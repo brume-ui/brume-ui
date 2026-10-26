@@ -11,13 +11,17 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./theme.css": "./dist/theme.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./tokens.json": "./dist/tokens.json"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
-    "typecheck": "tsc --noEmit"
+    "build": "tsup src/index.ts --format esm --dts --clean && node scripts/build.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   }
 }
