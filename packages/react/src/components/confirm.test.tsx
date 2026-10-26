@@ -35,6 +35,26 @@ function setup(opts: Opts) {
   return results;
 }
 
+function Two({ results }: { results: string[] }) {
+  const confirm = useConfirm();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        confirm({ title: '第一個', confirmLabel: '確認一' }).then((v) => results.push(`1:${v}`));
+        confirm({
+          title: '第二個',
+          confirmLabel: '確認二',
+          tone: 'danger',
+          cancelLabel: '先不要',
+        }).then((v) => results.push(`2:${v}`));
+      }}
+    >
+      兩個
+    </button>
+  );
+}
+
 describe('useConfirm', () => {
   it('resolves true on the confirm button', async () => {
     const user = userEvent.setup();
@@ -69,5 +89,25 @@ describe('useConfirm', () => {
     const cancel = screen.getByRole('button', { name: '先不要' });
     expect(document.activeElement).toBe(cancel);
     expect(screen.getByRole('button', { name: '刪除項目' }).className).toContain('br:bg-danger');
+    await user.click(cancel); // settle so the module-level queue stays clean
+  });
+
+  it('queued confirms: answering the first leaves the second to be answered on its own', async () => {
+    const user = userEvent.setup();
+    const results: string[] = [];
+    render(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <Two results={results} />
+        <ConfirmHost />
+      </BrumeProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: '兩個' }));
+    await user.click(screen.getByRole('button', { name: '確認一' }));
+    expect(results).toEqual(['1:true']);
+    expect(await screen.findByRole('alertdialog', { name: '第二個' })).toBeTruthy();
+    // danger request queued behind a default one still starts on Cancel
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '先不要' }));
+    await user.click(screen.getByRole('button', { name: '確認二' }));
+    expect(results).toEqual(['1:true', '2:true']);
   });
 });

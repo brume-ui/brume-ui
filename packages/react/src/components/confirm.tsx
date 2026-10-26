@@ -13,11 +13,13 @@ export interface ConfirmOptions {
 }
 
 interface Request {
+  id: number;
   opts: ConfirmOptions;
   resolve(value: boolean): void;
 }
 
 let queue: Request[] = [];
+let nextId = 0;
 const listeners = new Set<() => void>();
 
 function emit(next: Request[]) {
@@ -26,12 +28,13 @@ function emit(next: Request[]) {
 }
 
 function ask(opts: ConfirmOptions): Promise<boolean> {
-  return new Promise((resolve) => emit([...queue, { opts, resolve }]));
+  return new Promise((resolve) => emit([...queue, { id: ++nextId, opts, resolve }]));
 }
 
-function settle(value: boolean) {
+/** Idempotent per request: only acts while `req` is still the head of the queue. */
+function settle(req: Request, value: boolean) {
   const [head, ...rest] = queue;
-  if (!head) return;
+  if (head !== req) return;
   emit(rest);
   head.resolve(value);
 }
@@ -60,7 +63,11 @@ export function ConfirmHost() {
   const danger = opts.tone === 'danger';
 
   return (
-    <AlertDialog.Root open onOpenChange={(open) => !open && settle(false)}>
+    <AlertDialog.Root
+      key={current.id}
+      open
+      onOpenChange={(open) => !open && settle(current, false)}
+    >
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="br:fixed br:inset-0 br:z-[70] br:bg-text/40" />
         <AlertDialog.Content
@@ -93,7 +100,7 @@ export function ConfirmHost() {
               <Button
                 data-confirm-action=""
                 variant={danger ? 'danger' : 'primary'}
-                onClick={() => settle(true)}
+                onClick={() => settle(current, true)}
               >
                 {opts.confirmLabel}
               </Button>

@@ -142,4 +142,38 @@ describe('Dialog', () => {
     await user.keyboard('{Control>}{Enter}{/Control}');
     expect(onSave).toHaveBeenCalledTimes(2);
   });
+
+  it('hidden inputs do not break initial focus', async () => {
+    const user = userEvent.setup();
+    render(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <button type="button">外面</button>
+        <Dialog open onOpenChange={() => {}} title="表單">
+          <input type="hidden" name="_token" />
+          <input aria-label="名稱" />
+        </Dialog>
+      </BrumeProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true),
+    );
+    expect(document.activeElement).toBe(screen.getByLabelText('名稱'));
+    void user;
+  });
+
+  it('a dialog with no focusable body focuses the container and closes on first Esc', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <Dialog open onOpenChange={onOpenChange} title="說明">
+          <p>只有文字</p>
+        </Dialog>
+      </BrumeProvider>,
+    );
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() => expect(document.activeElement).toBe(dialog));
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
 });
