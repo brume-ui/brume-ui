@@ -8,5 +8,7 @@ export const zhCN: Record<MessageKey, string> = {
   'common.loading': '加载中',
   'pagination.page': '第 {page} 页',
   'shell.menu': '菜单',
+  'password.show': '显示密码',
+  'password.hide': '隐藏密码',
   'shell.colorScheme': '色彩模式',
 };

@@ -6,5 +6,7 @@ export const zhTW = {
   'common.loading': '載入中',
   'pagination.page': '第 {page} 頁',
   'shell.menu': '選單',
+  'password.show': '顯示密碼',
+  'password.hide': '隱藏密碼',
   'shell.colorScheme': '色彩模式',
 } as const;

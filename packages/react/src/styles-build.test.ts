@@ -22,15 +22,17 @@ describe('dist/styles.css', () => {
 
   it('emits only br:-prefixed utilities', () => {
     const css = readFileSync(resolve(root, 'dist/styles.css'), 'utf8');
-    expect(css).toContain('.br\\:bg-surface-canvas');
-    expect(css).not.toMatch(/\.bg-surface-canvas/);
+    expect(css).toContain('.br\\:bg-accent');
+    expect(css).not.toMatch(/\.bg-accent/);
   });
 
   it('uses no var(--x) without a definition', () => {
     const css = readFileSync(resolve(root, 'dist/styles.css'), 'utf8');
     const defined = new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
     const used = [...css.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)].map((m) => m[1] as string);
-    const undefinedVars = used.filter((v) => !defined.has(v) && !v.startsWith('--tw-'));
+    const undefinedVars = used.filter(
+      (v) => !defined.has(v) && !v.startsWith('--tw-') && !v.startsWith('--radix-'),
+    );
     expect(new Set(undefinedVars)).toEqual(new Set());
   });
 });

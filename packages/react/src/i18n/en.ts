@@ -8,5 +8,7 @@ export const en: Record<MessageKey, string> = {
   'common.loading': 'Loading',
   'pagination.page': 'Page {page}',
   'shell.menu': 'Menu',
+  'password.show': 'Show password',
+  'password.hide': 'Hide password',
   'shell.colorScheme': 'Color scheme',
 };
