@@ -5,7 +5,7 @@
 @source "./";
 
 @layer base {
-  :where(.br-root, [data-brume]) {
+  :where(html, .br-root, [data-brume]) {
     font-family: var(--br-font-sans);
     font-variant-numeric: tabular-nums;
   }

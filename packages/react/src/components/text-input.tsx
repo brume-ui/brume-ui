@@ -7,18 +7,23 @@ export interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   ref?: Ref<HTMLInputElement>;
 }
 
-export function TextInput({ invalid, className, type = 'text', ...rest }: TextInputProps) {
+export function TextInput({
+  invalid,
+  className,
+  type = 'text',
+  'aria-invalid': ariaInvalid,
+  ...rest
+}: TextInputProps) {
+  const isInvalid = Boolean(invalid) || ariaInvalid === true || ariaInvalid === 'true';
   return (
     <input
       type={type}
-      aria-invalid={invalid || rest['aria-invalid'] || undefined}
       {...rest}
+      aria-invalid={isInvalid || undefined}
       className={cn(
         CONTROL_BASE,
         'br:w-full',
-        invalid || rest['aria-invalid'] === true || rest['aria-invalid'] === 'true'
-          ? 'br:border-danger'
-          : 'br:border-border-strong',
+        isInvalid ? 'br:border-danger' : 'br:border-border-strong',
         FOCUS_RING,
         className,
       )}

@@ -35,4 +35,29 @@ describe('Field', () => {
     );
     expect(screen.getByLabelText('帳號').hasAttribute('aria-invalid')).toBe(false);
   });
+
+  it('keeps invalid on the child when there is no error', () => {
+    render(
+      <Field label="帳號">
+        <TextInput invalid />
+      </Field>,
+    );
+    expect(screen.getByLabelText('帳號').getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('merges the child aria-describedby and keeps aria-required', () => {
+    render(
+      <>
+        <p id="hint">提示</p>
+        <Field label="帳號" error="錯了" required>
+          <TextInput aria-describedby="hint" aria-required />
+        </Field>
+      </>,
+    );
+    const input = screen.getByLabelText(/帳號/);
+    const ids = (input.getAttribute('aria-describedby') ?? '').split(' ');
+    expect(ids).toContain('hint');
+    expect(ids).toContain(screen.getByText('錯了').id);
+    expect(input.getAttribute('aria-required')).toBe('true');
+  });
 });

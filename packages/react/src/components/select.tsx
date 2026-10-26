@@ -68,7 +68,7 @@ export function Select({
                 key={o.value}
                 value={o.value}
                 disabled={o.disabled}
-                className="br:relative br:flex br:h-9 br:cursor-default br:items-center br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none br:data-[disabled]:opacity-50 br:data-[highlighted]:bg-surface-selected br:data-[highlighted]:outline-none"
+                className="br:relative br:flex br:h-9 br:cursor-default br:items-center br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none br:data-[disabled]:opacity-50 br:data-[highlighted]:bg-surface-selected br:data-[highlighted]:outline-2 br:data-[highlighted]:-outline-offset-2 br:data-[highlighted]:outline-focus-ring"
               >
                 <RadixSelect.ItemIndicator className="br:absolute br:left-2">
                   <Check aria-hidden="true" className="br:size-4 br:text-accent" />

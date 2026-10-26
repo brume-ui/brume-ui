@@ -13,7 +13,14 @@ export function Field({ label, description, error, required, children }: FieldPr
   const id = (children.props.id as string | undefined) ?? autoId;
   const descriptionId = description ? `${id}-description` : undefined;
   const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [descriptionId, errorId].filter(Boolean).join(' ') || undefined;
+  const describedBy =
+    [children.props['aria-describedby'] as string | undefined, descriptionId, errorId]
+      .filter(Boolean)
+      .join(' ') || undefined;
+  const injected: Record<string, unknown> = { id };
+  if (describedBy) injected['aria-describedby'] = describedBy;
+  if (error) injected['aria-invalid'] = true;
+  if (required) injected['aria-required'] = true;
 
   return (
     <div className="br:flex br:flex-col br:gap-1.5">
@@ -30,12 +37,7 @@ export function Field({ label, description, error, required, children }: FieldPr
           {description}
         </p>
       ) : null}
-      {cloneElement(children, {
-        id,
-        'aria-describedby': describedBy,
-        'aria-invalid': error ? true : undefined,
-        'aria-required': required || undefined,
-      })}
+      {cloneElement(children, injected)}
       {error ? (
         <p id={errorId} className="br:text-sm br:text-danger">
           {error}

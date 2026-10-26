@@ -19,7 +19,7 @@ describe('Button', () => {
 
   it('keeps label in layout while loading so width does not jump', () => {
     render(<Button loading>登入</Button>);
-    expect(screen.getByText('登入').className).toContain('br:invisible');
+    expect(screen.getByText('登入').className).toContain('br:opacity-0');
   });
 
   it('fires onClick when idle and has no aria-busy', () => {
@@ -28,5 +28,10 @@ describe('Button', () => {
     fireEvent.click(screen.getByRole('button', { name: '登入' }));
     expect(onClick).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button').hasAttribute('aria-busy')).toBe(false);
+  });
+
+  it('keeps its accessible name while loading', () => {
+    render(<Button loading>登入</Button>);
+    expect(screen.getByRole('button', { name: '登入' })).toBeTruthy();
   });
 });

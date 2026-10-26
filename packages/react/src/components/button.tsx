@@ -45,7 +45,7 @@ export function Button({
       )}
     >
       {/* Content stays in the layout (hidden while loading) so the width never jumps. */}
-      <span className={cn('br:inline-flex br:items-center br:gap-2', loading && 'br:invisible')}>
+      <span className={cn('br:inline-flex br:items-center br:gap-2', loading && 'br:opacity-0')}>
         {Icon ? <Icon aria-hidden="true" className="br:size-4" /> : null}
         {children}
       </span>
