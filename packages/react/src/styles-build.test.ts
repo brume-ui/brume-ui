@@ -25,4 +25,12 @@ describe('dist/styles.css', () => {
     expect(css).toContain('.br\\:bg-surface-canvas');
     expect(css).not.toMatch(/\.bg-surface-canvas/);
   });
+
+  it('uses no var(--x) without a definition', () => {
+    const css = readFileSync(resolve(root, 'dist/styles.css'), 'utf8');
+    const defined = new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+    const used = [...css.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)].map((m) => m[1] as string);
+    const undefinedVars = used.filter((v) => !defined.has(v) && !v.startsWith('--tw-'));
+    expect(new Set(undefinedVars)).toEqual(new Set());
+  });
 });
