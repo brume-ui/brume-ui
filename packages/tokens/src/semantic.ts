@@ -12,7 +12,7 @@ export const semantic = {
   // Darkened from spec #6b7785 so it passes 4.5:1 on surface-canvas as well.
   'text-muted': { light: '#5b6776', dark: '#9aa8b6' },
   border: { light: '#e3e8ee', dark: '#263140' },
-  'border-strong': { light: '#cfd7e0', dark: '#3a4757' },
+  'border-strong': { light: '#878c92', dark: '#5f6a77' },
   accent: { light: '#0e7490', dark: '#38b6d4' },
   // Fallback hex; CSS derives it with color-mix so it follows --br-accent.
   'accent-tint': { light: '#e3f1f4', dark: '#173540' },

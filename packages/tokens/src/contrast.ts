@@ -44,6 +44,8 @@ export const contrastPairs: ContrastPair[] = [
   text('info', 'surface'),
   ui('accent', 'surface-canvas'),
   ui('accent', 'surface-selected'),
+  ui('border-strong', 'surface'),
+  ui('border-strong', 'surface-canvas'),
   ui('focus-ring', 'surface'),
   ui('focus-ring', 'surface-canvas'),
   ui('focus-ring', 'surface-selected'),
