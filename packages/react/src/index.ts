@@ -7,11 +7,14 @@ export { cn } from './cn';
 export { COLOR_SCHEME_STORAGE_KEY, type ColorScheme, useColorScheme } from './color-scheme';
 export { Button, type ButtonProps } from './components/button';
 export { Checkbox, type CheckboxProps } from './components/checkbox';
+export { ConfirmHost, type ConfirmOptions, useConfirm } from './components/confirm';
+export { Dialog, type DialogProps } from './components/dialog';
 export { Field, type FieldProps } from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { PasswordInput, type PasswordInputProps } from './components/password-input';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { TextInput, type TextInputProps } from './components/text-input';
+export { Toaster, type ToastOptions, toast } from './components/toast';
 export {
   createTranslator,
   type Locale,

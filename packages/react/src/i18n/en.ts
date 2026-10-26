@@ -11,4 +11,8 @@ export const en: Record<MessageKey, string> = {
   'password.show': 'Show password',
   'password.hide': 'Hide password',
   'shell.colorScheme': 'Color scheme',
+  'dialog.discard.title': 'Discard unsaved changes?',
+  'dialog.discard.confirm': 'Discard changes',
+  'dialog.maximize': 'Maximize',
+  'dialog.restore': 'Restore size',
 };

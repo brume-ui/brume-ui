@@ -9,4 +9,8 @@ export const zhTW = {
   'password.show': '顯示密碼',
   'password.hide': '隱藏密碼',
   'shell.colorScheme': '色彩模式',
+  'dialog.discard.title': '放棄未儲存的變更？',
+  'dialog.discard.confirm': '放棄變更',
+  'dialog.maximize': '放大',
+  'dialog.restore': '還原大小',
 } as const;

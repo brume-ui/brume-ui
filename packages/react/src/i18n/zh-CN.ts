@@ -11,4 +11,8 @@ export const zhCN: Record<MessageKey, string> = {
   'password.show': '显示密码',
   'password.hide': '隐藏密码',
   'shell.colorScheme': '色彩模式',
+  'dialog.discard.title': '放弃未保存的更改？',
+  'dialog.discard.confirm': '放弃更改',
+  'dialog.maximize': '放大',
+  'dialog.restore': '还原大小',
 };
