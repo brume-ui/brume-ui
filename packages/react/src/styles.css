@@ -1,0 +1,13 @@
+@import "tailwindcss" prefix(br);
+@import "@herb09638/brume-tokens/theme.css";
+@import "@herb09638/brume-tokens/tokens.css";
+@import "@fontsource-variable/nunito";
+
+@source "./";
+
+@layer base {
+  :where(.br-root, [data-brume]) {
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+}
