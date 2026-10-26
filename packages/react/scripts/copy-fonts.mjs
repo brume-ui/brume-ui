@@ -1,0 +1,10 @@
+import { cpSync, mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+
+const require = createRequire(import.meta.url);
+const src = join(dirname(require.resolve('@fontsource-variable/nunito/package.json')), 'files');
+mkdirSync('dist/files', { recursive: true });
+for (const f of ['nunito-latin-wght-normal.woff2', 'nunito-latin-ext-wght-normal.woff2']) {
+  cpSync(join(src, f), join('dist/files', f));
+}
