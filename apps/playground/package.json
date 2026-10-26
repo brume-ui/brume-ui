@@ -1,0 +1,12 @@
+{
+  "name": "@herb09638/brume-playground",
+  "private": true,
+  "version": "0.1.0-alpha.0",
+  "type": "module",
+  "dependencies": {
+    "@herb09638/brume-react": "workspace:*",
+    "@herb09638/brume-renderer": "workspace:*",
+    "@herb09638/brume-schema": "workspace:*",
+    "@herb09638/brume-inertia": "workspace:*"
+  }
+}
