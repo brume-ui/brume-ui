@@ -4,15 +4,9 @@ import { ComponentSlot } from './component-slot';
 
 export function DashboardPageView({ page }: { page: DashboardPage }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="br:flex br:flex-col br:gap-4">
       <PageHeader title={page.title} />
-      <div
-        style={{
-          display: 'grid',
-          gap: '16px',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 18rem), 1fr))',
-        }}
-      >
+      <div className="br:grid br:grid-cols-1 br:gap-4 br:md:grid-cols-2 br:xl:grid-cols-3">
         {page.blocks.map((block, i) =>
           block.type === 'card' ? (
             // biome-ignore lint/suspicious/noArrayIndexKey: blocks have no ids

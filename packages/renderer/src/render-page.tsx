@@ -14,14 +14,9 @@ export function BrumePageView({ envelope }: { envelope: PageEnvelope }) {
     return (
       <div
         role="alert"
-        style={{
-          border: '1px solid var(--br-danger)',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          color: 'var(--br-danger)',
-        }}
+        className="br:rounded-card br:border br:border-danger br:bg-surface br:px-4 br:py-3 br:text-danger"
       >
-        <p style={{ fontWeight: 600 }}>{t('renderer.version.title')}</p>
+        <p className="br:font-semibold">{t('renderer.version.title')}</p>
         <p>
           {t('renderer.version.message', {
             received: envelope.schemaVersion,

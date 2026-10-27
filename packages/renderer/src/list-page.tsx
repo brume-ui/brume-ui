@@ -42,7 +42,7 @@ export function ListPageView({ page }: { page: ListPage }) {
   );
   const { pagination } = page;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="br:flex br:flex-col br:gap-4">
       <PageHeader title={page.title} description={page.description} />
       <DataTable
         columns={columns}
