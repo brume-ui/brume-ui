@@ -25,5 +25,10 @@ export {
   type MessageKey,
   type Messages,
 } from './i18n';
+export { AppShell, type AppShellProps, SIDEBAR_COLLAPSED_STORAGE_KEY } from './layout/app-shell';
+export type { BreadcrumbItem } from './layout/breadcrumbs';
+export { Card, type CardProps } from './layout/card';
+export { PageHeader, type PageHeaderProps } from './layout/page-header';
+export type { ShellUser } from './layout/user-menu';
 export { createMemoryAdapter } from './memory-adapter';
 export { BrumeProvider, useBrume } from './provider';
