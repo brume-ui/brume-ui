@@ -49,10 +49,15 @@ describe('AppShell', () => {
     expect(screen.queryByRole('button', { name: /使用者選單/ })).toBeNull();
   });
 
-  it('writes accent to --br-accent-custom on the shell root', () => {
-    render(renderShell({ layout: { ...LAYOUT, accent: '#aa3366' } }).ui());
-    const root = document.querySelector('[data-brume]') as HTMLElement;
-    expect(root.style.getPropertyValue('--br-accent-custom')).toBe('#aa3366');
+  it('sets --br-accent-custom on <html>, updates it, and removes it on unmount', () => {
+    const read = () => document.documentElement.style.getPropertyValue('--br-accent-custom');
+    const { ui } = renderShell({ layout: { ...LAYOUT, accent: '#1e3a8a' } });
+    const view = render(ui());
+    expect(read()).toBe('#1e3a8a');
+    view.rerender(ui({ layout: { ...LAYOUT, accent: '#aa3366' } }));
+    expect(read()).toBe('#aa3366');
+    view.unmount();
+    expect(read()).toBe('');
   });
 
   it('switches color scheme', async () => {

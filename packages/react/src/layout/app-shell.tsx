@@ -1,7 +1,7 @@
 import type { LayoutSettings, MenuItem } from '@herb09638/brume-schema';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Menu, X } from 'lucide-react';
-import { type CSSProperties, type ReactNode, useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useLayoutEffect, useState } from 'react';
 import { IconButton } from '../components/icon-button';
 import type { Locale } from '../i18n';
 import { useBrume } from '../provider';
@@ -11,6 +11,7 @@ import { Sidebar, SidebarNav } from './sidebar';
 import { TopMenu } from './top-menu';
 import { type ShellUser, UserMenu } from './user-menu';
 
+const ACCENT_VAR = '--br-accent-custom';
 export const SIDEBAR_COLLAPSED_STORAGE_KEY = 'brume.sidebar-collapsed';
 
 export interface AppShellProps {
@@ -78,15 +79,23 @@ export function AppShell({
     });
   }, []);
 
-  const style = (layout.accent ? { '--br-accent-custom': layout.accent } : undefined) as
-    | CSSProperties
-    | undefined;
+  // tokens.css reads --br-accent-custom on :root (light mode only), so it must be set on <html>.
+  const accent = layout.accent;
+  useLayoutEffect(() => {
+    if (!accent) return;
+    const el = document.documentElement;
+    const previous = el.style.getPropertyValue(ACCENT_VAR);
+    el.style.setProperty(ACCENT_VAR, accent);
+    return () => {
+      if (previous) el.style.setProperty(ACCENT_VAR, previous);
+      else el.style.removeProperty(ACCENT_VAR);
+    };
+  }, [accent]);
 
   return (
     <div
       data-brume=""
       data-shell-mount={mountId}
-      style={style}
       className="br-root br:flex br:min-h-screen br:bg-surface-canvas br:text-text"
     >
       <a
@@ -141,7 +150,6 @@ export function AppShell({
           <Dialog.Content
             aria-describedby={undefined}
             data-brume=""
-            style={style}
             className="br-root br:fixed br:inset-y-0 br:left-0 br:z-50 br:w-72 br:max-w-[85vw] br:overflow-y-auto br:bg-surface br:p-3 br:text-text br:shadow-overlay br:outline-none br:md:hidden"
           >
             <div className="br:mb-4 br:flex br:h-11 br:items-center br:justify-between br:px-3">
