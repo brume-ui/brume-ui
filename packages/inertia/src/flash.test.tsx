@@ -1,9 +1,11 @@
+import { toast } from '@herb09638/brume-react';
 import { createRegistry } from '@herb09638/brume-renderer';
 import type { SharedProps } from '@herb09638/brume-schema';
 import { usePage } from '@inertiajs/react';
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrumeLayout } from './brume-layout';
+import { resetSeenFlashMemory } from './flash';
 import { makeShared } from './test-fixtures';
 
 vi.mock('@inertiajs/react', async (importOriginal) => ({
@@ -26,7 +28,12 @@ const ui = () => (
   </BrumeLayout>
 );
 
-beforeEach(() => vi.mocked(usePage).mockReset());
+beforeEach(() => {
+  vi.mocked(usePage).mockReset();
+  sessionStorage.clear();
+  resetSeenFlashMemory();
+});
+afterEach(() => vi.restoreAllMocks());
 
 describe('BrumeLayout flash', () => {
   it('toasts once per flash id', () => {
@@ -39,6 +46,25 @@ describe('BrumeLayout flash', () => {
     setPage({ id: 'f2', type: 'success', message: '已儲存 A' });
     rerender(ui());
     expect(screen.getAllByText('已儲存 A')).toHaveLength(2);
+  });
+
+  it('does not re-toast an old flash restored by Back/Forward or a full reload', () => {
+    const success = vi.spyOn(toast, 'success');
+    const f1 = { id: 'b1', type: 'success', message: '已儲存 C' } as const;
+    const f2 = { id: 'b2', type: 'success', message: '已儲存 D' } as const;
+    setPage(f1);
+    const { rerender, unmount } = render(ui());
+    setPage(f2);
+    rerender(ui());
+    setPage(f1); // Back: Inertia restores f1's props from history.state
+    rerender(ui());
+    expect(success.mock.calls.filter(([msg]) => msg === '已儲存 C')).toHaveLength(1);
+
+    unmount();
+    resetSeenFlashMemory(); // full reload: module state is gone, sessionStorage is not
+    setPage(f2);
+    render(ui());
+    expect(success.mock.calls.filter(([msg]) => msg === '已儲存 D')).toHaveLength(1);
   });
 
   it('maps flash type to the toast kind and ignores null', () => {

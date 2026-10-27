@@ -2,6 +2,7 @@ import { router, usePage } from '@inertiajs/react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { resetSeenFlashMemory } from './flash';
 import { LoginPage } from './pages/login';
 import { makeShared } from './test-fixtures';
 
@@ -20,6 +21,8 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  sessionStorage.clear();
+  resetSeenFlashMemory();
   window.history.replaceState(null, '', '/admin/login');
   vi.mocked(usePage).mockReturnValue({
     url: '/admin/login',
