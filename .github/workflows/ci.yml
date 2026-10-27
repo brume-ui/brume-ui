@@ -36,12 +36,13 @@ jobs:
 
       - run: pnpm lint
 
+      # Build before typecheck/test: packages resolve each other's types through dist/.
+      # Uses the committed font subsets; scripts/split-fonts.py (fonttools) is never run in CI.
+      - run: pnpm build
+
       - run: pnpm typecheck
 
       - run: pnpm test
-
-      # Uses the committed font subsets; scripts/split-fonts.py (fonttools) is never run in CI.
-      - run: pnpm build
 
       - name: Install Playwright Chromium
         run: pnpm --filter ./apps/playground exec playwright install --with-deps chromium
