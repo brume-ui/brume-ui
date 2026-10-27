@@ -7,8 +7,15 @@ import { FOCUS_RING } from '../components/focus';
 import { useBrume } from '../provider';
 import { containsItem, findCurrentItem, interceptClick, menuKey, resolveIcon } from './menu-utils';
 
-const ROW =
-  'br:flex br:h-11 br:w-full br:items-center br:gap-3 br:rounded-card br:px-3 br:text-sm br:font-medium br:transition-colors br:motion-reduce:transition-none';
+const ROW_BASE =
+  'br:flex br:h-11 br:w-full br:items-center br:gap-3 br:rounded-card br:text-sm br:font-medium br:transition-colors br:motion-reduce:transition-none';
+const ROW = `${ROW_BASE} br:px-3`;
+/**
+ * Child links line their label up with the group label (12px padding + 20px icon + 12px gap).
+ * Own padding, not `pl-*` on top of `px-3`: those are different properties, and with several
+ * Brume stylesheets on a page the later `px-3` can win the cascade.
+ */
+const NESTED_ROW = `${ROW_BASE} br:pr-3 br:pl-11`;
 const IDLE = 'br:text-text br:hover:bg-surface-canvas';
 const CURRENT = 'br:bg-accent-tint br:text-accent-tint-text';
 
@@ -61,10 +68,9 @@ function NavLink({
       aria-label={collapsed ? item.title : undefined}
       onClick={interceptClick(() => adapter.visit(url), onNavigate)}
       className={cn(
-        ROW,
+        nested ? NESTED_ROW : ROW,
         current ? CURRENT : IDLE,
         collapsed && 'br:justify-center br:px-0',
-        nested && 'br:pl-10',
         FOCUS_RING,
       )}
     >

@@ -2,7 +2,7 @@ import type { MenuItem } from '@brume-ui/brume-schema';
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../cn';
-import { FOCUS_RING } from '../components/focus';
+import { FOCUS_RING, HIGHLIGHT_RING } from '../components/focus';
 import { useBrume } from '../provider';
 import { containsItem, findCurrentItem, interceptClick, menuKey, resolveIcon } from './menu-utils';
 
@@ -55,7 +55,8 @@ export function TopMenu({
                               aria-current={child === currentItem ? 'page' : undefined}
                               onClick={interceptClick(() => adapter.visit(childUrl))}
                               className={cn(
-                                'br:flex br:h-10 br:items-center br:rounded-input br:px-3 br:text-sm br:text-text br:outline-none br:data-[highlighted]:bg-surface-selected',
+                                'br:flex br:h-10 br:items-center br:rounded-input br:px-3 br:text-sm br:text-text br:data-[highlighted]:bg-surface-selected',
+                                HIGHLIGHT_RING,
                                 child === currentItem && CURRENT,
                               )}
                             >

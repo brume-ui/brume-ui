@@ -26,8 +26,11 @@ export interface DataTableProps<T> {
 }
 
 const SKELETON_ROWS = 5;
-/** Floor for columns without a fixed width, so narrow screens scroll instead of squeezing. */
-const MIN_FLUID_COLUMN = '8rem';
+/**
+ * Floor for columns without a fixed width, so narrow screens scroll instead of squeezing.
+ * 10rem leaves 128px of text, enough for a `Y-m-d H:i` timestamp.
+ */
+const MIN_FLUID_COLUMN = '10rem';
 
 function minTableWidth(columns: Array<{ width?: string }>): string {
   const parts = columns.map((c) =>

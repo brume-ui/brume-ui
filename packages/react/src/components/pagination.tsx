@@ -15,13 +15,18 @@ export interface PaginationProps {
 
 type Item = number | 'gap';
 
-/** First, last, current +/- 1; any hidden run becomes a single ellipsis. */
+/**
+ * First, last, current +/- 1; a hidden run of two or more pages becomes a single ellipsis.
+ * A lone hidden page is shown instead: the ellipsis would take its place without saving room.
+ */
 export function pageItems(page: number, lastPage: number): Item[] {
   const keep = new Set([1, lastPage, page - 1, page, page + 1]);
   const pages = [...keep].filter((n) => n >= 1 && n <= lastPage).sort((a, b) => a - b);
   const items: Item[] = [];
   pages.forEach((n, i) => {
-    if (i > 0 && n - (pages[i - 1] as number) > 1) items.push('gap');
+    const prev = pages[i - 1];
+    if (prev !== undefined && n - prev === 2) items.push(prev + 1);
+    else if (prev !== undefined && n - prev > 2) items.push('gap');
     items.push(n);
   });
   return items;

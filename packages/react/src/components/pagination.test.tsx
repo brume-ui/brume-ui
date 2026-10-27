@@ -26,6 +26,12 @@ describe('Pagination', () => {
     expect(screen.queryByText('…')).toBeNull();
   });
 
+  it('shows a lone hidden page instead of an ellipsis (1 2 3 4 on page 1 of 4)', () => {
+    wrap(<Pagination page={1} lastPage={4} hrefFor={hrefFor} />);
+    expect(labels().filter((t) => /^\d+$/.test(t ?? ''))).toEqual(['1', '2', '3', '4']);
+    expect(screen.queryByText('…')).toBeNull();
+  });
+
   it('marks the current page with aria-current and others are real links', () => {
     wrap(<Pagination page={10} lastPage={20} hrefFor={hrefFor} />);
     const current = screen.getByRole('link', { name: '第 10 頁' });

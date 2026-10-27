@@ -99,3 +99,41 @@ test('toasts do animate in without reduced motion (control)', async ({ page }) =
   await expect(toast).toBeVisible();
   expect(await toast.evaluate((el) => getComputedStyle(el).animationName)).toBe('br-toast-in');
 });
+
+async function outline(target: Locator): Promise<{ style: string; width: string }> {
+  return target.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { style: s.outlineStyle, width: s.outlineWidth };
+  });
+}
+
+test('keyboard focus draws a visible 2px solid ring', async ({ page }) => {
+  await openPage(page, 'button', 'light');
+  const button = page.getByRole('button', { name: '儲存' }).first();
+  await tabTo(page, button);
+  expect(await outline(button)).toEqual({ style: 'solid', width: '2px' });
+});
+
+test('a navbar menu item highlighted by the keyboard shows the focus ring', async ({ page }) => {
+  await openPage(page, 'shell', 'light');
+  await tabTo(page, page.getByRole('button', { name: '色彩模式' }));
+  await page.keyboard.press('Enter');
+  const item = page.getByRole('menuitemradio', { name: '淺色' });
+  await expect(item).toBeFocused();
+  expect(await outline(item)).toEqual({ style: 'solid', width: '2px' });
+});
+
+test('a nested sidebar link is indented past its group label', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openPage(page, 'shell', 'light');
+  const nav = page.getByRole('navigation', { name: '主選單' }).first();
+  const textLeft = (target: Locator) =>
+    target.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el.querySelector('span') ?? el);
+      return range.getBoundingClientRect().left;
+    });
+  const group = await textLeft(nav.getByRole('button', { name: '內容' }));
+  const child = await textLeft(nav.getByRole('link', { name: '使用者' }));
+  expect(child).toBeGreaterThanOrEqual(group);
+});

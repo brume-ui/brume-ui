@@ -112,7 +112,7 @@ describe('DataTable', () => {
       />,
     );
     const table = screen.getByRole('table');
-    expect(table.style.minWidth).toBe('calc(22rem)');
+    expect(table.style.minWidth).toBe('calc(26rem)');
     expect(table.parentElement?.className).toContain('br:overflow-x-auto');
     expect(screen.getByRole('cell', { name: '甲' }).className).toContain('br:truncate');
   });
