@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
     <title>Brume Playground</title>
+    <script>
+      // Apply the stored color scheme before first paint (same job as the host's root view script).
+      try {
+        const s = localStorage.getItem('brume.color-scheme');
+        if (s === 'light' || s === 'dark') document.documentElement.dataset.theme = s;
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

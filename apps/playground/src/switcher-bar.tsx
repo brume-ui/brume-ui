@@ -45,8 +45,17 @@ export function SwitcherBar({
   const { scheme, setScheme } = useColorScheme();
   const { accent, setAccent, menuPosition, setMenuPosition } = useSettings();
   return (
-    <div className="pg-bar" data-testid="pg-switcher">
-      <a href="#/" className="pg-bar-title">
+    <aside className="pg-bar" data-testid="pg-switcher" aria-label="Playground settings">
+      {/* href="./" (not "#/"): axe treats "#/" links as page links, and one placed before
+          AppShell's skip link stops axe recognising that skip link (region rule). */}
+      <a
+        href="./"
+        className="pg-bar-title"
+        onClick={(e) => {
+          e.preventDefault();
+          window.location.hash = '/';
+        }}
+      >
         Brume Playground
       </a>
       <Segmented
@@ -90,6 +99,6 @@ export function SwitcherBar({
         value={menuPosition}
         onChange={setMenuPosition}
       />
-    </div>
+    </aside>
   );
 }

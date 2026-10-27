@@ -91,7 +91,7 @@ function Snippet() {
 
 export function FontsPage() {
   return (
-    <div className="pg-fonts-wrap" data-testid="pg-fonts">
+    <main className="pg-fonts-wrap" data-testid="pg-fonts">
       <h1 style={{ margin: '0 0 4px', fontSize: 24 }}>中文字體比較</h1>
       <p className="pg-lead">
         同一個「訂單列表 + 登入表單」片段，三種字體並排；每欄上方為淺色、下方為深色。
@@ -119,6 +119,6 @@ export function FontsPage() {
           </section>
         ))}
       </div>
-    </div>
+    </main>
   );
 }

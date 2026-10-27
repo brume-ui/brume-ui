@@ -40,13 +40,27 @@ export function DataTablePage() {
   return (
     <Page name="data-table" title="DataTable" lead="Rows, loading skeleton and empty state.">
       <Section title="rows (numeric column right-aligned, tabular)">
-        <DataTable columns={COLUMNS} rows={ROWS} getRowId={(r) => r.id} empty={EMPTY} />
+        <DataTable
+          caption="使用者（有資料）"
+          columns={COLUMNS}
+          rows={ROWS}
+          getRowId={(r) => r.id}
+          empty={EMPTY}
+        />
       </Section>
       <Section title="loading">
-        <DataTable columns={COLUMNS} rows={[]} loading getRowId={(r) => r.id} empty={EMPTY} />
+        <DataTable
+          caption="使用者（載入中）"
+          columns={COLUMNS}
+          rows={[]}
+          loading
+          getRowId={(r) => r.id}
+          empty={EMPTY}
+        />
       </Section>
       <Section title="empty">
         <DataTable
+          caption="使用者（空狀態）"
           columns={COLUMNS}
           rows={[]}
           getRowId={(r) => r.id}
@@ -70,10 +84,20 @@ export function PaginationPage() {
         />
       </Section>
       <Section title="first page">
-        <Pagination page={1} lastPage={5} hrefFor={(n) => `#/pagination?page=${n}`} />
+        <Pagination
+          label="分頁（第一頁）"
+          page={1}
+          lastPage={5}
+          hrefFor={(n) => `#/pagination?page=${n}`}
+        />
       </Section>
       <Section title="last page">
-        <Pagination page={5} lastPage={5} hrefFor={(n) => `#/pagination?page=${n}`} />
+        <Pagination
+          label="分頁（最後一頁）"
+          page={5}
+          lastPage={5}
+          hrefFor={(n) => `#/pagination?page=${n}`}
+        />
       </Section>
     </Page>
   );

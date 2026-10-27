@@ -30,7 +30,7 @@ function useHashRoute(): string {
 
 function IndexPage() {
   return (
-    <div className="pg-page" data-testid="pg-index">
+    <main className="pg-page" data-testid="pg-index">
       <h1>Brume Playground</h1>
       <p className="pg-lead">One page per component. Use the bar above to switch settings.</p>
       <ul className="pg-index">
@@ -40,7 +40,7 @@ function IndexPage() {
           </li>
         ))}
       </ul>
-    </div>
+    </main>
   );
 }
 
