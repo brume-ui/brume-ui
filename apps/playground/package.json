@@ -3,10 +3,27 @@
   "private": true,
   "version": "0.1.0-alpha.0",
   "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
   "dependencies": {
+    "@fontsource/noto-sans-tc": "^5.3.1",
+    "@herb09638/brume-inertia": "workspace:*",
     "@herb09638/brume-react": "workspace:*",
     "@herb09638/brume-renderer": "workspace:*",
     "@herb09638/brume-schema": "workspace:*",
-    "@herb09638/brume-inertia": "workspace:*"
+    "@herb09638/brume-tokens": "workspace:*",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.5"
   }
 }
