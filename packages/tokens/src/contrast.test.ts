@@ -55,4 +55,11 @@ describe('contrast', () => {
       expect(semantic, name).toHaveProperty(name);
     }
   });
+
+  test.each(['light', 'dark'] as const)('scrim darkens what is behind a modal in %s', (mode) => {
+    // A scrim lighter than the canvas would wash the page out instead of dimming it.
+    const scrim = semantic.scrim[mode];
+    const canvas = semantic['surface-canvas'][mode];
+    expect(contrastRatio(scrim, '#000000')).toBeLessThan(contrastRatio(canvas, '#000000'));
+  });
 });

@@ -23,6 +23,8 @@ export const semantic = {
   success: { light: '#166d38', dark: '#4ade80' },
   warning: { light: '#8a5a00', dark: '#e5b341' },
   info: { light: '#1d6fb8', dark: '#6cb4f0' },
+  // Modal/drawer backdrop, used at 40% opacity. Dark must stay dark: `text` there is light.
+  scrim: { light: '#1f2a37', dark: '#000000' },
 } as const satisfies Record<string, ModeValue>;
 
 export type SemanticToken = keyof typeof semantic;

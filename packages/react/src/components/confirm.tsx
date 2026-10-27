@@ -69,7 +69,7 @@ export function ConfirmHost() {
       onOpenChange={(open) => !open && settle(current, false)}
     >
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="br:fixed br:inset-0 br:z-[70] br:bg-text/40" />
+        <AlertDialog.Overlay className="br:fixed br:inset-0 br:z-[70] br:bg-scrim/40" />
         <AlertDialog.Content
           ref={contentRef}
           onOpenAutoFocus={(e) => {

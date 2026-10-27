@@ -146,7 +146,7 @@ export function AppShell({
 
       <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="br:fixed br:inset-0 br:z-40 br:bg-text/40 br:md:hidden" />
+          <Dialog.Overlay className="br:fixed br:inset-0 br:z-40 br:bg-scrim/40 br:md:hidden" />
           <Dialog.Content
             aria-describedby={undefined}
             data-brume=""

@@ -73,7 +73,7 @@ export function Dialog({
   return (
     <RadixDialog.Root open={open} onOpenChange={handleOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="br:fixed br:inset-0 br:z-50 br:bg-text/40" />
+        <RadixDialog.Overlay className="br:fixed br:inset-0 br:z-50 br:bg-scrim/40" />
         <RadixDialog.Content
           ref={contentRef}
           onKeyDown={handleKeyDown}
