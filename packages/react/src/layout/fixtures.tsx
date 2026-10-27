@@ -1,4 +1,4 @@
-import type { LayoutSettings, MenuItem } from '@herb09638/brume-schema';
+import type { LayoutSettings, MenuItem } from '@brume-ui/brume-schema';
 import type { ReactNode } from 'react';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';

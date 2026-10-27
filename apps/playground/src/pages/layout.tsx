@@ -1,4 +1,4 @@
-import { Button, Card, PageHeader } from '@herb09638/brume-react';
+import { Button, Card, PageHeader } from '@brume-ui/brume-react';
 import { Plus } from 'lucide-react';
 import { Page, Section } from './page';
 

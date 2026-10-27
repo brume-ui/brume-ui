@@ -1,4 +1,4 @@
-import { Button, Dialog, Field, TextInput, toast, useConfirm } from '@herb09638/brume-react';
+import { Button, Dialog, Field, TextInput, toast, useConfirm } from '@brume-ui/brume-react';
 import { useState } from 'react';
 import { Page, Panel, Section } from './page';
 

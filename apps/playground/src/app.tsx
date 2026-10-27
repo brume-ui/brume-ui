@@ -4,7 +4,7 @@ import {
   createMemoryAdapter,
   type Locale,
   Toaster,
-} from '@herb09638/brume-react';
+} from '@brume-ui/brume-react';
 import { useEffect, useMemo, useState } from 'react';
 import { ShellPage } from './pages/shell';
 import { INDEX_ENTRIES, ROUTES, SHELL_ROUTE } from './routes';

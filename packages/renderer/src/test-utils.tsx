@@ -1,4 +1,4 @@
-import { BrumeProvider, createMemoryAdapter, type Locale } from '@herb09638/brume-react';
+import { BrumeProvider, createMemoryAdapter, type Locale } from '@brume-ui/brume-react';
 import { type RenderResult, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { type ComponentRegistry, createRegistry } from './registry';

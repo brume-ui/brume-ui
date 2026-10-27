@@ -1,10 +1,11 @@
 {
-  "name": "@herb09638/brume-renderer",
-  "version": "0.1.0-alpha.1",
+  "name": "@brume-ui/brume-renderer",
+  "version": "0.1.0-alpha.2",
+  "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/herb09638/brume-ui",
+    "url": "https://github.com/brume-ui/brume-ui",
     "directory": "packages/renderer"
   },
   "files": [
@@ -20,7 +21,8 @@
     "./styles.css": "./dist/styles.css"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean && pnpm build:css",
@@ -29,8 +31,8 @@
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify"
   },
   "dependencies": {
-    "@herb09638/brume-react": "workspace:*",
-    "@herb09638/brume-schema": "workspace:*"
+    "@brume-ui/brume-react": "workspace:*",
+    "@brume-ui/brume-schema": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",
@@ -44,7 +46,7 @@
     "vitest": "^5.0.5",
     "@tailwindcss/cli": "^4.3.3",
     "tailwindcss": "^4.3.3",
-    "@herb09638/brume-tokens": "workspace:*",
+    "@brume-ui/brume-tokens": "workspace:*",
     "@types/node": "^26.6.5"
   },
   "peerDependencies": {
@@ -53,5 +55,9 @@
   },
   "sideEffects": [
     "**/*.css"
-  ]
+  ],
+  "homepage": "https://github.com/brume-ui/brume-ui#readme",
+  "bugs": {
+    "url": "https://github.com/brume-ui/brume-ui/issues"
+  }
 }

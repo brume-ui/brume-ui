@@ -8,7 +8,7 @@ import {
   TextInput,
   Toaster,
   useBrume,
-} from '@herb09638/brume-react';
+} from '@brume-ui/brume-react';
 import { Head, useForm } from '@inertiajs/react';
 import { type FormEvent, useRef } from 'react';
 import { inertiaAdapter } from '../default-adapter';

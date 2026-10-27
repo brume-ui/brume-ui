@@ -2,13 +2,13 @@
 
 Brume admin-panel UI kit (pnpm monorepo).
 
-| Package                     | Purpose                                |
-| --------------------------- | -------------------------------------- |
-| `@herb09638/brume-tokens`   | Design tokens (CSS variables `--br-*`) |
-| `@herb09638/brume-react`    | React components                       |
-| `@herb09638/brume-schema`   | Page schema (TypeBox)                  |
-| `@herb09638/brume-renderer` | Schema renderer                        |
-| `@herb09638/brume-inertia`  | Inertia adapter                        |
+| Package                    | Purpose                                |
+| -------------------------- | -------------------------------------- |
+| `@brume-ui/brume-tokens`   | Design tokens (CSS variables `--br-*`) |
+| `@brume-ui/brume-react`    | React components                       |
+| `@brume-ui/brume-schema`   | Page schema (TypeBox)                  |
+| `@brume-ui/brume-renderer` | Schema renderer                        |
+| `@brume-ui/brume-inertia`  | Inertia adapter                        |
 
 ## Commands
 

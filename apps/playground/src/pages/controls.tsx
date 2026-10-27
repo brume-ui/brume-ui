@@ -6,7 +6,7 @@ import {
   PasswordInput,
   Select,
   TextInput,
-} from '@herb09638/brume-react';
+} from '@brume-ui/brume-react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Page, Panel, Section } from './page';

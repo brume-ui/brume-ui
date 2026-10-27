@@ -1,4 +1,4 @@
-import type { Locale } from '@herb09638/brume-schema';
+import type { Locale } from '@brume-ui/brume-schema';
 import { en } from './en';
 import { zhCN } from './zh-CN';
 import { zhTW } from './zh-TW';

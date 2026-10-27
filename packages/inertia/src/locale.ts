@@ -1,4 +1,4 @@
-import type { Locale } from '@herb09638/brume-schema';
+import type { Locale } from '@brume-ui/brume-schema';
 import { router } from '@inertiajs/react';
 
 export const LOCALE_COOKIE = 'brume_locale';

@@ -1,4 +1,4 @@
-import type { MenuItem } from '@herb09638/brume-schema';
+import type { MenuItem } from '@brume-ui/brume-schema';
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../cn';

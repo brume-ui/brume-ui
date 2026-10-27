@@ -1,4 +1,4 @@
-import type { MenuItem } from '@herb09638/brume-schema';
+import type { MenuItem } from '@brume-ui/brume-schema';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { type ReactNode, useState } from 'react';

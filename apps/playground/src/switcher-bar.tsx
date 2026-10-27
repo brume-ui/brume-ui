@@ -1,4 +1,4 @@
-import { type ColorScheme, type Locale, useColorScheme } from '@herb09638/brume-react';
+import { type ColorScheme, type Locale, useColorScheme } from '@brume-ui/brume-react';
 import { ACCENT_PRESETS, type MenuPosition, useSettings } from './settings';
 
 const SCHEMES: Array<{ value: ColorScheme; label: string }> = [

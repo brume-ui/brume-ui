@@ -1,5 +1,5 @@
-import { useBrume } from '@herb09638/brume-react';
-import { type PageEnvelope, SCHEMA_VERSION } from '@herb09638/brume-schema';
+import { useBrume } from '@brume-ui/brume-react';
+import { type PageEnvelope, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { DashboardPageView } from './dashboard-page';
 import { ListPageView } from './list-page';
 

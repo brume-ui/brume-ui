@@ -1,6 +1,6 @@
-import { toast } from '@herb09638/brume-react';
-import { createRegistry } from '@herb09638/brume-renderer';
-import type { SharedProps } from '@herb09638/brume-schema';
+import { toast } from '@brume-ui/brume-react';
+import { createRegistry } from '@brume-ui/brume-renderer';
+import type { SharedProps } from '@brume-ui/brume-schema';
 import { usePage } from '@inertiajs/react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

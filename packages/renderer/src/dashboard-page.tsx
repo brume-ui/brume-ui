@@ -1,5 +1,5 @@
-import { Card, PageHeader } from '@herb09638/brume-react';
-import type { DashboardPage } from '@herb09638/brume-schema';
+import { Card, PageHeader } from '@brume-ui/brume-react';
+import type { DashboardPage } from '@brume-ui/brume-schema';
 import { ComponentSlot } from './component-slot';
 
 export function DashboardPageView({ page }: { page: DashboardPage }) {

@@ -1,5 +1,5 @@
-import { AppShell, BrumeProvider, ConfirmHost, Toaster } from '@herb09638/brume-react';
-import { type ComponentRegistry, RegistryProvider } from '@herb09638/brume-renderer';
+import { AppShell, BrumeProvider, ConfirmHost, Toaster } from '@brume-ui/brume-react';
+import { type ComponentRegistry, RegistryProvider } from '@brume-ui/brume-renderer';
 import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { inertiaAdapter } from './default-adapter';

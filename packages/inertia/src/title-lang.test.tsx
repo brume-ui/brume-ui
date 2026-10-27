@@ -1,5 +1,5 @@
-import { createRegistry } from '@herb09638/brume-renderer';
-import { type PageEnvelope, SCHEMA_VERSION } from '@herb09638/brume-schema';
+import { createRegistry } from '@brume-ui/brume-renderer';
+import { type PageEnvelope, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { createInertiaApp, usePage } from '@inertiajs/react';
 import { render } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';

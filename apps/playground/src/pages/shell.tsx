@@ -7,9 +7,9 @@ import {
   type Locale,
   Select,
   TextInput,
-} from '@herb09638/brume-react';
-import { createRegistry, ListPageView, RegistryProvider } from '@herb09638/brume-renderer';
-import type { ListPage, MenuItem } from '@herb09638/brume-schema';
+} from '@brume-ui/brume-react';
+import { createRegistry, ListPageView, RegistryProvider } from '@brume-ui/brume-renderer';
+import type { ListPage, MenuItem } from '@brume-ui/brume-schema';
 import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSettings } from '../settings';

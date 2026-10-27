@@ -4,8 +4,8 @@ import {
   PageHeader,
   Pagination,
   useBrume,
-} from '@herb09638/brume-react';
-import type { ListPage } from '@herb09638/brume-schema';
+} from '@brume-ui/brume-react';
+import type { ListPage } from '@brume-ui/brume-schema';
 import { useMemo } from 'react';
 import { ComponentSlot } from './component-slot';
 

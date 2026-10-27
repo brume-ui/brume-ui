@@ -23,24 +23,24 @@ importers:
 
   apps/playground:
     dependencies:
+      '@brume-ui/brume-inertia':
+        specifier: workspace:*
+        version: link:../../packages/inertia
+      '@brume-ui/brume-react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@brume-ui/brume-renderer':
+        specifier: workspace:*
+        version: link:../../packages/renderer
+      '@brume-ui/brume-schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+      '@brume-ui/brume-tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
       '@fontsource/noto-sans-tc':
         specifier: ^5.3.1
         version: 5.3.1
-      '@herb09638/brume-inertia':
-        specifier: workspace:*
-        version: link:../../packages/inertia
-      '@herb09638/brume-react':
-        specifier: workspace:*
-        version: link:../../packages/react
-      '@herb09638/brume-renderer':
-        specifier: workspace:*
-        version: link:../../packages/renderer
-      '@herb09638/brume-schema':
-        specifier: workspace:*
-        version: link:../../packages/schema
-      '@herb09638/brume-tokens':
-        specifier: workspace:*
-        version: link:../../packages/tokens
       lucide-react:
         specifier: ^1.61.0
         version: 1.61.0(@types/react@19.3.0)(react@19.3.1)
@@ -75,20 +75,20 @@ importers:
 
   packages/inertia:
     dependencies:
-      '@herb09638/brume-react':
+      '@brume-ui/brume-react':
         specifier: workspace:*
         version: link:../react
-      '@herb09638/brume-renderer':
+      '@brume-ui/brume-renderer':
         specifier: workspace:*
         version: link:../renderer
-      '@herb09638/brume-schema':
+      '@brume-ui/brume-schema':
         specifier: workspace:*
         version: link:../schema
       '@inertiajs/react':
         specifier: 2.3.29
         version: 2.3.29(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     devDependencies:
-      '@herb09638/brume-tokens':
+      '@brume-ui/brume-tokens':
         specifier: workspace:*
         version: link:../tokens
       '@tailwindcss/cli':
@@ -130,15 +130,15 @@ importers:
 
   packages/react:
     dependencies:
+      '@brume-ui/brume-schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@brume-ui/brume-tokens':
+        specifier: workspace:*
+        version: link:../tokens
       '@fontsource-variable/nunito':
         specifier: ^5.3.0
         version: 5.3.0
-      '@herb09638/brume-schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@herb09638/brume-tokens':
-        specifier: workspace:*
-        version: link:../tokens
       '@radix-ui/react-alert-dialog':
         specifier: ^1.2.1
         version: 1.2.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -209,14 +209,14 @@ importers:
 
   packages/renderer:
     dependencies:
-      '@herb09638/brume-react':
+      '@brume-ui/brume-react':
         specifier: workspace:*
         version: link:../react
-      '@herb09638/brume-schema':
+      '@brume-ui/brume-schema':
         specifier: workspace:*
         version: link:../schema
     devDependencies:
-      '@herb09638/brume-tokens':
+      '@brume-ui/brume-tokens':
         specifier: workspace:*
         version: link:../tokens
       '@tailwindcss/cli':

@@ -1,4 +1,4 @@
-import { useBrume } from '@herb09638/brume-react';
+import { useBrume } from '@brume-ui/brume-react';
 import { useRegistry } from './registry-context';
 
 export function MissingComponent({ name }: { name: string }) {

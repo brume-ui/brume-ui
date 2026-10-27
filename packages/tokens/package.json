@@ -1,10 +1,11 @@
 {
-  "name": "@herb09638/brume-tokens",
-  "version": "0.1.0-alpha.1",
+  "name": "@brume-ui/brume-tokens",
+  "version": "0.1.0-alpha.2",
+  "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/herb09638/brume-ui",
+    "url": "https://github.com/brume-ui/brume-ui",
     "directory": "packages/tokens"
   },
   "files": [
@@ -22,11 +23,16 @@
     "./tokens.json": "./dist/tokens.json"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean && node scripts/build.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "homepage": "https://github.com/brume-ui/brume-ui#readme",
+  "bugs": {
+    "url": "https://github.com/brume-ui/brume-ui/issues"
   }
 }

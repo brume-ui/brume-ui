@@ -1,4 +1,4 @@
-import type { DashboardPage } from '@herb09638/brume-schema';
+import type { DashboardPage } from '@brume-ui/brume-schema';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BrumePageView } from './render-page';

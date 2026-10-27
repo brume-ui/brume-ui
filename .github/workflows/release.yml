@@ -10,7 +10,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      packages: write
+      # id-token lets npm exchange the GitHub OIDC token for a short-lived publish credential (trusted publishing)
+      id-token: write
     steps:
       - uses: actions/checkout@v5
 
@@ -20,8 +21,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          registry-url: https://npm.pkg.github.com
-          scope: "@herb09638"
+          registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
 
@@ -30,9 +30,14 @@ jobs:
 
       - run: pnpm build
 
+      # Trusted publishing needs npm >= 11.5.1; node 24 may bundle an older npm.
+      - name: Upgrade npm
+        run: npm install -g npm@^11.5.1 && npm --version
+
+      # pnpm pack rewrites workspace:* deps to real versions; npm publish then uploads the tarball
+      # with OIDC auth + provenance. No NPM_TOKEN / NODE_AUTH_TOKEN is used.
       # npm refuses to publish a prerelease without an explicit dist-tag, so 1.0.0-alpha.3 goes to "alpha".
-      # Private workspace packages (root, playground) are skipped by pnpm.
-      - name: Publish to GitHub Packages
+      - name: Publish to npmjs.com
         run: |
           version="${GITHUB_REF_NAME#v}"
           if [[ "$version" == *-* ]]; then
@@ -41,6 +46,10 @@ jobs:
           else
             dist_tag=latest
           fi
-          pnpm -r publish --no-git-checks --access restricted --tag "$dist_tag"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          mkdir -p "$RUNNER_TEMP/tarballs"
+          for dir in packages/*/; do
+            pnpm --dir "$dir" pack --pack-destination "$RUNNER_TEMP/tarballs"
+          done
+          for tgz in "$RUNNER_TEMP"/tarballs/*.tgz; do
+            npm publish "$tgz" --access public --provenance --tag "$dist_tag"
+          done

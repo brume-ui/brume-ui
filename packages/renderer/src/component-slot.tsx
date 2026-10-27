@@ -1,4 +1,4 @@
-import type { ComponentRef } from '@herb09638/brume-schema';
+import type { ComponentRef } from '@brume-ui/brume-schema';
 import { MissingComponent } from './missing-component';
 import { useRegistry } from './registry-context';
 

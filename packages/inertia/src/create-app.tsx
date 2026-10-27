@@ -2,7 +2,7 @@ import {
   type ComponentRegistry,
   createRegistry,
   type RegistryMode,
-} from '@herb09638/brume-renderer';
+} from '@brume-ui/brume-renderer';
 import { createInertiaApp, type ResolvedComponent } from '@inertiajs/react';
 import type { ComponentType, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';

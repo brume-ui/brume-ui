@@ -1,5 +1,5 @@
-import { toast } from '@herb09638/brume-react';
-import type { Flash } from '@herb09638/brume-schema';
+import { toast } from '@brume-ui/brume-react';
+import type { Flash } from '@brume-ui/brume-schema';
 import { useEffect } from 'react';
 
 export const SEEN_FLASH_STORAGE_KEY = 'brume.seen-flash';

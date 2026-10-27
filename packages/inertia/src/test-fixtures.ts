@@ -1,4 +1,4 @@
-import type { SharedProps } from '@herb09638/brume-schema';
+import type { SharedProps } from '@brume-ui/brume-schema';
 
 export function makeShared(overrides: Partial<SharedProps['brume']> = {}): SharedProps['brume'] {
   return {

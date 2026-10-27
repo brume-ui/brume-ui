@@ -1,5 +1,5 @@
 {
-  "name": "@herb09638/brume-playground",
+  "name": "@brume-ui/brume-playground",
   "private": true,
   "version": "0.1.0-alpha.0",
   "type": "module",
@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@fontsource/noto-sans-tc": "^5.3.1",
-    "@herb09638/brume-inertia": "workspace:*",
-    "@herb09638/brume-react": "workspace:*",
-    "@herb09638/brume-renderer": "workspace:*",
-    "@herb09638/brume-schema": "workspace:*",
-    "@herb09638/brume-tokens": "workspace:*",
+    "@brume-ui/brume-inertia": "workspace:*",
+    "@brume-ui/brume-react": "workspace:*",
+    "@brume-ui/brume-renderer": "workspace:*",
+    "@brume-ui/brume-schema": "workspace:*",
+    "@brume-ui/brume-tokens": "workspace:*",
     "lucide-react": "^1.61.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
@@ -29,5 +29,6 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "vite": "^8.3.5"
-  }
+  },
+  "license": "MIT"
 }

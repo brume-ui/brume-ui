@@ -1,4 +1,4 @@
-import type { SharedProps } from '@herb09638/brume-schema';
+import type { SharedProps } from '@brume-ui/brume-schema';
 import { usePage } from '@inertiajs/react';
 
 export function useShared(): SharedProps['brume'] {

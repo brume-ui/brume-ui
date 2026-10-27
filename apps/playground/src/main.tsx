@@ -1,6 +1,6 @@
-import '@herb09638/brume-tokens/tokens.css';
-import '@herb09638/brume-react/styles.css';
-import '@herb09638/brume-renderer/styles.css';
+import '@brume-ui/brume-tokens/tokens.css';
+import '@brume-ui/brume-react/styles.css';
+import '@brume-ui/brume-renderer/styles.css';
 import '@fontsource/noto-sans-tc/400.css';
 import '@fontsource/noto-sans-tc/600.css';
 import './playground.css';

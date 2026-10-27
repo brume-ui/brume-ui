@@ -1,10 +1,11 @@
 {
-  "name": "@herb09638/brume-schema",
-  "version": "0.1.0-alpha.1",
+  "name": "@brume-ui/brume-schema",
+  "version": "0.1.0-alpha.2",
+  "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/herb09638/brume-ui",
+    "url": "https://github.com/brume-ui/brume-ui",
     "directory": "packages/schema"
   },
   "files": [
@@ -22,7 +23,8 @@
     "./schema/v0.json": "./schema/v0.json"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean && pnpm emit-schema",
@@ -37,5 +39,9 @@
     "@types/node": "^26.6.5",
     "ajv": "^8.20.0",
     "tsx": "^4.23.15"
+  },
+  "homepage": "https://github.com/brume-ui/brume-ui#readme",
+  "bugs": {
+    "url": "https://github.com/brume-ui/brume-ui/issues"
   }
 }

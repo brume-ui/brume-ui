@@ -2,6 +2,6 @@
    --br-* tokens come from brume-tokens' tokens.css, loaded by the app (via brume-react/styles.css). */
 @import "tailwindcss/theme.css" layer(theme) prefix(br);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(br);
-@import "@herb09638/brume-tokens/theme.css";
+@import "@brume-ui/brume-tokens/theme.css";
 
 @source "./";

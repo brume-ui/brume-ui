@@ -6,8 +6,8 @@ import {
   Field,
   PasswordInput,
   TextInput,
-} from '@herb09638/brume-react';
-import { semantic } from '@herb09638/brume-tokens';
+} from '@brume-ui/brume-react';
+import { semantic } from '@brume-ui/brume-tokens';
 import { type CSSProperties, useState } from 'react';
 
 type Scheme = 'light' | 'dark';

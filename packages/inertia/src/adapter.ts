@@ -1,4 +1,4 @@
-import type { BrumeAdapter } from '@herb09638/brume-react';
+import type { BrumeAdapter } from '@brume-ui/brume-react';
 import { router } from '@inertiajs/react';
 
 type InertiaErrors = Record<string, string | string[] | undefined>;

@@ -1,4 +1,4 @@
-import type { MenuItem } from '@herb09638/brume-schema';
+import type { MenuItem } from '@brume-ui/brume-schema';
 import { Circle, icons, type LucideIcon } from 'lucide-react';
 import type { MouseEvent } from 'react';
 
