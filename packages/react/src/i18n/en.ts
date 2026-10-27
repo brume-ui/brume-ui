@@ -38,4 +38,9 @@ export const en: Record<MessageKey, string> = {
   'renderer.version.title': 'This page cannot be displayed',
   'renderer.version.message':
     'The page data uses schema version {received}, but this frontend only supports {supported}. Update the Laravel package and the frontend packages to the same version.',
+  'login.title': 'Sign in with your admin account',
+  'login.username': 'Username',
+  'login.password': 'Password',
+  'login.remember': 'Remember me',
+  'login.submit': 'Sign in',
 };
