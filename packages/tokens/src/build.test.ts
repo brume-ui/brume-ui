@@ -16,6 +16,15 @@ describe('build', () => {
     expect(css).toMatch(/:root\[data-theme="dark"\] \{[^}]*--br-surface-canvas: #[0-9a-f]{6};/);
   });
 
+  test('custom accent applies to the light block only', () => {
+    const css = buildTokensCss();
+    const light = css.slice(0, css.indexOf(':root[data-theme="dark"]'));
+    const dark = css.slice(css.indexOf(':root[data-theme="dark"]'));
+    expect(light).toContain('--br-accent: var(--br-accent-custom, #0e7490);');
+    expect(dark).not.toContain('--br-accent-custom');
+    expect(dark).toContain('--br-accent: #38b6d4;');
+  });
+
   test('accent-tint follows the accent via color-mix', () => {
     expect(buildTokensCss()).toContain(
       '--br-accent-tint: color-mix(in oklab, var(--br-accent) 12%, var(--br-surface));',

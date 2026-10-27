@@ -13,7 +13,7 @@ describe('AppShell', () => {
     const { adapter, ui } = renderShell({ layout: { ...LAYOUT, menuPosition: 'top' } });
     render(ui());
     expect(document.querySelector('aside')).toBeNull();
-    expect(document.querySelector('[data-shell-mount]')).toBeNull();
+    expect(document.querySelector('[data-shell-mount]')).not.toBeNull();
     const nav = screen.getByRole('navigation', { name: '主選單' });
     expect(within(nav).getByRole('link', { name: '儀表板' })).toBeTruthy();
     await userEvent.click(within(nav).getByRole('button', { name: /內容/ }));
@@ -49,10 +49,10 @@ describe('AppShell', () => {
     expect(screen.queryByRole('button', { name: /使用者選單/ })).toBeNull();
   });
 
-  it('writes accent to --br-accent on the shell root', () => {
+  it('writes accent to --br-accent-custom on the shell root', () => {
     render(renderShell({ layout: { ...LAYOUT, accent: '#aa3366' } }).ui());
     const root = document.querySelector('[data-brume]') as HTMLElement;
-    expect(root.style.getPropertyValue('--br-accent')).toBe('#aa3366');
+    expect(root.style.getPropertyValue('--br-accent-custom')).toBe('#aa3366');
   });
 
   it('switches color scheme', async () => {
@@ -82,5 +82,17 @@ describe('AppShell', () => {
     await userEvent.click(within(dialog).getByRole('link', { name: '文章' }));
     expect(adapter.calls).toContainEqual({ fn: 'visit', args: ['/admin/posts'] });
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('with homeUrl, the dashboard highlights only on /admin, not on unmatched admin pages', () => {
+    const view = render(renderShell({ homeUrl: '/admin', currentUrl: '/admin' }).ui());
+    expect(
+      within(document.querySelector('aside') as HTMLElement)
+        .getByRole('link', { name: '儀表板' })
+        .getAttribute('aria-current'),
+    ).toBe('page');
+    view.unmount();
+    render(renderShell({ homeUrl: '/admin', currentUrl: '/admin/settings' }).ui());
+    expect(document.querySelector('aside [aria-current="page"]')).toBeNull();
   });
 });

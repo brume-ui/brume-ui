@@ -69,10 +69,11 @@ describe('Sidebar', () => {
   it('keeps the same data-shell-mount across re-renders (persistent layout)', () => {
     const { ui } = renderShell();
     const view = render(ui());
-    const id = sidebar().dataset.shellMount;
+    const root = () => document.querySelector('[data-shell-mount]') as HTMLElement;
+    const id = root().dataset.shellMount;
     expect(id).toBeTruthy();
     view.rerender(ui({ currentUrl: '/admin/posts' }));
-    expect(sidebar().dataset.shellMount).toBe(id);
+    expect(root().dataset.shellMount).toBe(id);
   });
 });
 
@@ -80,7 +81,9 @@ describe('menu utils', () => {
   it('matches exact, ignores query, and falls back to longest prefix except home', () => {
     expect(findCurrentItem(MENU, '/admin/users?page=2')?.title).toBe('使用者');
     expect(findCurrentItem(MENU, '/admin/users/5')?.title).toBe('使用者');
-    expect(findCurrentItem(MENU, '/admin/usersx')?.title).toBe('儀表板');
+    expect(findCurrentItem(MENU, '/admin/usersx', '/admin')).toBeNull();
+    expect(findCurrentItem(MENU, '/admin/settings', '/admin')).toBeNull();
+    expect(findCurrentItem(MENU, '/admin', '/admin')?.title).toBe('儀表板');
     const withHome = [{ title: '首頁', url: '/' }, ...MENU];
     expect(findCurrentItem(withHome, '/nowhere')).toBeNull();
     expect(findCurrentItem(withHome, '/')?.title).toBe('首頁');

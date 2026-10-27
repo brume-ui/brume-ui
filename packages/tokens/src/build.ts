@@ -10,7 +10,14 @@ function colorVars(mode: Mode, indent: string): string {
   return names
     .map(
       (n) =>
-        `${indent}--br-${n}: ${mode === 'light' ? (derived[n] ?? semantic[n].light) : (derived[n] ?? semantic[n].dark)};`,
+        `${indent}--br-${n}: ${
+          n === 'accent' && mode === 'light'
+            ? // Light mode only: a configured accent (--br-accent-custom) overrides it. Dark keeps its own.
+              `var(--br-accent-custom, ${semantic[n].light})`
+            : mode === 'light'
+              ? (derived[n] ?? semantic[n].light)
+              : (derived[n] ?? semantic[n].dark)
+        };`,
     )
     .join('\n');
 }

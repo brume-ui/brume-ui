@@ -19,17 +19,22 @@ export function flattenMenu(items: MenuItem[]): MenuItem[] {
 
 /**
  * The menu item that represents the current page: exact path match first, otherwise the item whose
- * url is the longest path-prefix (on a "/" boundary) of the current path. The home url "/" only
+ * url is the longest path-prefix (on a "/" boundary) of the current path. The home url (default "/") only
  * matches exactly.
  */
-export function findCurrentItem(items: MenuItem[], currentUrl: string): MenuItem | null {
+export function findCurrentItem(
+  items: MenuItem[],
+  currentUrl: string,
+  homeUrl = '/',
+): MenuItem | null {
   const current = pathOf(currentUrl);
+  const home = pathOf(homeUrl);
   let best: MenuItem | null = null;
   let bestLen = -1;
   for (const item of flattenMenu(items)) {
     if (!item.url) continue;
     const path = pathOf(item.url);
-    const matches = path === current || (path !== '/' && current.startsWith(`${path}/`));
+    const matches = path === current || (path !== home && current.startsWith(`${path}/`));
     if (matches && path.length > bestLen) {
       best = item;
       bestLen = path.length;

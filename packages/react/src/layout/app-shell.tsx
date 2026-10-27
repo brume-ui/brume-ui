@@ -17,6 +17,8 @@ export interface AppShellProps {
   appName: string;
   menu: MenuItem[];
   currentUrl: string;
+  /** Url of the home/dashboard item; it only highlights on an exact match. Default '/'. */
+  homeUrl?: string;
   user: ShellUser | null;
   breadcrumbs: BreadcrumbItem[];
   layout: LayoutSettings;
@@ -49,6 +51,7 @@ export function AppShell({
   appName,
   menu,
   currentUrl,
+  homeUrl = '/',
   user,
   breadcrumbs,
   layout,
@@ -75,13 +78,14 @@ export function AppShell({
     });
   }, []);
 
-  const style = (layout.accent ? { '--br-accent': layout.accent } : undefined) as
+  const style = (layout.accent ? { '--br-accent-custom': layout.accent } : undefined) as
     | CSSProperties
     | undefined;
 
   return (
     <div
       data-brume=""
+      data-shell-mount={mountId}
       style={style}
       className="br-root br:flex br:min-h-screen br:bg-surface-canvas br:text-text"
     >
@@ -97,10 +101,10 @@ export function AppShell({
           appName={appName}
           items={menu}
           currentUrl={currentUrl}
+          homeUrl={homeUrl}
           collapsible={layout.sidebarCollapsible}
           collapsed={collapsed}
           onToggleCollapsed={toggleCollapsed}
-          mountId={mountId}
         />
       ) : null}
 
@@ -115,7 +119,7 @@ export function AppShell({
           {sideMenu ? null : (
             <>
               <span className="br:mr-2 br:truncate br:text-base br:font-semibold">{appName}</span>
-              <TopMenu items={menu} currentUrl={currentUrl} />
+              <TopMenu items={menu} currentUrl={currentUrl} homeUrl={homeUrl} />
             </>
           )}
           <div className="br:ml-auto br:flex br:items-center br:gap-1">
@@ -151,6 +155,7 @@ export function AppShell({
             <SidebarNav
               items={menu}
               currentUrl={currentUrl}
+              homeUrl={homeUrl}
               collapsed={false}
               onNavigate={() => setDrawerOpen(false)}
             />

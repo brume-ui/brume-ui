@@ -12,9 +12,17 @@ const IDLE = 'br:text-text br:hover:bg-surface-canvas';
 const CURRENT = 'br:bg-accent-tint br:text-accent-tint-text';
 
 /** Horizontal menu for layout.menuPosition = 'top'. Items with children open a dropdown. */
-export function TopMenu({ items, currentUrl }: { items: MenuItem[]; currentUrl: string }) {
+export function TopMenu({
+  items,
+  currentUrl,
+  homeUrl,
+}: {
+  items: MenuItem[];
+  currentUrl: string;
+  homeUrl?: string;
+}) {
   const { adapter, t } = useBrume();
-  const currentItem = findCurrentItem(items, currentUrl);
+  const currentItem = findCurrentItem(items, currentUrl, homeUrl);
   return (
     <nav aria-label={t('shell.mainNav')} className="br:hidden br:md:block">
       <ul className="br:flex br:items-center br:gap-1">

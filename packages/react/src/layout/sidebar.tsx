@@ -15,6 +15,7 @@ const CURRENT = 'br:bg-accent-tint br:text-accent-tint-text';
 interface NavProps {
   items: MenuItem[];
   currentUrl: string;
+  homeUrl?: string;
   collapsed: boolean;
   onNavigate?: () => void;
   onExpandRequest?: () => void;
@@ -149,12 +150,13 @@ function NavGroup({
 export function SidebarNav({
   items,
   currentUrl,
+  homeUrl,
   collapsed,
   onNavigate,
   onExpandRequest,
 }: NavProps) {
   const { t } = useBrume();
-  const currentItem = findCurrentItem(items, currentUrl);
+  const currentItem = findCurrentItem(items, currentUrl, homeUrl);
   return (
     <Tooltip.Provider delayDuration={300}>
       <nav aria-label={t('shell.mainNav')}>
@@ -189,10 +191,10 @@ export interface SidebarProps {
   appName: string;
   items: MenuItem[];
   currentUrl: string;
+  homeUrl?: string;
   collapsible: boolean;
   collapsed: boolean;
   onToggleCollapsed(): void;
-  mountId: string;
 }
 
 /** Desktop sidebar (hidden below md; the drawer takes over there). */
@@ -200,17 +202,16 @@ export function Sidebar({
   appName,
   items,
   currentUrl,
+  homeUrl,
   collapsible,
   collapsed,
   onToggleCollapsed,
-  mountId,
 }: SidebarProps) {
   const { t } = useBrume();
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
   const toggleLabel = collapsed ? t('shell.expand') : t('shell.collapse');
   return (
     <aside
-      data-shell-mount={mountId}
       data-collapsed={collapsed || undefined}
       className={cn(
         'br:sticky br:top-0 br:hidden br:h-screen br:shrink-0 br:flex-col br:border-r br:border-border br:bg-surface br:p-3 br:md:flex',
@@ -231,6 +232,7 @@ export function Sidebar({
         <SidebarNav
           items={items}
           currentUrl={currentUrl}
+          homeUrl={homeUrl}
           collapsed={collapsed}
           onExpandRequest={onToggleCollapsed}
         />
