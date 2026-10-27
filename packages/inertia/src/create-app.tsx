@@ -25,16 +25,17 @@ export interface CreateBrumeAppOptions {
 
 /** `<title>` for a page title: `"<title> · <app name>"`, or just the app name when empty. */
 export function formatTitle(title: string, appName: string): string {
-  return title ? `${title} · ${appName}` : appName;
+  return title && appName ? `${title} · ${appName}` : title || appName;
 }
 
 /** App name from the server-rendered initial page (`props.brume.app.name`), read once at bootstrap. */
-function readAppName(el: HTMLElement): string {
+export function readAppName(el: HTMLElement): string {
   try {
     const page = JSON.parse(el.dataset.page ?? '{}') as {
-      props?: { brume?: { app?: { name?: string } } };
-    };
-    return page.props?.brume?.app?.name ?? '';
+      props?: { brume?: { app?: { name?: unknown } } };
+    } | null;
+    const name = page?.props?.brume?.app?.name;
+    return typeof name === 'string' ? name : '';
   } catch {
     return '';
   }

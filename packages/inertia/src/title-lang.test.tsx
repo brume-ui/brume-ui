@@ -1,10 +1,10 @@
 import { createRegistry } from '@herb09638/brume-renderer';
 import { type PageEnvelope, SCHEMA_VERSION } from '@herb09638/brume-schema';
-import { usePage } from '@inertiajs/react';
+import { createInertiaApp, usePage } from '@inertiajs/react';
 import { render } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrumeLayout } from './brume-layout';
-import { formatTitle } from './create-app';
+import { createBrumeApp, formatTitle, readAppName } from './create-app';
 import { LoginPage } from './pages/login';
 import { BrumePage } from './pages/page';
 import { makeShared } from './test-fixtures';
@@ -14,6 +14,7 @@ const headTitles: string[] = [];
 vi.mock('@inertiajs/react', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@inertiajs/react')>()),
   usePage: vi.fn(),
+  createInertiaApp: vi.fn(async () => {}),
   Head: ({ title }: { title?: string }) => {
     headTitles.push(title ?? '');
     return null;
@@ -45,6 +46,42 @@ describe('formatTitle', () => {
   it('joins page title and app name, or falls back to the app name', () => {
     expect(formatTitle('使用者列表', 'Brume Admin')).toBe('使用者列表 · Brume Admin');
     expect(formatTitle('', 'Brume Admin')).toBe('Brume Admin');
+    expect(formatTitle('Users', '')).toBe('Users');
+  });
+});
+
+describe('readAppName', () => {
+  const el = (page?: string) => {
+    const div = document.createElement('div');
+    if (page !== undefined) div.dataset.page = page;
+    return div;
+  };
+
+  it('reads props.brume.app.name', () => {
+    expect(readAppName(el(JSON.stringify({ props: { brume: { app: { name: 'X' } } } })))).toBe('X');
+  });
+
+  it('returns an empty string for missing, invalid, null or non-string data', () => {
+    expect(readAppName(el())).toBe('');
+    expect(readAppName(el('{not json'))).toBe('');
+    expect(readAppName(el('null'))).toBe('');
+    expect(readAppName(el(JSON.stringify({ props: { brume: { app: { name: 5 } } } })))).toBe('');
+  });
+});
+
+describe('createBrumeApp title option', () => {
+  it('formats titles with the app name read from #app[data-page]', () => {
+    document.body.innerHTML = `<div id="app" data-page='${JSON.stringify({ props: { brume: { app: { name: 'X' } } } })}'></div>`;
+    document.title = '';
+    vi.mocked(createInertiaApp).mockClear();
+    void createBrumeApp({ mode: 'precompiled' });
+    const opts = vi.mocked(createInertiaApp).mock.calls[0]?.[0] as {
+      title: (t: string) => string;
+    };
+    expect(opts.title('Users')).toBe('Users · X');
+    expect(opts.title('')).toBe('X');
+    expect(document.title).toBe('X');
+    document.body.innerHTML = '';
   });
 });
 
