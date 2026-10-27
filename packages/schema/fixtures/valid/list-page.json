@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.1.0",
+  "page": {
+    "type": "list",
+    "title": "使用者",
+    "description": "所有後台使用者",
+    "columns": [
+      { "key": "name", "label": "姓名" },
+      { "key": "orders", "label": "訂單數", "numeric": true, "display": { "type": "text" } },
+      {
+        "key": "status",
+        "label": "狀態",
+        "display": { "type": "component", "name": "StatusBadge", "props": { "tone": "info" } }
+      }
+    ],
+    "rows": [
+      { "id": 1, "name": "王小明", "orders": 3, "status": "active" },
+      { "id": "b-2", "name": "李小華", "orders": 0, "status": "inactive" }
+    ],
+    "pagination": { "page": 1, "perPage": 15, "total": 2, "lastPage": 1 }
+  }
+}

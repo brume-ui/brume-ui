@@ -1,0 +1,4 @@
+{
+  "schemaVersion": "0.1.0",
+  "page": { "type": "dashboard", "title": "總覽", "blocks": [{ "type": "component" }] }
+}

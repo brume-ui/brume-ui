@@ -1,8 +1,9 @@
+import type { Locale } from '@herb09638/brume-schema';
 import { en } from './en';
 import { zhCN } from './zh-CN';
 import { zhTW } from './zh-TW';
 
-export type Locale = 'zh-TW' | 'en' | 'zh-CN';
+export type { Locale };
 export type MessageKey = keyof typeof zhTW;
 export type Messages = Record<MessageKey, string>;
 export type TranslateVars = Record<string, string | number>;

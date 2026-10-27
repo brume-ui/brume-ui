@@ -3,7 +3,9 @@
   "version": "0.1.0-alpha.0",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "schema",
+    "docs"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,14 +13,23 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./schema/v0.json": "./schema/v0.json"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
+    "build": "tsup src/index.ts --format esm --dts --clean && pnpm emit-schema",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "emit-schema": "tsx scripts/emit-json-schema.ts"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.52"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15"
   }
 }

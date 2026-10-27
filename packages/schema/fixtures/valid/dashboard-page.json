@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.1.0",
+  "page": {
+    "type": "dashboard",
+    "title": "總覽",
+    "blocks": [
+      { "type": "card", "title": "歡迎", "body": "今天有 3 筆新訂單。" },
+      { "type": "component", "name": "SalesChart" }
+    ]
+  }
+}
