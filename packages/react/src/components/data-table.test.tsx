@@ -69,4 +69,26 @@ describe('DataTable', () => {
     // header stays so column widths do not jump
     expect(screen.getByRole('columnheader', { name: '名稱' })).toBeTruthy();
   });
+
+  it('uses the same fixed layout and col widths when loading and loaded', () => {
+    const cols = [
+      { key: 'name', header: '名稱', width: '12rem' },
+      { key: 'count', header: '數量', numeric: true },
+    ];
+    const rows = [{ id: 'a', name: '甲', count: 3 }];
+    const widths = (el: HTMLElement) =>
+      Array.from(el.querySelectorAll('col')).map((c) => c.style.width);
+    const { unmount } = render(
+      <DataTable<Row> columns={cols} rows={rows} getRowId={(r) => r.id} empty={empty} loading />,
+    );
+    const loadingTable = screen.getByRole('table');
+    expect(loadingTable.className).toContain('br:table-fixed');
+    const loadingWidths = widths(loadingTable);
+    unmount();
+    render(<DataTable<Row> columns={cols} rows={rows} getRowId={(r) => r.id} empty={empty} />);
+    const table = screen.getByRole('table');
+    expect(table.className).toContain('br:table-fixed');
+    expect(widths(table)).toEqual(loadingWidths);
+    expect(loadingWidths).toEqual(['12rem', '']);
+  });
 });

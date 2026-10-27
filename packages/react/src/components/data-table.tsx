@@ -10,6 +10,8 @@ export interface DataColumn<T> {
   cell?(row: T): ReactNode;
   align?: 'start' | 'end';
   numeric?: boolean;
+  /** CSS width (e.g. '8rem', '20%'). Columns without one share the remaining space. */
+  width?: string;
 }
 
 export interface DataTableProps<T> {
@@ -63,8 +65,13 @@ export function DataTable<T>({
     <div>
       <table
         aria-busy={loading || undefined}
-        className="br:w-full br:border-separate br:border-spacing-y-1"
+        className="br:w-full br:table-fixed br:border-separate br:border-spacing-y-1"
       >
+        <colgroup>
+          {columns.map((col) => (
+            <col key={col.key} style={col.width ? { width: col.width } : undefined} />
+          ))}
+        </colgroup>
         {caption ? <caption className="br:sr-only">{caption}</caption> : null}
         <thead>
           {table.getHeaderGroups().map((group) => (
