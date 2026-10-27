@@ -1,0 +1,32 @@
+{
+  "brume": {
+    "schemaVersion": "0.1.0",
+    "app": {
+      "name": "Brume",
+      "locale": "zh-TW",
+      "locales": ["zh-TW", "en", "zh-CN"],
+      "homeUrl": "/admin",
+      "logoutUrl": "/admin/logout",
+      "layout": {
+        "menuPosition": "side",
+        "accent": "#0e7490",
+        "sidebarCollapsible": true,
+        "breadcrumbs": true
+      }
+    },
+    "auth": { "user": { "id": 7, "name": "王小明", "username": "xiaoming", "avatar": null } },
+    "menu": [
+      { "title": "儀表板", "icon": "layout-dashboard", "url": "/admin" },
+      {
+        "title": "系統",
+        "icon": "settings",
+        "children": [
+          { "title": "使用者", "url": "/admin/users" },
+          { "title": "權限", "children": [{ "title": "角色", "url": "/admin/roles" }] }
+        ]
+      }
+    ],
+    "breadcrumbs": [{ "title": "首頁", "url": "/admin" }, { "title": "使用者" }],
+    "flash": null
+  }
+}

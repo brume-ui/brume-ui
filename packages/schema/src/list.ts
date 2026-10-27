@@ -23,10 +23,10 @@ export const ListPageSchema = Type.Object({
     ]),
   ),
   pagination: Type.Object({
-    page: Type.Integer(),
-    perPage: Type.Integer(),
-    total: Type.Integer(),
-    lastPage: Type.Integer(),
+    page: Type.Integer({ minimum: 1 }),
+    perPage: Type.Integer({ minimum: 1 }),
+    total: Type.Integer({ minimum: 0 }),
+    lastPage: Type.Integer({ minimum: 1 }),
   }),
 });
 export type ListPage = Static<typeof ListPageSchema>;

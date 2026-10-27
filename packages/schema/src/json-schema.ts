@@ -1,15 +1,37 @@
 import { PageEnvelopeSchema } from './page';
-import { SharedPropsSchema } from './shared';
+import { MenuItemSchema, SharedPropsSchema } from './shared';
 
-/** v0.json 的內容：根為 PageEnvelope，`$defs` 收錄 PageEnvelope 與 SharedProps。 */
+const MENU_ITEM_REF = '#/$defs/MenuItem';
+
+/**
+ * TypeBox 的遞迴型別用 `$id` 加相對 `$ref` 表示；輸出時改成 `$defs` 加 `#/$defs/...`，
+ * 這樣換 base URI 也不會壞。
+ */
+function hoistMenuItem(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(hoistMenuItem);
+  if (node === null || typeof node !== 'object') return node;
+  const obj = node as Record<string, unknown>;
+  if (obj.$id === 'MenuItem' || obj.$ref === 'MenuItem') return { $ref: MENU_ITEM_REF };
+  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, hoistMenuItem(v)]));
+}
+
+function menuItemDef(): unknown {
+  const { $id: _id, ...rest } = JSON.parse(JSON.stringify(MenuItemSchema)) as Record<
+    string,
+    unknown
+  >;
+  return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, hoistMenuItem(v)]));
+}
+
+/** v0.json 的內容：JSON Schema 2020-12，根為 PageEnvelope，`$defs` 收錄 PageEnvelope、SharedProps、MenuItem。 */
 export function emitJsonSchema(): string {
   const doc = {
-    $schema: 'http://json-schema.org/draft-07/schema#',
-    $id: 'https://brume.dev/schema/v0.json',
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
     $ref: '#/$defs/PageEnvelope',
     $defs: {
-      PageEnvelope: PageEnvelopeSchema,
-      SharedProps: SharedPropsSchema,
+      PageEnvelope: hoistMenuItem(JSON.parse(JSON.stringify(PageEnvelopeSchema))),
+      SharedProps: hoistMenuItem(JSON.parse(JSON.stringify(SharedPropsSchema))),
+      MenuItem: menuItemDef(),
     },
   };
   return `${JSON.stringify(doc, null, 2)}\n`;

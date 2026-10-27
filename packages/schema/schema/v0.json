@@ -1,6 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brume.dev/schema/v0.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$ref": "#/$defs/PageEnvelope",
   "$defs": {
     "PageEnvelope": {
@@ -135,15 +134,19 @@
                   ],
                   "properties": {
                     "page": {
+                      "minimum": 1,
                       "type": "integer"
                     },
                     "perPage": {
+                      "minimum": 1,
                       "type": "integer"
                     },
                     "total": {
+                      "minimum": 0,
                       "type": "integer"
                     },
                     "lastPage": {
+                      "minimum": 1,
                       "type": "integer"
                     }
                   }
@@ -384,28 +387,7 @@
             "menu": {
               "type": "array",
               "items": {
-                "$id": "MenuItem",
-                "type": "object",
-                "required": [
-                  "title"
-                ],
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "icon": {
-                    "type": "string"
-                  },
-                  "url": {
-                    "type": "string"
-                  },
-                  "children": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "MenuItem"
-                    }
-                  }
-                }
+                "$ref": "#/$defs/MenuItem"
               }
             },
             "breadcrumbs": {
@@ -468,6 +450,29 @@
                 }
               ]
             }
+          }
+        }
+      }
+    },
+    "MenuItem": {
+      "type": "object",
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MenuItem"
           }
         }
       }
