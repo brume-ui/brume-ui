@@ -1,6 +1,12 @@
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { render as rtlRender, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryAdapter } from '../memory-adapter';
+import { BrumeProvider } from '../provider';
 import { DataTable } from './data-table';
+
+const render = (ui: ReactNode) =>
+  rtlRender(<BrumeProvider adapter={createMemoryAdapter()}>{ui}</BrumeProvider>);
 
 interface Row {
   id: string;
@@ -90,5 +96,68 @@ describe('DataTable', () => {
     expect(table.className).toContain('br:table-fixed');
     expect(widths(table)).toEqual(loadingWidths);
     expect(loadingWidths).toEqual(['12rem', '']);
+  });
+
+  it('keeps a minimum width from the columns and scrolls horizontally instead of squeezing', () => {
+    render(
+      <DataTable<Row>
+        columns={[
+          { key: 'name', header: '名稱', width: '6rem' },
+          { key: 'count', header: '數量', numeric: true },
+          { key: 'pct', header: '比例', width: '20%' },
+        ]}
+        rows={[{ id: 'a', name: '甲', count: 3 }]}
+        getRowId={(r) => r.id}
+        empty={empty}
+      />,
+    );
+    const table = screen.getByRole('table');
+    expect(table.style.minWidth).toBe('calc(22rem)');
+    expect(table.parentElement?.className).toContain('br:overflow-x-auto');
+    expect(screen.getByRole('cell', { name: '甲' }).className).toContain('br:truncate');
+  });
+
+  describe('when the table is wider than its container', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('becomes a focusable, labelled scroll region', () => {
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          observe() {}
+          disconnect() {}
+        },
+      );
+      const scrollWidth = vi
+        .spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
+        .mockReturnValue(600);
+      const clientWidth = vi
+        .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+        .mockReturnValue(300);
+      render(
+        <DataTable<Row>
+          columns={columns}
+          rows={[{ id: 'a', name: '甲', count: 3 }]}
+          getRowId={(r) => r.id}
+          empty={empty}
+        />,
+      );
+      const region = screen.getByRole('region', { name: '資料表格（可左右捲動）' });
+      expect(region.tabIndex).toBe(0);
+      scrollWidth.mockRestore();
+      clientWidth.mockRestore();
+    });
+
+    it('is not a tab stop when nothing overflows', () => {
+      render(
+        <DataTable<Row>
+          columns={columns}
+          rows={[{ id: 'a', name: '甲', count: 3 }]}
+          getRowId={(r) => r.id}
+          empty={empty}
+        />,
+      );
+      expect(screen.queryByRole('region')).toBeNull();
+    });
   });
 });

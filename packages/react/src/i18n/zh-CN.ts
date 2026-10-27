@@ -6,6 +6,7 @@ export const zhCN: Record<MessageKey, string> = {
   'common.save': '保存',
   'common.delete': '删除',
   'common.loading': '加载中',
+  'dataTable.scrollRegion': '数据表格（可左右滚动）',
   'pagination.page': '第 {page} 页',
   'pagination.label': '分页',
   'pagination.previous': '上一页',

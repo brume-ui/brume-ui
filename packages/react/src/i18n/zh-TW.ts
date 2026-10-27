@@ -4,6 +4,7 @@ export const zhTW = {
   'common.save': '儲存',
   'common.delete': '刪除',
   'common.loading': '載入中',
+  'dataTable.scrollRegion': '資料表格（可左右捲動）',
   'pagination.page': '第 {page} 頁',
   'pagination.label': '分頁',
   'pagination.previous': '上一頁',
