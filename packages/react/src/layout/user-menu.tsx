@@ -24,12 +24,13 @@ export function UserMenu({ user, logoutUrl }: { user: ShellUser; logoutUrl: stri
         {user.avatar ? (
           <img src={user.avatar} alt="" className="br:size-8 br:rounded-pill br:object-cover" />
         ) : (
+          // The initial is CSS-generated so it is not "visible text" that the accessible name
+          // has to contain (WCAG 2.5.3, axe label-content-name-mismatch).
           <span
             aria-hidden="true"
-            className="br:flex br:size-8 br:items-center br:justify-center br:rounded-pill br:bg-surface-selected br:text-sm br:font-semibold"
-          >
-            {user.name.charAt(0).toUpperCase()}
-          </span>
+            data-initial={user.name.charAt(0).toUpperCase()}
+            className="br:flex br:size-8 br:items-center br:justify-center br:rounded-pill br:bg-surface-selected br:text-sm br:font-semibold br:before:content-[attr(data-initial)]"
+          />
         )}
         <span className="br:hidden br:max-w-32 br:truncate br:sm:inline">{user.name}</span>
       </Dropdown.Trigger>

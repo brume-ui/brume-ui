@@ -60,4 +60,9 @@ describe('Pagination', () => {
     const { container } = wrap(<Pagination page={1} lastPage={1} hrefFor={hrefFor} />);
     expect(container.innerHTML).toBe('');
   });
+
+  it('uses a custom landmark label when given', () => {
+    wrap(<Pagination page={1} lastPage={3} hrefFor={hrefFor} label="頁尾分頁" />);
+    expect(screen.getByRole('navigation', { name: '頁尾分頁' })).toBeTruthy();
+  });
 });

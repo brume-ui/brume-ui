@@ -9,6 +9,8 @@ export interface PaginationProps {
   lastPage: number;
   hrefFor(page: number): string;
   onNavigate?(href: string): void;
+  /** Accessible name of the nav landmark; set a distinct one when a page has several paginators. */
+  label?: string;
 }
 
 type Item = number | 'gap';
@@ -28,7 +30,7 @@ export function pageItems(page: number, lastPage: number): Item[] {
 const PILL =
   'br:inline-flex br:h-9 br:min-w-9 br:items-center br:justify-center br:rounded-pill br:px-3 br:text-sm br:font-semibold br:transition-colors br:motion-reduce:transition-none';
 
-export function Pagination({ page, lastPage, hrefFor, onNavigate }: PaginationProps) {
+export function Pagination({ page, lastPage, hrefFor, onNavigate, label }: PaginationProps) {
   const { t } = useBrume();
   if (lastPage <= 1) return null;
 
@@ -62,7 +64,7 @@ export function Pagination({ page, lastPage, hrefFor, onNavigate }: PaginationPr
     );
 
   return (
-    <nav aria-label={t('pagination.label')}>
+    <nav aria-label={label ?? t('pagination.label')}>
       <ul className="br:inline-flex br:items-center br:gap-1 br:rounded-pill br:bg-surface br:p-1 br:shadow-row">
         <li>
           {step(
