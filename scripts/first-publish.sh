@@ -31,7 +31,8 @@ for tgz in "$out"/*.tgz; do
   fi
 done
 
-flags=(--access public --tag "$dist_tag")
+# publishConfig.provenance is for CI; a local publish has no OIDC provider to attest with
+flags=(--access public --tag "$dist_tag" --provenance=false)
 [[ -n "${DRY_RUN:-}" ]] && flags+=(--dry-run)
 for tgz in "$out"/*.tgz; do
   echo "== $(basename "$tgz")"
