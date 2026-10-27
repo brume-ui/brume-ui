@@ -32,10 +32,12 @@ jobs:
 
       # Trusted publishing needs npm >= 11.5.1; node 24 may bundle an older npm.
       - name: Upgrade npm
-        run: npm install -g npm@^11.5.1 && npm --version
+        run: npm install -g npm@^11.17.0 && npm --version
 
-      # pnpm pack rewrites workspace:* deps to real versions; npm publish then uploads the tarball
+      # pnpm pack rewrites workspace:* deps to real versions; npm stage publish uploads the tarball
       # with OIDC auth + provenance. No NPM_TOKEN / NODE_AUTH_TOKEN is used.
+      # The trusted publisher only grants "stage publish": each version waits in npmjs.com → Staged Packages
+      # until a maintainer approves it with 2FA.
       # npm refuses to publish a prerelease without an explicit dist-tag, so 1.0.0-alpha.3 goes to "alpha".
       - name: Publish to npmjs.com
         run: |
@@ -51,5 +53,5 @@ jobs:
             pnpm --dir "$dir" pack --pack-destination "$RUNNER_TEMP/tarballs"
           done
           for tgz in "$RUNNER_TEMP"/tarballs/*.tgz; do
-            npm publish "$tgz" --access public --provenance --tag "$dist_tag"
+            npm stage publish "$tgz" --access public --provenance --tag "$dist_tag"
           done
