@@ -58,7 +58,10 @@ const KINDS: Record<ToastKind, { icon: LucideIcon; color: string }> = {
 };
 
 function ToastView({ item }: { item: ToastItem }) {
-  const [paused, setPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  // Hover or keyboard focus inside the toast pauses the timer (WCAG 2.2.1).
+  const paused = hovered || focused;
   const remaining = useRef(DURATION_MS);
   const { t } = useBrume();
   const { icon: Icon, color } = KINDS[item.kind];
@@ -77,8 +80,12 @@ function ToastView({ item }: { item: ToastItem }) {
   return (
     <div
       role="status"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
+      }}
       className="br:pointer-events-auto br:flex br:max-w-sm br:items-start br:gap-3 br:rounded-card br:border br:border-border br:bg-surface br:px-4 br:py-3 br:text-sm br:text-text br:shadow-overlay br:animate-[br-toast-in_160ms_ease-out] br:motion-reduce:animate-none"
     >
       <Icon aria-hidden="true" className={`br:mt-0.5 br:size-5 br:shrink-0 ${color}`} />

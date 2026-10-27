@@ -14,7 +14,8 @@ export default defineConfig({
     timezoneId: 'Asia/Taipei',
   },
   expect: {
-    toHaveScreenshot: { animations: 'disabled', maxDiffPixelRatio: 0.01, scale: 'css' },
+    // Strict on purpose: a site-wide font swap must fail. Loosen per screenshot only where flaky, with a reason.
+    toHaveScreenshot: { animations: 'disabled', scale: 'css', threshold: 0.2, maxDiffPixels: 50 },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   // Builds against the packages' dist output, so run `pnpm build` at the root first.

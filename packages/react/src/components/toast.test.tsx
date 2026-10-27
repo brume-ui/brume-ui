@@ -131,6 +131,32 @@ describe('toast', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
+  it('pauses while focus is inside the toast and resumes with the remaining time', async () => {
+    vi.useRealTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<Toaster />);
+    act(() => toast.info('資訊'));
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '關閉' }));
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(screen.queryByRole('status')).not.toBeNull();
+    act(() => (document.activeElement as HTMLElement).blur());
+    act(() => {
+      vi.advanceTimersByTime(1900);
+    });
+    expect(screen.queryByRole('status')).not.toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('an id can show again after it has gone', () => {
     render(<Toaster />);
     act(() => toast.info('A', { id: 'x' }));

@@ -33,6 +33,12 @@ def big5_key(cp):
         return None
     return int.from_bytes(b, "big") if len(b) == 2 else None
 
+# Dedicated first chunk: CJK and fullwidth punctuation plus a few common symbols, so a
+# typical sentence does not pull a chunk full of rare hanzi just for "，" or "「".
+PUNCT_RANGES = [(0x3000, 0x303F), (0xFF00, 0xFFEF), (0x2010, 0x2027), (0xB7, 0xB7), (0xD7, 0xD7)]
+punct = sorted(cp for cp in cmap if any(a <= cp <= b for a, b in PUNCT_RANGES))
+cmap -= set(punct)
+
 cjk = sorted(
     (cp for cp in cmap if cp >= 0x80 and big5_key(cp) is not None and 0x4E00 <= cp <= 0x9FFF),
     key=big5_key,
@@ -40,7 +46,8 @@ cjk = sorted(
 seen = set(cjk)
 rest = sorted(cp for cp in cmap if cp not in seen)
 # Small non-CJK glyphs (Latin, punctuation, symbols, kana, bopomofo) in one chunk each by codepoint order.
-groups = [cjk[i : i + CHUNK] for i in range(0, len(cjk), CHUNK)]
+groups = [punct] if punct else []
+groups += [cjk[i : i + CHUNK] for i in range(0, len(cjk), CHUNK)]
 groups += [rest[i : i + CHUNK * 2] for i in range(0, len(rest), CHUNK * 2)]
 
 def ranges(cps):
