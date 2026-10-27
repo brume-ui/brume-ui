@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: "@herb09638"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check package versions match the tag
+        run: node scripts/check-versions.mjs "$GITHUB_REF_NAME"
+
+      - run: pnpm build
+
+      # npm refuses to publish a prerelease without an explicit dist-tag, so 1.0.0-alpha.3 goes to "alpha".
+      # Private workspace packages (root, playground) are skipped by pnpm.
+      - name: Publish to GitHub Packages
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ "$version" == *-* ]]; then
+            prerelease="${version#*-}"
+            dist_tag="${prerelease%%.*}"
+          else
+            dist_tag=latest
+          fi
+          pnpm -r publish --no-git-checks --access restricted --tag "$dist_tag"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
