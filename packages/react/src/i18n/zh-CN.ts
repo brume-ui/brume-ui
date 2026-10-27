@@ -40,6 +40,7 @@ export const zhCN: Record<MessageKey, string> = {
   'renderer.version.message':
     '页面数据的 schema 版本是 {received}，这个前端只支持 {supported}。请把 Laravel 端与前端包更新到相同的版本。',
   'login.title': '使用管理员账号登录',
+  'login.pageTitle': '登录',
   'login.username': '账号',
   'login.password': '密码',
   'login.remember': '记住我',

@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { inertiaAdapter } from './default-adapter';
 import { useFlashToast } from './flash';
 import { changeLocale } from './locale';
+import { useHtmlLang } from './use-html-lang';
 import { useShared } from './use-shared';
 
 /** Persistent layout: stays mounted across Inertia visits, only `children` changes. */
@@ -19,6 +20,7 @@ export function BrumeLayout({
   const { url } = usePage();
   useFlashToast(shared.flash);
   const { app } = shared;
+  useHtmlLang(app.locale);
 
   return (
     <BrumeProvider adapter={inertiaAdapter} locale={app.locale}>

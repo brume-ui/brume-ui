@@ -38,6 +38,7 @@ export const zhTW = {
   'renderer.version.message':
     '頁面資料的 schema 版本是 {received}，這個前端只支援 {supported}。請把 Laravel 端與前端套件更新到相同的版本。',
   'login.title': '使用管理員帳號登入',
+  'login.pageTitle': '登入',
   'login.username': '帳號',
   'login.password': '密碼',
   'login.remember': '記住我',

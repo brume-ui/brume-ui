@@ -23,6 +23,23 @@ export interface CreateBrumeAppOptions {
   el?: string;
 }
 
+/** `<title>` for a page title: `"<title> · <app name>"`, or just the app name when empty. */
+export function formatTitle(title: string, appName: string): string {
+  return title ? `${title} · ${appName}` : appName;
+}
+
+/** App name from the server-rendered initial page (`props.brume.app.name`), read once at bootstrap. */
+function readAppName(el: HTMLElement): string {
+  try {
+    const page = JSON.parse(el.dataset.page ?? '{}') as {
+      props?: { brume?: { app?: { name?: string } } };
+    };
+    return page.props?.brume?.app?.name ?? '';
+  } catch {
+    return '';
+  }
+}
+
 export const INERTIA_PROGRESS = {
   color: 'var(--br-accent)',
   delay: 150,
@@ -62,8 +79,15 @@ export async function resolvePage(
 
 export function createBrumeApp(opts: CreateBrumeAppOptions): Promise<void> {
   const registry = createRegistry({ mode: opts.mode, components: opts.components });
+  const id = (opts.el ?? '#app').replace(/^#/, '');
+  const appName = readAppName(document.getElementById(id) ?? document.body);
+  // Inertia drops the server's <title inertia>; pages set theirs with <Head title>
+  // (brume/page and brume/login do). Handwritten pages should render their own <Head title="...">;
+  // without one the title stays at the app name.
+  if (!document.title) document.title = appName;
   return createInertiaApp({
-    id: (opts.el ?? '#app').replace(/^#/, ''),
+    id,
+    title: (title) => formatTitle(title, appName),
     resolve: (name) => resolvePage(name, { registry, pages: opts.pages }),
     setup({ el, App, props }) {
       createRoot(el).render(<App {...props} />);

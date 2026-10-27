@@ -9,16 +9,18 @@ import {
   Toaster,
   useBrume,
 } from '@herb09638/brume-react';
-import { useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { type FormEvent, useRef } from 'react';
 import { inertiaAdapter } from '../default-adapter';
 import { useFlashToast } from '../flash';
+import { useHtmlLang } from '../use-html-lang';
 import { useShared } from '../use-shared';
 
 /** Inertia component `brume/login`: its own centered layout, no AppShell. */
 export function LoginPage({ status }: { status?: string }) {
   const shared = useShared();
   useFlashToast(shared.flash);
+  useHtmlLang(shared.app.locale);
   return (
     <BrumeProvider adapter={inertiaAdapter} locale={shared.app.locale}>
       <div
@@ -53,6 +55,7 @@ function LoginForm({ appName, status }: { appName: string; status?: string }) {
 
   return (
     <Card>
+      <Head title={t('login.pageTitle')} />
       <div className="br:mb-6 br:flex br:flex-col br:gap-1">
         <h1 className="br:text-xl br:font-bold br:text-text">{appName}</h1>
         <p className="br:text-sm br:text-text-muted">{t('login.title')}</p>

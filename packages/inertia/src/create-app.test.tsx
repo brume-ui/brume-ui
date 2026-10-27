@@ -11,6 +11,7 @@ import { makeShared } from './test-fixtures';
 vi.mock('@inertiajs/react', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@inertiajs/react')>()),
   usePage: vi.fn(),
+  Head: () => null,
 }));
 
 import { BrumePage } from './pages/page';
