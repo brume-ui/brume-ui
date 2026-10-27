@@ -36,7 +36,7 @@ describe('build', () => {
     expect(css).toContain('@theme inline {');
     expect(css).toContain('--color-surface-canvas: var(--br-surface-canvas);');
     expect(css).toContain('--radius-card: var(--br-radius-card);');
-    expect(css).toMatch(/--font-sans: "?Nunito"?, "Noto Sans TC", system-ui/);
+    expect(css).toContain('--font-sans: var(--br-font-sans);');
     expect(css).toContain('--spacing: 4px;');
     expect(css).toContain('--shadow-row: var(--br-shadow-row);');
   });

@@ -15,7 +15,7 @@ export const shadow = {
 } as const;
 
 export const font = {
-  sans: '"Nunito", "Noto Sans TC", system-ui, sans-serif',
+  sans: '"Nunito", "jf-openhuninn", "Noto Sans TC", system-ui, sans-serif',
 } as const;
 
 /** Row height for the default density. */

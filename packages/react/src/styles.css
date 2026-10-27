@@ -1,6 +1,7 @@
 @import "tailwindcss" prefix(br);
 @import "@herb09638/brume-tokens/theme.css";
 @import "@herb09638/brume-tokens/tokens.css";
+@import "./fonts.css";
 
 @source "./";
 

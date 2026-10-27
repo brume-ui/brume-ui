@@ -194,12 +194,3 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
-/* jf open-huninn (OFL, see public/fonts/LICENSE-jf-openhuninn.txt). Playground only. */
-@font-face {
-  font-family: "jf-openhuninn";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/jf-openhuninn-2.1.ttf") format("truetype");
-}

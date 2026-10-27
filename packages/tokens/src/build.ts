@@ -68,7 +68,7 @@ export function buildThemeCss(): string {
 ${colors}
 ${radii}
 ${shadows}
-  --font-sans: ${font.sans};
+  --font-sans: var(--br-font-sans);
   --spacing: ${spacingBase};
 }
 `;
