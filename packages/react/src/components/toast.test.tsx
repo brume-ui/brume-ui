@@ -1,13 +1,21 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render as rtlRender, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Toaster, toast } from './toast';
+import { createMemoryAdapter } from '../memory-adapter';
+import { BrumeProvider } from '../provider';
+import { clearToasts, Toaster, toast } from './toast';
+
+const render = (ui: ReactElement) =>
+  rtlRender(<BrumeProvider adapter={createMemoryAdapter()}>{ui}</BrumeProvider>);
 
 beforeEach(() => {
   vi.useFakeTimers();
 });
 afterEach(() => {
   act(() => {
-    vi.runOnlyPendingTimers();
+    if (vi.isFakeTimers()) vi.runOnlyPendingTimers();
+    clearToasts();
   });
   vi.useRealTimers();
 });
@@ -55,7 +63,7 @@ describe('toast', () => {
 
   it('pauses while hovered and resumes after', () => {
     render(<Toaster />);
-    act(() => toast.error('失敗'));
+    act(() => toast.info('資訊'));
     const el = screen.getByRole('status');
     act(() => {
       vi.advanceTimersByTime(2000);
@@ -73,6 +81,53 @@ describe('toast', () => {
     act(() => {
       vi.advanceTimersByTime(2100);
     });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('keeps an error toast until it is dismissed', () => {
+    render(<Toaster />);
+    act(() => toast.error('失敗'));
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(screen.getByRole('status').textContent).toContain('失敗');
+  });
+
+  it('removes a toast with its close button', async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    render(<Toaster />);
+    act(() => toast.error('失敗', { id: 'close-me' }));
+    await user.click(screen.getByRole('button', { name: '關閉' }));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('has a close button on every kind of toast', () => {
+    render(<Toaster />);
+    act(() => {
+      toast.success('a');
+      toast.info('b');
+      toast.warning('c');
+      toast.error('d');
+    });
+    expect(screen.getAllByRole('button', { name: '關閉' })).toHaveLength(4);
+  });
+
+  it('close button is reachable by keyboard and closes with Enter', async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    render(
+      <>
+        <button type="button">其他</button>
+        <Toaster />
+      </>,
+    );
+    act(() => toast.error('失敗', { id: 'kbd' }));
+    await user.tab();
+    await user.tab();
+    const close = screen.getByRole('button', { name: '關閉' });
+    expect(document.activeElement).toBe(close);
+    await user.keyboard('{Enter}');
     expect(screen.queryByRole('status')).toBeNull();
   });
 

@@ -1,5 +1,7 @@
-import { CircleAlert, CircleCheck, Info, type LucideIcon, TriangleAlert } from 'lucide-react';
+import { CircleAlert, CircleCheck, Info, type LucideIcon, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useBrume } from '../provider';
+import { IconButton } from './icon-button';
 
 type ToastKind = 'success' | 'error' | 'info' | 'warning';
 
@@ -14,6 +16,7 @@ export interface ToastOptions {
   id?: string;
 }
 
+/** Success, info and warning toasts dismiss themselves after this; errors stay until closed. */
 const DURATION_MS = 4000;
 
 let items: ToastItem[] = [];
@@ -35,6 +38,11 @@ function dismiss(id: string) {
   emit(items.filter((t) => t.id !== id));
 }
 
+/** Test helper (not exported from the package index): removes every toast. */
+export function clearToasts() {
+  emit([]);
+}
+
 export const toast = {
   success: (msg: string, opts?: ToastOptions) => push('success', msg, opts),
   error: (msg: string, opts?: ToastOptions) => push('error', msg, opts),
@@ -52,17 +60,19 @@ const KINDS: Record<ToastKind, { icon: LucideIcon; color: string }> = {
 function ToastView({ item }: { item: ToastItem }) {
   const [paused, setPaused] = useState(false);
   const remaining = useRef(DURATION_MS);
+  const { t } = useBrume();
   const { icon: Icon, color } = KINDS[item.kind];
+  const sticky = item.kind === 'error';
 
   useEffect(() => {
-    if (paused) return;
+    if (sticky || paused) return;
     const startedAt = Date.now();
     const timer = setTimeout(() => dismiss(item.id), remaining.current);
     return () => {
       clearTimeout(timer);
       remaining.current = Math.max(0, remaining.current - (Date.now() - startedAt));
     };
-  }, [paused, item.id]);
+  }, [sticky, paused, item.id]);
 
   return (
     <div
@@ -72,7 +82,13 @@ function ToastView({ item }: { item: ToastItem }) {
       className="br:pointer-events-auto br:flex br:max-w-sm br:items-start br:gap-3 br:rounded-card br:border br:border-border br:bg-surface br:px-4 br:py-3 br:text-sm br:text-text br:shadow-overlay br:animate-[br-toast-in_160ms_ease-out] br:motion-reduce:animate-none"
     >
       <Icon aria-hidden="true" className={`br:mt-0.5 br:size-5 br:shrink-0 ${color}`} />
-      <span>{item.message}</span>
+      <span className="br:min-w-0 br:flex-1 br:py-0.5">{item.message}</span>
+      <IconButton
+        icon={X}
+        label={t('common.close')}
+        onClick={() => dismiss(item.id)}
+        className="br:-my-1 br:-mr-2 br:size-8 br:shrink-0"
+      />
     </div>
   );
 }
