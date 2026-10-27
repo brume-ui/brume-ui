@@ -1,4 +1,11 @@
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 export type MenuPosition = 'side' | 'top';
 
@@ -13,14 +20,17 @@ interface Settings {
 
 const SettingsContext = createContext<Settings | null>(null);
 
-export function SettingsProvider({ children }: { children: ReactNode }) {
+export function SettingsProvider({ route, children }: { route: string; children: ReactNode }) {
   const [accent, setAccent] = useState<string>(ACCENT_PRESETS[0]);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>('side');
 
   // tokens.css reads --br-accent-custom on :root (light mode only, by design).
-  useEffect(() => {
+  // Re-applied on route change too: AppShell's cleanup restores its mount-time value when it
+  // unmounts, and layout effects here run after child cleanups.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: route is a deliberate trigger
+  useLayoutEffect(() => {
     document.documentElement.style.setProperty('--br-accent-custom', accent);
-  }, [accent]);
+  }, [accent, route]);
 
   const value = useMemo(
     () => ({ accent, setAccent, menuPosition, setMenuPosition }),

@@ -18,7 +18,10 @@ function currentRoute(): string {
 function useHashRoute(): string {
   const [route, setRoute] = useState(currentRoute);
   useEffect(() => {
-    const onChange = () => setRoute(currentRoute());
+    const onChange = () => {
+      setRoute(currentRoute());
+      window.scrollTo(0, 0);
+    };
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
@@ -58,7 +61,7 @@ export function App() {
   }
 
   return (
-    <SettingsProvider>
+    <SettingsProvider route={route}>
       <BrumeProvider adapter={adapter} locale={locale}>
         <SwitcherBar locale={locale} onLocaleChange={setLocale} />
         {view}
