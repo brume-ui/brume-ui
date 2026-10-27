@@ -51,6 +51,12 @@ jobs:
           for dir in packages/*/; do
             pnpm --dir "$dir" pack --pack-destination "$RUNNER_TEMP/tarballs"
           done
+          # Skip versions already on the registry so a re-run after a partial failure finishes the rest.
           for tgz in "$RUNNER_TEMP"/tarballs/*.tgz; do
+            spec=$(tar -xOf "$tgz" package/package.json | node -p 'const p=JSON.parse(require("fs").readFileSync(0));p.name+"@"+p.version')
+            if npm view "$spec" version >/dev/null 2>&1; then
+              echo "skip $spec (already published)"
+              continue
+            fi
             npm publish "$tgz" --access public --provenance --tag "$dist_tag"
           done

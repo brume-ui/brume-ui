@@ -21,4 +21,5 @@ pnpm test
 pnpm test:e2e
 ```
 
-Packages are published to GitHub Packages (`https://npm.pkg.github.com`).
+Packages are published to npmjs.com under the `@brume-ui` scope (dist-tag `alpha` for prereleases),
+by `.github/workflows/release.yml` on a `v*` tag push, using npm trusted publishing with provenance.
