@@ -29,4 +29,13 @@ export const en: Record<MessageKey, string> = {
   'dialog.discard.confirm': 'Discard changes',
   'dialog.maximize': 'Maximize',
   'dialog.restore': 'Restore size',
+  'renderer.missing.precompiled':
+    'Custom component "{name}" was not found. The precompiled build cannot load custom components. Run `php artisan brume:install --frontend` to compile the frontend in your own project.',
+  'renderer.missing.vite':
+    'Custom component "{name}" was not found. Register it in `resources/js/brume/components.ts`.',
+  'renderer.list.emptyTitle': 'No data yet',
+  'renderer.list.emptyDescription': 'Records that match will show up here.',
+  'renderer.version.title': 'This page cannot be displayed',
+  'renderer.version.message':
+    'The page data uses schema version {received}, but this frontend only supports {supported}. Update the Laravel package and the frontend packages to the same version.',
 };
