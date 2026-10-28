@@ -243,21 +243,38 @@ describe('toast', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('a press on the message text never swipes; the rest of the toast still does', () => {
+  it('a mouse press on the message text never swipes; the rest of the toast still does', () => {
     render(<Toaster />);
     act(() => toast.error('付款失敗：卡片被拒絕。'));
     const el = screen.getByRole('status');
     const message = screen.getByText('付款失敗：卡片被拒絕。');
-    const drag = (from: Element) => {
-      fireEvent.pointerDown(from, { button: 0, pointerId: 1, clientX: 100 });
-      fireEvent.pointerMove(from, { pointerId: 1, clientX: 220 });
-      fireEvent.pointerUp(from, { pointerId: 1, clientX: 220 });
+    const drag = (from: Element, pointerType: string) => {
+      fireEvent.pointerDown(from, { button: 0, pointerId: 1, clientX: 100, pointerType });
+      fireEvent.pointerMove(from, { pointerId: 1, clientX: 220, pointerType });
+      fireEvent.pointerUp(from, { pointerId: 1, clientX: 220, pointerType });
     };
     // No selection exists yet (as at the start of a slow drag over a CJK glyph): still no swipe.
-    act(() => drag(message));
+    act(() => drag(message, 'mouse'));
     expect(screen.getByRole('status').textContent).toContain('付款失敗');
     expect(document.querySelector('[data-removing]')).toBeNull();
-    act(() => drag(el));
+    act(() => drag(el, 'mouse'));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('a touch drag on the message text swipes (touch drags do not select text)', () => {
+    render(<Toaster />);
+    act(() => toast.error('付款失敗：卡片被拒絕。'));
+    const message = screen.getByText('付款失敗：卡片被拒絕。');
+    act(() => {
+      fireEvent.pointerDown(message, {
+        button: 0,
+        pointerId: 1,
+        clientX: 100,
+        pointerType: 'touch',
+      });
+      fireEvent.pointerMove(message, { pointerId: 1, clientX: 220, pointerType: 'touch' });
+      fireEvent.pointerUp(message, { pointerId: 1, clientX: 220, pointerType: 'touch' });
+    });
     expect(screen.queryByRole('status')).toBeNull();
   });
 

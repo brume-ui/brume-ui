@@ -135,9 +135,11 @@ function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewP
   }
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     const target = e.target as Element;
-    // Presses on the message select text (to read or copy an error), never swipe; the rest of
-    // the toast (padding, icon) is the swipe handle.
-    if (removing || e.button !== 0 || target.closest('button, [data-toast-message]')) return;
+    // Mouse presses on the message select text (to read or copy an error), never swipe; the rest of
+    // the toast (padding, icon) is the swipe handle. A horizontal touch drag doesn't select text, so
+    // touch can swipe from anywhere.
+    const onMessage = e.pointerType === 'mouse' && target.closest('[data-toast-message]');
+    if (removing || e.button !== 0 || target.closest('button') || onMessage) return;
     // Capture only once it is clearly a swipe, so a plain click stays a click.
     drag.current = { x: e.clientX, at: Date.now(), id: e.pointerId, captured: false };
   }
