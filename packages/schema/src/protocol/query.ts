@@ -27,6 +27,11 @@ export interface GridQuery {
   q?: string;
   scope?: string;
   filters: Record<string, FilterValue>;
+  /**
+   * 使用者把篩選全部移除了：`filters` 為空時寫成不帶值的 `filter=`，讓後端不要套用篩選預設值
+   * （有任何 `filter` 參數就不套預設，見 docs/url-params.md）。`filters` 不為空時沒有作用。
+   */
+  filtersCleared?: boolean;
 }
 
 const OWNED_SCALARS: string[] = [
@@ -120,6 +125,13 @@ export function parseGridQuery(search: string | URLSearchParams): GridQuery {
     const resolved = resolveFilter(draft);
     if (resolved !== undefined) query.filters[name] = resolved;
   }
+  // 帶了 filter 參數（含不帶值的 `filter=`）卻沒有任何有效篩選：篩選是被明確清空的。
+  if (
+    Object.keys(query.filters).length === 0 &&
+    (params.has(GRID_PARAMS.filter) || drafts.size > 0)
+  ) {
+    query.filtersCleared = true;
+  }
 
   return query;
 }
@@ -139,7 +151,7 @@ class GridSearchParams extends URLSearchParams {
 }
 
 function isOwned(key: string): boolean {
-  return OWNED_SCALARS.includes(key) || FILTER_KEY.test(key);
+  return OWNED_SCALARS.includes(key) || key === GRID_PARAMS.filter || FILTER_KEY.test(key);
 }
 
 /**
@@ -162,6 +174,7 @@ export function serializeGridQuery(query: GridQuery, base?: URLSearchParams): UR
   if (query.q) out.set(GRID_PARAMS.q, query.q);
   if (query.scope) out.set(GRID_PARAMS.scope, query.scope);
 
+  const before = out.size;
   for (const [name, value] of Object.entries(query.filters)) {
     const prefix = `${GRID_PARAMS.filter}[${name}]`;
     if (typeof value === 'string') {
@@ -178,11 +191,16 @@ export function serializeGridQuery(query: GridQuery, base?: URLSearchParams): UR
       if (value.end) out.set(`${prefix}[end]`, value.end);
     }
   }
+  if (query.filtersCleared && out.size === before) out.set(GRID_PARAMS.filter, '');
 
   return out;
 }
 
-/** 以 patch 合併後回傳新網址（path + search + hash）；patch 內只要有 page 以外的鍵，page 就回到 1（刪掉 page 參數）。 */
+/**
+ * 以 patch 合併後回傳新網址（path + search + hash）；patch 內只要有 page 以外的鍵，page 就回到 1（刪掉 page 參數）。
+ * patch 帶 `filters` 時它就是完整的篩選狀態：結果為空就寫成 `filter=`（`filtersCleared` 預設為
+ * true），要回到後端預設值時傳 `filtersCleared: false`。
+ */
 export function withGridQuery(currentUrl: string, patch: Partial<GridQuery>): string {
   const hashAt = currentUrl.indexOf('#');
   const hash = hashAt === -1 ? '' : currentUrl.slice(hashAt);
@@ -193,6 +211,7 @@ export function withGridQuery(currentUrl: string, patch: Partial<GridQuery>): st
 
   const merged: GridQuery = { ...parseGridQuery(base), ...patch };
   if (merged.filters === undefined) merged.filters = {};
+  if (patch.filters !== undefined) merged.filtersCleared = patch.filtersCleared ?? true;
   if (Object.keys(patch).some((key) => key !== 'page')) delete merged.page;
 
   const search = serializeGridQuery(merged, base).toString();

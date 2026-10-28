@@ -181,7 +181,8 @@ describe('filter panel', () => {
     expect(fromAfter.value).toBe('');
     expect(visits(adapter)).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: '套用篩選' }));
-    expect(lastHref(adapter)).toBe('/admin/users');
+    // Nothing left: a bare filter= keeps the backend's defaults off.
+    expect(lastHref(adapter)).toBe('/admin/users?filter=');
   });
 
   it('「重設」 also puts a condition filter back on its first operator', async () => {
@@ -294,6 +295,19 @@ describe('applied-filter chips', () => {
     expect(href).toContain('scope=vip');
   });
 
+  it('removing the only filter, applied by a default, sends a bare filter=', async () => {
+    const user = userEvent.setup();
+    const defaulted: ListPage = {
+      ...orders,
+      query: { ...orders.query, filters: { status: 'paid' } },
+      appliedFilters: [{ key: 'status', label: '狀態', display: '已付款' }],
+    };
+    // No filter param in the URL: the server applied the default itself.
+    const { adapter } = renderWithBrume(<GridView page={defaulted} />, { url: '/admin/orders' });
+    await user.click(screen.getByRole('button', { name: '移除篩選：狀態' }));
+    expect(lastHref(adapter)).toBe('/admin/orders?filter=');
+  });
+
   it('removes scope and q like any other key', async () => {
     const user = userEvent.setup();
     const { adapter } = renderWithBrume(<GridView page={applied} />, { url });
@@ -308,7 +322,7 @@ describe('applied-filter chips', () => {
     const { adapter, rerender } = renderWithBrume(<GridView page={applied} />, { url });
     const chips = screen.getByRole('group', { name: '已套用的篩選' });
     await user.click(within(chips).getByRole('button', { name: '清除所有篩選' }));
-    expect(lastHref(adapter)).toBe('/admin/orders');
+    expect(lastHref(adapter)).toBe('/admin/orders?filter=');
     rerender(
       <GridView page={{ ...applied, appliedFilters: applied.appliedFilters.slice(0, 1) }} />,
     );
@@ -351,6 +365,18 @@ describe('column header filters', () => {
     await user.click(funnel);
     await user.click(await screen.findByRole('button', { name: '清除' }));
     expect(lastHref(adapter)).toBe('/admin/orders?filter[status]=paid');
+  });
+
+  it('「清除」 on the last filter sends a bare filter=', async () => {
+    const user = userEvent.setup();
+    const page: ListPage = {
+      ...orders,
+      query: { ...orders.query, filters: { customer_name: 'Ada' } },
+    };
+    const { adapter } = renderWithBrume(<GridView page={page} />, { url: '/admin/orders' });
+    await user.click(screen.getByRole('button', { name: '篩選「客戶名稱」（已套用）' }));
+    await user.click(await screen.findByRole('button', { name: '清除' }));
+    expect(lastHref(adapter)).toBe('/admin/orders?filter=');
   });
 });
 
@@ -403,7 +429,7 @@ describe('selectors', () => {
     const chosen = within(group).getByRole('button', { name: '新品' });
     expect(chosen.getAttribute('aria-pressed')).toBe('true');
     await user.click(chosen);
-    expect(lastHref(adapter)).toBe('/admin/orders');
+    expect(lastHref(adapter)).toBe('/admin/orders?filter=');
   });
 });
 

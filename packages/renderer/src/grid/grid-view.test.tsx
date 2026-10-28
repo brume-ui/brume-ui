@@ -147,8 +147,29 @@ describe('GridView empty states', () => {
     await user.click(screen.getByRole('button', { name: '清除所有篩選' }));
     const url = String(lastVisit(adapter)?.args[0]);
     expect(url).not.toContain('filter[');
-    expect(url).toBe('/admin/orders?ref=nav');
+    // A bare filter= keeps the backend's filter defaults off (R28).
+    expect(url).toBe('/admin/orders?ref=nav&filter=');
     expect(lastVisit(adapter)?.args[1]).toEqual(ENVELOPE_ONLY);
+  });
+
+  it('clearing a defaulted filter does not loop back to the same empty page', async () => {
+    const user = userEvent.setup();
+    // The server applied a default (no filter param in the URL) and nothing matched.
+    const defaulted = {
+      ...orders,
+      ...none,
+      query: { ...orders.query, filters: { status: 'paid' } },
+      appliedFilters: [{ key: 'status', label: '狀態', display: '已付款' }],
+    };
+    const { adapter, rerender } = renderWithBrume(<GridView page={defaulted} />, {
+      url: '/admin/orders',
+    });
+    await user.click(screen.getByRole('button', { name: '清除所有篩選' }));
+    expect(String(lastVisit(adapter)?.args[0])).toBe('/admin/orders?filter=');
+    // The server answers filter= without its default: the unfiltered empty state, no clear button.
+    rerender(<GridView page={{ ...orders, ...none }} />);
+    expect(screen.getByText('目前沒有資料')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '清除所有篩選' })).toBeNull();
   });
 
   it('treats a search term alone as filtered', () => {

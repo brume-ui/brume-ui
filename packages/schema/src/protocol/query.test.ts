@@ -29,6 +29,49 @@ describe('grid query protocol', () => {
     expect(withGridQuery('/admin/orders?page=3', { page: 4 })).toBe('/admin/orders?page=4');
   });
 
+  describe('filters cleared (bare filter=)', () => {
+    test('serializes as a bare filter= only when no filter is left', () => {
+      expect(serializeGridQuery({ filters: {}, filtersCleared: true }).toString()).toBe('filter=');
+      expect(
+        serializeGridQuery({ filters: { status: 'paid' }, filtersCleared: true }).toString(),
+      ).toBe('filter[status]=paid');
+      expect(serializeGridQuery({ filters: { a: '' }, filtersCleared: true }).toString()).toBe(
+        'filter=',
+      );
+    });
+
+    test('round-trips through parseGridQuery', () => {
+      const q: GridQuery = {
+        sort: { key: 'no', direction: 'asc' },
+        filters: {},
+        filtersCleared: true,
+      };
+      expect(serializeGridQuery(q).toString()).toBe('sort=no&filter=');
+      expect(parseGridQuery(serializeGridQuery(q))).toEqual(q);
+      // An empty-valued bracketed filter is also a filter param: it reads as cleared.
+      expect(parseGridQuery('filter[status]=').filtersCleared).toBe(true);
+      expect(parseGridQuery('sort=no').filtersCleared).toBeUndefined();
+    });
+
+    test('removing the last filter writes filter=, and later patches keep it', () => {
+      const cleared = withGridQuery('/admin/orders?filter[status]=paid&page=2', { filters: {} });
+      expect(cleared).toBe('/admin/orders?filter=');
+      expect(withGridQuery(cleared, { sort: { key: 'no', direction: 'desc' } })).toBe(
+        '/admin/orders?sort=-no&filter=',
+      );
+      expect(withGridQuery(cleared, { page: 2 })).toBe('/admin/orders?page=2&filter=');
+    });
+
+    test('setting a filter replaces the bare filter=; filtersCleared: false returns to defaults', () => {
+      expect(withGridQuery('/admin/orders?filter=', { filters: { status: 'paid' } })).toBe(
+        '/admin/orders?filter[status]=paid',
+      );
+      expect(
+        withGridQuery('/admin/orders?filter=&tab=x', { filters: {}, filtersCleared: false }),
+      ).toBe('/admin/orders?tab=x');
+    });
+  });
+
   test('parse ignores malformed values', () => {
     expect(parseGridQuery('sort=&per_page=abc&filter[x][y][z]=1&page=-2')).toEqual({
       filters: {},
