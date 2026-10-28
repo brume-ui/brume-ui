@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
 import { cn } from '../cn';
+import { isPlainClick } from '../layout/menu-utils';
 import { useBrume } from '../provider';
 import { type ButtonSize, type ButtonVariant, buttonClasses } from './button';
 import { FOCUS_RING } from './focus';
@@ -54,17 +55,7 @@ export function Link({
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     onClick?.(event);
-    if (
-      native ||
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
-      return;
-    }
+    if (native || !isPlainClick(event)) return;
     event.preventDefault();
     adapter.visit(href);
   }

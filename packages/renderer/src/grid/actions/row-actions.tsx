@@ -1,6 +1,7 @@
 import {
   ActionMenu,
   Button,
+  isPlainClick,
   Link,
   LinkButton,
   type MenuAction,
@@ -161,8 +162,7 @@ export function PrimaryCell({ column, row }: { column: ListColumn; row: GridRow 
   const label = formatCell(row[column.key]) || `#${row.id}`;
   if (editUrl) {
     const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-      if (!onEdit || event.button !== 0) return;
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (!onEdit || !isPlainClick(event)) return;
       event.preventDefault();
       onEdit(row);
     };

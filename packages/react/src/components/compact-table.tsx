@@ -5,7 +5,8 @@ export interface CompactTableProps {
   caption?: string;
 }
 
-function format(value: unknown): string {
+/** A cell value as plain text (also the grid's fallback when a column has no display). */
+export function formatCell(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
@@ -42,7 +43,7 @@ export function CompactTable({ columns, rows, caption }: CompactTableProps) {
                 key={col.key}
                 className="br:border-b br:border-border br:px-2 br:py-1 br:whitespace-normal br:wrap-anywhere"
               >
-                {format(row[col.key])}
+                {formatCell(row[col.key])}
               </td>
             ))}
           </tr>

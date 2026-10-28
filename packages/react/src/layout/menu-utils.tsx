@@ -90,19 +90,25 @@ export function resolveIcon(name: string | undefined): LucideIcon {
   return Circle;
 }
 
+/**
+ * Whether a click on a link is a plain left click the app may handle itself. Modified clicks
+ * (new tab, new window, download) and clicks something already handled belong to the browser.
+ */
+export function isPlainClick(event: MouseEvent): boolean {
+  return (
+    !event.defaultPrevented &&
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  );
+}
+
 /** Click handler that routes plain left-clicks through the adapter but leaves modified clicks to the browser. */
 export function interceptClick(go: () => void, after?: () => void) {
   return (event: MouseEvent<HTMLAnchorElement>) => {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
-      return;
-    }
+    if (!isPlainClick(event)) return;
     event.preventDefault();
     go();
     after?.();
