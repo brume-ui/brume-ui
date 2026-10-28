@@ -64,4 +64,7 @@ export const zhCN: Record<MessageKey, string> = {
   'stat.previousPeriod': '上期',
   'stat.vs': '较{period}',
   'stat.trend': '{label}趋势：从 {first} 到 {last}，最低 {min}，最高 {max}',
+  'http.networkError': '连不上服务器，请检查网络后再试一次。',
+  'http.expired': '页面已过期，请刷新后再试一次。',
+  'http.unauthorized': '登录已超时，请重新登录。',
 };

@@ -26,6 +26,7 @@ export { Select, type SelectOption, type SelectProps } from './components/select
 export { Skeleton } from './components/skeleton';
 export { TextInput, type TextInputProps } from './components/text-input';
 export { Toaster, type ToastOptions, toast } from './components/toast';
+export { errorMessage, fetchJson, type HttpRequest, type HttpResponse } from './http';
 export {
   createTranslator,
   type Locale,

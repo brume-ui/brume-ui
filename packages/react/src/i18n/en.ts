@@ -64,4 +64,7 @@ export const en: Record<MessageKey, string> = {
   'stat.previousPeriod': 'previous period',
   'stat.vs': 'vs {period}',
   'stat.trend': '{label} trend: from {first} to {last}, low {min}, high {max}',
+  'http.networkError': "Can't reach the server. Check your connection and try again.",
+  'http.expired': 'This page has expired. Refresh and try again.',
+  'http.unauthorized': 'Your session has timed out. Please sign in again.',
 };

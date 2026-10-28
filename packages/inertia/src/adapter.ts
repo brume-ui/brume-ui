@@ -1,4 +1,4 @@
-import type { BrumeAdapter } from '@brume-ui/brume-react';
+import { type BrumeAdapter, fetchJson } from '@brume-ui/brume-react';
 import { router } from '@inertiajs/react';
 
 type InertiaErrors = Record<string, string | string[] | undefined>;
@@ -26,6 +26,7 @@ export function createInertiaAdapter(): BrumeAdapter {
         onError: (errors) => options.onError?.(flattenErrors(errors as InertiaErrors)),
         onFinish: () => options.onFinish?.(),
       }),
+    request: (req) => fetchJson(req),
     currentUrl: () => window.location.pathname + window.location.search + window.location.hash,
   };
 }

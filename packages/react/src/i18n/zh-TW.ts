@@ -62,4 +62,7 @@ export const zhTW = {
   'stat.previousPeriod': '上期',
   'stat.vs': '較{period}',
   'stat.trend': '{label}趨勢：由 {first} 到 {last}，最低 {min}，最高 {max}',
+  'http.networkError': '連不上伺服器，請檢查網路後再試一次。',
+  'http.expired': '頁面已過期，請重新整理後再試一次。',
+  'http.unauthorized': '登入已逾時，請重新登入。',
 } as const;

@@ -1,3 +1,5 @@
+import type { HttpRequest, HttpResponse } from './http';
+
 export interface VisitOptions {
   preserveScroll?: boolean;
   preserveState?: boolean;
@@ -22,4 +24,5 @@ export interface BrumeAdapter {
     options?: SubmitOptions,
   ): void;
   currentUrl(): string;
+  request<T = unknown>(req: HttpRequest): Promise<HttpResponse<T>>;
 }

@@ -38,3 +38,24 @@ describe('createInertiaAdapter', () => {
     expect(createInertiaAdapter().currentUrl()).toBe('/admin/users?page=2#top');
   });
 });
+
+describe('createInertiaAdapter request', () => {
+  it('delegates to fetchJson (fetch with CSRF-aware JSON headers)', async () => {
+    const fetchMock = vi.fn(async () => new Response('{"ok":1}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const res = await createInertiaAdapter().request({
+        method: 'patch',
+        url: '/cell',
+        body: { v: 1 },
+      });
+      expect(res).toEqual({ status: 200, data: { ok: 1 } });
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/cell',
+        expect.objectContaining({ method: 'PATCH', credentials: 'same-origin' }),
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});

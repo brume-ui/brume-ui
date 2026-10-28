@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from './memory-adapter';
 
 describe('createMemoryAdapter', () => {
@@ -15,5 +15,23 @@ describe('createMemoryAdapter', () => {
     a.reload({ only: ['rows'] });
     a.submit('post', '/x', { a: 1 });
     expect(a.calls.map((c) => c.fn)).toEqual(['reload', 'submit']);
+  });
+});
+
+describe('createMemoryAdapter request', () => {
+  it('defaults to 200 and records the call', async () => {
+    const a = createMemoryAdapter();
+    const res = await a.request({ method: 'get', url: '/x' });
+    expect(res).toEqual({ status: 200, data: {} });
+    expect(a.calls).toEqual([{ fn: 'request', args: [{ method: 'get', url: '/x' }] }]);
+  });
+
+  it('calls respond and returns its response', async () => {
+    const respond = vi.fn(async () => ({ status: 422, data: { message: 'bad' } }));
+    const a = createMemoryAdapter('/', { respond });
+    const req = { method: 'post', url: '/y', body: { a: 1 } } as const;
+    expect(await a.request(req)).toEqual({ status: 422, data: { message: 'bad' } });
+    expect(respond).toHaveBeenCalledWith(req);
+    expect(a.calls[0]?.fn).toBe('request');
   });
 });
