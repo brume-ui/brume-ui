@@ -150,6 +150,12 @@ describe('DataTable', () => {
       // Columns scrolling under the sticky actions fade out instead of showing a cut glyph.
       const sticky = container.querySelector('tbody td:last-child') as HTMLElement;
       expect(sticky.className).toContain('-12px_0_4px_-6px_var(--br-surface)');
+      // More columns wait on the right: a hairline on the sticky column's edge says so.
+      expect(sticky.hasAttribute('data-more-columns')).toBe(true);
+      const scrollLeft = vi.spyOn(HTMLElement.prototype, 'scrollLeft', 'get').mockReturnValue(300);
+      fireEvent.scroll(region);
+      expect(sticky.hasAttribute('data-more-columns')).toBe(false);
+      scrollLeft.mockRestore();
       scrollWidth.mockRestore();
       clientWidth.mockRestore();
     });

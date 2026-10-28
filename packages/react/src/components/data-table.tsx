@@ -83,20 +83,38 @@ function minTableWidth(columns: Array<{ width?: string }>, extra: string[]): str
  */
 const HIDDEN_LABEL_CHECKBOX = 'br:gap-0';
 
-/** True while the element's content is wider than its box (i.e. it scrolls horizontally). */
-function useHorizontalOverflow(ref: RefObject<HTMLElement | null>): boolean {
-  const [overflows, setOverflows] = useState(false);
+/**
+ * Whether the element's content is wider than its box (it scrolls horizontally), and whether
+ * some of it is still out of view on the end side.
+ */
+function useHorizontalOverflow(ref: RefObject<HTMLElement | null>): {
+  overflows: boolean;
+  moreAtEnd: boolean;
+} {
+  const [state, setState] = useState({ overflows: false, moreAtEnd: false });
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const check = () => setOverflows(el.scrollWidth > el.clientWidth);
+    const check = () => {
+      const overflows = el.scrollWidth > el.clientWidth;
+      const moreAtEnd = overflows && el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setState((prev) =>
+        prev.overflows === overflows && prev.moreAtEnd === moreAtEnd
+          ? prev
+          : { overflows, moreAtEnd },
+      );
+    };
     const observer = new ResizeObserver(check);
     observer.observe(el);
     if (el.firstElementChild) observer.observe(el.firstElementChild);
+    el.addEventListener('scroll', check, { passive: true });
     check();
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      el.removeEventListener('scroll', check);
+    };
   }, [ref]);
-  return overflows;
+  return state;
 }
 
 function alignClass(col: { align?: 'start' | 'end'; numeric?: boolean }) {
@@ -137,7 +155,7 @@ export function DataTable<T>({
   const { t } = useBrume();
   const scrollRef = useRef<HTMLDivElement>(null);
   // A scroll container must be reachable by keyboard when it actually scrolls (WCAG 2.1.1).
-  const scrolls = useHorizontalOverflow(scrollRef);
+  const { overflows: scrolls, moreAtEnd } = useHorizontalOverflow(scrollRef);
   const meta = new Map(columns.map((c) => [c.key, c]));
   const showEmpty = !loading && rows.length === 0;
 
@@ -148,6 +166,10 @@ export function DataTable<T>({
   // Selected rows take the selected surface (also while hovered); the accent stays on the checkbox.
   const rowSelected = 'br:group-aria-selected/row:bg-surface-selected';
   const stickyActions = 'br:sticky br:right-0';
+  // While more columns wait on the right, a hairline on the sticky column's left edge says the
+  // row goes on under it (the fade alone reads as the row's end).
+  const moreColumns =
+    'br:data-more-columns:before:absolute br:data-more-columns:before:inset-y-3 br:data-more-columns:before:left-0 br:data-more-columns:before:w-px br:data-more-columns:before:bg-border';
   // While columns scroll under the sticky actions, they fade out on its left edge instead of
   // showing a sliver of a cut glyph: a shadow in the row's own colour (the cell clips anything
   // else drawn outside it). The negative spread keeps the blur inside the row's height, so
@@ -357,8 +379,10 @@ export function DataTable<T>({
                           rowSelected,
                           stickyActions,
                           stickyFade,
+                          moreColumns,
                           'br:text-right',
                         )}
+                        data-more-columns={moreAtEnd || undefined}
                       >
                         {rowActions(row.original)}
                       </td>

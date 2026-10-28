@@ -39,7 +39,14 @@ export function CellEditButton({
         FOCUS_RING,
       )}
     >
-      {children}
+      {children === '' || children === null || children === undefined || children === false ? (
+        // An empty value would leave an underline with nothing on it.
+        <span aria-hidden="true" className="br:text-text-muted">
+          —
+        </span>
+      ) : (
+        children
+      )}
     </button>
   );
 }

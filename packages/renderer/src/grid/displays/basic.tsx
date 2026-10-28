@@ -8,7 +8,7 @@ import {
   useBrume,
 } from '@brume-ui/brume-react';
 import type { Display, ListColumn } from '@brume-ui/brume-schema';
-import { Copy, Ellipsis } from 'lucide-react';
+import { Copy, TextSearch } from 'lucide-react';
 import { formatCell } from './format';
 
 type DisplayOf<K extends Display['type']> = Extract<Display, { type: K }>;
@@ -73,7 +73,7 @@ export function LinkDisplay({
   );
 }
 
-/** The first `length` characters and a 「…」 button that shows the whole text in a popover. */
+/** The first `length` characters and a button that shows the whole text in a popover (not ⋯, which is the row menu). */
 export function LimitDisplay({ column, display, value }: Props<'limit'>) {
   const { t } = useBrume();
   const text = formatCell(value);
@@ -86,7 +86,7 @@ export function LimitDisplay({ column, display, value }: Props<'limit'>) {
         title={column.label}
         trigger={
           <IconButton
-            icon={Ellipsis}
+            icon={TextSearch}
             size="sm"
             label={t('grid.display.showFull', { label: column.label })}
           />

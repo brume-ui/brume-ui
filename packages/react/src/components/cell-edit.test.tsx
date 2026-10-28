@@ -25,6 +25,17 @@ describe('CellEditButton', () => {
     expect(button.getAttribute('aria-busy')).toBe('true');
   });
 
+  it('an empty value still shows something to click: a muted dash, hidden from screen readers', () => {
+    const { rerender } = render(<CellEditButton aria-label="編輯備註：">{''}</CellEditButton>);
+    const button = screen.getByRole('button', { name: '編輯備註：' });
+    expect(button.textContent).toBe('—');
+    expect(button.querySelector('[aria-hidden="true"]')?.textContent).toBe('—');
+    rerender(<CellEditButton aria-label="編輯備註：">{null}</CellEditButton>);
+    expect(button.textContent).toBe('—');
+    rerender(<CellEditButton aria-label="編輯備註：0">{0}</CellEditButton>);
+    expect(button.textContent).toBe('0');
+  });
+
   it('a badge value drops the dashed underline: the pill is the affordance, with a hover ring', () => {
     render(
       <CellEditButton aria-label="編輯狀態：已付款" variant="badge">
