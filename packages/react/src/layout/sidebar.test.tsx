@@ -35,8 +35,9 @@ describe('Sidebar', () => {
     const group = within(sidebar()).getByRole('button', { name: '內容' });
     await userEvent.click(group);
     expect(group.getAttribute('aria-expanded')).toBe('false');
-    const leaving = within(sidebar()).queryByRole('link', { name: '使用者' });
-    if (leaving) expect(leaving.closest('[inert]')).not.toBeNull();
+    // Still mounted for its exit transition, but already out of reach.
+    const leaving = within(sidebar()).getByRole('link', { name: '使用者' });
+    expect(leaving.closest('[inert]')).not.toBeNull();
     await waitFor(() =>
       expect(within(sidebar()).queryByRole('link', { name: '使用者' })).toBeNull(),
     );

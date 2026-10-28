@@ -83,4 +83,25 @@ describe('withThemeTransition', () => {
     expect(start).not.toHaveBeenCalled();
     expect(update).toHaveBeenCalledOnce();
   });
+
+  it('keeps the attribute while a newer transition is still running', async () => {
+    const finishers: Array<() => void> = [];
+    const start = vi.fn((cb: () => void) => {
+      cb();
+      return { finished: new Promise<void>((resolve) => finishers.push(resolve)) };
+    });
+    Object.assign(document, { startViewTransition: start });
+    mockReducedMotion(false);
+    withThemeTransition(() => {});
+    withThemeTransition(() => {});
+    // The first (skipped) transition settles while the second still runs.
+    finishers[0]?.();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.documentElement.hasAttribute(THEME_SWITCH_ATTR)).toBe(true);
+    finishers[1]?.();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.documentElement.hasAttribute(THEME_SWITCH_ATTR)).toBe(false);
+  });
 });

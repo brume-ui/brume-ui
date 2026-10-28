@@ -34,6 +34,9 @@ type ViewTransitionDocument = Document & {
 /** Set on <html> while Brume's own theme cross-fade runs; styles.css scopes its timing to it. */
 export const THEME_SWITCH_ATTR = 'data-brume-theme-switch';
 
+/** Latest theme transition; a skipped earlier one must not clear the attribute of a newer one. */
+let latestSwitch = 0;
+
 /**
  * Runs `update` inside a View Transition when the browser supports it, so the whole page
  * cross-fades between themes (styles.css sets the timing). Without support, under reduced motion
@@ -52,7 +55,10 @@ export function withThemeTransition(update: () => void): void {
   }
   const root = doc.documentElement;
   root.setAttribute(THEME_SWITCH_ATTR, '');
-  const done = () => root.removeAttribute(THEME_SWITCH_ATTR);
+  const token = ++latestSwitch;
+  const done = () => {
+    if (token === latestSwitch) root.removeAttribute(THEME_SWITCH_ATTR);
+  };
   const transition = doc.startViewTransition(update);
   if (transition?.finished) transition.finished.then(done, done);
   else done();
