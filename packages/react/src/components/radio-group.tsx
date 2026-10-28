@@ -15,6 +15,8 @@ export interface RadioGroupProps {
   name?: string;
   disabled?: boolean;
   id?: string;
+  /** Names the group by a visible caption (Field with `group`); replaces `aria-label`. */
+  'aria-labelledby'?: string;
 }
 
 /** Single choice from a few options. Arrow keys move and select (Radix roving focus). */
@@ -27,6 +29,7 @@ export function RadioGroup({
   name,
   disabled,
   id,
+  'aria-labelledby': labelledBy,
 }: RadioGroupProps) {
   const baseId = useId();
   return (
@@ -34,7 +37,8 @@ export function RadioGroup({
       id={id}
       value={value}
       onValueChange={onChange}
-      aria-label={label}
+      aria-label={labelledBy ? undefined : label}
+      aria-labelledby={labelledBy}
       // Not passed to Radix as `orientation`: that would limit arrows to one axis, while the APG
       // radio group moves with all four arrow keys in any layout.
       aria-orientation={orientation}

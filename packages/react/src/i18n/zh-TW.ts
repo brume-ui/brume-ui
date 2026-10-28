@@ -64,6 +64,8 @@ export const zhTW = {
   'grid.apply': '套用',
   'grid.clear': '清除',
   'grid.filterColumn': '篩選「{label}」',
+  'grid.filterColumnActive': '篩選「{label}」（已套用）',
+  'grid.filterCount': '，已套用 {count} 個',
   'grid.filterOperator': '{label}的條件',
   'grid.appliedFilters': '已套用的篩選',
   'grid.scope': '範圍',
@@ -91,6 +93,7 @@ export const zhTW = {
   'action.done': '已完成「{label}」',
   'action.failed': '操作沒有完成：{message}',
   'action.failedUnknown': '操作沒有完成，請稍後再試一次。',
+  'renderer.error.home': '回到首頁',
   'renderer.version.title': '無法顯示這個頁面',
   'renderer.version.message':
     '頁面資料的 schema 版本是 {received}，這個前端只支援 {supported}。請把 Laravel 端與前端套件更新到相同的版本。',

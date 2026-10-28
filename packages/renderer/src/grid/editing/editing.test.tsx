@@ -215,6 +215,17 @@ describe('text editors', () => {
     ]);
   });
 
+  it('a numeric column keeps its editable value on the end edge, like its header', () => {
+    setup(saved(), {
+      ...orders,
+      columns: orders.columns.map((c) => (c.key === 'qty' ? { ...c, numeric: true } : c)),
+    });
+    const button = row1().getByRole('button', { name: '編輯數量：2' });
+    expect((button.parentElement as HTMLElement).className).toContain('br:items-end');
+    const text = row1().getByRole('button', { name: '編輯客戶：Ann' });
+    expect((text.parentElement as HTMLElement).className).toContain('br:items-start');
+  });
+
   it('number sends a number (an empty one sends null)', async () => {
     const { user, adapter } = setup();
     await user.click(row1().getByRole('button', { name: '編輯數量：2' }));
@@ -439,6 +450,26 @@ describe('success feedback and row overrides', () => {
       );
       expect(adapter.calls.filter((c) => c.fn === 'reload')).toHaveLength(1);
     });
+  });
+
+  it('an adapter that rejects still ends the save: the overlap settles, the cell reverts', async () => {
+    const pending: Array<{ resolve(res: HttpResponse): void; reject(error: Error): void }> = [];
+    const respond: Respond = () =>
+      new Promise((resolve, reject) => pending.push({ resolve, reject }));
+    const { user, adapter } = setup(respond);
+    await user.click(row1().getByRole('switch', { name: '上架' }));
+    await user.click(row1().getByRole('switch', { name: '熱門' }));
+    await act(async () => pending[0]?.reject(new Error('socket closed')));
+    // Treated as a network error: the toast, and the switch goes back.
+    expect(toasts.error).toHaveBeenCalledWith('連不上伺服器，請檢查網路後再試一次。');
+    expect(row1().getByRole('switch', { name: '上架' }).getAttribute('aria-checked')).toBe('false');
+    await act(async () =>
+      pending[1]?.resolve(
+        saved()({ body: { column: 'flags', value: { hot: true } } } as HttpRequest) as HttpResponse,
+      ),
+    );
+    // The rejected save counted as settled, so the last of the two lets the server decide.
+    expect(adapter.calls.filter((c) => c.fn === 'reload')).toHaveLength(1);
   });
 
   it('a later save that did not overlap brings the whole server row, cascades included', async () => {
@@ -668,6 +699,37 @@ describe('switches', () => {
       expect(sw().getAttribute('aria-checked')).toBe('false');
       expect(row1().getByText('ORD-1 #2')).toBeTruthy();
     });
+  });
+});
+
+describe('displays inside the edit button', () => {
+  it('a display with its own controls (limit) shows as text, so no control is nested', () => {
+    setup(saved(), {
+      ...orders,
+      columns: orders.columns.map((c) =>
+        c.key === 'note' ? { ...c, display: { type: 'limit', length: 2 } } : c,
+      ),
+      rows: [{ ...(rows[0] as GridRow), note: '一段很長的備註文字' }, rows[1] as GridRow],
+    });
+    const button = row1().getByRole('button', { name: '編輯備註：一段很長的備註文字' });
+    expect(button.querySelector('button, a, [tabindex]')).toBeNull();
+    expect(button.textContent).toBe('一段很長的備註文字');
+  });
+
+  it('a static display (label) still renders inside it', () => {
+    setup(saved(), {
+      ...orders,
+      columns: orders.columns.map((c) =>
+        c.key === 'status'
+          ? {
+              ...c,
+              display: { type: 'label', options: { paid: { label: '已付款', tone: 'success' } } },
+            }
+          : c,
+      ),
+    });
+    const button = row1().getByRole('button', { name: '編輯狀態：已付款' });
+    expect(button.querySelector('[data-tone="success"]')).not.toBeNull();
   });
 });
 

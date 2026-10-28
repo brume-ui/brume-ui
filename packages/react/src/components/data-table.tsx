@@ -77,6 +77,12 @@ function minTableWidth(columns: Array<{ width?: string }>, extra: string[]): str
   return `calc(${parts.join(' + ')})`;
 }
 
+/**
+ * The selection checkboxes' labels are screen-reader only: no gap after the box, or it would
+ * overflow the 20px cell and the cell's ellipsis would paint a stray dot.
+ */
+const HIDDEN_LABEL_CHECKBOX = 'br:gap-0';
+
 /** True while the element's content is wider than its box (i.e. it scrolls horizontally). */
 function useHorizontalOverflow(ref: RefObject<HTMLElement | null>): boolean {
   const [overflows, setOverflows] = useState(false);
@@ -143,6 +149,12 @@ export function DataTable<T>({
   // Selected rows take the selected surface (also while hovered); the accent stays on the checkbox.
   const rowSelected = 'br:group-aria-selected/row:bg-surface-selected';
   const stickyActions = 'br:sticky br:right-0';
+  // While columns scroll under the sticky actions, they fade out on its left edge instead of
+  // showing a sliver of a cut glyph: a shadow in the row's own colour (the cell clips anything
+  // else drawn outside it).
+  const stickyFade =
+    scrolls &&
+    'br:shadow-[var(--br-shadow-row),-12px_0_6px_-4px_var(--br-surface)] br:group-hover/row:shadow-[var(--br-shadow-row),-12px_0_6px_-4px_color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))] br:group-aria-selected/row:shadow-[var(--br-shadow-row),-12px_0_6px_-4px_var(--br-surface-selected)]';
   // The checkbox is 20px in a 44px column: px-3 leaves 12px on each side.
   const selectCell = 'br:px-3';
 
@@ -206,6 +218,7 @@ export function DataTable<T>({
                     onCheckedChange={toggleAll}
                     disabled={loading || pageIds.length === 0}
                     label={<span className="br:sr-only">{t('dataTable.selectAll')}</span>}
+                    className={HIDDEN_LABEL_CHECKBOX}
                   />
                 </th>
               ) : null}
@@ -258,10 +271,16 @@ export function DataTable<T>({
                 );
               })}
               {rowActions ? (
-                // Same colour as the canvas behind the header, so scrolled columns pass under it.
+                // Same colour as the surface behind the header (the canvas, or the Card or Dialog the
+                // table sits in, through --br-table-header-bg), so scrolled columns pass under it.
                 <th
                   scope="col"
-                  className={cn(stickyActions, 'br:bg-surface-canvas br:px-4 br:pb-1')}
+                  className={cn(
+                    stickyActions,
+                    'br:bg-[var(--br-table-header-bg,var(--br-surface-canvas))] br:px-4 br:pb-1',
+                    scrolls &&
+                      'br:shadow-[-12px_0_6px_-4px_var(--br-table-header-bg,var(--br-surface-canvas))]',
+                  )}
                 >
                   <span className="br:sr-only">{t('dataTable.actions')}</span>
                 </th>
@@ -300,6 +319,7 @@ export function DataTable<T>({
                         <Checkbox
                           checked={selection.selected.has(row.id)}
                           onCheckedChange={(on) => toggleRow(row.id, on)}
+                          className={HIDDEN_LABEL_CHECKBOX}
                           label={
                             <span className="br:sr-only">
                               {t('dataTable.selectRow', {
@@ -334,6 +354,7 @@ export function DataTable<T>({
                           rowHover,
                           rowSelected,
                           stickyActions,
+                          stickyFade,
                           'br:text-right',
                         )}
                       >

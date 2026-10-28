@@ -1,6 +1,5 @@
 import type { Option } from '@brume-ui/brume-schema';
-import * as RadixRadioGroup from '@radix-ui/react-radio-group';
-import { useId } from 'react';
+import { type KeyboardEvent, useId, useRef } from 'react';
 import { cn } from '../cn';
 import { PRESS } from '../motion/classes';
 import { FOCUS_RING } from './focus';
@@ -26,16 +25,58 @@ export interface PillRadioGroupProps {
   label: string;
 }
 
-/** One choice shown as pills (list scopes). A radio group: arrow keys move and select. */
+/**
+ * One choice shown as pills (list scopes). A radio group with manual activation: arrow keys,
+ * Home and End only move focus (each choice may load a new page), Space or Enter selects. One
+ * tab stop, the checked pill (else the first enabled one).
+ */
 export function PillRadioGroup({ options, value, onChange, label }: PillRadioGroupProps) {
+  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const enabled = options.flatMap((o, i) => (o.disabled ? [] : [i]));
+  const checkedIndex = options.findIndex((o) => o.value === value && !o.disabled);
+  const tabStop = checkedIndex >= 0 ? checkedIndex : (enabled[0] ?? -1);
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const at = enabled.indexOf(index);
+    let next: number | undefined;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      next = enabled[(at + 1) % enabled.length];
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      next = enabled[(at - 1 + enabled.length) % enabled.length];
+    } else if (event.key === 'Home') {
+      next = enabled[0];
+    } else if (event.key === 'End') {
+      next = enabled.at(-1);
+    }
+    if (next === undefined) return;
+    event.preventDefault();
+    refs.current[next]?.focus();
+  };
+
   return (
-    <RadixRadioGroup.Root value={value} onValueChange={onChange} aria-label={label} className={ROW}>
-      {options.map((o) => (
-        <RadixRadioGroup.Item key={o.value} value={o.value} disabled={o.disabled} className={PILL}>
+    <div role="radiogroup" aria-label={label} className={ROW}>
+      {options.map((o, i) => (
+        // biome-ignore lint/a11y/useSemanticElements: a native radio cannot take the pill look or manual activation.
+        <button
+          key={o.value}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          type="button"
+          role="radio"
+          aria-checked={o.value === value}
+          tabIndex={i === tabStop ? 0 : -1}
+          disabled={o.disabled}
+          onClick={() => {
+            if (o.value !== value) onChange(o.value);
+          }}
+          onKeyDown={(e) => onKeyDown(e, i)}
+          className={PILL}
+        >
           {o.label}
-        </RadixRadioGroup.Item>
+        </button>
       ))}
-    </RadixRadioGroup.Root>
+    </div>
   );
 }
 

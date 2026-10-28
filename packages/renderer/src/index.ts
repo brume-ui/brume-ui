@@ -1,5 +1,6 @@
 export { ComponentSlot } from './component-slot';
 export { DashboardPageView } from './dashboard-page';
+export { ErrorPageView } from './error-page';
 export {
   COLUMN_VISIBILITY_KEY,
   readHiddenColumns,

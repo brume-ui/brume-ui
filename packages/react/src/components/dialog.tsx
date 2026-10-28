@@ -101,7 +101,7 @@ export function Dialog({
             contentRef.current?.focus();
           }}
           className={cn(
-            'br:fixed br:top-1/2 br:left-1/2 br:z-50 br:flex br:max-h-[calc(100vh-48px)] br:max-w-[calc(100vw-48px)] br:-translate-x-1/2 br:-translate-y-1/2 br:flex-col br:rounded-dialog br:border br:border-border br:bg-surface br:text-text br:shadow-overlay',
+            'br:fixed br:top-1/2 br:left-1/2 br:z-50 br:flex br:max-h-[calc(100vh-48px)] br:max-w-[calc(100vw-48px)] br:-translate-x-1/2 br:-translate-y-1/2 br:flex-col br:rounded-dialog br:border br:border-border br:bg-surface br:text-text br:shadow-overlay br:[--br-table-header-bg:var(--br-surface)]',
             // Modals scale from their centre; maximize/restore eases the size change.
             'br:transition-[width,height] br:duration-slow br:ease-emphasized',
             MODAL_MOTION,

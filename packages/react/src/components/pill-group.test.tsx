@@ -37,6 +37,32 @@ describe('PillRadioGroup', () => {
     expect(screen.getByRole('radio', { name: '丙' }).getAttribute('aria-checked')).toBe('true');
   });
 
+  it('manual activation: arrows only move focus, Space or Enter selects', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<RadioHarness onChange={onChange} />);
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: '甲' }));
+    await user.keyboard('{ArrowRight}');
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: '乙' }));
+    expect(onChange).not.toHaveBeenCalled();
+    await user.keyboard(' ');
+    expect(onChange).toHaveBeenLastCalledWith('b');
+    await user.keyboard('{ArrowRight}{Enter}');
+    expect(onChange).toHaveBeenLastCalledWith('c');
+    // Wraps, and Home / End jump to the ends.
+    await user.keyboard('{ArrowRight}');
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: '甲' }));
+    await user.keyboard('{ArrowLeft}');
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: '丙' }));
+    await user.keyboard('{Home}');
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: '甲' }));
+    expect(onChange).toHaveBeenCalledTimes(2);
+    // One tab stop: the checked pill.
+    const tabbable = screen.getAllByRole('radio').filter((r) => r.tabIndex === 0);
+    expect(tabbable.map((r) => r.textContent)).toEqual(['丙']);
+  });
+
   it('accepts an empty-string value (the 「all」 choice)', () => {
     render(
       <PillRadioGroup

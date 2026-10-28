@@ -290,6 +290,9 @@ describe('grid displays', () => {
     );
     const toggle = within(cell(1)).getByRole('button', { name: '展開「明細」' });
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    // A quiet ghost pill: one per row, so it must not repeat the accent down the column.
+    expect(toggle.className).toContain('br:bg-transparent');
+    expect(toggle.className).not.toContain('br:text-accent-tint-text');
     expect(screen.getAllByRole('row')).toHaveLength(2);
 
     await user.click(toggle);

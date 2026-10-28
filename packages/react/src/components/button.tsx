@@ -15,6 +15,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconStart?: LucideIcon;
   /** A number after the label in the accent colour (how many filters are applied); hidden at 0. */
   count?: number;
+  /**
+   * What a screen reader hears for the count instead of the bare number (e.g. 「，已套用 2 個」),
+   * so the name reads 「篩選，已套用 2 個」 rather than 「篩選2」.
+   */
+  countLabel?: string;
 }
 
 const VARIANTS = {
@@ -45,6 +50,7 @@ export function Button({
   loading = false,
   iconStart: Icon,
   count,
+  countLabel,
   className,
   children,
   disabled,
@@ -73,9 +79,16 @@ export function Button({
         {Icon ? <Icon aria-hidden="true" className="br:size-4" /> : null}
         {children}
         {count ? (
-          <span data-count="" className="br:text-accent br:tabular-nums">
-            {count}
-          </span>
+          <>
+            <span
+              data-count=""
+              aria-hidden={countLabel ? true : undefined}
+              className="br:text-accent br:tabular-nums"
+            >
+              {count}
+            </span>
+            {countLabel ? <span className="br:sr-only">{countLabel}</span> : null}
+          </>
         ) : null}
       </span>
       {loading ? (

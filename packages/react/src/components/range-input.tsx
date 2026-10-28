@@ -15,6 +15,8 @@ export interface RangeInputProps {
   /** Accessible name of the group; each field is 「{label}（起）」/「{label}（迄）」. */
   label: string;
   id?: string;
+  /** Names the group by a visible caption (Field with `group`); replaces `aria-label`. */
+  'aria-labelledby'?: string;
 }
 
 const INPUT_TYPE = {
@@ -25,7 +27,14 @@ const INPUT_TYPE = {
 } as const;
 
 /** Two fields, start – end, for range filters. */
-export function RangeInput({ of, value, onChange, label, id }: RangeInputProps) {
+export function RangeInput({
+  of,
+  value,
+  onChange,
+  label,
+  id,
+  'aria-labelledby': labelledBy,
+}: RangeInputProps) {
   const { t } = useBrume();
   const type = INPUT_TYPE[of];
   const field = (bound: 'start' | 'end') => (
@@ -46,7 +55,13 @@ export function RangeInput({ of, value, onChange, label, id }: RangeInputProps) 
   );
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset would need a visible legend; the group is named by aria-label.
-    <div id={id} role="group" aria-label={label} className="br:flex br:items-center br:gap-2">
+    <div
+      id={id}
+      role="group"
+      aria-label={labelledBy ? undefined : label}
+      aria-labelledby={labelledBy}
+      className="br:flex br:items-center br:gap-2"
+    >
       {field('start')}
       <span aria-hidden="true" className="br:shrink-0 br:text-text-muted">
         –

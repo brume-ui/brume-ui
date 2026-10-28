@@ -88,6 +88,8 @@ export interface FilterInputControlProps {
   /** Set by Field so its label points at the control. */
   id?: string;
   'aria-describedby'?: string;
+  /** Set by Field (with `group`) for radio, checkbox and range inputs. */
+  'aria-labelledby'?: string;
 }
 
 /** The input for one filter, chosen by `def.input.type`. */
@@ -97,6 +99,7 @@ export function FilterInputControl({
   onChange,
   id,
   'aria-describedby': describedBy,
+  'aria-labelledby': labelledBy,
 }: FilterInputControlProps) {
   const { input, label } = def;
   switch (input.type) {
@@ -127,6 +130,7 @@ export function FilterInputControl({
       return (
         <RadioGroup
           id={id}
+          aria-labelledby={labelledBy}
           label={label}
           options={input.options}
           value={filterText(value)}
@@ -137,6 +141,7 @@ export function FilterInputControl({
       return (
         <CheckboxGroup
           id={id}
+          aria-labelledby={labelledBy}
           label={label}
           options={input.options}
           value={filterList(value)}
@@ -158,6 +163,7 @@ export function FilterInputControl({
       return (
         <RangeInput
           id={id}
+          aria-labelledby={labelledBy}
           of={input.of}
           label={label}
           value={filterRange(value)}

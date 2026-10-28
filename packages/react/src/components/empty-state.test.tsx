@@ -22,4 +22,14 @@ describe('EmptyState', () => {
     render(<EmptyState title="沒有結果" description="換個關鍵字再試試。" />);
     expect(screen.getByText('沒有結果')).toBeTruthy();
   });
+
+  it('can lead with a large muted code and make the title a heading', () => {
+    render(
+      <EmptyState code={404} titleAs="h1" title="找不到這個頁面" description="網址可能打錯了。" />,
+    );
+    expect(screen.getByRole('heading', { level: 1, name: '找不到這個頁面' })).toBeTruthy();
+    const code = screen.getByText('404');
+    expect(code.className).toContain('br:tabular-nums');
+    expect(code.className).toContain('br:text-text-muted');
+  });
 });

@@ -53,6 +53,19 @@ const orders: ListPage = {
         placement: 'panel',
         input: { type: 'select', remote: true },
       },
+      {
+        key: 'qty',
+        label: '數量',
+        placement: 'panel',
+        input: {
+          type: 'group',
+          of: 'number',
+          operators: [
+            { value: 'eq', label: '等於' },
+            { value: 'gt', label: '大於' },
+          ],
+        },
+      },
       { key: 'secret', label: '內部代碼', placement: 'hidden', input: { type: 'text' } },
     ],
   },
@@ -70,8 +83,8 @@ const lastHref = (adapter: Adapter) => String(visits(adapter).at(-1)?.args[0]);
 const requests = (adapter: Pick<Adapter, 'calls'>) =>
   adapter.calls.filter((c) => c.fn === 'request').map((c) => c.args[0] as HttpRequest);
 
-/** 「篩選」, followed by the applied count when there is one. */
-const filterToggle = () => screen.getByRole('button', { name: /^篩選\d*$/ });
+/** 「篩選」, followed by 「，已套用 N 個」 when filters are applied. */
+const filterToggle = () => screen.getByRole('button', { name: /^篩選(，已套用 \d+ 個)?$/ });
 
 const customers: OptionsResponse = {
   data: [{ value: '7', label: 'Ada Lovelace' }],
@@ -123,9 +136,13 @@ describe('filter panel', () => {
   it('lays items on a CSS grid: newline starts a new row, span 2 takes two columns', async () => {
     const user = userEvent.setup();
     renderWithBrume(<GridView page={orders} />);
-    await user.click(filterToggle());
+    const toggle = filterToggle();
+    await user.click(toggle);
+    const panel = document.getElementById(String(toggle.getAttribute('aria-controls')));
     const cell = (name: string) =>
-      screen.getByText(name, { selector: 'label' }).closest('[data-filter-item]') as HTMLElement;
+      within(panel as HTMLElement)
+        .getByText(name, { selector: 'label, span' })
+        .closest('[data-filter-item]') as HTMLElement;
     expect(cell('狀態').style.gridRow).toBe('1');
     expect(cell('金額').style.gridRow).toBe('2');
     expect(cell('金額').style.gridColumn).toBe('1 / span 2');
@@ -154,14 +171,40 @@ describe('filter panel', () => {
     const { adapter } = renderWithBrume(<GridView page={page} />);
     const toggle = filterToggle();
     expect(toggle.querySelector('[data-count]')?.textContent).toBe('2');
+    // The count is read with its meaning, not as 「篩選2」.
+    expect(screen.getByRole('button', { name: '篩選，已套用 2 個' })).toBe(toggle);
     await user.click(toggle);
     const from = screen.getByRole('spinbutton', { name: '金額（起）' }) as HTMLInputElement;
     expect(from.value).toBe('100');
     await user.click(screen.getByRole('button', { name: '重設' }));
-    expect(from.value).toBe('');
+    const fromAfter = screen.getByRole('spinbutton', { name: '金額（起）' }) as HTMLInputElement;
+    expect(fromAfter.value).toBe('');
     expect(visits(adapter)).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: '套用篩選' }));
     expect(lastHref(adapter)).toBe('/admin/users');
+  });
+
+  it('「重設」 also puts a condition filter back on its first operator', async () => {
+    const user = userEvent.setup();
+    renderWithBrume(<GridView page={orders} />);
+    await user.click(filterToggle());
+    const operator = () => screen.getByRole('combobox', { name: '數量的條件' });
+    await user.click(operator());
+    await user.click(await screen.findByRole('option', { name: '大於' }));
+    expect(operator().textContent).toContain('大於');
+    await user.click(screen.getByRole('button', { name: '重設' }));
+    expect(operator().textContent).toContain('等於');
+  });
+
+  it('names group inputs by their caption with aria-labelledby (no label for a div)', async () => {
+    const user = userEvent.setup();
+    renderWithBrume(<GridView page={orders} />);
+    await user.click(filterToggle());
+    const group = screen.getByRole('group', { name: '金額' });
+    const caption = document.getElementById(String(group.getAttribute('aria-labelledby')));
+    expect(caption?.textContent).toBe('金額');
+    expect(caption?.tagName).not.toBe('LABEL');
+    expect(document.querySelector(`label[for="${group.id}"]`)).toBeNull();
   });
 
   it('loads remote options through adapter.request with q, page and per_page=20', async () => {
@@ -302,7 +345,8 @@ describe('column header filters', () => {
     const { adapter } = renderWithBrume(<GridView page={page} />, {
       url: '/admin/orders?filter[customer_name]=Ada&filter[status]=paid',
     });
-    const funnel = screen.getByRole('button', { name: '篩選「客戶名稱」' });
+    // Not by colour alone: the name says the filter is applied.
+    const funnel = screen.getByRole('button', { name: '篩選「客戶名稱」（已套用）' });
     expect(funnel.className).toContain('br:bg-accent-tint');
     await user.click(funnel);
     await user.click(await screen.findByRole('button', { name: '清除' }));
@@ -386,5 +430,19 @@ describe('scopes', () => {
     serve(adapter, rerender, page);
     await user.click(within(group).getByRole('radio', { name: '全部' }));
     expect(lastHref(adapter)).toBe('/admin/orders');
+  });
+
+  it('arrow keys only move focus; Space or Enter picks the scope (one visit)', async () => {
+    const user = userEvent.setup();
+    const { adapter } = renderWithBrume(<GridView page={page} />, { url: '/admin/orders' });
+    within(screen.getByRole('radiogroup', { name: '範圍' }))
+      .getByRole('radio', { name: '全部' })
+      .focus();
+    await user.keyboard('{ArrowRight}{ArrowRight}');
+    expect(visits(adapter)).toHaveLength(0);
+    expect(document.activeElement?.textContent).toBe('本月');
+    await user.keyboard('{Enter}');
+    expect(visits(adapter)).toHaveLength(1);
+    expect(lastHref(adapter)).toBe('/admin/orders?scope=month');
   });
 });

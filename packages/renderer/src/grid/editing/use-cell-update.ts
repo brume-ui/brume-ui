@@ -112,15 +112,25 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
       const seq = ++issued.current;
       const ticket = beginRowSave(rowId);
       setOptimistic({ seq, value: shown });
-      const res = await adapter.request<Partial<CellUpdateResponse & ErrorResponse>>({
-        method: 'patch',
-        url: endpoint.replaceAll('{id}', encodeURIComponent(String(rowId))),
-        body: { column, value: next },
-      });
-      const refreshed = settle(seq, res, ticket, shown);
-      // Saves of this row overlapped: only the server knows the order it ran them in, so once the
-      // last one settles its rows decide (unless this response already refreshes or leaves).
-      if (endRowSave(ticket) && !refreshed) refresh();
+      let refreshed = false;
+      try {
+        let res: HttpResponse<Partial<CellUpdateResponse & ErrorResponse>>;
+        try {
+          res = await adapter.request<Partial<CellUpdateResponse & ErrorResponse>>({
+            method: 'patch',
+            url: endpoint.replaceAll('{id}', encodeURIComponent(String(rowId))),
+            body: { column, value: next },
+          });
+        } catch (error) {
+          // Adapters resolve every outcome; one that throws anyway counts as a network error.
+          res = { status: 0, data: { message: error instanceof Error ? error.message : '' } };
+        }
+        refreshed = settle(seq, res, ticket, shown);
+      } finally {
+        // Saves of this row overlapped: only the server knows the order it ran them in, so once
+        // the last one settles its rows decide (unless this response already refreshes or leaves).
+        if (endRowSave(ticket) && !refreshed) refresh();
+      }
     },
     [adapter, t, refresh, endpoint, rowId, column, beginRowSave, endRowSave, replaceRow],
   );

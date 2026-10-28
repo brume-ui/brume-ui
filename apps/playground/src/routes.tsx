@@ -11,6 +11,7 @@ import {
 } from './pages/controls';
 import { DataTablePage, EmptyStatePage, PaginationPage, SkeletonPage } from './pages/data';
 import { FontsPage } from './pages/fonts';
+import { ErrorPagePage, GridEmptyPage, GridPage } from './pages/grid';
 import { InputsPage } from './pages/inputs';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
 import { MotionPage } from './pages/motion';
@@ -42,6 +43,9 @@ export const ROUTES: Route[] = [
   { name: 'pagination', title: 'Pagination', Component: PaginationPage },
   { name: 'empty-state', title: 'EmptyState', Component: EmptyStatePage },
   { name: 'skeleton', title: 'Skeleton', Component: SkeletonPage },
+  { name: 'grid', title: 'Grid（訂單）', Component: GridPage },
+  { name: 'grid-empty', title: 'Grid（空）', Component: GridEmptyPage },
+  { name: 'error-page', title: '錯誤頁', Component: ErrorPagePage },
   { name: 'app-shell', title: 'AppShell parts', Component: AppShellPage },
   { name: 'page-header', title: 'PageHeader', Component: PageHeaderPage },
   { name: 'card', title: 'Card', Component: CardPage },

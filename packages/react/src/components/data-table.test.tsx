@@ -1,6 +1,7 @@
 import { fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
 import { cloneElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Card } from '../layout/card';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
 import { type DataColumn, DataTable } from './data-table';
@@ -135,16 +136,20 @@ describe('DataTable', () => {
       const clientWidth = vi
         .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
         .mockReturnValue(300);
-      render(
+      const { container } = render(
         <DataTable<Row>
           columns={columns}
           rows={[{ id: 'a', name: '甲', count: 3 }]}
           getRowId={(r) => r.id}
           empty={empty}
+          rowActions={() => null}
         />,
       );
       const region = screen.getByRole('region', { name: '資料表格（可左右捲動）' });
       expect(region.tabIndex).toBe(0);
+      // Columns scrolling under the sticky actions fade out instead of showing a cut glyph.
+      const sticky = container.querySelector('tbody td:last-child') as HTMLElement;
+      expect(sticky.className).toContain('-12px_0_6px_-4px_var(--br-surface)');
       scrollWidth.mockRestore();
       clientWidth.mockRestore();
     });
@@ -159,6 +164,20 @@ describe('DataTable', () => {
         />,
       );
       expect(screen.queryByRole('region')).toBeNull();
+    });
+
+    it('has no fade on the actions column when nothing scrolls under it', () => {
+      const { container } = render(
+        <DataTable<Row>
+          columns={columns}
+          rows={[{ id: 'a', name: '甲', count: 3 }]}
+          getRowId={(r) => r.id}
+          empty={empty}
+          rowActions={() => null}
+        />,
+      );
+      const sticky = container.querySelector('tbody td:last-child') as HTMLElement;
+      expect(sticky.className).not.toContain('-12px_0_6px_-4px_var(--br-surface)');
     });
   });
 
@@ -249,6 +268,9 @@ describe('DataTable', () => {
       expect(selectTd.className).toContain('br:px-3');
       expect(selectTd.className).not.toContain('br:px-4');
       expect(selectTd.className).toContain('br:group-aria-selected/row:bg-surface-selected');
+      // No gap after the box (its label is screen-reader only), so nothing overflows the cell.
+      expect((selectTd.firstElementChild as HTMLElement).className).toContain('br:gap-0');
+      expect((selectTd.firstElementChild as HTMLElement).className).not.toContain('br:gap-2');
     });
 
     it('keeps the actions column sticky with a background in header and skeleton rows', () => {
@@ -257,10 +279,22 @@ describe('DataTable', () => {
       );
       const th = container.querySelector('thead th:last-child') as HTMLElement;
       expect(th.className).toContain('br:sticky');
-      expect(th.className).toContain('br:bg-surface-canvas');
+      // The canvas by default; a Card or Dialog sets --br-table-header-bg to its own surface.
+      expect(th.className).toContain('br:bg-[var(--br-table-header-bg,var(--br-surface-canvas))]');
       const td = container.querySelector('tbody tr td:last-child') as HTMLElement;
       expect(td.className).toContain('br:sticky');
       expect(td.className).toContain('br:right-0');
+    });
+
+    it('Card and Dialog set the sticky header background to their own surface', () => {
+      const { container } = render(
+        <Card>
+          <DataTable<Row> {...base} columns={columns} rowActions={() => null} />
+        </Card>,
+      );
+      expect(container.querySelector('section')?.className).toContain(
+        'br:[--br-table-header-bg:var(--br-surface)]',
+      );
     });
 
     it('does not render hidden columns', () => {

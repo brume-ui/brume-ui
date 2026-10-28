@@ -7,7 +7,8 @@ import { useGridNavigation } from '../use-grid-navigation';
 import { FilterInputControl, withFilter } from './filter-input';
 
 /**
- * The funnel in a column header (accent tint while the filter has a value). It opens a popover
+ * The funnel in a column header (accent tint, and 「（已套用）」 in its name, while the filter has
+ * a value). It opens a popover
  * with just that input; 「套用」 applies the draft, 「清除」 removes the filter.
  */
 export function ColumnFilter({ def }: { def: FilterDef }) {
@@ -37,7 +38,9 @@ export function ColumnFilter({ def }: { def: FilterDef }) {
         <IconButton
           icon={Funnel}
           size="sm"
-          label={t('grid.filterColumn', { label: def.label })}
+          label={t(applied === undefined ? 'grid.filterColumn' : 'grid.filterColumnActive', {
+            label: def.label,
+          })}
           active={applied !== undefined}
         />
       }

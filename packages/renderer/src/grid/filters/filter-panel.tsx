@@ -42,6 +42,13 @@ export function placeFilters(panel: FilterPanel): PlacedFilter[] {
   return placed;
 }
 
+/** Inputs that are a group of controls: Field names them with aria-labelledby, not a label. */
+const GROUP_INPUTS: ReadonlySet<FilterDef['input']['type']> = new Set([
+  'radio',
+  'checkbox',
+  'range',
+]);
+
 function panelFilters(panel: FilterPanel | undefined): FilterDef[] {
   return panel ? placeFilters(panel).map((p) => p.def) : [];
 }
@@ -60,11 +67,13 @@ export function FilterPanelToggle({ open, onToggle, panelId }: FilterPanelToggle
   const defs = panelFilters(page.filters);
   if (defs.length === 0) return null;
   const keys = new Set(defs.map((d) => d.key));
+  const count = page.appliedFilters.filter((a) => keys.has(a.key)).length;
   return (
     <Button
       variant="secondary"
       iconStart={ListFilter}
-      count={page.appliedFilters.filter((a) => keys.has(a.key)).length}
+      count={count}
+      countLabel={t('grid.filterCount', { count })}
       aria-expanded={open}
       aria-controls={panelId}
       onClick={onToggle}
@@ -104,6 +113,9 @@ export function FilterPanelView({ id, open }: FilterPanelViewProps) {
   const defs = placed.map((p) => p.def);
 
   const [draft, setDraft] = useState(() => pickFilters(applied, defs));
+  // Bumped by 「重設」 so the inputs start over, including state they keep themselves (the
+  // operator picked in a condition filter before its value).
+  const [generation, setGeneration] = useState(0);
   // A new server answer (after any navigation) starts the draft again from what is applied.
   const [draftFor, setDraftFor] = useState(applied);
   if (draftFor !== applied) {
@@ -138,13 +150,13 @@ export function FilterPanelView({ id, open }: FilterPanelViewProps) {
             >
               {placed.map(({ def, row, column, span }) => (
                 <div
-                  key={def.key}
+                  key={`${def.key}-${generation}`}
                   data-filter-item=""
                   // One column on phones: the explicit placement only applies from `sm` up.
                   className="br:min-w-0 br:max-sm:[grid-row:auto]! br:max-sm:[grid-column:auto]!"
                   style={{ gridRow: String(row), gridColumn: `${column} / span ${span}` }}
                 >
-                  <Field label={def.label}>
+                  <Field label={def.label} group={GROUP_INPUTS.has(def.input.type)}>
                     <FilterInputControl
                       def={def}
                       value={draft[def.key]}
@@ -155,7 +167,13 @@ export function FilterPanelView({ id, open }: FilterPanelViewProps) {
               ))}
             </div>
             <div className="br:flex br:flex-wrap br:justify-end br:gap-2">
-              <Button variant="ghost" onClick={() => setDraft({})}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setDraft({});
+                  setGeneration((g) => g + 1);
+                }}
+              >
                 {t('grid.resetFilters')}
               </Button>
               <Button type="submit">{t('grid.applyFilters')}</Button>

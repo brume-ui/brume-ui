@@ -44,29 +44,38 @@ export function EditableCell(props: CellProps) {
 
 /** The cell's control and, under it, its save error (the control points at it). */
 function CellFrame({
+  column,
   cell,
   errorId,
   children,
 }: {
+  column: ListColumn;
   cell: CellUpdate;
   errorId: string;
   children: ReactNode;
 }) {
+  // A numeric column's value sits on the end edge, like its header and its read-only cells.
+  const edge = column.numeric ? 'br:items-end' : 'br:items-start';
   return (
-    <div className="br:flex br:min-w-0 br:flex-col br:items-start br:gap-1">
+    <div className={`br:flex br:min-w-0 br:flex-col ${edge} br:gap-1`}>
       {children}
       {cell.error ? <CellError id={errorId}>{cell.error}</CellError> : null}
     </div>
   );
 }
 
+/** Displays without controls of their own, so they can render inside the edit button. */
+const STATIC_DISPLAYS: ReadonlySet<string> = new Set(['text', 'label', 'badge', 'progress']);
+
 /** What an edit button shows and announces: the pending value, else the confirmed one. */
 function useCellLabel({ column, row, editor, display }: CellProps, cell: CellUpdate) {
   const { t } = useBrume();
   const separator = t('grid.listSeparator');
   const text = cellText(editor, cell.pending ? cell.value : row[column.key], separator);
-  // A display renders the confirmed value; a pending one (or no display) shows as text.
-  const content = cell.pending || !column.display ? text : display;
+  // A display renders the confirmed value; a pending one, no display, or a display with controls of
+  // its own (which cannot sit inside the edit button) shows as text.
+  const staticDisplay = column.display && STATIC_DISPLAYS.has(column.display.type);
+  const content = cell.pending || !staticDisplay ? text : display;
   return { content, ariaLabel: t('grid.editCell', { label: column.label, value: text }) };
 }
 
@@ -96,7 +105,7 @@ function TextCell(props: CellProps<TextEditorDef>) {
   };
 
   return (
-    <CellFrame cell={cell} errorId={errorId}>
+    <CellFrame column={column} cell={cell} errorId={errorId}>
       {editing ? (
         <div className="br:w-full br:min-w-40">
           <TextEditor
@@ -173,7 +182,7 @@ function ChoiceCell(props: CellProps<ChoiceEditorDef>) {
   };
 
   return (
-    <CellFrame cell={cell} errorId={errorId}>
+    <CellFrame column={column} cell={cell} errorId={errorId}>
       <Popover
         open={open}
         onOpenChange={onOpenChange}
@@ -235,7 +244,7 @@ function SwitchCell({ column, row, editor }: CellProps<Extract<InlineEditor, { t
   const on = isOn(cell.value);
   const stateLabel = on ? editor.onLabel : editor.offLabel;
   return (
-    <CellFrame cell={cell} errorId={errorId}>
+    <CellFrame column={column} cell={cell} errorId={errorId}>
       <span className="br:inline-flex br:items-center br:gap-2">
         <Switch
           label={column.label}
@@ -262,7 +271,7 @@ function SwitchGroupCell({
   const states =
     cell.value && typeof cell.value === 'object' ? (cell.value as Record<string, unknown>) : {};
   return (
-    <CellFrame cell={cell} errorId={errorId}>
+    <CellFrame column={column} cell={cell} errorId={errorId}>
       <span className="br:inline-flex br:flex-wrap br:items-center br:gap-x-4 br:gap-y-1.5">
         {editor.keys.map(({ key, label }) => (
           <span key={key} className="br:inline-flex br:items-center br:gap-2">

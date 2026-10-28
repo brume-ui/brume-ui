@@ -66,6 +66,8 @@ export const en: Record<MessageKey, string> = {
   'grid.apply': 'Apply',
   'grid.clear': 'Clear',
   'grid.filterColumn': 'Filter {label}',
+  'grid.filterColumnActive': 'Filter {label} (applied)',
+  'grid.filterCount': ', {count} applied',
   'grid.filterOperator': '{label} condition',
   'grid.appliedFilters': 'Applied filters',
   'grid.scope': 'Scope',
@@ -93,6 +95,7 @@ export const en: Record<MessageKey, string> = {
   'action.done': 'Done: “{label}”',
   'action.failed': "The action didn't finish: {message}",
   'action.failedUnknown': "The action didn't finish. Please try again later.",
+  'renderer.error.home': 'Back to home',
   'renderer.version.title': 'This page cannot be displayed',
   'renderer.version.message':
     'The page data uses schema version {received}, but this frontend only supports {supported}. Update the Laravel package and the frontend packages to the same version.',

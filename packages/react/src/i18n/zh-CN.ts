@@ -66,6 +66,8 @@ export const zhCN: Record<MessageKey, string> = {
   'grid.apply': '应用',
   'grid.clear': '清除',
   'grid.filterColumn': '筛选「{label}」',
+  'grid.filterColumnActive': '筛选「{label}」（已应用）',
+  'grid.filterCount': '，已应用 {count} 个',
   'grid.filterOperator': '{label}的条件',
   'grid.appliedFilters': '已应用的筛选',
   'grid.scope': '范围',
@@ -93,6 +95,7 @@ export const zhCN: Record<MessageKey, string> = {
   'action.done': '已完成“{label}”',
   'action.failed': '操作没有完成：{message}',
   'action.failedUnknown': '操作没有完成，请稍后再试一次。',
+  'renderer.error.home': '回到首页',
   'renderer.version.title': '无法显示这个页面',
   'renderer.version.message':
     '页面数据的 schema 版本是 {received}，这个前端只支持 {supported}。请把 Laravel 端与前端包更新到相同的版本。',

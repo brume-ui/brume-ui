@@ -12,6 +12,8 @@ export interface CheckboxGroupProps {
   /** Default 'horizontal' (options wrap on narrow widths). */
   orientation?: 'horizontal' | 'vertical';
   id?: string;
+  /** Names the group by a visible caption (Field with `group`); replaces `aria-label`. */
+  'aria-labelledby'?: string;
 }
 
 /** Several independent choices; each option is a Checkbox, Tab moves between them. */
@@ -22,6 +24,7 @@ export function CheckboxGroup({
   label,
   orientation = 'horizontal',
   id,
+  'aria-labelledby': labelledBy,
 }: CheckboxGroupProps) {
   const selected = new Set(value);
   return (
@@ -29,7 +32,8 @@ export function CheckboxGroup({
     <div
       id={id}
       role="group"
-      aria-label={label}
+      aria-label={labelledBy ? undefined : label}
+      aria-labelledby={labelledBy}
       className={cn(
         'br:flex br:gap-x-5 br:gap-y-2',
         orientation === 'horizontal' ? 'br:flex-row br:flex-wrap' : 'br:flex-col',

@@ -9,7 +9,7 @@ export interface CardProps {
 
 export function Card({ title, children, padding = 'md' }: CardProps) {
   return (
-    <section className="br:overflow-hidden br:rounded-card br:bg-surface br:shadow-flat br:transition-shadow br:duration-base br:ease-out br:hover:shadow-row">
+    <section className="br:overflow-hidden br:rounded-card br:bg-surface br:[--br-table-header-bg:var(--br-surface)] br:shadow-flat br:transition-shadow br:duration-base br:ease-out br:hover:shadow-row">
       {title ? (
         <h2
           className={cn(

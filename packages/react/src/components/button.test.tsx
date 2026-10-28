@@ -55,4 +55,14 @@ describe('Button count', () => {
     expect(count?.textContent).toBe('2');
     expect(count?.className).toContain('br:text-accent');
   });
+
+  it('reads the count through countLabel instead of the bare number', () => {
+    render(
+      <Button variant="secondary" count={2} countLabel="，已套用 2 個">
+        篩選
+      </Button>,
+    );
+    const button = screen.getByRole('button', { name: '篩選，已套用 2 個' });
+    expect(button.querySelector('[data-count]')?.getAttribute('aria-hidden')).toBe('true');
+  });
 });

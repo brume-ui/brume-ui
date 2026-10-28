@@ -1,6 +1,6 @@
 import { Button, CompactTable, Dialog, useBrume } from '@brume-ui/brume-react';
 import type { CellContent, Display, GridRow, ListColumn } from '@brume-ui/brume-schema';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { ComponentSlot } from '../../component-slot';
 import { useGrid } from '../grid-context';
@@ -43,8 +43,9 @@ export function ExpandDisplay({ column, display, row }: Props<'expand'>) {
   const expanded = isExpanded(rowId, column.key);
   const action = display.label ?? t('grid.display.expand');
   return (
+    // Ghost, not the outline pill: it repeats on every row, and the accent is kept for actions.
     <Button
-      variant="outline"
+      variant="ghost"
       size="sm"
       iconStart={expanded ? ChevronDown : ChevronRight}
       aria-expanded={expanded}
@@ -89,8 +90,9 @@ export function ModalDisplay({ column, display, row }: Props<'modal'>) {
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
+        iconStart={Eye}
         aria-label={t('grid.display.actionOn', { action, label: column.label })}
         onClick={() => setOpen(true)}
       >

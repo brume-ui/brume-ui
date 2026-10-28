@@ -12,6 +12,18 @@ describe('BrumePageView', () => {
     expect(screen.getByRole('heading', { name: 'Overview' })).toBeTruthy();
   });
 
+  it('dispatches error pages to ErrorPageView', () => {
+    renderWithBrume(
+      <BrumePageView
+        envelope={{
+          schemaVersion: '0.2.0',
+          page: { type: 'error', status: 403, title: '沒有權限', message: '請聯絡管理員。' },
+        }}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: '沒有權限' })).toBeTruthy();
+  });
+
   it('accepts other 0.x versions', () => {
     renderWithBrume(<BrumePageView envelope={{ schemaVersion: '0.2.0', page: dashboard }} />);
     expect(screen.queryByRole('alert')).toBeNull();
