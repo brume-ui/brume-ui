@@ -50,6 +50,17 @@ describe('build', () => {
     expect(css).toContain('--br-shadow-row: 0 1.5px 0 rgba(31, 42, 55, 0.07);');
   });
 
+  test('chart colours are emitted per mode and mapped for Tailwind', () => {
+    const css = buildTokensCss();
+    const light = css.slice(0, css.indexOf(':root[data-theme="dark"]'));
+    const dark = css.slice(css.indexOf(':root[data-theme="dark"]'), css.indexOf('@media'));
+    expect(light).toContain('--br-chart-1: #2a78d6;');
+    expect(dark).toContain('--br-chart-1: #3987e5;');
+    expect(light).toContain('--br-chart-grid: #e3e8ee;');
+    expect(buildThemeCss()).toContain('--color-chart-8: var(--br-chart-8);');
+    expect(JSON.parse(buildTokensJson()).chart['chart-positive'].light).toBe('#0ca30c');
+  });
+
   test('tokens.json contains both modes', () => {
     const json = JSON.parse(buildTokensJson());
     expect(json.semantic.accent.light).toBe('#0e7490');

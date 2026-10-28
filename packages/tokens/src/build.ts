@@ -1,3 +1,4 @@
+import { chart } from './chart';
 import { component } from './component';
 import { duration, easing, reducedDuration } from './motion';
 import { font, radius, shadow, spacingBase } from './primitives';
@@ -6,9 +7,10 @@ import { derived, semantic } from './semantic';
 type Mode = 'light' | 'dark';
 
 const names = Object.keys(semantic) as (keyof typeof semantic)[];
+const chartNames = Object.keys(chart) as (keyof typeof chart)[];
 
 function colorVars(mode: Mode, indent: string): string {
-  return names
+  const semanticLines = names
     .map(
       (n) =>
         `${indent}--br-${n}: ${
@@ -21,6 +23,8 @@ function colorVars(mode: Mode, indent: string): string {
         };`,
     )
     .join('\n');
+  const chartLines = chartNames.map((n) => `${indent}--br-${n}: ${chart[n][mode]};`).join('\n');
+  return `${semanticLines}\n${chartLines}`;
 }
 
 function staticVars(indent: string): string {
@@ -67,7 +71,7 @@ ${Object.entries(reducedDuration)
 }
 
 export function buildThemeCss(): string {
-  const colors = names.map((n) => `  --color-${n}: var(--br-${n});`).join('\n');
+  const colors = [...names, ...chartNames].map((n) => `  --color-${n}: var(--br-${n});`).join('\n');
   const radii = Object.keys(radius)
     .map((k) => `  --radius-${k}: var(--br-radius-${k});`)
     .join('\n');
@@ -116,7 +120,7 @@ ${durationUtilities}
 
 export function buildTokensJson(): string {
   return `${JSON.stringify(
-    { semantic, radius, shadow, font, spacing: spacingBase, component, duration, easing },
+    { semantic, chart, radius, shadow, font, spacing: spacingBase, component, duration, easing },
     null,
     2,
   )}\n`;
