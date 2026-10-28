@@ -1,6 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { MouseEvent, ReactNode } from 'react';
+import { type MouseEvent, type ReactNode, useRef } from 'react';
 import { cn } from '../cn';
+import { PRESS } from '../motion/classes';
+import { useActiveIndicator } from '../motion/indicator';
 import { useBrume } from '../provider';
 import { FOCUS_RING } from './focus';
 
@@ -33,11 +35,18 @@ export function pageItems(page: number, lastPage: number): Item[] {
 }
 
 const PILL =
-  'br:inline-flex br:h-9 br:min-w-9 br:items-center br:justify-center br:rounded-pill br:px-3 br:text-sm br:font-semibold br:transition-colors br:motion-reduce:transition-none';
+  'br:relative br:inline-flex br:h-9 br:min-w-9 br:items-center br:justify-center br:rounded-pill br:px-3 br:text-sm br:font-semibold';
 
-export function Pagination({ page, lastPage, hrefFor, onNavigate, label }: PaginationProps) {
+export function Pagination(props: PaginationProps) {
+  if (props.lastPage <= 1) return null;
+  return <PaginationNav {...props} />;
+}
+
+function PaginationNav({ page, lastPage, hrefFor, onNavigate, label }: PaginationProps) {
   const { t } = useBrume();
-  if (lastPage <= 1) return null;
+  const listRef = useRef<HTMLUListElement>(null);
+  // The accent pill slides to the new page while this component stays mounted (client navigation).
+  const pill = useActiveIndicator(listRef, '[aria-current="page"]', `${page}/${lastPage}`);
 
   const click = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
     if (!onNavigate) return;
@@ -61,7 +70,7 @@ export function Pagination({ page, lastPage, hrefFor, onNavigate, label }: Pagin
       <a
         href={hrefFor(target)}
         onClick={click(hrefFor(target))}
-        className={cn(PILL, 'br:text-text br:hover:bg-surface-canvas', FOCUS_RING)}
+        className={cn(PILL, 'br:text-text br:hover:bg-surface-canvas', PRESS, FOCUS_RING)}
       >
         {icon}
         <span className="br:sr-only">{label}</span>
@@ -70,7 +79,15 @@ export function Pagination({ page, lastPage, hrefFor, onNavigate, label }: Pagin
 
   return (
     <nav aria-label={label ?? t('pagination.label')}>
-      <ul className="br:inline-flex br:items-center br:gap-1 br:rounded-pill br:bg-surface br:p-1 br:shadow-row">
+      <ul
+        ref={listRef}
+        className="br:relative br:inline-flex br:items-center br:gap-1 br:rounded-pill br:bg-surface br:p-1 br:shadow-row"
+      >
+        <li
+          aria-hidden="true"
+          style={pill.style}
+          className="br:pointer-events-none br:absolute br:top-0 br:left-0 br:rounded-pill br:bg-accent br:transition-[transform,width,opacity] br:duration-base br:ease-emphasized br:motion-reduce:transition-none"
+        />
         <li>
           {step(
             page - 1,
@@ -96,8 +113,9 @@ export function Pagination({ page, lastPage, hrefFor, onNavigate, label }: Pagin
                   PILL,
                   'br:tabular-nums',
                   item === page
-                    ? 'br:bg-accent br:text-text-on-accent'
+                    ? cn('br:text-text-on-accent', !pill.ready && 'br:bg-accent')
                     : 'br:text-text br:hover:bg-surface-canvas',
+                  PRESS,
                   FOCUS_RING,
                 )}
               >
