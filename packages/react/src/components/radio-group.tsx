@@ -35,7 +35,9 @@ export function RadioGroup({
       value={value}
       onValueChange={onChange}
       aria-label={label}
-      orientation={orientation}
+      // Not passed to Radix as `orientation`: that would limit arrows to one axis, while the APG
+      // radio group moves with all four arrow keys in any layout.
+      aria-orientation={orientation}
       name={name}
       disabled={disabled}
       className={cn(

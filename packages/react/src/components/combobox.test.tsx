@@ -141,6 +141,136 @@ describe('Combobox', () => {
     expect(screen.queryByRole('button', { name: '移除「Green」' })).toBeNull();
   });
 
+  it('does not load while an IME is composing, then loads once after compositionend', async () => {
+    const load = vi.fn<ComboboxLoader>(async () => ({ options: opts('Ada'), hasMore: false }));
+    render(<Harness label="使用者" initial="" load={load} />);
+    const input = screen.getByRole('combobox', { name: '使用者' });
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: 'ㄕ' } });
+    fireEvent.change(input, { target: { value: 'ㄕˇ' } });
+    act(() => vi.advanceTimersByTime(1000));
+    expect(load).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: '使' } });
+    fireEvent.compositionEnd(input, { data: '使' });
+    act(() => vi.advanceTimersByTime(249));
+    expect(load).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenCalledWith({ q: '使', page: 1 });
+  });
+
+  it('a failed page offers 重試, by mouse or keyboard, which asks for the same page again', async () => {
+    const load = vi
+      .fn<ComboboxLoader>()
+      .mockResolvedValueOnce({ options: opts('Ada', 'Adam'), hasMore: true })
+      .mockRejectedValueOnce(new Error('500'))
+      .mockRejectedValueOnce(new Error('500'))
+      .mockResolvedValueOnce({ options: opts('Adele'), hasMore: false });
+    render(<Harness label="使用者" initial="" load={load} />);
+    const input = screen.getByRole('combobox', { name: '使用者' });
+    fireEvent.change(input, { target: { value: 'ad' } });
+    act(() => vi.advanceTimersByTime(250));
+    await flush();
+    fireEvent.click(screen.getByRole('button', { name: '載入更多' }));
+    await flush();
+    expect(screen.getByRole('status').textContent).toBe('選項載入失敗，請再試一次。');
+    expect(screen.queryByRole('button', { name: '載入更多' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '重試' }));
+    expect(load).toHaveBeenLastCalledWith({ q: 'ad', page: 2 });
+    await flush();
+    // Keyboard: ↓ past the last option retries too.
+    fireEvent.keyDown(input, { key: 'End' });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(load).toHaveBeenCalledTimes(4);
+    expect(load).toHaveBeenLastCalledWith({ q: 'ad', page: 2 });
+    await flush();
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Ada',
+      'Adam',
+      'Adele',
+    ]);
+    expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
+  });
+
+  it('loads the next page when the list is scrolled to its end (once per burst) or ↓ passes the last option', async () => {
+    const load = vi.fn<ComboboxLoader>(async ({ page }) => ({
+      options: opts(`P${page}a`, `P${page}b`),
+      hasMore: page < 3,
+    }));
+    render(<Harness label="使用者" initial="" load={load} />);
+    const input = screen.getByRole('combobox', { name: '使用者' });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    act(() => vi.advanceTimersByTime(250));
+    await flush();
+    const listbox = screen.getByRole('listbox');
+    Object.defineProperty(listbox, 'scrollHeight', { configurable: true, value: 400 });
+    Object.defineProperty(listbox, 'clientHeight', { configurable: true, value: 256 });
+    listbox.scrollTop = 140;
+    fireEvent.scroll(listbox);
+    fireEvent.scroll(listbox);
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(load).toHaveBeenLastCalledWith({ q: '', page: 2 });
+    await flush();
+    fireEvent.keyDown(input, { key: 'End' });
+    expect(input.getAttribute('aria-activedescendant')).toBe(screen.getAllByRole('option')[3]?.id);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(load).toHaveBeenLastCalledWith({ q: '', page: 3 });
+    await flush();
+    expect(screen.getAllByRole('option')).toHaveLength(6);
+  });
+
+  it('closing drops remote results, so reopening shows no stale options', async () => {
+    const load = vi.fn<ComboboxLoader>(async ({ q }) => ({
+      options: opts(`${q}1`),
+      hasMore: false,
+    }));
+    render(<Harness label="使用者" initial="" load={load} />);
+    const input = screen.getByRole('combobox', { name: '使用者' });
+    fireEvent.change(input, { target: { value: 'zz' } });
+    act(() => vi.advanceTimersByTime(250));
+    await flush();
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['zz1']);
+    fireEvent.keyDown(input, { key: 'Escape' });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    expect(screen.getByRole('status').textContent).toBe('載入中');
+    act(() => vi.advanceTimersByTime(250));
+    await flush();
+    expect(load).toHaveBeenLastCalledWith({ q: '', page: 1 });
+  });
+
+  it('ArrowUp opens on the last option; Home and End jump; an IME Enter (229) does not select', () => {
+    const spy = vi.fn();
+    render(
+      <Harness label="城市" initial="" spy={spy} options={opts('Taipei', 'Tainan', 'Kaohsiung')} />,
+    );
+    const input = screen.getByRole('combobox', { name: '城市' });
+    const activeText = () =>
+      document.getElementById(input.getAttribute('aria-activedescendant') ?? '')?.textContent;
+    fireEvent.keyDown(input, { key: 'ArrowUp' });
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(activeText()).toBe('Kaohsiung');
+    fireEvent.keyDown(input, { key: 'Home' });
+    expect(activeText()).toBe('Taipei');
+    fireEvent.keyDown(input, { key: 'End' });
+    expect(activeText()).toBe('Kaohsiung');
+    fireEvent.keyDown(input, { key: 'Enter', keyCode: 229 });
+    expect(spy).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(spy).toHaveBeenCalledWith('kaohsiung');
+  });
+
+  it('single mode has a 清除 button that clears the selection', () => {
+    const spy = vi.fn();
+    render(<Harness label="城市" initial="tainan" spy={spy} options={opts('Taipei', 'Tainan')} />);
+    const input = screen.getByRole('combobox', { name: '城市' }) as HTMLInputElement;
+    expect(input.value).toBe('Tainan');
+    fireEvent.click(screen.getByRole('button', { name: '清除' }));
+    expect(spy).toHaveBeenCalledWith('');
+    expect(input.value).toBe('');
+    expect(screen.queryByRole('button', { name: '清除' })).toBeNull();
+  });
+
   it('resolves labels of selected values it has not loaded', async () => {
     const resolveLabels = vi.fn(async (values: string[]) =>
       values.map((value) => ({ value, label: `User ${value}` })),

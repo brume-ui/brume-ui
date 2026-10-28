@@ -8,7 +8,8 @@ describe('QrCode', () => {
     const svg = screen.getByRole('img', { name: '訂單 42 的 QR Code' });
     expect(svg.tagName.toLowerCase()).toBe('svg');
     expect(svg.getAttribute('width')).toBe('160');
-    expect(svg.querySelector('path')?.getAttribute('d')).toMatch(/^M/);
+    // 4-module quiet zone: the first dark module (finder pattern corner) is at (4, 4).
+    expect(svg.querySelector('path')?.getAttribute('d')).toMatch(/^M4 4h1/);
   });
 
   it('honours size', () => {

@@ -48,6 +48,19 @@ describe('RadioGroup', () => {
     await arrowRight();
     expect(document.activeElement).toBe(screen.getByRole('radio', { name: '隱藏' }));
     expect(onChange).toHaveBeenLastCalledWith('hidden');
+    // All four arrows work in the default (horizontal) layout, as the APG radio group expects.
+    const press = async (key: string) => {
+      await user.keyboard(`{${key}>}`);
+      await new Promise((r) => setTimeout(r, 0));
+      await user.keyboard(`{/${key}}`);
+    };
+    await press('ArrowUp');
+    expect(onChange).toHaveBeenLastCalledWith('published');
+    await press('ArrowDown');
+    expect(onChange).toHaveBeenLastCalledWith('hidden');
+    await press('ArrowLeft');
+    expect(onChange).toHaveBeenLastCalledWith('published');
+    expect(screen.getByRole('radiogroup').getAttribute('aria-orientation')).toBe('horizontal');
   });
 
   it('marks orientation and selects on click', async () => {

@@ -50,9 +50,12 @@ export function SearchInput({
     clearTimeout(timer.current);
     timer.current = undefined;
   };
+  // A pending debounce calls the latest onSearch, not the one from the render that scheduled it.
+  const onSearchRef = useRef(onSearch);
+  onSearchRef.current = onSearch;
   const emit = (next: string) => {
     sent.current = next;
-    onSearch(next);
+    onSearchRef.current(next);
   };
   const schedule = (next: string) => {
     cancel();
@@ -89,8 +92,10 @@ export function SearchInput({
           schedule(e.currentTarget.value);
         }}
         onKeyDown={(e) => {
-          // Enter that confirms an IME candidate is not a search.
-          if (e.key !== 'Enter' || composing.current || e.nativeEvent.isComposing) return;
+          // Enter that confirms an IME candidate is not a search (Safari: keyCode 229 after compositionend).
+          const ime =
+            composing.current || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229;
+          if (e.key !== 'Enter' || ime) return;
           e.preventDefault();
           cancel();
           emit(e.currentTarget.value);

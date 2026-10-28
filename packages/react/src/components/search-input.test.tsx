@@ -53,6 +53,33 @@ describe('SearchInput', () => {
     expect(onSearch).toHaveBeenCalledTimes(1);
   });
 
+  it('ignores the Enter that commits an IME candidate after compositionend (Safari, keyCode 229)', () => {
+    const { onSearch, input } = setup();
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '豬' } });
+    fireEvent.compositionEnd(input, { data: '豬' });
+    fireEvent.keyDown(input, { key: 'Enter', keyCode: 229 });
+    expect(onSearch).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(300));
+    expect(onSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it('a pending debounce calls the latest onSearch', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const ui = (onSearch: (v: string) => void) => (
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <SearchInput value="" onSearch={onSearch} placeholder="搜尋" label="搜尋" />
+      </BrumeProvider>
+    );
+    const { rerender } = render(ui(first));
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'a' } });
+    rerender(ui(second));
+    act(() => vi.advanceTimersByTime(300));
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith('a');
+  });
+
   it('SearchInput does not emit while composing', () => {
     const { onSearch, input } = setup();
     fireEvent.compositionStart(input);

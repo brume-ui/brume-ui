@@ -1,6 +1,6 @@
 import type { OptionItem } from '@brume-ui/brume-schema';
 import * as RadixPopover from '@radix-ui/react-popover';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, X } from 'lucide-react';
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -15,6 +15,7 @@ import { HighlightIndicator, useHighlightIndicator } from '../motion/highlight';
 import { useBrume } from '../provider';
 import { Chip } from './chip';
 import { CONTROL_BORDER, CONTROL_SKIN, HIGHLIGHT_RING } from './focus';
+import { IconButton } from './icon-button';
 import { POPOVER_SURFACE } from './popover';
 
 export type ComboboxLoader = (args: {
@@ -83,6 +84,8 @@ export function Combobox({
   /** Single mode: the input shows the typed text instead of the selected label. */
   const [editing, setEditing] = useState(false);
   const [active, setActive] = useState(-1);
+  /** True between compositionstart and compositionend: the text is not committed, so no request. */
+  const [composing, setComposing] = useState(false);
 
   // Labels of every option seen (local, loaded, resolved), so selections keep their label.
   const [known, setKnown] = useState<ReadonlyMap<string, OptionItem>>(() => new Map());
@@ -104,8 +107,11 @@ export function Combobox({
     hasMore: false,
   });
   const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  /** The request that failed, so 「重試」 (or ↓) asks for the same page again. */
+  const [failure, setFailure] = useState<{ q: string; page: number } | null>(null);
   const latest = useRef(0);
+  /** Set synchronously when a request starts: several scroll events in one frame start one load. */
+  const inFlight = useRef(false);
   const loadedFor = useRef<string | null>(null);
   const loadRef = useRef(load);
   loadRef.current = load;
@@ -115,8 +121,9 @@ export function Combobox({
       const loader = loadRef.current;
       if (!loader) return;
       const request = ++latest.current;
+      inFlight.current = true;
       setLoading(true);
-      setFailed(false);
+      setFailure(null);
       try {
         const res = await loader({ q, page });
         if (request !== latest.current) return;
@@ -128,10 +135,12 @@ export function Combobox({
         }));
       } catch {
         if (request !== latest.current) return;
-        loadedFor.current = null; // reopening or typing retries
-        setFailed(true);
+        setFailure({ q, page });
       } finally {
-        if (request === latest.current) setLoading(false);
+        if (request === latest.current) {
+          inFlight.current = false;
+          setLoading(false);
+        }
       }
     },
     [remember],
@@ -139,18 +148,34 @@ export function Combobox({
 
   const remoteMode = load !== undefined;
   useEffect(() => {
-    if (!remoteMode || !open || loadedFor.current === query) return;
+    if (!remoteMode || !open || composing || loadedFor.current === query) return;
     const timer = setTimeout(() => {
       loadedFor.current = query;
       setActive(-1);
       void fetchPage(query, 1);
     }, REMOTE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [remoteMode, open, query, fetchPage]);
+  }, [remoteMode, open, composing, query, fetchPage]);
 
   const loadMore = () => {
-    if (!remoteMode || loading || !remote.hasMore || loadedFor.current === null) return;
+    if (!remoteMode || inFlight.current || failure) return;
+    if (!remote.hasMore || loadedFor.current === null) return;
     void fetchPage(loadedFor.current, remote.page + 1);
+  };
+
+  const retry = () => {
+    if (failure && !inFlight.current) void fetchPage(failure.q, failure.page);
+  };
+
+  /** Forget remote results and drop any in-flight answer, so a reopened list never shows stale options. */
+  const resetRemote = () => {
+    if (!remoteMode) return;
+    latest.current++;
+    inFlight.current = false;
+    loadedFor.current = null;
+    setLoading(false);
+    setFailure(null);
+    setRemote({ items: [], page: 0, hasMore: false });
   };
 
   // Ask once for labels of selected values nobody has described yet.
@@ -176,6 +201,7 @@ export function Combobox({
     setActive(-1);
     setEditing(false);
     setQuery('');
+    resetRemote();
   };
 
   const choose = (o: OptionItem) => {
@@ -208,21 +234,26 @@ export function Combobox({
   }, [active]);
 
   const move = (delta: 1 | -1) => {
+    const last = visible.length - 1;
     if (!open) {
+      // Down opens on the first option, Up on the last (APG).
       setOpen(true);
-      setActive(visible.length > 0 ? 0 : -1);
+      setActive(last < 0 ? -1 : delta === 1 ? 0 : last);
       return;
     }
-    if (visible.length === 0) return;
-    if (delta === 1 && active >= visible.length - 1) {
-      loadMore();
+    if (delta === 1 && active >= last) {
+      // Past the end: the keyboard's 載入更多, or 重試 after a failed load.
+      if (failure) retry();
+      else loadMore();
       return;
     }
-    setActive((i) => Math.max(0, Math.min(visible.length - 1, i + delta)));
+    if (last < 0) return;
+    setActive((i) => Math.max(0, Math.min(last, i + delta)));
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.nativeEvent.isComposing) return;
+    // keyCode 229: Safari sends the IME's committing Enter after compositionend.
+    if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -232,9 +263,21 @@ export function Combobox({
         e.preventDefault();
         move(-1);
         break;
+      case 'Home':
+      case 'End':
+        if (!open || visible.length === 0) return; // closed: the caret moves as usual
+        e.preventDefault();
+        setActive(e.key === 'Home' ? 0 : visible.length - 1);
+        break;
       case 'Enter': {
         const o = open ? visible[active] : undefined;
-        if (!o) return;
+        if (!o) {
+          if (open && failure) {
+            e.preventDefault();
+            retry();
+          }
+          return;
+        }
         e.preventDefault();
         choose(o);
         break;
@@ -260,9 +303,11 @@ export function Combobox({
   };
 
   const selectedLabel = !multiple && values[0] !== undefined ? labelOf(values[0]) : '';
-  const status = loading
+  // A remote query typed but not loaded yet counts as loading (no 「沒有符合的選項」 flash).
+  const pending = loading || (remoteMode && open && !composing && loadedFor.current !== query);
+  const status = pending
     ? t('common.loading')
-    : failed
+    : failure
       ? t('combobox.loadFailed')
       : visible.length === 0
         ? t('combobox.empty')
@@ -324,6 +369,11 @@ export function Combobox({
               setActive(-1);
               setOpen(true);
             }}
+            onCompositionStart={() => setComposing(true)}
+            onCompositionEnd={(e) => {
+              setComposing(false);
+              setQuery(e.currentTarget.value);
+            }}
             onClick={() => setOpen(true)}
             // Single mode: typing replaces the shown label instead of appending to it.
             onFocus={(e) => !multiple && e.currentTarget.select()}
@@ -334,6 +384,18 @@ export function Combobox({
             }}
             className="br:h-8 br:min-w-[6ch] br:flex-1 br:bg-transparent br:px-1.5 br:text-sm br:text-text br:outline-none br:placeholder:text-text-muted br:disabled:cursor-not-allowed"
           />
+          {!multiple && values.length > 0 && !disabled ? (
+            <IconButton
+              icon={X}
+              label={t('combobox.clear')}
+              onClick={() => {
+                onChange('');
+                close();
+                document.getElementById(inputId)?.focus();
+              }}
+              className="br:size-7 br:shrink-0 br:text-text-muted br:hover:text-text br:[&>svg]:size-4"
+            />
+          ) : null}
           <ChevronDown
             aria-hidden="true"
             className="br:size-4 br:shrink-0 br:text-text-muted br:transition-[rotate] br:duration-base br:ease-out br:group-data-[state=open]:rotate-180 br:motion-reduce:transition-none"
@@ -411,19 +473,28 @@ export function Combobox({
           >
             {status}
           </div>
-          {remoteMode && remote.hasMore && !loading ? (
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={loadMore}
-              className="br:mt-1 br:flex br:h-9 br:w-full br:items-center br:justify-center br:rounded-input br:text-sm br:text-text-muted br:transition-colors br:duration-fast br:hover:bg-surface-canvas br:hover:text-text"
-            >
-              {t('combobox.loadMore')}
-            </button>
+          {/* Mouse buttons; the keyboard gets the same through ↓ past the last option (and Enter for 重試). */}
+          {remoteMode && failure && !loading ? (
+            <ListButton onClick={retry}>{t('combobox.retry')}</ListButton>
+          ) : remoteMode && remote.hasMore && !loading ? (
+            <ListButton onClick={loadMore}>{t('combobox.loadMore')}</ListButton>
           ) : null}
         </RadixPopover.Content>
       </RadixPopover.Portal>
     </RadixPopover.Root>
+  );
+}
+
+function ListButton({ onClick, children }: { onClick(): void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      onClick={onClick}
+      className="br:mt-1 br:flex br:h-9 br:w-full br:items-center br:justify-center br:rounded-input br:text-sm br:text-text-muted br:transition-colors br:duration-fast br:hover:bg-surface-canvas br:hover:text-text"
+    >
+      {children}
+    </button>
   );
 }
 

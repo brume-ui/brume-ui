@@ -12,6 +12,8 @@ export const en: Record<MessageKey, string> = {
   'combobox.loadMore': 'Load more',
   'combobox.empty': 'No matching options',
   'combobox.loadFailed': 'Couldn’t load the options. Try again.',
+  'combobox.retry': 'Retry',
+  'combobox.clear': 'Clear',
   'combobox.remove': 'Remove “{label}”',
   'range.start': '{label} (from)',
   'range.end': '{label} (to)',

@@ -10,6 +10,8 @@ export const zhTW = {
   'combobox.loadMore': '載入更多',
   'combobox.empty': '沒有符合的選項',
   'combobox.loadFailed': '選項載入失敗，請再試一次。',
+  'combobox.retry': '重試',
+  'combobox.clear': '清除',
   'combobox.remove': '移除「{label}」',
   'range.start': '{label}（起）',
   'range.end': '{label}（迄）',

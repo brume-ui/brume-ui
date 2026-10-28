@@ -9,8 +9,8 @@ export interface QrCodeProps {
   label: string;
 }
 
-/** Quiet zone in modules (the spec asks for 4; 2 scans reliably on a white tile). */
-const QUIET = 2;
+/** Quiet zone in modules, as the QR spec requires, so scanners find it next to other dark content. */
+const QUIET = 4;
 
 /**
  * QR code as one SVG path (dark modules on white in both themes, so scanners read it).
