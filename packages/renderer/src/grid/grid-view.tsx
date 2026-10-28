@@ -8,6 +8,8 @@ import {
 } from '@brume-ui/brume-react';
 import type { GridRow, ListPage } from '@brume-ui/brume-schema';
 import { useCallback, useId, useMemo, useState } from 'react';
+import { BatchBar } from './actions/batch-bar';
+import { hasRowActions, PrimaryCell, RowActions, RowMenu, rowLabel } from './actions/row-actions';
 import { readHiddenColumns, writeHiddenColumns } from './column-visibility';
 import { RowExpansion, renderCell } from './displays';
 import { useGridEmptyState } from './empty';
@@ -17,7 +19,7 @@ import { FilterPanelToggle, FilterPanelView } from './filters/filter-panel';
 import { GridScopes } from './filters/scopes';
 import { GridSelectors } from './filters/selectors';
 import { GridContext, type GridContextValue, useGrid } from './grid-context';
-import { GridToolbar } from './toolbar';
+import { ExportMenu, GridToolbar, ToolActions } from './toolbar';
 import { GRID_VISIT, hrefForPage, useGridNavigation } from './use-grid-navigation';
 
 export interface GridViewProps {
@@ -40,6 +42,19 @@ export function GridView({ page, onEdit }: GridViewProps) {
   };
 
   const [selection, setSelection] = useState<ReadonlySet<string>>(() => new Set());
+  // Another view of the list (grid, sort, filters, search, scope, page size or page) starts with
+  // nothing selected; new rows for the same view (a refresh) keep the ids that are still there.
+  const viewKey = JSON.stringify([page.gridId, page.query, page.pagination.page]);
+  const [selectionFor, setSelectionFor] = useState({ viewKey, rows: page.rows });
+  if (selectionFor.viewKey !== viewKey) {
+    setSelectionFor({ viewKey, rows: page.rows });
+    if (selection.size > 0) setSelection(new Set());
+  } else if (selectionFor.rows !== page.rows) {
+    setSelectionFor({ viewKey, rows: page.rows });
+    const present = new Set(page.rows.map((row) => String(row.id)));
+    const kept = [...selection].filter((id) => present.has(id));
+    if (kept.length !== selection.size) setSelection(new Set(kept));
+  }
 
   // Open `expand` cells, keyed "rowId␀columnKey".
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
@@ -78,7 +93,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
     <GridContext.Provider value={grid}>
       <div className="br:flex br:flex-col br:gap-4">
         <PageHeader title={page.title} description={page.description} />
-        {/* Task 11: the batch bar (shown while rows are selected) goes above the toolbar. */}
+        <BatchBar />
         <GridToolbar
           hidden={hidden}
           onHiddenChange={changeHidden}
@@ -90,6 +105,12 @@ export function GridView({ page, onEdit }: GridViewProps) {
                 onToggle={() => setFiltersOpen((open) => !open)}
                 panelId={filterPanelId}
               />
+            </>
+          }
+          end={
+            <>
+              <ToolActions />
+              <ExportMenu />
             </>
           }
         />
@@ -104,7 +125,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
 }
 
 function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
-  const { page, isExpanded } = useGrid();
+  const { page, isExpanded, selection, setSelection, onEdit } = useGrid();
   const { navigate } = useGridNavigation();
   const empty = useGridEmptyState();
   const sort = page.query.sort;
@@ -118,7 +139,8 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
         numeric: col.numeric,
         width: col.width,
         hidden: hidden.has(col.key),
-        cell: (row) => renderCell(col, row),
+        cell: (row) =>
+          col.primary ? <PrimaryCell column={col} row={row} /> : renderCell(col, row),
         // Unsorted → ascending → descending → unsorted.
         sort: col.sortable
           ? {
@@ -154,6 +176,12 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
     return open.length > 0 ? <RowExpansion row={row} columns={open} /> : null;
   };
 
+  const runnable = Boolean(page.endpoints?.action);
+  // Checkboxes only when something acts on a selection: batch actions or 「已選取的 N 筆」 export.
+  const selectable = (runnable && page.actions.batch.length > 0) || Boolean(page.export);
+  const canEdit = Boolean(onEdit) || page.rows.some((row) => row._meta?.editUrl);
+  const withRowActions = hasRowActions(page, canEdit);
+
   return (
     <DataTable
       columns={columns}
@@ -162,7 +190,17 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
       caption={page.title}
       empty={empty}
       rowExpansion={expandColumns.length > 0 ? rowExpansion : undefined}
-      // Task 11: selection, rowWrapper (context menu) and rowActions.
+      selection={
+        selectable
+          ? {
+              selected: selection,
+              onChange: setSelection,
+              rowLabel: (row) => rowLabel(page, row),
+            }
+          : undefined
+      }
+      rowWrapper={(row, tr) => <RowMenu row={row}>{tr}</RowMenu>}
+      rowActions={withRowActions ? (row) => <RowActions row={row} /> : undefined}
     />
   );
 }

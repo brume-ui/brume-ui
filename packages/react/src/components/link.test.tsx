@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Download } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
-import { Link } from './link';
+import { Link, LinkButton } from './link';
 
 function setup(ui: ReactNode) {
   const adapter = createMemoryAdapter('/admin');
@@ -73,5 +73,17 @@ describe('Link', () => {
       </Link>,
     );
     expect(screen.getByRole('link').className).toContain('br:bg-accent');
+  });
+});
+
+describe('LinkButton', () => {
+  it('is a button with the text-link look that runs onClick', () => {
+    const onClick = vi.fn();
+    setup(<LinkButton onClick={onClick}>ORD-1</LinkButton>);
+    const button = screen.getByRole('button', { name: 'ORD-1' });
+    expect(button.getAttribute('type')).toBe('button');
+    expect(button.className).toContain('br:underline');
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledOnce();
   });
 });

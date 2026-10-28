@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import type { AnchorHTMLAttributes, MouseEvent, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
 import { type ButtonSize, type ButtonVariant, buttonClasses } from './button';
@@ -81,5 +81,22 @@ export function Link({
       {variant === 'text' ? <span className="br:truncate">{children}</span> : children}
       {external ? <span className="br:sr-only">{t('link.newTab')}</span> : null}
     </a>
+  );
+}
+
+export interface LinkButtonProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'> {
+  children: ReactNode;
+}
+
+/**
+ * A `<button>` that looks like a text Link, for an in-page action that has no URL of its own
+ * (e.g. opening a row's edit dialog from its name).
+ */
+export function LinkButton({ type = 'button', children, ...rest }: LinkButtonProps) {
+  return (
+    <button {...rest} type={type} className={cn(TEXT, 'br:cursor-pointer', FOCUS_RING)}>
+      <span className="br:truncate">{children}</span>
+    </button>
   );
 }

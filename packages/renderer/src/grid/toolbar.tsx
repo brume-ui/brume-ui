@@ -1,6 +1,17 @@
-import { CheckboxGroup, IconButton, Popover, SearchInput, useBrume } from '@brume-ui/brume-react';
-import { Columns3, RefreshCw } from 'lucide-react';
+import {
+  ActionMenu,
+  Button,
+  CheckboxGroup,
+  IconButton,
+  Popover,
+  resolveIcon,
+  SearchInput,
+  useBrume,
+} from '@brume-ui/brume-react';
+import { Columns3, Download, RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { triggerDownload } from './actions/feedback';
+import { runKey, useActionRunner } from './actions/run-action';
 import { useGrid } from './grid-context';
 import { useGridNavigation } from './use-grid-navigation';
 
@@ -36,8 +47,8 @@ export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarP
         ) : null}
         {start}
       </div>
-      <div className="br:flex br:items-center br:gap-1">
-        {end}
+      <div className="br:flex br:flex-wrap br:items-center br:gap-1">
+        <div className="br:flex br:flex-wrap br:items-center br:gap-2 br:empty:hidden">{end}</div>
         <ColumnToggle hidden={hidden} onHiddenChange={onHiddenChange} />
         <IconButton icon={RefreshCw} label={t('grid.refresh')} onClick={refresh} />
       </div>
@@ -72,5 +83,81 @@ function ColumnToggle({ hidden, onHiddenChange }: Omit<GridToolbarProps, 'start'
         }}
       />
     </Popover>
+  );
+}
+
+/** Tool actions (no rows): one button each, before the export menu. */
+export function ToolActions() {
+  const { page } = useGrid();
+  const { run, pending } = useActionRunner();
+  if (!run || page.actions.tools.length === 0) return null;
+  return page.actions.tools.map((def) => (
+    <Button
+      key={def.key}
+      variant={def.tone === 'danger' ? 'danger' : 'secondary'}
+      iconStart={def.icon ? resolveIcon(def.icon) : undefined}
+      loading={pending === runKey(def, 'tool', [])}
+      onClick={() => void run(def, 'tool', [])}
+    >
+      {def.label}
+    </Button>
+  ));
+}
+
+export type ExportScope = 'all' | 'page' | 'selected';
+
+/**
+ * `export.url` with the current list query, `export_scope` and (for `selected`) `ids[]`.
+ * Keys stay readable (`ids[]`, not `ids%5B%5D`); values are encoded.
+ */
+export function exportHref(
+  exportUrl: string,
+  currentUrl: string,
+  scope: ExportScope,
+  ids: ReadonlyArray<string | number> = [],
+): string {
+  const params = new URL(currentUrl, 'http://localhost').searchParams;
+  params.delete('export_scope');
+  params.delete('ids[]');
+  const parts = [
+    params.toString(),
+    `export_scope=${scope}`,
+    ...(scope === 'selected' ? ids.map((id) => `ids[]=${encodeURIComponent(String(id))}`) : []),
+  ].filter(Boolean);
+  return `${exportUrl}${exportUrl.includes('?') ? '&' : '?'}${parts.join('&')}`;
+}
+
+/** 「匯出 Excel」: all matching rows, this page, or the selected rows; a plain download. */
+export function ExportMenu() {
+  const { page, selection } = useGrid();
+  const { adapter, t } = useBrume();
+  const url = page.export?.url;
+  if (!url) return null;
+  const selectedIds = page.rows.filter((r) => selection.has(String(r.id))).map((r) => r.id);
+  const download = (scope: ExportScope) =>
+    triggerDownload(exportHref(url, adapter.currentUrl(), scope, selectedIds));
+  const label = t('grid.export');
+  return (
+    <ActionMenu
+      label={label}
+      trigger={
+        <Button variant="secondary" iconStart={Download}>
+          {label}
+        </Button>
+      }
+      items={[
+        { key: 'all', label: t('grid.exportAll'), onSelect: () => download('all') },
+        { key: 'page', label: t('grid.exportPage'), onSelect: () => download('page') },
+        ...(selectedIds.length > 0
+          ? [
+              {
+                key: 'selected',
+                label: t('grid.exportSelected', { count: selectedIds.length }),
+                onSelect: () => download('selected'),
+              },
+            ]
+          : []),
+      ]}
+    />
   );
 }
