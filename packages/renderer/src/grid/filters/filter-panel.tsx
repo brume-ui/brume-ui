@@ -116,10 +116,12 @@ export function FilterPanelView({ id, open }: FilterPanelViewProps) {
   // Bumped by 「重設」 so the inputs start over, including state they keep themselves (the
   // operator picked in a condition filter before its value).
   const [generation, setGeneration] = useState(0);
-  // A new server answer (after any navigation) starts the draft again from what is applied.
-  const [draftFor, setDraftFor] = useState(applied);
-  if (draftFor !== applied) {
-    setDraftFor(applied);
+  // Applied filters that change (by content: every server answer brings new objects) start the
+  // draft again; sorting, paging or a refresh keep what is being typed.
+  const appliedKey = JSON.stringify(applied);
+  const [draftFor, setDraftFor] = useState(appliedKey);
+  if (draftFor !== appliedKey) {
+    setDraftFor(appliedKey);
     setDraft(pickFilters(applied, defs));
   }
 

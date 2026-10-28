@@ -310,6 +310,24 @@ describe('grid displays', () => {
     expect(screen.getAllByRole('row')).toHaveLength(2);
   });
 
+  it('expand: another view of the list starts with everything collapsed', async () => {
+    const user = userEvent.setup();
+    const columns: ListColumn[] = [{ key: 'detail', label: '明細', display: { type: 'expand' } }];
+    const rows: GridRow[] = [
+      { id: 1, _meta: { content: { detail: { type: 'text', text: '茶葉' } } } },
+    ];
+    const { rerender } = renderGrid(columns, rows);
+    await user.click(within(cell(0)).getByRole('button'));
+    expect(screen.getAllByRole('row')).toHaveLength(3);
+    // A refresh of the same view keeps it open…
+    rerender(<GridView page={page(columns, [...rows])} />);
+    expect(screen.getAllByRole('row')).toHaveLength(3);
+    // …another page does not.
+    const next = page(columns, [...rows]);
+    rerender(<GridView page={{ ...next, pagination: { ...next.pagination, page: 2 } }} />);
+    expect(screen.getAllByRole('row')).toHaveLength(2);
+  });
+
   it('modal: opens a dialog with the row content', async () => {
     const user = userEvent.setup();
     renderGrid(

@@ -133,6 +133,30 @@ describe('filter panel', () => {
     });
   });
 
+  it('keeps the draft across answers with the same filters, restarts it when they change', async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithBrume(<GridView page={orders} />, { url: '/admin/orders' });
+    await user.click(filterToggle());
+    const from = () => screen.getByRole('spinbutton', { name: '金額（起）' }) as HTMLInputElement;
+    await user.type(from(), '100');
+    // A sort or a refresh: new objects, same filters.
+    rerender(
+      <GridView
+        page={{
+          ...orders,
+          query: { ...orders.query, filters: {}, sort: { key: 'amount', direction: 'asc' } },
+        }}
+      />,
+    );
+    expect(from().value).toBe('100');
+    rerender(
+      <GridView
+        page={{ ...orders, query: { ...orders.query, filters: { amount: { start: '5' } } } }}
+      />,
+    );
+    expect(from().value).toBe('5');
+  });
+
   it('lays items on a CSS grid: newline starts a new row, span 2 takes two columns', async () => {
     const user = userEvent.setup();
     renderWithBrume(<GridView page={orders} />);

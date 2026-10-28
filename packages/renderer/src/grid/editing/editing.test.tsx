@@ -388,6 +388,19 @@ describe('success feedback and row overrides', () => {
     expect(sw().getAttribute('aria-checked')).toBe('false');
   });
 
+  it('a text save that lands after the rows changed shows the saved value until the refresh', async () => {
+    const { respond, settle } = deferred();
+    const { user, rerenderPage } = setup(respond);
+    await user.click(row1().getByRole('button', { name: '編輯客戶：Ann' }));
+    await user.type(row1().getByRole('textbox', { name: '客戶' }), 'e{Enter}');
+    rerenderPage({ ...orders, rows: [{ ...rows[0], no: 'ORD-1 新' } as GridRow] });
+    await act(async () =>
+      settle(0, { status: 200, data: { row: { ...rows[0], customer: 'Anne' } } }),
+    );
+    // Held: not the changed rows' older 'Ann'.
+    expect(row1().getByRole('button', { name: '編輯客戶：Anne' })).toBeTruthy();
+  });
+
   describe('two cells of one row answered out of order', () => {
     /** Saves customer (request 0), then toggles published (request 1) before either answers. */
     async function saveBoth() {

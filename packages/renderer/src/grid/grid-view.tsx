@@ -43,13 +43,17 @@ export function GridView({ page, onEdit }: GridViewProps) {
   };
 
   const [selection, setSelection] = useState<ReadonlySet<string>>(() => new Set());
+  // Open `expand` cells, keyed "rowId␀columnKey".
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   // Another view of the list (grid, sort, filters, search, scope, page size or page) starts with
-  // nothing selected; new rows for the same view (a refresh) keep the ids that are still there.
+  // nothing selected and nothing expanded; new rows for the same view (a refresh) keep the ids that
+  // are still there.
   const viewKey = JSON.stringify([page.gridId, page.query, page.pagination.page]);
   const [selectionFor, setSelectionFor] = useState({ viewKey, rows: page.rows });
   if (selectionFor.viewKey !== viewKey) {
     setSelectionFor({ viewKey, rows: page.rows });
     if (selection.size > 0) setSelection(new Set());
+    if (expanded.size > 0) setExpanded(new Set());
   } else if (selectionFor.rows !== page.rows) {
     setSelectionFor({ viewKey, rows: page.rows });
     const present = new Set(page.rows.map((row) => String(row.id)));
@@ -57,8 +61,6 @@ export function GridView({ page, onEdit }: GridViewProps) {
     if (kept.length !== selection.size) setSelection(new Set(kept));
   }
 
-  // Open `expand` cells, keyed "rowId␀columnKey".
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const expansionPrefix = useId();
   const toggleExpanded = useCallback((rowId: string, key: string) => {
     setExpanded((prev) => {

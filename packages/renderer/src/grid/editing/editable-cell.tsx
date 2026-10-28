@@ -69,15 +69,16 @@ function CellFrame({
 /** Displays without controls of their own, so they can render inside the edit button. */
 const STATIC_DISPLAYS: ReadonlySet<string> = new Set(['text', 'label', 'badge', 'progress']);
 
-/** What an edit button shows and announces: the pending value, else the confirmed one. */
+/** What an edit button shows and announces: the pending (or held) value, else the confirmed one. */
 function useCellLabel({ column, row, editor, display }: CellProps, cell: CellUpdate) {
   const { t } = useBrume();
   const separator = t('grid.listSeparator');
-  const text = cellText(editor, cell.pending ? cell.value : row[column.key], separator);
+  const unconfirmed = cell.pending || cell.held;
+  const text = cellText(editor, unconfirmed ? cell.value : row[column.key], separator);
   // A display renders the confirmed value; a pending one, no display, or a display with controls of
   // its own (which cannot sit inside the edit button) shows as text.
   const staticDisplay = column.display && STATIC_DISPLAYS.has(column.display.type);
-  const showDisplay = !cell.pending && staticDisplay;
+  const showDisplay = !unconfirmed && staticDisplay;
   const content = showDisplay ? display : text;
   // A label or badge is a pill: the pill is the affordance, not a dashed underline.
   const pill =
