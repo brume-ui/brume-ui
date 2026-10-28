@@ -38,7 +38,7 @@ const PAGE: ListPage = {
   columns: [
     { key: 'name', label: '名稱' },
     { key: 'email', label: '信箱' },
-    { key: 'orders', label: '訂單數', numeric: true },
+    { key: 'orders', label: '訂單數', numeric: true, sortable: true },
     { key: 'status', label: '狀態', display: { type: 'component', name: 'StatusBadge' } },
   ],
   rows: Array.from({ length: 12 }, (_, i) => ({
@@ -49,8 +49,9 @@ const PAGE: ListPage = {
     status: STATUSES[i % STATUSES.length],
   })),
   pagination: { page: 2, perPage: 12, total: 96, lastPage: 8 },
-  query: { perPage: 12, filters: {} },
-  perPageOptions: [12],
+  query: { perPage: 12, sort: { key: 'orders', direction: 'asc' }, filters: {} },
+  perPageOptions: [12, 24, 48],
+  quickSearch: { placeholder: '搜尋名稱或信箱' },
   appliedFilters: [],
   actions: { row: [], batch: [], tools: [] },
 };

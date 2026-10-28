@@ -49,8 +49,13 @@ describe('ListPageView', () => {
     });
     await userEvent.click(screen.getByRole('link', { name: '第 3 頁' }));
     const call = adapter.calls.find((c) => c.fn === 'visit');
-    expect(call?.args[0]).toBe('/admin/users?q=ada&page=3#top');
-    expect(call?.args[1]).toMatchObject({ preserveScroll: true, preserveState: true });
+    // Grid parameters come out in the protocol's order (page, per_page, sort, q, scope, filter).
+    expect(call?.args[0]).toBe('/admin/users?page=3&q=ada#top');
+    expect(call?.args[1]).toEqual({
+      preserveScroll: true,
+      preserveState: true,
+      only: ['envelope'],
+    });
   });
 
   it('shows the empty state when there are no rows', () => {
@@ -85,5 +90,11 @@ describe('ListPageView', () => {
 describe('hrefForPage', () => {
   it('adds page to a bare path', () => {
     expect(hrefForPage('/a', 3)).toBe('/a?page=3');
+  });
+
+  it('keeps filters with literal brackets and unrelated params', () => {
+    expect(hrefForPage('/a?ref=x&filter[status][]=paid&page=2', 4)).toBe(
+      '/a?ref=x&page=4&filter[status][]=paid',
+    );
   });
 });

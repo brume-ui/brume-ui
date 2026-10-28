@@ -49,7 +49,15 @@ export const en: Record<MessageKey, string> = {
   'renderer.missing.vite':
     'Custom component "{name}" was not found. Register it in `resources/js/brume/components.ts`.',
   'renderer.list.emptyTitle': 'No data yet',
-  'renderer.list.emptyDescription': 'Records that match will show up here.',
+  'renderer.list.emptyDescription': 'Records you add will show up here.',
+  'grid.search': 'Search',
+  'grid.perPage': '{n} per page',
+  'grid.perPageLabel': 'Rows per page',
+  'grid.refresh': 'Refresh',
+  'grid.columns': 'Columns',
+  'grid.clearFilters': 'Clear all filters',
+  'grid.filteredEmptyTitle': 'No matching records',
+  'grid.filteredEmptyDescription': 'Try another keyword or remove some filters.',
   'renderer.version.title': 'This page cannot be displayed',
   'renderer.version.message':
     'The page data uses schema version {received}, but this frontend only supports {supported}. Update the Laravel package and the frontend packages to the same version.',

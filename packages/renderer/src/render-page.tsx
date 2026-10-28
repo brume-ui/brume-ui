@@ -27,7 +27,17 @@ export function BrumePageView({ envelope }: { envelope: PageEnvelope }) {
     );
   }
   const { page } = envelope;
-  if (page.type === 'list') return <ListPageView page={page} />;
-  if (page.type === 'dashboard') return <DashboardPageView page={page} />;
-  return null;
+  switch (page.type) {
+    case 'list':
+      return <ListPageView page={page} />;
+    case 'dashboard':
+      return <DashboardPageView page={page} />;
+    case 'error':
+      // Task 13 adds the error view.
+      return null;
+    default: {
+      const unknown: never = page;
+      return unknown;
+    }
+  }
 }

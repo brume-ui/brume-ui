@@ -20,6 +20,8 @@ export interface SelectProps {
   id?: string;
   name?: string;
   disabled?: boolean;
+  /** Accessible name when no visible label (Field) points at the trigger. */
+  'aria-label'?: string;
   'aria-describedby'?: string;
   'aria-invalid'?: boolean | 'true' | 'false';
   'aria-required'?: boolean;

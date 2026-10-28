@@ -49,7 +49,15 @@ export const zhCN: Record<MessageKey, string> = {
   'renderer.missing.vite':
     '找不到自定义组件“{name}”。请在 `resources/js/brume/components.ts` 注册它。',
   'renderer.list.emptyTitle': '目前没有数据',
-  'renderer.list.emptyDescription': '符合条件的数据会显示在这里。',
+  'renderer.list.emptyDescription': '新增第一条后会显示在这里。',
+  'grid.search': '搜索',
+  'grid.perPage': '每页 {n} 条',
+  'grid.perPageLabel': '每页条数',
+  'grid.refresh': '刷新',
+  'grid.columns': '显示列',
+  'grid.clearFilters': '清除所有筛选',
+  'grid.filteredEmptyTitle': '没有符合条件的数据',
+  'grid.filteredEmptyDescription': '换个关键词或移除部分筛选条件再试一次。',
   'renderer.version.title': '无法显示这个页面',
   'renderer.version.message':
     '页面数据的 schema 版本是 {received}，这个前端只支持 {supported}。请把 Laravel 端与前端包更新到相同的版本。',

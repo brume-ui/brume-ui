@@ -47,7 +47,15 @@ export const zhTW = {
   'renderer.missing.vite':
     '找不到自訂元件「{name}」。請在 `resources/js/brume/components.ts` 註冊它。',
   'renderer.list.emptyTitle': '目前沒有資料',
-  'renderer.list.emptyDescription': '符合條件的資料會顯示在這裡。',
+  'renderer.list.emptyDescription': '新增第一筆後會顯示在這裡。',
+  'grid.search': '搜尋',
+  'grid.perPage': '每頁 {n} 筆',
+  'grid.perPageLabel': '每頁筆數',
+  'grid.refresh': '重新整理',
+  'grid.columns': '顯示欄位',
+  'grid.clearFilters': '清除所有篩選',
+  'grid.filteredEmptyTitle': '沒有符合條件的資料',
+  'grid.filteredEmptyDescription': '換個關鍵字或移除部分篩選條件再試一次。',
   'renderer.version.title': '無法顯示這個頁面',
   'renderer.version.message':
     '頁面資料的 schema 版本是 {received}，這個前端只支援 {supported}。請把 Laravel 端與前端套件更新到相同的版本。',

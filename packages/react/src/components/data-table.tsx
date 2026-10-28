@@ -137,7 +137,11 @@ export function DataTable<T>({
   // Hovering a data row shifts its surface a step towards the text colour.
   const rowHover =
     'br:transition-colors br:duration-fast br:group-hover/row:bg-[color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))]';
+  // Selected rows take the selected surface (also while hovered); the accent stays on the checkbox.
+  const rowSelected = 'br:group-aria-selected/row:bg-surface-selected';
   const stickyActions = 'br:sticky br:right-0';
+  // The checkbox is 20px in a 44px column: px-3 leaves 12px on each side.
+  const selectCell = 'br:px-3';
 
   const pageIds = rows.map((row) => getRowId(row));
   const selectedOnPage = selection ? pageIds.filter((id) => selection.selected.has(id)).length : 0;
@@ -193,7 +197,7 @@ export function DataTable<T>({
           {table.getHeaderGroups().map((group) => (
             <tr key={group.id}>
               {selection ? (
-                <th scope="col" className="br:px-4 br:pb-1">
+                <th scope="col" className={cn(selectCell, 'br:pb-1')}>
                   <Checkbox
                     checked={headerChecked}
                     onCheckedChange={toggleAll}
@@ -251,7 +255,11 @@ export function DataTable<T>({
                 );
               })}
               {rowActions ? (
-                <th scope="col" className={cn(stickyActions, 'br:px-4 br:pb-1')}>
+                // Same colour as the canvas behind the header, so scrolled columns pass under it.
+                <th
+                  scope="col"
+                  className={cn(stickyActions, 'br:bg-surface-canvas br:px-4 br:pb-1')}
+                >
                   <span className="br:sr-only">{t('dataTable.actions')}</span>
                 </th>
               ) : null}
@@ -263,19 +271,20 @@ export function DataTable<T>({
             ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder rows
                 <tr key={i}>
-                  {selection ? <td className={cellBase} /> : null}
+                  {selection ? <td className={cn(cellBase, selectCell)} /> : null}
                   {columns.map((col) => (
                     <td key={col.key} className={cn(cellBase, alignClass(col))}>
                       <Skeleton className={cn('br:w-3/4', col.numeric && 'br:ml-auto')} />
                     </td>
                   ))}
-                  {rowActions ? <td className={cellBase} /> : null}
+                  {rowActions ? <td className={cn(cellBase, stickyActions)} /> : null}
                 </tr>
               ))
             : table.getRowModel().rows.map((row, i) => {
                 const tr = (
                   <tr
                     key={row.id}
+                    aria-selected={selection ? selection.selected.has(row.id) : undefined}
                     className={ROW_ENTER}
                     style={
                       {
@@ -284,7 +293,7 @@ export function DataTable<T>({
                     }
                   >
                     {selection ? (
-                      <td className={cn(cellBase, rowHover)}>
+                      <td className={cn(cellBase, selectCell, rowHover, rowSelected)}>
                         <Checkbox
                           checked={selection.selected.has(row.id)}
                           onCheckedChange={(on) => toggleRow(row.id, on)}
@@ -306,6 +315,7 @@ export function DataTable<T>({
                           className={cn(
                             cellBase,
                             rowHover,
+                            rowSelected,
                             col && alignClass(col),
                             col?.numeric && 'br:tabular-nums',
                           )}
@@ -315,7 +325,15 @@ export function DataTable<T>({
                       );
                     })}
                     {rowActions ? (
-                      <td className={cn(cellBase, rowHover, stickyActions, 'br:text-right')}>
+                      <td
+                        className={cn(
+                          cellBase,
+                          rowHover,
+                          rowSelected,
+                          stickyActions,
+                          'br:text-right',
+                        )}
+                      >
                         {rowActions(row.original)}
                       </td>
                     ) : null}

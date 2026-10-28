@@ -1,5 +1,5 @@
 import { fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { cloneElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
@@ -231,6 +231,38 @@ describe('DataTable', () => {
       expect([...(onChange.mock.lastCall?.[0] ?? [])].sort()).toEqual(['a', 'b']);
     });
 
+    it('marks selected rows with aria-selected and centres the checkbox column', () => {
+      render(
+        <DataTable<Row>
+          {...base}
+          columns={columns}
+          selection={{ selected: new Set(['b']), onChange: () => {}, rowLabel: (r) => r.name }}
+        />,
+      );
+      const [, rowA, rowB] = screen.getAllByRole('row') as HTMLElement[];
+      expect(rowA?.getAttribute('aria-selected')).toBe('false');
+      expect(rowB?.getAttribute('aria-selected')).toBe('true');
+      // 44px column, 20px checkbox: 12px either side.
+      const selectTh = screen.getAllByRole('columnheader')[0] as HTMLElement;
+      expect(selectTh.className).toContain('br:px-3');
+      const selectTd = within(rowB as HTMLElement).getAllByRole('cell')[0] as HTMLElement;
+      expect(selectTd.className).toContain('br:px-3');
+      expect(selectTd.className).not.toContain('br:px-4');
+      expect(selectTd.className).toContain('br:group-aria-selected/row:bg-surface-selected');
+    });
+
+    it('keeps the actions column sticky with a background in header and skeleton rows', () => {
+      const { container } = render(
+        <DataTable<Row> {...base} columns={columns} rowActions={() => null} loading />,
+      );
+      const th = container.querySelector('thead th:last-child') as HTMLElement;
+      expect(th.className).toContain('br:sticky');
+      expect(th.className).toContain('br:bg-surface-canvas');
+      const td = container.querySelector('tbody tr td:last-child') as HTMLElement;
+      expect(td.className).toContain('br:sticky');
+      expect(td.className).toContain('br:right-0');
+    });
+
     it('does not render hidden columns', () => {
       render(<DataTable<Row> {...base} columns={[nameCol, { ...countCol, hidden: true }]} />);
       expect(screen.queryByRole('columnheader', { name: '數量' })).toBeNull();
@@ -248,11 +280,12 @@ describe('DataTable', () => {
           {...base}
           columns={columns}
           rowActions={(r) => <button type="button">操作{r.name}</button>}
-          rowWrapper={(r, tr) => <div data-wrapped={r.id}>{tr}</div>}
+          rowWrapper={(r, tr) => cloneElement(tr, { 'data-wrapped': r.id } as never)}
         />,
       );
       const rowEls = screen.getAllByRole('row').slice(1);
       expect(rowEls).toHaveLength(2);
+      expect(rowEls.map((tr) => tr.getAttribute('data-wrapped'))).toEqual(['a', 'b']);
       const cells = within(rowEls[0] as HTMLElement).getAllByRole('cell');
       expect(
         within(cells[cells.length - 1] as HTMLElement).getByRole('button', { name: '操作甲' }),
