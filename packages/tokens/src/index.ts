@@ -1,4 +1,4 @@
-export { buildThemeCss, buildTokensCss, buildTokensJson } from './build';
+export { buildMotionThemeCss, buildThemeCss, buildTokensCss, buildTokensJson } from './build';
 export { component } from './component';
 export { type ContrastPair, contrastPairs, contrastRatio } from './contrast';
 export { duration, easing, reducedDuration } from './motion';

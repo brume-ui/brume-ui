@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildThemeCss, buildTokensCss, buildTokensJson } from './build';
+import { buildMotionThemeCss, buildThemeCss, buildTokensCss, buildTokensJson } from './build';
 import { duration, easing, reducedDuration } from './motion';
 
 describe('motion tokens', () => {
@@ -31,8 +31,8 @@ describe('motion tokens', () => {
     }
   });
 
-  test('theme.css exposes easings, named durations and removes ease-in', () => {
-    const css = buildThemeCss();
+  test('motion-theme.css (Brume builds only) sets easings, durations and removes ease-in', () => {
+    const css = buildMotionThemeCss();
     expect(css).toContain('--ease-out: var(--br-ease-out);');
     expect(css).toContain('--ease-emphasized: var(--br-ease-emphasized);');
     expect(css).toContain('--ease-spring: var(--br-ease-spring);');
@@ -41,6 +41,17 @@ describe('motion tokens', () => {
     expect(css).toMatch(
       /@utility duration-base \{[^}]*transition-duration: var\(--br-duration-base\);/,
     );
+  });
+
+  test('shared theme.css does not touch Tailwind motion defaults of host projects', () => {
+    const css = buildThemeCss();
+    expect(css).not.toMatch(/--ease-|--default-transition|--animate-|@utility|@keyframes/);
+    // Every declaration only maps a Tailwind key to a --br-* value (or the spacing scale).
+    const decls = [...css.matchAll(/^\s*(--[\w-]+):\s*([^;]+);/gm)];
+    for (const [, name, value] of decls) {
+      expect(name).toMatch(/^--(color|radius|shadow|font-sans|spacing)/);
+      if (name !== '--spacing') expect(value).toMatch(/^var\(--br-/);
+    }
   });
 
   test('tokens.json carries the motion scale', () => {

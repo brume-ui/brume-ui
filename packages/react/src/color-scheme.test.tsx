@@ -1,6 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { COLOR_SCHEME_STORAGE_KEY, useColorScheme, withThemeTransition } from './color-scheme';
+import {
+  COLOR_SCHEME_STORAGE_KEY,
+  THEME_SWITCH_ATTR,
+  useColorScheme,
+  withThemeTransition,
+} from './color-scheme';
 import { mockReducedMotion } from './motion/test-utils';
 
 afterEach(() => {
@@ -47,14 +52,26 @@ describe('withThemeTransition', () => {
     expect(update).toHaveBeenCalledOnce();
   });
 
-  it('runs the change inside a view transition when supported', () => {
-    const start = vi.fn((cb: () => void) => cb());
+  it('runs the change inside a view transition, scoped by an attribute while it runs', async () => {
+    let finish = () => {};
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const start = vi.fn((cb: () => void) => {
+      cb();
+      return { finished };
+    });
     Object.assign(document, { startViewTransition: start });
     mockReducedMotion(false);
     const update = vi.fn();
     withThemeTransition(update);
     expect(start).toHaveBeenCalledOnce();
     expect(update).toHaveBeenCalledOnce();
+    expect(document.documentElement.hasAttribute(THEME_SWITCH_ATTR)).toBe(true);
+    finish();
+    await finished;
+    await Promise.resolve();
+    expect(document.documentElement.hasAttribute(THEME_SWITCH_ATTR)).toBe(false);
   });
 
   it('skips the cross-fade under prefers-reduced-motion', () => {

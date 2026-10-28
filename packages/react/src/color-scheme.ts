@@ -28,8 +28,11 @@ function apply(scheme: ColorScheme): void {
 }
 
 type ViewTransitionDocument = Document & {
-  startViewTransition?(update: () => void): unknown;
+  startViewTransition?(update: () => void): { finished?: Promise<unknown> } | undefined;
 };
+
+/** Set on <html> while Brume's own theme cross-fade runs; styles.css scopes its timing to it. */
+export const THEME_SWITCH_ATTR = 'data-brume-theme-switch';
 
 /**
  * Runs `update` inside a View Transition when the browser supports it, so the whole page
@@ -47,7 +50,12 @@ export function withThemeTransition(update: () => void): void {
     update();
     return;
   }
-  doc.startViewTransition(update);
+  const root = doc.documentElement;
+  root.setAttribute(THEME_SWITCH_ATTR, '');
+  const done = () => root.removeAttribute(THEME_SWITCH_ATTR);
+  const transition = doc.startViewTransition(update);
+  if (transition?.finished) transition.finished.then(done, done);
+  else done();
 }
 
 export function useColorScheme(): {

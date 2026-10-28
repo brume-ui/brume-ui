@@ -3,5 +3,6 @@
 @import "tailwindcss/theme.css" layer(theme) prefix(br);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(br);
 @import "@brume-ui/brume-tokens/theme.css";
+@import "@brume-ui/brume-tokens/motion-theme.css";
 
 @source "./";

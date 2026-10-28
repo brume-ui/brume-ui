@@ -35,4 +35,11 @@ describe('dist/styles.css', () => {
     );
     expect(new Set(undefinedVars)).toEqual(new Set());
   });
+
+  it("scopes view-transition rules to Brume's own theme switch", () => {
+    const css = readFileSync(resolve(root, 'dist/styles.css'), 'utf8');
+    const rules = [...css.matchAll(/([^{}]*)::view-transition[^{]*\{/g)].map((m) => m[0]);
+    expect(rules.length).toBeGreaterThan(0);
+    for (const rule of rules) expect(rule).toContain('[data-brume-theme-switch]');
+  });
 });

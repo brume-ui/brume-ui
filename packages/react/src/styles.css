@@ -1,5 +1,6 @@
 @import "tailwindcss" prefix(br);
 @import "@brume-ui/brume-tokens/theme.css";
+@import "@brume-ui/brume-tokens/motion-theme.css";
 @import "@brume-ui/brume-tokens/tokens.css";
 @import "./fonts.css";
 
@@ -123,16 +124,13 @@
   }
 }
 
-/* Theme switch cross-fade (View Transitions API; see color-scheme.ts). Plain fade, no movement. */
-::view-transition-old(root),
-::view-transition-new(root) {
+/*
+ * Theme switch cross-fade (View Transitions API; see color-scheme.ts). Scoped to the attribute
+ * Brume sets only while its own theme switch runs, so host-app view transitions are untouched.
+ * Under reduced motion no transition is started at all.
+ */
+:root[data-brume-theme-switch]::view-transition-old(root),
+:root[data-brume-theme-switch]::view-transition-new(root) {
   animation-duration: var(--br-duration-slow);
   animation-timing-function: ease;
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none;
-  }
 }

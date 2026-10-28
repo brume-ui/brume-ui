@@ -20,6 +20,7 @@
       "import": "./dist/index.js"
     },
     "./theme.css": "./dist/theme.css",
+    "./motion-theme.css": "./dist/motion-theme.css",
     "./tokens.css": "./dist/tokens.css",
     "./tokens.json": "./dist/tokens.json"
   },
