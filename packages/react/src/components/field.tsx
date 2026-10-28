@@ -39,7 +39,12 @@ export function Field({ label, description, error, required, children }: FieldPr
       ) : null}
       {cloneElement(children, injected)}
       {error ? (
-        <p id={errorId} className="br:text-sm br:text-danger">
+        // Keyed by the message so each new error drops in again (fade-only under reduced motion).
+        <p
+          key={error}
+          id={errorId}
+          className="br:text-sm br:text-danger br:animate-[br-drop-in_var(--br-duration-base)_var(--br-ease-out)]"
+        >
           {error}
         </p>
       ) : null}

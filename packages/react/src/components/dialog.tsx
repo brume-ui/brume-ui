@@ -2,6 +2,7 @@ import * as RadixDialog from '@radix-ui/react-dialog';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react';
 import { cn } from '../cn';
+import { MODAL_MOTION, OVERLAY_MOTION } from '../motion/classes';
 import { useBrume } from '../provider';
 import { useConfirm } from './confirm';
 import { IconButton } from './icon-button';
@@ -73,7 +74,9 @@ export function Dialog({
   return (
     <RadixDialog.Root open={open} onOpenChange={handleOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="br:fixed br:inset-0 br:z-50 br:bg-scrim/40" />
+        <RadixDialog.Overlay
+          className={cn('br:fixed br:inset-0 br:z-50 br:bg-scrim/40', OVERLAY_MOTION)}
+        />
         <RadixDialog.Content
           ref={contentRef}
           onKeyDown={handleKeyDown}
@@ -99,6 +102,9 @@ export function Dialog({
           }}
           className={cn(
             'br:fixed br:top-1/2 br:left-1/2 br:z-50 br:flex br:max-h-[calc(100vh-48px)] br:max-w-[calc(100vw-48px)] br:-translate-x-1/2 br:-translate-y-1/2 br:flex-col br:rounded-dialog br:border br:border-border br:bg-surface br:text-text br:shadow-overlay',
+            // Modals scale from their centre; maximize/restore eases the size change.
+            'br:transition-[width,height] br:duration-slow br:ease-emphasized',
+            MODAL_MOTION,
             maximized ? 'br:w-[calc(100vw-48px)] br:h-[calc(100vh-48px)]' : WIDTHS[size],
           )}
         >

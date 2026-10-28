@@ -1,7 +1,9 @@
 import * as RadixSelect from '@radix-ui/react-select';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '../cn';
-import { CONTROL_BASE, FOCUS_RING } from './focus';
+import { POPOVER_MOTION } from '../motion/classes';
+import { HighlightIndicator, useHighlightIndicator } from '../motion/highlight';
+import { CONTROL_BASE, CONTROL_BORDER, FOCUS_RING } from './focus';
 
 export interface SelectOption {
   value: string;
@@ -45,40 +47,54 @@ export function Select({
         aria-invalid={isInvalid || undefined}
         className={cn(
           CONTROL_BASE,
-          'br:inline-flex br:w-full br:items-center br:justify-between br:gap-2 br:data-[placeholder]:text-text-muted',
-          isInvalid ? 'br:border-danger' : 'br:border-border-strong',
+          'br:group br:inline-flex br:w-full br:items-center br:justify-between br:gap-2 br:data-[placeholder]:text-text-muted',
+          isInvalid ? 'br:border-danger' : CONTROL_BORDER,
           FOCUS_RING,
           className,
         )}
       >
         <RadixSelect.Value placeholder={placeholder} />
         <RadixSelect.Icon>
-          <ChevronDown aria-hidden="true" className="br:size-4" />
+          <ChevronDown
+            aria-hidden="true"
+            className="br:size-4 br:transition-[rotate] br:duration-base br:ease-out br:group-data-[state=open]:rotate-180"
+          />
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
-        <RadixSelect.Content
-          position="popper"
-          sideOffset={4}
-          className="br:z-50 br:min-w-(--radix-select-trigger-width) br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay"
-        >
-          <RadixSelect.Viewport>
-            {options.map((o) => (
-              <RadixSelect.Item
-                key={o.value}
-                value={o.value}
-                disabled={o.disabled}
-                className="br:relative br:flex br:h-9 br:cursor-default br:items-center br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none br:data-[disabled]:opacity-50 br:data-[highlighted]:bg-surface-selected br:data-[highlighted]:outline-2 br:data-[highlighted]:-outline-offset-2 br:data-[highlighted]:outline-focus-ring"
-              >
-                <RadixSelect.ItemIndicator className="br:absolute br:left-2">
-                  <Check aria-hidden="true" className="br:size-4 br:text-accent" />
-                </RadixSelect.ItemIndicator>
-                <RadixSelect.ItemText>{o.label}</RadixSelect.ItemText>
-              </RadixSelect.Item>
-            ))}
-          </RadixSelect.Viewport>
-        </RadixSelect.Content>
+        <SelectContent options={options} />
       </RadixSelect.Portal>
     </RadixSelect.Root>
+  );
+}
+
+function SelectContent({ options }: { options: SelectOption[] }) {
+  const highlight = useHighlightIndicator();
+  return (
+    <RadixSelect.Content
+      position="popper"
+      sideOffset={4}
+      className={cn(
+        'br:z-50 br:min-w-(--radix-select-trigger-width) br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay br:[--br-origin:var(--radix-select-content-transform-origin)]',
+        POPOVER_MOTION,
+      )}
+    >
+      <RadixSelect.Viewport ref={highlight.ref}>
+        <HighlightIndicator state={highlight} />
+        {options.map((o) => (
+          <RadixSelect.Item
+            key={o.value}
+            value={o.value}
+            disabled={o.disabled}
+            className="br:relative br:flex br:h-9 br:cursor-default br:items-center br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none br:data-[disabled]:opacity-50 br:data-[highlighted]:outline-2 br:data-[highlighted]:-outline-offset-2 br:data-[highlighted]:outline-focus-ring"
+          >
+            <RadixSelect.ItemIndicator className="br:absolute br:left-2">
+              <Check aria-hidden="true" className="br:size-4 br:text-accent" />
+            </RadixSelect.ItemIndicator>
+            <RadixSelect.ItemText>{o.label}</RadixSelect.ItemText>
+          </RadixSelect.Item>
+        ))}
+      </RadixSelect.Viewport>
+    </RadixSelect.Content>
   );
 }

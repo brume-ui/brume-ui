@@ -2,8 +2,10 @@ import type { LayoutSettings, MenuItem } from '@brume-ui/brume-schema';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Menu, X } from 'lucide-react';
 import { type ReactNode, useCallback, useLayoutEffect, useState } from 'react';
+import { cn } from '../cn';
 import { IconButton } from '../components/icon-button';
 import type { Locale } from '../i18n';
+import { OVERLAY_MOTION } from '../motion/classes';
 import { useBrume } from '../provider';
 import { type BreadcrumbItem, Breadcrumbs } from './breadcrumbs';
 import { ColorSchemeMenu, LocaleMenu } from './navbar-menus';
@@ -146,11 +148,16 @@ export function AppShell({
 
       <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="br:fixed br:inset-0 br:z-40 br:bg-scrim/40 br:md:hidden" />
+          <Dialog.Overlay
+            className={cn(
+              'br:fixed br:inset-0 br:z-40 br:bg-scrim/40 br:md:hidden',
+              OVERLAY_MOTION,
+            )}
+          />
           <Dialog.Content
             aria-describedby={undefined}
             data-brume=""
-            className="br-root br:fixed br:inset-y-0 br:left-0 br:z-50 br:w-72 br:max-w-[85vw] br:overflow-y-auto br:bg-surface br:p-3 br:text-text br:shadow-overlay br:outline-none br:md:hidden"
+            className="br-root br:fixed br:inset-y-0 br:left-0 br:z-50 br:w-72 br:max-w-[85vw] br:overflow-y-auto br:bg-surface br:p-3 br:text-text br:shadow-overlay br:outline-none br:md:hidden br:data-[state=open]:animate-[br-drawer-in_var(--br-duration-slow)_var(--br-ease-emphasized)] br:data-[state=closed]:animate-[br-drawer-out_var(--br-duration-base)_var(--br-ease-emphasized)_forwards]"
           >
             <div className="br:mb-4 br:flex br:h-11 br:items-center br:justify-between br:px-3">
               <Dialog.Title className="br:truncate br:text-base br:font-semibold">

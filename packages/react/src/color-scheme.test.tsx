@@ -1,10 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { COLOR_SCHEME_STORAGE_KEY, useColorScheme } from './color-scheme';
+import { COLOR_SCHEME_STORAGE_KEY, useColorScheme, withThemeTransition } from './color-scheme';
+import { mockReducedMotion } from './motion/test-utils';
 
 afterEach(() => {
   localStorage.clear();
   delete document.documentElement.dataset.theme;
+  delete (document as { startViewTransition?: unknown }).startViewTransition;
   vi.restoreAllMocks();
 });
 
@@ -35,5 +37,33 @@ describe('useColorScheme', () => {
     const { result } = renderHook(() => useColorScheme());
     expect(() => act(() => result.current.setScheme('dark'))).not.toThrow();
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+});
+
+describe('withThemeTransition', () => {
+  it('applies the change immediately without the View Transitions API', () => {
+    const update = vi.fn();
+    withThemeTransition(update);
+    expect(update).toHaveBeenCalledOnce();
+  });
+
+  it('runs the change inside a view transition when supported', () => {
+    const start = vi.fn((cb: () => void) => cb());
+    Object.assign(document, { startViewTransition: start });
+    mockReducedMotion(false);
+    const update = vi.fn();
+    withThemeTransition(update);
+    expect(start).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+  });
+
+  it('skips the cross-fade under prefers-reduced-motion', () => {
+    const start = vi.fn((cb: () => void) => cb());
+    Object.assign(document, { startViewTransition: start });
+    mockReducedMotion(true);
+    const update = vi.fn();
+    withThemeTransition(update);
+    expect(start).not.toHaveBeenCalled();
+    expect(update).toHaveBeenCalledOnce();
   });
 });

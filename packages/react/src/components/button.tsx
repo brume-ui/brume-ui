@@ -1,6 +1,7 @@
 import { Loader2, type LucideIcon } from 'lucide-react';
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '../cn';
+import { PRESS } from '../motion/classes';
 import { FOCUS_RING } from './focus';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -37,7 +38,8 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'br:relative br:inline-flex br:items-center br:justify-center br:gap-2 br:rounded-pill br:border br:font-semibold br:transition-colors br:motion-reduce:transition-none br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+        'br:relative br:inline-flex br:items-center br:justify-center br:gap-2 br:rounded-pill br:border br:font-semibold br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+        PRESS,
         FOCUS_RING,
         VARIANTS[variant],
         SIZES[size],
@@ -45,15 +47,23 @@ export function Button({
       )}
     >
       {/* Content stays in the layout (hidden while loading) so the width never jumps. */}
-      <span className={cn('br:inline-flex br:items-center br:gap-2', loading && 'br:opacity-0')}>
+      <span
+        className={cn(
+          'br:inline-flex br:items-center br:gap-2 br:transition-[opacity,filter] br:duration-fade br:ease-out',
+          loading && 'br:opacity-0 br:blur-[2px]',
+        )}
+      >
         {Icon ? <Icon aria-hidden="true" className="br:size-4" /> : null}
         {children}
       </span>
       {loading ? (
-        <Loader2
-          aria-hidden="true"
-          className="br:absolute br:size-4 br:animate-spin br:motion-reduce:animate-none"
-        />
+        // Fades in over the hidden label; the spin itself stops under reduced motion.
+        <span className="br:absolute br:inline-flex br:animate-[br-fade-in_var(--br-duration-fade)_var(--br-ease-out)]">
+          <Loader2
+            aria-hidden="true"
+            className="br:size-4 br:animate-spin br:motion-reduce:animate-none"
+          />
+        </span>
       ) : null}
     </button>
   );

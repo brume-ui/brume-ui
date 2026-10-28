@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { prefersReducedMotion } from './motion/reduced-motion';
 
 export type ColorScheme = 'light' | 'dark' | 'system';
 export const COLOR_SCHEME_STORAGE_KEY = 'brume.color-scheme';
@@ -26,6 +27,29 @@ function apply(scheme: ColorScheme): void {
   else document.documentElement.dataset.theme = scheme;
 }
 
+type ViewTransitionDocument = Document & {
+  startViewTransition?(update: () => void): unknown;
+};
+
+/**
+ * Runs `update` inside a View Transition when the browser supports it, so the whole page
+ * cross-fades between themes (styles.css sets the timing). Without support, under reduced motion
+ * or in a hidden tab the switch is immediate, which is also flash-free.
+ */
+export function withThemeTransition(update: () => void): void {
+  const doc = typeof document === 'undefined' ? null : (document as ViewTransitionDocument);
+  if (
+    !doc ||
+    typeof doc.startViewTransition !== 'function' ||
+    doc.visibilityState === 'hidden' ||
+    prefersReducedMotion()
+  ) {
+    update();
+    return;
+  }
+  doc.startViewTransition(update);
+}
+
 export function useColorScheme(): {
   scheme: ColorScheme;
   resolved: 'light' | 'dark';
@@ -48,7 +72,7 @@ export function useColorScheme(): {
     } catch {
       // storage unavailable (private mode, blocked): still apply for this session
     }
-    apply(next);
+    withThemeTransition(() => apply(next));
     setSchemeState(next);
   }, []);
 

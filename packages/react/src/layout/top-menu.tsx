@@ -3,11 +3,12 @@ import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../cn';
 import { FOCUS_RING, HIGHLIGHT_RING } from '../components/focus';
+import { PRESS } from '../motion/classes';
 import { useBrume } from '../provider';
 import { containsItem, findCurrentItem, interceptClick, menuKey, resolveIcon } from './menu-utils';
+import { MenuContent } from './navbar-menus';
 
-const ITEM =
-  'br:inline-flex br:h-10 br:items-center br:gap-2 br:rounded-pill br:px-4 br:text-sm br:font-medium br:transition-colors br:motion-reduce:transition-none';
+const ITEM = `br:group br:inline-flex br:h-10 br:items-center br:gap-2 br:rounded-pill br:px-4 br:text-sm br:font-medium ${PRESS}`;
 const IDLE = 'br:text-text br:hover:bg-surface-canvas';
 const CURRENT = 'br:bg-accent-tint br:text-accent-tint-text';
 
@@ -38,14 +39,13 @@ export function TopMenu({
                   <Dropdown.Trigger className={cn(ITEM, hasCurrent ? CURRENT : IDLE, FOCUS_RING)}>
                     <Icon aria-hidden="true" className="br:size-4" />
                     {item.title}
-                    <ChevronDown aria-hidden="true" className="br:size-4" />
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="br:size-4 br:transition-[rotate] br:duration-base br:ease-out br:group-data-[state=open]:rotate-180"
+                    />
                   </Dropdown.Trigger>
                   <Dropdown.Portal>
-                    <Dropdown.Content
-                      align="start"
-                      sideOffset={6}
-                      className="br:z-50 br:min-w-44 br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay"
-                    >
+                    <MenuContent align="start" sideOffset={6} className="br:min-w-44">
                       {item.children.map((child) => {
                         const childUrl = child.url ?? '#';
                         return (
@@ -55,7 +55,7 @@ export function TopMenu({
                               aria-current={child === currentItem ? 'page' : undefined}
                               onClick={interceptClick(() => adapter.visit(childUrl))}
                               className={cn(
-                                'br:flex br:h-10 br:items-center br:rounded-input br:px-3 br:text-sm br:text-text br:data-[highlighted]:bg-surface-selected',
+                                'br:relative br:flex br:h-10 br:items-center br:rounded-input br:px-3 br:text-sm br:text-text',
                                 HIGHLIGHT_RING,
                                 child === currentItem && CURRENT,
                               )}
@@ -65,7 +65,7 @@ export function TopMenu({
                           </Dropdown.Item>
                         );
                       })}
-                    </Dropdown.Content>
+                    </MenuContent>
                   </Dropdown.Portal>
                 </Dropdown.Root>
               </li>

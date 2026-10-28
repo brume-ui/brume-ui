@@ -2,8 +2,9 @@ import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { LogOut } from 'lucide-react';
 import { cn } from '../cn';
 import { FOCUS_RING } from '../components/focus';
+import { PRESS } from '../motion/classes';
 import { useBrume } from '../provider';
-import { MENU_CONTENT, MENU_ITEM } from './navbar-menus';
+import { MENU_ITEM, MenuContent } from './navbar-menus';
 
 export interface ShellUser {
   name: string;
@@ -17,7 +18,8 @@ export function UserMenu({ user, logoutUrl }: { user: ShellUser; logoutUrl: stri
       <Dropdown.Trigger
         aria-label={`${t('shell.userMenu')}: ${user.name}`}
         className={cn(
-          'br:inline-flex br:h-10 br:items-center br:gap-2 br:rounded-pill br:pr-3 br:pl-1 br:text-sm br:text-text br:transition-colors br:hover:bg-surface-canvas br:motion-reduce:transition-none',
+          'br:inline-flex br:h-10 br:items-center br:gap-2 br:rounded-pill br:pr-3 br:pl-1 br:text-sm br:text-text br:hover:bg-surface-canvas',
+          PRESS,
           FOCUS_RING,
         )}
       >
@@ -35,7 +37,7 @@ export function UserMenu({ user, logoutUrl }: { user: ShellUser; logoutUrl: stri
         <span className="br:hidden br:max-w-32 br:truncate br:sm:inline">{user.name}</span>
       </Dropdown.Trigger>
       <Dropdown.Portal>
-        <Dropdown.Content align="end" sideOffset={6} className={MENU_CONTENT}>
+        <MenuContent align="end" sideOffset={6}>
           <Dropdown.Item
             className={MENU_ITEM}
             onSelect={() => adapter.submit('post', logoutUrl, {})}
@@ -43,7 +45,7 @@ export function UserMenu({ user, logoutUrl }: { user: ShellUser; logoutUrl: stri
             <LogOut aria-hidden="true" className="br:absolute br:left-2 br:size-4" />
             {t('shell.logout')}
           </Dropdown.Item>
-        </Dropdown.Content>
+        </MenuContent>
       </Dropdown.Portal>
     </Dropdown.Root>
   );

@@ -1,5 +1,7 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { useCallback, useRef, useSyncExternalStore } from 'react';
+import { cn } from '../cn';
+import { MODAL_MOTION, OVERLAY_MOTION } from '../motion/classes';
 import { useBrume } from '../provider';
 import { Button } from './button';
 
@@ -58,18 +60,24 @@ export function ConfirmHost() {
     () => undefined,
   );
   const contentRef = useRef<HTMLDivElement>(null);
-  if (!current) return null;
-  const { opts } = current;
+  // The last request stays rendered (closed) so the dialog can play its exit animation.
+  const lastRef = useRef<Request | undefined>(undefined);
+  if (current) lastRef.current = current;
+  const shown = current ?? lastRef.current;
+  if (!shown) return null;
+  const { opts } = shown;
   const danger = opts.tone === 'danger';
 
   return (
     <AlertDialog.Root
-      key={current.id}
-      open
-      onOpenChange={(open) => !open && settle(current, false)}
+      key={shown.id}
+      open={shown === current}
+      onOpenChange={(open) => !open && settle(shown, false)}
     >
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="br:fixed br:inset-0 br:z-[70] br:bg-scrim/40" />
+        <AlertDialog.Overlay
+          className={cn('br:fixed br:inset-0 br:z-[70] br:bg-scrim/40', OVERLAY_MOTION)}
+        />
         <AlertDialog.Content
           ref={contentRef}
           onOpenAutoFocus={(e) => {
@@ -80,7 +88,10 @@ export function ConfirmHost() {
               action.focus();
             }
           }}
-          className="br:fixed br:top-1/2 br:left-1/2 br:z-[70] br:w-[420px] br:max-w-[calc(100vw-48px)] br:-translate-x-1/2 br:-translate-y-1/2 br:rounded-dialog br:border br:border-border br:bg-surface br:p-6 br:text-text br:shadow-overlay"
+          className={cn(
+            'br:fixed br:top-1/2 br:left-1/2 br:z-[70] br:w-[420px] br:max-w-[calc(100vw-48px)] br:-translate-x-1/2 br:-translate-y-1/2 br:rounded-dialog br:border br:border-border br:bg-surface br:p-6 br:text-text br:shadow-overlay',
+            MODAL_MOTION,
+          )}
         >
           <AlertDialog.Title className="br:text-lg br:font-semibold">
             {opts.title}
@@ -100,7 +111,7 @@ export function ConfirmHost() {
               <Button
                 data-confirm-action=""
                 variant={danger ? 'danger' : 'primary'}
-                onClick={() => settle(current, true)}
+                onClick={() => settle(shown, true)}
               >
                 {opts.confirmLabel}
               </Button>

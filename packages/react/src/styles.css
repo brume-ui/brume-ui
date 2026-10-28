@@ -33,13 +33,106 @@
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-@keyframes br-toast-in {
+/*
+ * Motion (柔霧動效). Rules: packages/tokens/MOTION.md.
+ * Durations come from --br-duration-* (0ms under prefers-reduced-motion, set in tokens.css);
+ * the reduced-motion block below also strips movement from the keyframes so anything that still
+ * plays (fade) only changes opacity.
+ */
+@keyframes br-fade-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+  }
+}
+@keyframes br-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+/* Popovers / dialogs: from 0.96, never from 0. Origin is set by the element (Radix var or center). */
+@keyframes br-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes br-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+/* Field hints and errors: short drop into place. */
+@keyframes br-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes br-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes br-drawer-out {
+  to {
+    transform: translateX(-100%);
+  }
+}
+/* Keyboard focus ring settles in from the control edge. */
+@keyframes br-focus-ring {
+  from {
+    outline-offset: 0;
+    outline-color: transparent;
+  }
+}
+@keyframes br-shimmer {
+  from {
+    background-position: 100% 0;
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes br-pop-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes br-pop-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes br-drop-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes br-drawer-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes br-drawer-out {
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+/* Theme switch cross-fade (View Transitions API; see color-scheme.ts). Plain fade, no movement. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--br-duration-slow);
+  animation-timing-function: ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
   }
 }

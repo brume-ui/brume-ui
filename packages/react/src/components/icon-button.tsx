@@ -2,6 +2,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import type { LucideIcon } from 'lucide-react';
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '../cn';
+import { POPOVER_MOTION, PRESS } from '../motion/classes';
 import { FOCUS_RING } from './focus';
 
 export interface IconButtonProps
@@ -27,7 +28,8 @@ export function IconButton({
             {...rest}
             aria-label={label}
             className={cn(
-              'br:inline-flex br:size-10 br:items-center br:justify-center br:rounded-pill br:text-text br:transition-colors br:hover:bg-surface-canvas br:motion-reduce:transition-none br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+              'br:inline-flex br:size-10 br:items-center br:justify-center br:rounded-pill br:text-text br:hover:bg-surface-canvas br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+              PRESS,
               FOCUS_RING,
               className,
             )}
@@ -38,7 +40,10 @@ export function IconButton({
         <Tooltip.Portal>
           <Tooltip.Content
             sideOffset={6}
-            className="br:z-50 br:rounded-input br:bg-text br:px-2 br:py-1 br:text-xs br:text-surface br:shadow-overlay"
+            className={cn(
+              'br:z-50 br:rounded-input br:bg-text br:px-2 br:py-1 br:text-xs br:text-surface br:shadow-overlay br:[--br-origin:var(--radix-tooltip-content-transform-origin)]',
+              POPOVER_MOTION,
+            )}
           >
             {label}
           </Tooltip.Content>

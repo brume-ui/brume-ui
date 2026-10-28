@@ -1,16 +1,33 @@
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
-import { Check, Globe, Monitor, Moon, Sun } from 'lucide-react';
+import { Check, Globe, type LucideIcon, Monitor, Moon, Sun } from 'lucide-react';
+import type { ComponentProps } from 'react';
 import { cn } from '../cn';
 import { type ColorScheme, useColorScheme } from '../color-scheme';
 import { FOCUS_RING, HIGHLIGHT_RING } from '../components/focus';
 import type { Locale } from '../i18n';
+import { POPOVER_MOTION, PRESS } from '../motion/classes';
+import { HighlightIndicator, useHighlightIndicator } from '../motion/highlight';
 import { useBrume } from '../provider';
 
-export const MENU_CONTENT =
-  'br:z-50 br:min-w-40 br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay';
-export const MENU_ITEM = `br:relative br:flex br:h-10 br:cursor-default br:items-center br:gap-2 br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none br:data-[highlighted]:bg-surface-selected ${HIGHLIGHT_RING}`;
-export const TRIGGER =
-  'br:inline-flex br:size-10 br:items-center br:justify-center br:rounded-pill br:text-text br:transition-colors br:hover:bg-surface-canvas br:motion-reduce:transition-none';
+export const MENU_CONTENT = `br:relative br:z-50 br:min-w-40 br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay br:[--br-origin:var(--radix-dropdown-menu-content-transform-origin)] ${POPOVER_MOTION}`;
+/** Item background comes from the gliding HighlightIndicator inside MenuContent. */
+export const MENU_ITEM = `br:relative br:flex br:h-10 br:cursor-default br:items-center br:gap-2 br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none ${HIGHLIGHT_RING}`;
+export const TRIGGER = `br:inline-flex br:size-10 br:items-center br:justify-center br:rounded-pill br:text-text br:hover:bg-surface-canvas ${PRESS}`;
+
+/** Dropdown.Content with the shared look, origin-aware open/close and a gliding highlight. */
+export function MenuContent({
+  className,
+  children,
+  ...rest
+}: ComponentProps<typeof Dropdown.Content>) {
+  const highlight = useHighlightIndicator();
+  return (
+    <Dropdown.Content ref={highlight.ref} {...rest} className={cn(MENU_CONTENT, className)}>
+      <HighlightIndicator state={highlight} />
+      {children}
+    </Dropdown.Content>
+  );
+}
 
 interface RadioOption {
   value: string;
@@ -36,7 +53,7 @@ function RadioMenu({
         {icon}
       </Dropdown.Trigger>
       <Dropdown.Portal>
-        <Dropdown.Content align="end" sideOffset={6} className={MENU_CONTENT}>
+        <MenuContent align="end" sideOffset={6}>
           <Dropdown.RadioGroup value={value} onValueChange={onValueChange} aria-label={label}>
             {options.map((o) => (
               <Dropdown.RadioItem key={o.value} value={o.value} className={MENU_ITEM}>
@@ -47,20 +64,40 @@ function RadioMenu({
               </Dropdown.RadioItem>
             ))}
           </Dropdown.RadioGroup>
-        </Dropdown.Content>
+        </MenuContent>
       </Dropdown.Portal>
     </Dropdown.Root>
+  );
+}
+
+const SCHEME_ICONS: Array<[ColorScheme, LucideIcon]> = [
+  ['light', Sun],
+  ['dark', Moon],
+  ['system', Monitor],
+];
+
+/** All three icons stay mounted and cross-fade with a small turn (blur hides the overlap). */
+function SchemeIcon({ scheme }: { scheme: ColorScheme }) {
+  return (
+    <span aria-hidden="true" className="br:relative br:block br:size-5">
+      {SCHEME_ICONS.map(([value, Icon]) => (
+        <Icon
+          key={value}
+          data-active={value === scheme || undefined}
+          className="br:absolute br:inset-0 br:size-5 br:scale-50 br:-rotate-90 br:opacity-0 br:blur-[2px] br:transition-[opacity,scale,rotate,filter] br:duration-slow br:ease-out br:motion-reduce:transition-[opacity] br:motion-reduce:duration-fade br:data-active:scale-100 br:data-active:rotate-0 br:data-active:opacity-100 br:data-active:blur-none"
+        />
+      ))}
+    </span>
   );
 }
 
 export function ColorSchemeMenu() {
   const { t } = useBrume();
   const { scheme, setScheme } = useColorScheme();
-  const Icon = scheme === 'dark' ? Moon : scheme === 'light' ? Sun : Monitor;
   return (
     <RadioMenu
       label={t('shell.colorScheme')}
-      icon={<Icon aria-hidden="true" className="br:size-5" />}
+      icon={<SchemeIcon scheme={scheme} />}
       value={scheme}
       onValueChange={(v) => setScheme(v as ColorScheme)}
       options={[

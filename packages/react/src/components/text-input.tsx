@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, Ref } from 'react';
 import { cn } from '../cn';
-import { CONTROL_BASE, FOCUS_RING } from './focus';
+import { CONTROL_BASE, CONTROL_BORDER, FOCUS_RING } from './focus';
 
 export interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   invalid?: boolean;
@@ -23,7 +23,7 @@ export function TextInput({
       className={cn(
         CONTROL_BASE,
         'br:w-full',
-        isInvalid ? 'br:border-danger' : 'br:border-border-strong',
+        isInvalid ? 'br:border-danger' : CONTROL_BORDER,
         FOCUS_RING,
         className,
       )}

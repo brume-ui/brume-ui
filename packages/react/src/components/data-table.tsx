@@ -26,6 +26,11 @@ export interface DataTableProps<T> {
 }
 
 const SKELETON_ROWS = 5;
+/** Rows fade in one after another (30ms apart, capped) when data arrives; decoration only. */
+const ROW_STAGGER_MS = 30;
+const ROW_STAGGER_MAX = 8;
+const ROW_ENTER =
+  'br:group/row br:animate-[br-fade-in_var(--br-duration-base)_var(--br-ease-out)_backwards]';
 /**
  * Floor for columns without a fixed width, so narrow screens scroll instead of squeezing.
  * 10rem leaves 128px of text, enough for a `Y-m-d H:i` timestamp.
@@ -94,6 +99,9 @@ export function DataTable<T>({
 
   const cellBase =
     'br:h-11 br:truncate br:bg-surface br:px-4 br:text-sm br:text-text br:shadow-row br:first:rounded-l-card br:last:rounded-r-card';
+  // Hovering a data row shifts its surface a step towards the text colour.
+  const rowHover =
+    'br:transition-colors br:duration-fast br:group-hover/row:bg-[color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))]';
 
   return (
     <div
@@ -148,8 +156,12 @@ export function DataTable<T>({
                   ))}
                 </tr>
               ))
-            : table.getRowModel().rows.map((row) => (
-                <tr key={row.id}>
+            : table.getRowModel().rows.map((row, i) => (
+                <tr
+                  key={row.id}
+                  className={ROW_ENTER}
+                  style={{ animationDelay: `${Math.min(i, ROW_STAGGER_MAX) * ROW_STAGGER_MS}ms` }}
+                >
                   {row.getVisibleCells().map((cell) => {
                     const col = meta.get(cell.column.id);
                     return (
@@ -157,6 +169,7 @@ export function DataTable<T>({
                         key={cell.id}
                         className={cn(
                           cellBase,
+                          rowHover,
                           col && alignClass(col),
                           col?.numeric && 'br:tabular-nums',
                         )}
@@ -169,7 +182,11 @@ export function DataTable<T>({
               ))}
         </tbody>
       </table>
-      {showEmpty ? <EmptyState {...empty} /> : null}
+      {showEmpty ? (
+        <div className="br:animate-[br-fade-in_var(--br-duration-base)_var(--br-ease-out)]">
+          <EmptyState {...empty} />
+        </div>
+      ) : null}
     </div>
   );
 }
