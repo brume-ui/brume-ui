@@ -4,7 +4,8 @@ import { cn } from '../cn';
 import { FOCUS_RING } from './focus';
 
 export interface CheckboxProps {
-  checked: boolean;
+  /** `'indeterminate'` shows a dash and reports `aria-checked="mixed"`. */
+  checked: boolean | 'indeterminate';
   onCheckedChange(checked: boolean): void;
   label: ReactNode;
   id?: string;
@@ -31,7 +32,7 @@ export function Checkbox({
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(v === true)}
         className={cn(
-          'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-[6px] br:border br:border-border-strong br:bg-surface br:data-[state=checked]:border-accent br:data-[state=checked]:bg-accent br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+          'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-[6px] br:border br:border-border-strong br:bg-surface br:data-[state=checked]:border-accent br:data-[state=checked]:bg-accent br:data-[state=indeterminate]:border-accent br:data-[state=indeterminate]:bg-accent br:disabled:opacity-50 br:disabled:cursor-not-allowed',
           // Press sinks a little; release settles with the spring curve.
           'br:transition-[background-color,border-color,scale] br:duration-fast br:ease-spring br:enabled:active:scale-90 br:motion-reduce:enabled:active:scale-100',
           FOCUS_RING,
@@ -53,6 +54,13 @@ export function Checkbox({
               strokeLinecap="round"
               strokeLinejoin="round"
               className="br:[stroke-dasharray:1] br:[stroke-dashoffset:1] br:opacity-0 br:transition-[stroke-dashoffset,opacity] br:duration-instant br:ease-out br:group-data-[state=checked]:[stroke-dashoffset:0] br:group-data-[state=checked]:opacity-100 br:group-data-[state=checked]:duration-base"
+            />
+            <path
+              d="M6 12h12"
+              stroke="currentColor"
+              strokeWidth={3.2}
+              strokeLinecap="round"
+              className="br:opacity-0 br:transition-opacity br:duration-fast br:group-data-[state=indeterminate]:opacity-100"
             />
           </svg>
         </RadixCheckbox.Indicator>

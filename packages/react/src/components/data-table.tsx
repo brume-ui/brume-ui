@@ -1,6 +1,9 @@
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import {
   type CSSProperties,
+  Fragment,
+  type ReactElement,
   type ReactNode,
   type RefObject,
   useEffect,
@@ -10,6 +13,7 @@ import {
 } from 'react';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
+import { Checkbox } from './checkbox';
 import { EmptyState, type EmptyStateProps } from './empty-state';
 import { FOCUS_RING } from './focus';
 import { Skeleton } from './skeleton';
@@ -22,6 +26,12 @@ export interface DataColumn<T> {
   numeric?: boolean;
   /** CSS width (e.g. '8rem', '20%'). Columns without one share the remaining space. */
   width?: string;
+  /** Makes the header a button; `direction` is the current state, `onToggle` asks for the next. */
+  sort?: { direction: 'asc' | 'desc' | null; onToggle(): void };
+  /** Rendered after the header label (e.g. a filter trigger). */
+  headerAccessory?: ReactNode;
+  /** Hidden columns are not rendered at all. */
+  hidden?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -31,6 +41,16 @@ export interface DataTableProps<T> {
   loading?: boolean;
   empty: Pick<EmptyStateProps, 'title' | 'description' | 'action'>;
   caption?: string;
+  /** Adds a checkbox column. The header checkbox only acts on the rows of the current page. */
+  selection?: {
+    selected: ReadonlySet<string>;
+    onChange(next: Set<string>): void;
+    rowLabel(row: T): string;
+  };
+  /** Wraps each data row's `<tr>`, e.g. in a RowContextMenu. */
+  rowWrapper?(row: T, tr: ReactElement): ReactElement;
+  /** A fixed last column of row actions. */
+  rowActions?(row: T): ReactNode;
 }
 
 const SKELETON_ROWS = 5;
@@ -44,11 +64,14 @@ const ROW_ENTER =
  * 10rem leaves 128px of text, enough for a `Y-m-d H:i` timestamp.
  */
 const MIN_FLUID_COLUMN = '10rem';
+const SELECT_COLUMN_WIDTH = '44px';
+const ACTIONS_COLUMN_WIDTH = '10rem';
 
-function minTableWidth(columns: Array<{ width?: string }>): string {
-  const parts = columns.map((c) =>
-    c.width && !c.width.endsWith('%') ? c.width : MIN_FLUID_COLUMN,
-  );
+function minTableWidth(columns: Array<{ width?: string }>, extra: string[]): string {
+  const parts = [
+    ...extra,
+    ...columns.map((c) => (c.width && !c.width.endsWith('%') ? c.width : MIN_FLUID_COLUMN)),
+  ];
   return `calc(${parts.join(' + ')})`;
 }
 
@@ -73,13 +96,17 @@ function alignClass(col: { align?: 'start' | 'end'; numeric?: boolean }) {
 }
 
 export function DataTable<T>({
-  columns,
   rows,
   getRowId,
   loading = false,
   empty,
   caption,
+  selection,
+  rowWrapper,
+  rowActions,
+  columns: allColumns,
 }: DataTableProps<T>) {
+  const columns = useMemo(() => allColumns.filter((c) => !c.hidden), [allColumns]);
   const defs = useMemo(
     () =>
       columns.map((col) => ({
@@ -110,6 +137,32 @@ export function DataTable<T>({
   // Hovering a data row shifts its surface a step towards the text colour.
   const rowHover =
     'br:transition-colors br:duration-fast br:group-hover/row:bg-[color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))]';
+  const stickyActions = 'br:sticky br:right-0';
+
+  const pageIds = rows.map((row) => getRowId(row));
+  const selectedOnPage = selection ? pageIds.filter((id) => selection.selected.has(id)).length : 0;
+  const allChecked = pageIds.length > 0 && selectedOnPage === pageIds.length;
+  const headerChecked = allChecked ? true : selectedOnPage > 0 ? 'indeterminate' : false;
+  const toggleAll = () => {
+    if (!selection) return;
+    const next = new Set(selection.selected);
+    for (const id of pageIds) {
+      if (allChecked) next.delete(id);
+      else next.add(id);
+    }
+    selection.onChange(next);
+  };
+  const toggleRow = (id: string, on: boolean) => {
+    if (!selection) return;
+    const next = new Set(selection.selected);
+    if (on) next.add(id);
+    else next.delete(id);
+    selection.onChange(next);
+  };
+  const extraWidths = [
+    ...(selection ? [SELECT_COLUMN_WIDTH] : []),
+    ...(rowActions ? [ACTIONS_COLUMN_WIDTH] : []),
+  ];
 
   return (
     <div
@@ -126,29 +179,82 @@ export function DataTable<T>({
       <table
         aria-busy={loading || undefined}
         className="br:w-full br:table-fixed br:border-separate br:border-spacing-y-1"
-        style={{ minWidth: minTableWidth(columns) }}
+        style={{ minWidth: minTableWidth(columns, extraWidths) }}
       >
+        {caption ? <caption className="br:sr-only">{caption}</caption> : null}
         <colgroup>
+          {selection ? <col style={{ width: SELECT_COLUMN_WIDTH }} /> : null}
           {columns.map((col) => (
             <col key={col.key} style={col.width ? { width: col.width } : undefined} />
           ))}
+          {rowActions ? <col style={{ width: ACTIONS_COLUMN_WIDTH }} /> : null}
         </colgroup>
-        {caption ? <caption className="br:sr-only">{caption}</caption> : null}
         <thead>
           {table.getHeaderGroups().map((group) => (
             <tr key={group.id}>
-              {group.headers.map((header) => (
-                <th
-                  key={header.id}
-                  scope="col"
-                  className={cn(
-                    'br:truncate br:px-4 br:pb-1 br:text-xs br:font-semibold br:text-text-muted',
-                    alignClass(meta.get(header.column.id) ?? {}),
-                  )}
-                >
-                  {flexRender(header.column.columnDef.header, header.getContext())}
+              {selection ? (
+                <th scope="col" className="br:px-4 br:pb-1">
+                  <Checkbox
+                    checked={headerChecked}
+                    onCheckedChange={toggleAll}
+                    disabled={loading || pageIds.length === 0}
+                    label={<span className="br:sr-only">{t('dataTable.selectAll')}</span>}
+                  />
                 </th>
-              ))}
+              ) : null}
+              {group.headers.map((header) => {
+                const col = meta.get(header.column.id);
+                const sort = col?.sort;
+                const label = flexRender(header.column.columnDef.header, header.getContext());
+                return (
+                  <th
+                    key={header.id}
+                    scope="col"
+                    aria-sort={
+                      sort
+                        ? sort.direction === 'asc'
+                          ? 'ascending'
+                          : sort.direction === 'desc'
+                            ? 'descending'
+                            : 'none'
+                        : undefined
+                    }
+                    className={cn(
+                      'br:truncate br:px-4 br:pb-1 br:text-xs br:font-semibold br:text-text-muted',
+                      alignClass(col ?? {}),
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'br:inline-flex br:max-w-full br:items-center br:gap-1',
+                        col?.align === 'end' || col?.numeric ? 'br:flex-row-reverse' : null,
+                      )}
+                    >
+                      {sort ? (
+                        <button
+                          type="button"
+                          onClick={sort.onToggle}
+                          className={cn(
+                            'br:inline-flex br:items-center br:gap-1 br:rounded-[6px] br:font-semibold br:transition-colors br:duration-fast br:hover:text-text',
+                            FOCUS_RING,
+                          )}
+                        >
+                          {label}
+                          <SortIcons direction={sort.direction} />
+                        </button>
+                      ) : (
+                        label
+                      )}
+                      {col?.headerAccessory}
+                    </span>
+                  </th>
+                );
+              })}
+              {rowActions ? (
+                <th scope="col" className={cn(stickyActions, 'br:px-4 br:pb-1')}>
+                  <span className="br:sr-only">{t('dataTable.actions')}</span>
+                </th>
+              ) : null}
             </tr>
           ))}
         </thead>
@@ -157,41 +263,68 @@ export function DataTable<T>({
             ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder rows
                 <tr key={i}>
+                  {selection ? <td className={cellBase} /> : null}
                   {columns.map((col) => (
                     <td key={col.key} className={cn(cellBase, alignClass(col))}>
                       <Skeleton className={cn('br:w-3/4', col.numeric && 'br:ml-auto')} />
                     </td>
                   ))}
+                  {rowActions ? <td className={cellBase} /> : null}
                 </tr>
               ))
-            : table.getRowModel().rows.map((row, i) => (
-                <tr
-                  key={row.id}
-                  className={ROW_ENTER}
-                  style={
-                    {
-                      '--br-row-delay': `${Math.min(i, ROW_STAGGER_MAX) * ROW_STAGGER_MS}ms`,
-                    } as CSSProperties
-                  }
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const col = meta.get(cell.column.id);
-                    return (
-                      <td
-                        key={cell.id}
-                        className={cn(
-                          cellBase,
-                          rowHover,
-                          col && alignClass(col),
-                          col?.numeric && 'br:tabular-nums',
-                        )}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            : table.getRowModel().rows.map((row, i) => {
+                const tr = (
+                  <tr
+                    key={row.id}
+                    className={ROW_ENTER}
+                    style={
+                      {
+                        '--br-row-delay': `${Math.min(i, ROW_STAGGER_MAX) * ROW_STAGGER_MS}ms`,
+                      } as CSSProperties
+                    }
+                  >
+                    {selection ? (
+                      <td className={cn(cellBase, rowHover)}>
+                        <Checkbox
+                          checked={selection.selected.has(row.id)}
+                          onCheckedChange={(on) => toggleRow(row.id, on)}
+                          label={
+                            <span className="br:sr-only">
+                              {t('dataTable.selectRow', {
+                                label: selection.rowLabel(row.original),
+                              })}
+                            </span>
+                          }
+                        />
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                    ) : null}
+                    {row.getVisibleCells().map((cell) => {
+                      const col = meta.get(cell.column.id);
+                      return (
+                        <td
+                          key={cell.id}
+                          className={cn(
+                            cellBase,
+                            rowHover,
+                            col && alignClass(col),
+                            col?.numeric && 'br:tabular-nums',
+                          )}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      );
+                    })}
+                    {rowActions ? (
+                      <td className={cn(cellBase, rowHover, stickyActions, 'br:text-right')}>
+                        {rowActions(row.original)}
+                      </td>
+                    ) : null}
+                  </tr>
+                );
+                return (
+                  <Fragment key={row.id}>{rowWrapper ? rowWrapper(row.original, tr) : tr}</Fragment>
+                );
+              })}
         </tbody>
       </table>
       {showEmpty ? (
@@ -200,5 +333,19 @@ export function DataTable<T>({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Up and down arrows stacked; only the current direction takes the accent colour. */
+function SortIcons({ direction }: { direction: 'asc' | 'desc' | null }) {
+  return (
+    <span aria-hidden="true" className="br:inline-flex br:-space-x-1.5">
+      <ArrowUp
+        className={cn('br:size-3', direction === 'asc' ? 'br:text-accent' : 'br:opacity-40')}
+      />
+      <ArrowDown
+        className={cn('br:size-3', direction === 'desc' ? 'br:text-accent' : 'br:opacity-40')}
+      />
+    </span>
   );
 }

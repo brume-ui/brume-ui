@@ -1,9 +1,9 @@
-import { render as rtlRender, screen, within } from '@testing-library/react';
+import { fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
-import { DataTable } from './data-table';
+import { type DataColumn, DataTable } from './data-table';
 
 const render = (ui: ReactNode) =>
   rtlRender(<BrumeProvider adapter={createMemoryAdapter()}>{ui}</BrumeProvider>);
@@ -13,10 +13,11 @@ interface Row {
   name: string;
   count: number;
 }
-const columns = [
+const columns: DataColumn<Row>[] = [
   { key: 'name', header: '名稱' },
   { key: 'count', header: '數量', numeric: true },
 ];
+const [nameCol, countCol] = columns as [DataColumn<Row>, DataColumn<Row>];
 const empty = { title: '還沒有資料', description: '新增第一筆資料後會顯示在這裡。' };
 
 describe('DataTable', () => {
@@ -175,5 +176,87 @@ describe('DataTable', () => {
     const rows = screen.getAllByRole('row').slice(1);
     expect(rows.map((r) => r.style.getPropertyValue('--br-row-delay'))).toEqual(['0ms', '30ms']);
     expect(rows[0]?.className).toContain('br:motion-reduce:[animation-delay:0ms]');
+  });
+  describe('extensions', () => {
+    const rows: Row[] = [
+      { id: 'a', name: '甲', count: 1 },
+      { id: 'b', name: '乙', count: 2 },
+    ];
+    const base = { rows, getRowId: (r: Row) => r.id, empty };
+
+    it('aria-sort reflects the sort direction', () => {
+      const onToggle = vi.fn();
+      const make = (direction: 'asc' | 'desc' | null) => (
+        <DataTable<Row>
+          {...base}
+          columns={[{ key: 'name', header: '名稱', sort: { direction, onToggle } }, countCol]}
+        />
+      );
+      const { rerender } = render(make('asc'));
+      const th = () => screen.getByRole('columnheader', { name: /名稱/ });
+      expect(th().getAttribute('aria-sort')).toBe('ascending');
+      rerender(<BrumeProvider adapter={createMemoryAdapter()}>{make('desc')}</BrumeProvider>);
+      expect(th().getAttribute('aria-sort')).toBe('descending');
+      rerender(<BrumeProvider adapter={createMemoryAdapter()}>{make(null)}</BrumeProvider>);
+      expect(th().getAttribute('aria-sort')).toBe('none');
+      expect(screen.getByRole('columnheader', { name: '數量' }).hasAttribute('aria-sort')).toBe(
+        false,
+      );
+      fireEvent.click(within(th()).getByRole('button'));
+      expect(onToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('selects the whole page and shows mixed state when partially selected', () => {
+      const onChange = vi.fn();
+      const sel = (selected: string[]) => ({
+        selected: new Set(selected),
+        onChange,
+        rowLabel: (r: Row) => r.name,
+      });
+      const { rerender } = render(
+        <DataTable<Row> {...base} columns={columns} selection={sel(['z'])} />,
+      );
+      fireEvent.click(screen.getByRole('checkbox', { name: '全選這一頁' }));
+      expect([...(onChange.mock.calls[0]?.[0] ?? [])].sort()).toEqual(['a', 'b', 'z']);
+      expect(screen.getByRole('checkbox', { name: '選取 甲' })).toBeTruthy();
+      rerender(
+        <BrumeProvider adapter={createMemoryAdapter()}>
+          <DataTable<Row> {...base} columns={columns} selection={sel(['a'])} />
+        </BrumeProvider>,
+      );
+      expect(
+        screen.getByRole('checkbox', { name: '全選這一頁' }).getAttribute('aria-checked'),
+      ).toBe('mixed');
+      fireEvent.click(screen.getByRole('checkbox', { name: '選取 乙' }));
+      expect([...(onChange.mock.lastCall?.[0] ?? [])].sort()).toEqual(['a', 'b']);
+    });
+
+    it('does not render hidden columns', () => {
+      render(<DataTable<Row> {...base} columns={[nameCol, { ...countCol, hidden: true }]} />);
+      expect(screen.queryByRole('columnheader', { name: '數量' })).toBeNull();
+      expect(screen.getAllByRole('columnheader')).toHaveLength(1);
+    });
+
+    it('caption is the first child of table', () => {
+      render(<DataTable<Row> {...base} columns={columns} caption="項目清單" />);
+      expect(screen.getByRole('table').firstElementChild?.tagName).toBe('CAPTION');
+    });
+
+    it('puts rowActions in the last cell of each row and wraps rows with rowWrapper', () => {
+      render(
+        <DataTable<Row>
+          {...base}
+          columns={columns}
+          rowActions={(r) => <button type="button">操作{r.name}</button>}
+          rowWrapper={(r, tr) => <div data-wrapped={r.id}>{tr}</div>}
+        />,
+      );
+      const rowEls = screen.getAllByRole('row').slice(1);
+      expect(rowEls).toHaveLength(2);
+      const cells = within(rowEls[0] as HTMLElement).getAllByRole('cell');
+      expect(
+        within(cells[cells.length - 1] as HTMLElement).getByRole('button', { name: '操作甲' }),
+      ).toBeTruthy();
+    });
   });
 });
