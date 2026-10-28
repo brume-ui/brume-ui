@@ -9,18 +9,18 @@
 - **螢幕閱讀器。** 每張圖是一個 `<figure>`，名稱是 `title`，描述是一句摘要（筆數、最低、最高）；圖下有一張視覺上隱藏的資料表，鍵盤移動時用 `aria-live` 唸出目前數值。圖已經放在有標題的 Card 裡時，可以加 `hideTitle`，標題就只給輔助科技用。
 - **載入與空資料。** `loading` 會在同樣高度顯示骨架；`data` 是空陣列時顯示「目前沒有資料」，可用 `emptyMessage` 改文字。
 - **進場動畫。** 長條從基線長出來，折線和甜甜圈畫出來，總長不超過約 500ms。使用者開啟「減少動態效果」時完全不播；也可以傳 `animate={false}` 關掉。
-- **數字格式。** `valueFormat` 給提示和資料表用，`axisFormat` 給座標軸用。兩者都可以是 `Intl.NumberFormatOptions`（例如 `{ style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }`），也可以是函式。沒給 `axisFormat` 時，座標軸用 `valueFormat` 的精簡寫法（`1.2萬`、`1.2K`），語系跟著 `BrumeProvider`。
+- **觸控。** 點一下會顯示點到的那一筆（不是第一筆），提示會留著，直到點別處。
+- **數字格式。** `valueFormat` 給提示和資料表用，`axisFormat` 給座標軸用。兩者都可以是 `Intl.NumberFormatOptions`（例如 `{ style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }`），也可以是函式。沒給 `axisFormat` 時，座標軸用 `valueFormat` 的精簡寫法（`1.25萬`、`1.2K`），小數位數依刻度決定，確保每個刻度都精確、不重複；語系跟著 `BrumeProvider`。
 
 ## 顏色
 
 圖表顏色是 `@brume-ui/brume-tokens` 的 `--br-chart-*`：
 
-| Token                                 | 用途                                                           |
-| ------------------------------------- | -------------------------------------------------------------- |
-| `--br-chart-1` … `--br-chart-8`       | 數列顏色，依序指定，不循環。第 9 個以後請合併成「其他」。      |
-| `--br-chart-positive` / `-negative`   | 有好壞意義的值（漲跌）。一定要搭配圖示或正負號，不能只靠顏色。 |
-| `--br-chart-muted`                    | 「其他」與淡化的項目。                                         |
-| `--br-chart-grid` / `--br-chart-axis` | 格線與基線。                                                   |
+| Token                                 | 用途                                                      |
+| ------------------------------------- | --------------------------------------------------------- |
+| `--br-chart-1` … `--br-chart-8`       | 數列顏色，依序指定，不循環。第 9 個以後請合併成「其他」。 |
+| `--br-chart-muted`                    | 「其他」與淡化的項目。                                    |
+| `--br-chart-grid` / `--br-chart-axis` | 格線與基線。                                              |
 
 順序是色盲安全的關鍵：相鄰兩色在紅色盲、綠色盲模擬下仍分得開，而且每個顏色在淺色和深色卡片上都有 3:1 以上的對比。`packages/tokens/src/chart-palette.test.ts` 會檢查這幾項，改色票時測試會擋下不合格的組合。主色（`--br-accent`）不用在圖表上。
 
@@ -76,13 +76,15 @@ const TWD = { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 } as 
 
 - 一個數字（加上和上期比較）用 `StatCard`，不要畫只有一根的長條圖。
 - 隨時間變化用 `LineChart`。`area` 只建議用在單一數列，多條線疊面積會糊在一起。
-- 比較大小用 `BarChart`。`DonutChart` 只適合一眼看占比，超過 6 塊會自動把尾巴合併成「其他」（`maxSlices` 可調）。
+- 比較大小用 `BarChart`。`DonutChart` 只適合一眼看占比，超過 6 塊時保留最大的幾塊（維持原本順序），其餘合併成「其他」（`maxSlices` 可調）。
 - 不要把兩種單位畫在同一張圖（雙 Y 軸）。分成兩張圖。
 - 缺值請給 `null`：折線會斷開，資料表顯示「—」。
+- 手機寬度下，分組長條的類別標籤會隔幾個才顯示一個；類別多或名稱長時改用 `orientation="horizontal"`。
+- 折線目前不在線尾直接標數值，靠圖例、提示和資料表。
 
 ## 從 brume-laravel 餵資料
 
-階段 1 的 schema 沒有圖表節點，儀表板透過自訂元件使用這些圖表。PHP 端 `->component()` 的陣列會原封不動變成元件的 props，所以所有 props 都設計成 JSON 可以表達的形狀：資料是物件陣列、日期用 ISO 字串、格式用 `Intl.NumberFormatOptions`。
+階段 1 的 schema 沒有圖表節點，儀表板透過自訂元件使用這些圖表。PHP 端 `->component()` 的陣列會原封不動變成元件的 props，所以所有 props 都設計成 JSON 可以表達的形狀：資料是物件陣列、日期用 ISO 字串、格式用 `Intl.NumberFormatOptions`。數值可以是數字或數字字串：PDO 會把 `DECIMAL` 和 `SUM()` 的結果傳成字串（例如 `"1284000.00"`），圖表、`StatCard` 和 `Sparkline` 都會自動轉成數字，不必在 PHP 端先 `(float)`；無法轉成數字的值當作缺值。
 
 最簡單的做法是直接把 Brume 的元件註冊進去（需要 `brume:install --frontend`）：
 
