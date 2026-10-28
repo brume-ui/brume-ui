@@ -16,6 +16,15 @@ export {
   validateEnvelope,
 } from './page';
 export {
+  type FilterValue,
+  GRID_PARAMS,
+  type GridQuery,
+  parseGridQuery,
+  type SortDirection,
+  serializeGridQuery,
+  withGridQuery,
+} from './protocol/query';
+export {
   type Flash,
   FlashSchema,
   type LayoutSettings,
