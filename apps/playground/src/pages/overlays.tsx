@@ -1,4 +1,18 @@
-import { Button, Dialog, Field, TextInput, toast, useConfirm } from '@brume-ui/brume-react';
+import {
+  ActionMenu,
+  Button,
+  Chip,
+  Dialog,
+  Field,
+  type MenuAction,
+  Popover,
+  RowContextMenu,
+  Switch,
+  TextInput,
+  toast,
+  useConfirm,
+} from '@brume-ui/brume-react';
+import { Copy, Eye, Filter, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Page, Panel, Section } from './page';
 
@@ -117,6 +131,117 @@ export function ToastPage() {
             >
               固定 id
             </Button>
+          </div>
+        </Panel>
+      </Section>
+    </Page>
+  );
+}
+
+const ROW_NAMES = ['保濕修護洗髮精 500ml', '頭皮淨化精華 30ml', '強韌防落洗髮露'] as const;
+
+function rowActions(name: string, log: (s: string) => void): MenuAction[] {
+  return [
+    {
+      key: 'edit',
+      label: '編輯',
+      icon: Pencil,
+      shortcut: 'E',
+      onSelect: () => log(`編輯 ${name}`),
+    },
+    {
+      key: 'copy',
+      label: '複製一份',
+      icon: Copy,
+      shortcut: 'D',
+      onSelect: () => log(`複製 ${name}`),
+    },
+    {
+      key: 'view',
+      label: '查看詳情',
+      icon: Eye,
+      shortcut: 'Enter',
+      onSelect: () => log(`查看 ${name}`),
+    },
+    {
+      key: 'delete',
+      label: '刪除',
+      icon: Trash2,
+      shortcut: 'Delete',
+      tone: 'danger',
+      onSelect: () => log(`刪除 ${name}`),
+    },
+  ];
+}
+
+export function MenusPage() {
+  const [last, setLast] = useState('尚未操作');
+  const [on, setOn] = useState<Record<string, boolean>>({ [ROW_NAMES[0]]: true });
+  const [pending, setPending] = useState<string | null>(null);
+  const [chips, setChips] = useState([
+    { key: 'status', label: '狀態', value: '上架' },
+    { key: 'category', label: '分類', value: '洗髮' },
+  ]);
+  function toggle(name: string, v: boolean) {
+    setPending(name);
+    setTimeout(() => {
+      setOn((o) => ({ ...o, [name]: v }));
+      setPending(null);
+    }, 800);
+  }
+  return (
+    <Page
+      name="menus"
+      title="Menus"
+      lead="ActionMenu (⋯), RowContextMenu (right-click a row), Popover, Switch and Chip."
+    >
+      <Section title="row actions (B＋C)">
+        <Panel>
+          <div className="pg-stack">
+            {ROW_NAMES.map((name) => (
+              <RowContextMenu key={name} items={rowActions(name, setLast)}>
+                <div className="pg-row" style={{ justifyContent: 'space-between' }}>
+                  <span>{name}</span>
+                  <span className="pg-row">
+                    <Switch
+                      label={`${name} 上架`}
+                      checked={on[name] ?? false}
+                      pending={pending === name}
+                      onCheckedChange={(v) => toggle(name, v)}
+                    />
+                    <ActionMenu label={`${name} 的更多操作`} items={rowActions(name, setLast)} />
+                  </span>
+                </div>
+              </RowContextMenu>
+            ))}
+            <span data-testid="menu-result">{last}</span>
+          </div>
+        </Panel>
+      </Section>
+      <Section title="popover + chips">
+        <Panel>
+          <div className="pg-row">
+            <Popover
+              trigger={
+                <Button variant="secondary" iconStart={Filter}>
+                  篩選
+                </Button>
+              }
+              title="篩選條件"
+            >
+              <Field label="名稱">
+                <TextInput />
+              </Field>
+            </Popover>
+            {chips.map((c) => (
+              <Chip
+                key={c.key}
+                label={c.label}
+                value={c.value}
+                removeLabel={`移除篩選：${c.label}`}
+                onRemove={() => setChips((all) => all.filter((x) => x.key !== c.key))}
+              />
+            ))}
           </div>
         </Panel>
       </Section>

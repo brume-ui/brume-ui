@@ -6,6 +6,8 @@ export const zhCN: Record<MessageKey, string> = {
   'common.save': '保存',
   'common.delete': '删除',
   'common.loading': '加载中',
+  'menu.moreActions': '{name} 的更多操作',
+  'chip.removeFilter': '移除筛选：{label}',
   'dataTable.scrollRegion': '数据表格（可左右滚动）',
   'pagination.page': '第 {page} 页',
   'pagination.label': '分页',

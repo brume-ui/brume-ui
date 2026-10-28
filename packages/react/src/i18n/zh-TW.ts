@@ -4,6 +4,8 @@ export const zhTW = {
   'common.save': '儲存',
   'common.delete': '刪除',
   'common.loading': '載入中',
+  'menu.moreActions': '{name} 的更多操作',
+  'chip.removeFilter': '移除篩選：{label}',
   'dataTable.scrollRegion': '資料表格（可左右捲動）',
   'pagination.page': '第 {page} 頁',
   'pagination.label': '分頁',

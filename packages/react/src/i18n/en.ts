@@ -6,6 +6,8 @@ export const en: Record<MessageKey, string> = {
   'common.save': 'Save',
   'common.delete': 'Delete',
   'common.loading': 'Loading',
+  'menu.moreActions': 'More actions for {name}',
+  'chip.removeFilter': 'Remove filter: {label}',
   'dataTable.scrollRegion': 'Data table (scrolls horizontally)',
   'pagination.page': 'Page {page}',
   'pagination.label': 'Pagination',

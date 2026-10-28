@@ -16,6 +16,7 @@ export const PAGES = [
   'dialog',
   'confirm',
   'toast',
+  'menus',
   'data-table',
   'pagination',
   'empty-state',

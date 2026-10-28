@@ -11,8 +11,16 @@ export { Sparkline, type SparklineProps } from './charts/sparkline';
 export { StatCard, type StatCardProps, type StatDelta } from './charts/stat-card';
 export { cn } from './cn';
 export { COLOR_SCHEME_STORAGE_KEY, type ColorScheme, useColorScheme } from './color-scheme';
+export {
+  ActionMenu,
+  type ActionMenuProps,
+  formatShortcut,
+  type MenuAction,
+  orderMenuItems,
+} from './components/action-menu';
 export { Button, type ButtonProps } from './components/button';
 export { Checkbox, type CheckboxProps } from './components/checkbox';
+export { Chip, type ChipProps } from './components/chip';
 export { ConfirmHost, type ConfirmOptions, useConfirm } from './components/confirm';
 export { type DataColumn, DataTable, type DataTableProps } from './components/data-table';
 export { Dialog, type DialogProps } from './components/dialog';
@@ -21,9 +29,12 @@ export { Field, type FieldProps } from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Pagination, type PaginationProps } from './components/pagination';
 export { PasswordInput, type PasswordInputProps } from './components/password-input';
+export { Popover, type PopoverProps } from './components/popover';
 export { RollingNumber, type RollingNumberProps } from './components/rolling-number';
+export { RowContextMenu, type RowContextMenuProps } from './components/row-context-menu';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { Skeleton } from './components/skeleton';
+export { Switch, type SwitchProps } from './components/switch';
 export { TextInput, type TextInputProps } from './components/text-input';
 export { Toaster, type ToastOptions, toast } from './components/toast';
 export { errorMessage, fetchJson, type HttpRequest, type HttpResponse } from './http';

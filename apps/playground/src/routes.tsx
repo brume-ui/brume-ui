@@ -13,7 +13,7 @@ import { DataTablePage, EmptyStatePage, PaginationPage, SkeletonPage } from './p
 import { FontsPage } from './pages/fonts';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
 import { MotionPage } from './pages/motion';
-import { ConfirmPage, DialogPage, ToastPage } from './pages/overlays';
+import { ConfirmPage, DialogPage, MenusPage, ToastPage } from './pages/overlays';
 
 export interface Route {
   name: string;
@@ -35,6 +35,7 @@ export const ROUTES: Route[] = [
   { name: 'dialog', title: 'Dialog', Component: DialogPage },
   { name: 'confirm', title: 'useConfirm', Component: ConfirmPage },
   { name: 'toast', title: 'toast', Component: ToastPage },
+  { name: 'menus', title: 'Menus', Component: MenusPage },
   { name: 'data-table', title: 'DataTable', Component: DataTablePage },
   { name: 'pagination', title: 'Pagination', Component: PaginationPage },
   { name: 'empty-state', title: 'EmptyState', Component: EmptyStatePage },
