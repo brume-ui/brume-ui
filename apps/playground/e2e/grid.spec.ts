@@ -149,3 +149,32 @@ test('right-clicking a row opens the same menu as its ⋯', async ({ page }) => 
   await page.keyboard.press('Escape');
   await expect(menu).toBeHidden();
 });
+
+test.describe('at 1440×900', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('the default columns fit: the table does not scroll sideways', async ({ page }) => {
+    const wrapper = page.getByRole('table').locator('xpath=..');
+    const { scrollWidth, clientWidth } = await wrapper.evaluate((el) => ({
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+    // Not a scroll region, so no extra tab stop.
+    await expect(page.getByRole('region', { name: /可左右捲動/ })).toHaveCount(0);
+  });
+});
+
+test.describe('at 390×844', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('the refresh icon never wraps onto a line alone', async ({ page }) => {
+    const top = async (name: string) =>
+      Math.round((await page.getByRole('button', { name, exact: true }).boundingBox())?.y ?? -1);
+    const refresh = await top('重新整理');
+    expect(refresh).toBe(await top('顯示欄位'));
+    // It shares its line with at least one of the toolbar's text buttons.
+    const others = [await top('篩選'), await top('同步金流狀態'), await top('匯出 Excel')];
+    expect(others).toContain(refresh);
+  });
+});

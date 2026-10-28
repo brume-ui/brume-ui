@@ -283,7 +283,7 @@ const COLUMNS: ListColumn[] = [
   {
     key: 'customer',
     label: '客戶',
-    width: '6.5rem',
+    width: '10.5rem',
     editor: { type: 'text', maxLength: 20 },
     filter: 'customer_name',
   },
@@ -341,7 +341,7 @@ const COLUMNS: ListColumn[] = [
     display: {
       type: 'label',
       options: Object.fromEntries(
-        TAGS.map((t) => [t.value, { label: t.label, tone: 'accent' as const }]),
+        TAGS.map((t) => [t.value, { label: t.label, tone: 'neutral' as const }]),
       ),
     },
     editor: { type: 'checkbox', options: TAGS },
@@ -473,7 +473,7 @@ const ROW_ACTIONS: ActionDef[] = [
   {
     key: 'delete',
     label: '刪除',
-    icon: 'trash-2',
+    icon: 'trash',
     tone: 'danger',
     shortcut: 'Delete',
     confirm: { title: '刪除這筆資料？', description: '刪除後無法復原。', confirmLabel: '刪除' },
@@ -485,7 +485,7 @@ const BATCH_ACTIONS: ActionDef[] = [
   {
     key: 'delete',
     label: '刪除',
-    icon: 'trash-2',
+    icon: 'trash',
     tone: 'danger',
     confirm: {
       title: '刪除所選的 {count} 筆資料？',

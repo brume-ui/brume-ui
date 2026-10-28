@@ -56,8 +56,10 @@ function CellFrame({
 }) {
   // A numeric column's value sits on the end edge, like its header and its read-only cells.
   const edge = column.numeric ? 'br:items-end' : 'br:items-start';
+  // With an error the cell takes a line more; the padding keeps the focus ring off the row edge.
+  const room = cell.error ? ' br:py-1.5' : '';
   return (
-    <div className={`br:flex br:min-w-0 br:flex-col ${edge} br:gap-1`}>
+    <div className={`br:flex br:min-w-0 br:flex-col ${edge} br:gap-1${room}`}>
       {children}
       {cell.error ? <CellError id={errorId}>{cell.error}</CellError> : null}
     </div>
@@ -75,14 +77,22 @@ function useCellLabel({ column, row, editor, display }: CellProps, cell: CellUpd
   // A display renders the confirmed value; a pending one, no display, or a display with controls of
   // its own (which cannot sit inside the edit button) shows as text.
   const staticDisplay = column.display && STATIC_DISPLAYS.has(column.display.type);
-  const content = cell.pending || !staticDisplay ? text : display;
-  return { content, ariaLabel: t('grid.editCell', { label: column.label, value: text }) };
+  const showDisplay = !cell.pending && staticDisplay;
+  const content = showDisplay ? display : text;
+  // A label or badge is a pill: the pill is the affordance, not a dashed underline.
+  const pill =
+    showDisplay && (column.display?.type === 'label' || column.display?.type === 'badge');
+  return {
+    content,
+    variant: pill ? ('badge' as const) : ('text' as const),
+    ariaLabel: t('grid.editCell', { label: column.label, value: text }),
+  };
 }
 
 function TextCell(props: CellProps<TextEditorDef>) {
   const { column, row, editor, display } = props;
   const cell = useCellUpdate(row.id, column.key);
-  const { content, ariaLabel } = useCellLabel(props, cell);
+  const { content, variant, ariaLabel } = useCellLabel(props, cell);
   const errorId = useId();
   const [editing, setEditing] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -122,6 +132,7 @@ function TextCell(props: CellProps<TextEditorDef>) {
           ref={button}
           aria-label={ariaLabel}
           aria-describedby={describedBy}
+          variant={variant}
           pending={cell.pending}
           onClick={() => setEditing(true)}
         >
@@ -153,7 +164,7 @@ function sameChoice(a: ChoiceDraft, b: ChoiceDraft): boolean {
 function ChoiceCell(props: CellProps<ChoiceEditorDef>) {
   const { column, row, editor, display } = props;
   const cell = useCellUpdate(row.id, column.key);
-  const { content, ariaLabel } = useCellLabel(props, cell);
+  const { content, variant, ariaLabel } = useCellLabel(props, cell);
   const errorId = useId();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<ChoiceDraft>('');
@@ -194,6 +205,7 @@ function ChoiceCell(props: CellProps<ChoiceEditorDef>) {
           <CellEditButton
             aria-label={ariaLabel}
             aria-describedby={cell.error ? errorId : undefined}
+            variant={variant}
             pending={cell.pending}
           >
             {content}

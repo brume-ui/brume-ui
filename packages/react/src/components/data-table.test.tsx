@@ -149,7 +149,7 @@ describe('DataTable', () => {
       expect(region.tabIndex).toBe(0);
       // Columns scrolling under the sticky actions fade out instead of showing a cut glyph.
       const sticky = container.querySelector('tbody td:last-child') as HTMLElement;
-      expect(sticky.className).toContain('-12px_0_6px_-4px_var(--br-surface)');
+      expect(sticky.className).toContain('-12px_0_4px_-6px_var(--br-surface)');
       scrollWidth.mockRestore();
       clientWidth.mockRestore();
     });
@@ -177,7 +177,7 @@ describe('DataTable', () => {
         />,
       );
       const sticky = container.querySelector('tbody td:last-child') as HTMLElement;
-      expect(sticky.className).not.toContain('-12px_0_6px_-4px_var(--br-surface)');
+      expect(sticky.className).not.toContain('-12px_0_4px_-6px_var(--br-surface)');
     });
   });
 

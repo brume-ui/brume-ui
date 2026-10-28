@@ -33,8 +33,10 @@ export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarP
   const { t } = useBrume();
   const { navigate, refresh } = useGridNavigation();
   return (
-    <div className="br:flex br:flex-wrap br:items-center br:justify-between br:gap-2">
-      <div className="br:flex br:min-w-0 br:flex-1 br:flex-wrap br:items-center br:gap-2">
+    <div className="br:flex br:flex-wrap br:items-center br:justify-between br:gap-2 br:max-sm:justify-start">
+      {/* On phones both halves dissolve into the toolbar's one wrapping row, so the icons wrap
+          with the buttons instead of onto a line of their own. */}
+      <div className="br:flex br:min-w-0 br:flex-1 br:flex-wrap br:items-center br:gap-2 br:max-sm:contents">
         {page.quickSearch ? (
           <div className="br:w-full br:sm:w-72">
             <SearchInput
@@ -47,10 +49,15 @@ export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarP
         ) : null}
         {start}
       </div>
-      <div className="br:flex br:flex-wrap br:items-center br:gap-1">
-        <div className="br:flex br:flex-wrap br:items-center br:gap-2 br:empty:hidden">{end}</div>
-        <ColumnToggle hidden={hidden} onHiddenChange={onHiddenChange} />
-        <IconButton icon={RefreshCw} label={t('grid.refresh')} onClick={refresh} />
+      <div className="br:flex br:flex-wrap br:items-center br:gap-1 br:max-sm:contents">
+        <div className="br:flex br:flex-wrap br:items-center br:gap-2 br:empty:hidden br:max-sm:contents">
+          {end}
+        </div>
+        {/* The two icons stay together, so neither wraps onto a line alone. */}
+        <div className="br:flex br:shrink-0 br:items-center br:gap-1">
+          <ColumnToggle hidden={hidden} onHiddenChange={onHiddenChange} />
+          <IconButton icon={RefreshCw} label={t('grid.refresh')} onClick={refresh} />
+        </div>
       </div>
     </div>
   );

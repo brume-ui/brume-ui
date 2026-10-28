@@ -2,10 +2,14 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { animationsIdle, expect, openPage, PAGES, SCHEMES, SLOW_PAGES, test } from './support';
 
-/** `include` limits the scan to that part of the page. */
-async function expectNoViolations(page: Page, include?: string): Promise<void> {
+/** `exclude`: parts of the page to leave out; `disableRules`: rules that do not apply to the state. */
+async function expectNoViolations(
+  page: Page,
+  opts: { exclude?: string; disableRules?: string[] } = {},
+): Promise<void> {
   const builder = new AxeBuilder({ page });
-  if (include) builder.include(include);
+  if (opts.exclude) builder.exclude(opts.exclude);
+  if (opts.disableRules) builder.disableRules(opts.disableRules);
   const { violations } = await builder.analyze();
   expect(
     violations.map((v) => ({
@@ -59,9 +63,13 @@ for (const viewport of VIEWPORTS) {
         await page.getByRole('button', { name: 'ORD-2610048 的更多操作' }).click();
         await expect(page.getByRole('menu')).toBeVisible();
         await animationsIdle(page);
-        // The open (modal) menu hides the page from assistive tech, which trips the page-level
-        // landmark rules; what is on offer now is the menu.
-        await expectNoViolations(page, '[role="menu"]');
+        // The whole page, minus what the open (modal) menu hides from assistive tech. While it is
+        // open the menu is all that is exposed, so the page-structure rules (one main landmark,
+        // an h1, content inside landmarks) cannot hold and are switched off for this state only.
+        await expectNoViolations(page, {
+          exclude: '[aria-hidden="true"], [inert]',
+          disableRules: ['landmark-one-main', 'page-has-heading-one', 'region'],
+        });
       });
 
       test(`grid with the batch bar and an inline error ${scheme} has no axe violations`, async ({

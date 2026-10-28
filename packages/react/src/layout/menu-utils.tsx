@@ -1,4 +1,5 @@
 import type { MenuItem } from '@brume-ui/brume-schema';
+import * as lucide from 'lucide-react';
 import { Circle, icons, type LucideIcon } from 'lucide-react';
 import type { MouseEvent } from 'react';
 
@@ -56,11 +57,37 @@ function toPascalCase(name: string): string {
     .join('');
 }
 
-/** Resolve a kebab-case lucide name ("layout-dashboard") to its component; unknown names fall back to Circle. */
+declare const process: { env: { NODE_ENV?: string } };
+
+/** True outside production builds (bundlers replace `process.env.NODE_ENV`). */
+function isDev(): boolean {
+  try {
+    return process.env.NODE_ENV !== 'production';
+  } catch {
+    return false;
+  }
+}
+
+const iconComponents = new Set<unknown>(Object.values(icons));
+const warned = new Set<string>();
+
+/**
+ * Resolve a kebab-case lucide name ("layout-dashboard") to its component. Names lucide renamed
+ * but still exports as aliases ("trash-2", "home") resolve too. Unknown names fall back to Circle,
+ * with a console warning in development.
+ */
 export function resolveIcon(name: string | undefined): LucideIcon {
   if (!name) return Circle;
-  const found = (icons as Record<string, LucideIcon | undefined>)[toPascalCase(name)];
-  return found ?? Circle;
+  const pascal = toPascalCase(name);
+  const found = (icons as Record<string, LucideIcon | undefined>)[pascal];
+  if (found) return found;
+  const alias = (lucide as Record<string, unknown>)[pascal];
+  if (iconComponents.has(alias)) return alias as LucideIcon;
+  if (isDev() && !warned.has(name)) {
+    warned.add(name);
+    console.warn(`[brume] Unknown lucide icon "${name}"; showing a circle instead.`);
+  }
+  return Circle;
 }
 
 /** Click handler that routes plain left-clicks through the adapter but leaves modified clicks to the browser. */

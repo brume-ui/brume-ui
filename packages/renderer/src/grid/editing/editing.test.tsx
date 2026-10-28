@@ -283,6 +283,8 @@ describe('errors', () => {
 
     const alert = await row1().findByRole('alert');
     expect(alert.textContent).toBe('客戶不能超過 5 個字');
+    // Room above and below, so the cell's focus ring never touches the row edge.
+    expect((alert.parentElement as HTMLElement).className).toContain('br:py-1.5');
     const cell = row1().getByRole('button', { name: '編輯客戶：Ann' });
     expect(cell.getAttribute('aria-describedby')).toBe(alert.id);
     expect(toasts.error).not.toHaveBeenCalled();
@@ -730,6 +732,8 @@ describe('displays inside the edit button', () => {
     });
     const button = row1().getByRole('button', { name: '編輯狀態：已付款' });
     expect(button.querySelector('[data-tone="success"]')).not.toBeNull();
+    // The pill is the affordance: no dashed underline under it.
+    expect(button.className).not.toContain('br:decoration-dashed');
   });
 });
 

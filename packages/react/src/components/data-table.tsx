@@ -144,17 +144,17 @@ export function DataTable<T>({
   const cellBase =
     'br:h-11 br:truncate br:bg-surface br:px-4 br:text-sm br:text-text br:shadow-row br:first:rounded-l-card br:last:rounded-r-card';
   // Hovering a data row shifts its surface a step towards the text colour.
-  const rowHover =
-    'br:transition-colors br:duration-fast br:group-hover/row:bg-[color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))]';
+  const rowHover = 'br:transition-colors br:duration-fast br:group-hover/row:bg-(--br-row-hover)';
   // Selected rows take the selected surface (also while hovered); the accent stays on the checkbox.
   const rowSelected = 'br:group-aria-selected/row:bg-surface-selected';
   const stickyActions = 'br:sticky br:right-0';
   // While columns scroll under the sticky actions, they fade out on its left edge instead of
   // showing a sliver of a cut glyph: a shadow in the row's own colour (the cell clips anything
-  // else drawn outside it).
+  // else drawn outside it). The negative spread keeps the blur inside the row's height, so
+  // nothing shows in the gaps between rows.
   const stickyFade =
     scrolls &&
-    'br:shadow-[var(--br-shadow-row),-12px_0_6px_-4px_var(--br-surface)] br:group-hover/row:shadow-[var(--br-shadow-row),-12px_0_6px_-4px_color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))] br:group-aria-selected/row:shadow-[var(--br-shadow-row),-12px_0_6px_-4px_var(--br-surface-selected)]';
+    'br:shadow-[var(--br-shadow-row),-12px_0_4px_-6px_var(--br-surface)] br:group-hover/row:shadow-[var(--br-shadow-row),-12px_0_4px_-6px_var(--br-row-hover)] br:group-aria-selected/row:shadow-[var(--br-shadow-row),-12px_0_4px_-6px_var(--br-surface-selected)]';
   // The checkbox is 20px in a 44px column: px-3 leaves 12px on each side.
   const selectCell = 'br:px-3';
 
@@ -197,7 +197,7 @@ export function DataTable<T>({
     >
       <table
         aria-busy={loading || undefined}
-        className="br:w-full br:table-fixed br:border-separate br:border-spacing-y-1"
+        className="br:w-full br:table-fixed br:border-separate br:border-spacing-y-1 br:[--br-row-hover:color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))]"
         style={{ minWidth: minTableWidth(columns, extraWidths) }}
       >
         {caption ? <caption className="br:sr-only">{caption}</caption> : null}
@@ -279,7 +279,7 @@ export function DataTable<T>({
                     stickyActions,
                     'br:bg-[var(--br-table-header-bg,var(--br-surface-canvas))] br:px-4 br:pb-1',
                     scrolls &&
-                      'br:shadow-[-12px_0_6px_-4px_var(--br-table-header-bg,var(--br-surface-canvas))]',
+                      'br:shadow-[-12px_0_4px_-6px_var(--br-table-header-bg,var(--br-surface-canvas))]',
                   )}
                 >
                   <span className="br:sr-only">{t('dataTable.actions')}</span>
