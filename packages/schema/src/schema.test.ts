@@ -2,7 +2,14 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020';
 import { describe, expect, it } from 'vitest';
-import { emitJsonSchema, validateEnvelope } from './index';
+import {
+  DisplaySchema,
+  emitJsonSchema,
+  FilterInputSchema,
+  InlineEditorSchema,
+  SCHEMA_VERSION,
+  validateEnvelope,
+} from './index';
 
 const pkg = (p: string) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 const load = (dir: string): [string, unknown][] =>
@@ -14,6 +21,45 @@ const v0 = JSON.parse(readFileSync(pkg('schema/v0.json'), 'utf8')) as Record<str
 const ajv = new Ajv2020({ strict: true });
 const checkEnvelope = ajv.compile(v0);
 const checkShared = ajv.compile({ $ref: '#/$defs/SharedProps', $defs: v0.$defs });
+
+/** union 各分支 `type` 欄位的所有字面值。 */
+function variantTypes(union: { anyOf: unknown[] }): string[] {
+  return union.anyOf.flatMap((branch) => {
+    const t = (branch as { properties: { type: { const?: string; anyOf?: { const: string }[] } } })
+      .properties.type;
+    return t.anyOf ? t.anyOf.map((l) => l.const) : [t.const as string];
+  });
+}
+
+type GridFull = {
+  page: {
+    columns: { display?: { type: string }; editor?: { type: string } }[];
+    rows: { _meta?: unknown }[];
+    filters: { items: { type?: string; input?: { type: string } }[] };
+    columnFilters: { input: { type: string } }[];
+  };
+};
+
+describe('schema 0.2', () => {
+  it('is version 0.2.0', () => {
+    expect(SCHEMA_VERSION).toBe('0.2.0');
+  });
+
+  it('grid-full.json covers every display, editor, filter input, newline and _meta', () => {
+    const full = load('fixtures/valid').find(([n]) => n === 'grid-full.json')?.[1] as GridFull;
+    const { columns, rows, filters, columnFilters } = full.page;
+    const displays = new Set(columns.flatMap((c) => (c.display ? [c.display.type] : [])));
+    const editors = new Set(columns.flatMap((c) => (c.editor ? [c.editor.type] : [])));
+    const inputs = new Set(
+      [...filters.items, ...columnFilters].flatMap((f) => (f.input ? [f.input.type] : [])),
+    );
+    expect([...displays].sort()).toEqual(variantTypes(DisplaySchema).sort());
+    expect([...editors].sort()).toEqual(variantTypes(InlineEditorSchema).sort());
+    expect([...inputs].sort()).toEqual(variantTypes(FilterInputSchema).sort());
+    expect(filters.items.some((i) => i.type === 'newline')).toBe(true);
+    expect(rows.some((r) => r._meta !== undefined)).toBe(true);
+  });
+});
 
 describe('validateEnvelope (TypeBox)', () => {
   it('has fixtures to check', () => {

@@ -93,9 +93,14 @@ describe('page titles', () => {
       page: {
         type: 'list',
         title: '使用者列表',
+        gridId: 'users',
         columns: [],
         rows: [],
         pagination: { page: 1, perPage: 20, total: 0, lastPage: 1 },
+        query: { perPage: 20, filters: {} },
+        perPageOptions: [20],
+        appliedFilters: [],
+        actions: { row: [], batch: [], tools: [] },
       },
     };
     const registry = createRegistry({ mode: 'precompiled' });

@@ -1,0 +1,301 @@
+{
+  "schemaVersion": "0.2.0",
+  "page": {
+    "type": "list",
+    "title": "訂單",
+    "description": "所有通路的訂單",
+    "gridId": "orders",
+    "columns": [
+      { "key": "id", "label": "編號", "numeric": true, "width": "80px", "sortable": true },
+      {
+        "key": "customer",
+        "label": "客戶",
+        "display": { "type": "text" },
+        "editor": { "type": "text", "maxLength": 40 },
+        "primary": true,
+        "hideable": false
+      },
+      {
+        "key": "note",
+        "label": "備註",
+        "display": { "type": "limit", "length": 20 },
+        "editor": { "type": "textarea" }
+      },
+      {
+        "key": "status",
+        "label": "狀態",
+        "display": {
+          "type": "label",
+          "options": {
+            "paid": { "label": "已付款", "tone": "success" },
+            "refunded": { "label": "已退款", "tone": "danger" }
+          },
+          "tone": "neutral"
+        },
+        "editor": {
+          "type": "select",
+          "options": [
+            { "value": "paid", "label": "已付款" },
+            { "value": "refunded", "label": "已退款", "disabled": true }
+          ]
+        },
+        "filter": "status"
+      },
+      {
+        "key": "channel",
+        "label": "通路",
+        "display": { "type": "badge", "tone": "info" },
+        "editor": {
+          "type": "radio",
+          "options": [{ "value": "web", "label": "網站" }, { "value": "store", "label": "門市" }]
+        }
+      },
+      {
+        "key": "tags",
+        "label": "標籤",
+        "display": { "type": "component", "name": "TagList", "props": { "max": 3 } },
+        "editor": {
+          "type": "checkbox",
+          "options": [{ "value": "gift", "label": "禮品" }, { "value": "rush", "label": "急件" }]
+        }
+      },
+      {
+        "key": "amount",
+        "label": "金額",
+        "numeric": true,
+        "display": { "type": "progress", "max": 10000 },
+        "editor": { "type": "number", "min": 0, "max": 10000, "step": 1 },
+        "sortable": true
+      },
+      {
+        "key": "published",
+        "label": "上架",
+        "editor": { "type": "switch", "onLabel": "開", "offLabel": "關" }
+      },
+      {
+        "key": "flags",
+        "label": "設定",
+        "editor": {
+          "type": "switchGroup",
+          "keys": [{ "key": "featured", "label": "精選" }, { "key": "hot", "label": "熱門" }]
+        }
+      },
+      {
+        "key": "site",
+        "label": "網站",
+        "display": { "type": "link", "external": true, "style": "button" }
+      },
+      {
+        "key": "photo",
+        "label": "照片",
+        "display": { "type": "image", "width": 48, "height": 48 }
+      },
+      { "key": "code", "label": "取貨碼", "display": { "type": "qrcode", "size": 96 } },
+      { "key": "tracking", "label": "物流單號", "display": { "type": "copyable" } },
+      { "key": "invoice", "label": "發票", "display": { "type": "downloadable" } },
+      { "key": "detail", "label": "明細", "display": { "type": "expand", "label": "展開" } },
+      {
+        "key": "history",
+        "label": "紀錄",
+        "display": { "type": "modal", "label": "查看", "title": "訂單紀錄" },
+        "hiddenByDefault": true
+      },
+      {
+        "key": "items",
+        "label": "品項",
+        "display": {
+          "type": "table",
+          "columns": [{ "key": "name", "label": "品名" }, { "key": "qty", "label": "數量" }]
+        }
+      }
+    ],
+    "rows": [
+      {
+        "id": 1,
+        "customer": "王小明",
+        "note": "請在下午送達，謝謝",
+        "status": "paid",
+        "channel": "web",
+        "tags": ["gift"],
+        "amount": 1200,
+        "published": true,
+        "flags": { "featured": true, "hot": false },
+        "site": "example.com",
+        "photo": ["https://example.com/a.png", "https://example.com/b.png"],
+        "code": "PICK-001",
+        "tracking": "TW123456",
+        "invoice": { "url": "https://example.com/inv-1.pdf", "name": "inv-1.pdf" },
+        "items": [{ "name": "茶葉", "qty": 2 }],
+        "_meta": {
+          "editUrl": "/admin/orders/1/edit",
+          "actions": ["refund", "delete"],
+          "href": { "site": "https://example.com" },
+          "content": {
+            "detail": {
+              "type": "table",
+              "columns": [{ "key": "sku", "label": "SKU" }],
+              "rows": [{ "sku": "T-01" }]
+            },
+            "history": { "type": "text", "text": "10/27 建立" }
+          },
+          "raw": { "status": "paid", "amount": 1200 }
+        }
+      },
+      {
+        "id": "o-2",
+        "customer": "李小華",
+        "status": "refunded",
+        "amount": 0,
+        "_meta": {
+          "content": { "history": { "type": "component", "name": "Timeline" } }
+        }
+      },
+      { "id": 3, "customer": "陳大文" }
+    ],
+    "pagination": { "page": 1, "perPage": 20, "total": 3, "lastPage": 1 },
+    "query": {
+      "sort": { "key": "amount", "direction": "desc" },
+      "q": "王",
+      "scope": "vip",
+      "perPage": 20,
+      "filters": {
+        "status": ["paid"],
+        "customer": "王",
+        "amount": { "start": "100", "end": "5000" },
+        "total": { "op": "gt", "value": "10" }
+      }
+    },
+    "perPageOptions": [20, 50, 100],
+    "quickSearch": { "placeholder": "搜尋客戶或單號" },
+    "filters": {
+      "columns": 3,
+      "items": [
+        {
+          "key": "customer",
+          "label": "客戶",
+          "input": { "type": "text", "inputMode": "text", "placeholder": "姓名" },
+          "placement": "panel"
+        },
+        {
+          "key": "channel",
+          "label": "通路",
+          "input": {
+            "type": "multipleSelect",
+            "options": [{ "value": "web", "label": "網站" }, { "value": "store", "label": "門市" }]
+          },
+          "placement": "panel"
+        },
+        {
+          "key": "seller",
+          "label": "業務",
+          "input": { "type": "select", "remote": true },
+          "placement": "panel"
+        },
+        { "type": "newline" },
+        {
+          "key": "paid",
+          "label": "付款",
+          "input": {
+            "type": "radio",
+            "options": [{ "value": "1", "label": "已付款" }, { "value": "0", "label": "未付款" }]
+          },
+          "placement": "panel"
+        },
+        {
+          "key": "flags",
+          "label": "設定",
+          "input": { "type": "checkbox", "options": [{ "value": "hot", "label": "熱門" }] },
+          "placement": "panel"
+        },
+        {
+          "key": "created",
+          "label": "建立日期",
+          "input": { "type": "date", "withTime": false },
+          "placement": "panel"
+        },
+        {
+          "key": "amount",
+          "label": "金額",
+          "input": { "type": "range", "of": "number" },
+          "placement": "panel",
+          "span": 2
+        },
+        {
+          "key": "total",
+          "label": "總數",
+          "input": {
+            "type": "group",
+            "of": "number",
+            "operators": [{ "value": "gt", "label": "大於" }, { "value": "lt", "label": "小於" }]
+          },
+          "placement": "panel",
+          "span": 1
+        }
+      ]
+    },
+    "columnFilters": [
+      {
+        "key": "status",
+        "label": "狀態",
+        "input": {
+          "type": "select",
+          "options": [
+            { "value": "paid", "label": "已付款" },
+            { "value": "refunded", "label": "已退款" }
+          ]
+        },
+        "placement": "column"
+      },
+      {
+        "key": "owner",
+        "label": "負責人",
+        "input": { "type": "text", "inputMode": "numeric" },
+        "placement": "hidden"
+      }
+    ],
+    "selectors": [
+      {
+        "key": "brand",
+        "label": "品牌",
+        "multiple": true,
+        "options": [{ "value": "a", "label": "品牌 A" }, { "value": "b", "label": "品牌 B" }]
+      }
+    ],
+    "scopes": [{ "key": "vip", "label": "VIP 客戶" }, { "key": "trashed", "label": "已刪除" }],
+    "appliedFilters": [
+      { "key": "status", "label": "狀態", "display": "已付款" },
+      { "key": "scope", "label": "範圍", "display": "VIP 客戶" },
+      { "key": "q", "label": "搜尋", "display": "王" }
+    ],
+    "actions": {
+      "row": [
+        { "key": "refund", "label": "退款", "icon": "undo-2", "shortcut": "r", "exposed": true },
+        {
+          "key": "delete",
+          "label": "刪除",
+          "icon": "trash-2",
+          "tone": "danger",
+          "confirm": {
+            "title": "刪除這筆資料？",
+            "description": "刪除後無法復原。",
+            "confirmLabel": "刪除"
+          },
+          "shortcut": "Delete"
+        }
+      ],
+      "batch": [{ "key": "delete", "label": "刪除", "tone": "danger" }],
+      "tools": [{ "key": "sync", "label": "同步庫存", "tone": "default" }]
+    },
+    "export": { "url": "/admin/orders/_brume/export" },
+    "endpoints": {
+      "action": "/admin/orders/_brume/action/{action}",
+      "cell": "/admin/orders/_brume/cell/{id}",
+      "options": "/admin/orders/_brume/options/{source}"
+    },
+    "empty": {
+      "title": "目前沒有資料",
+      "description": "新增第一筆後會顯示在這裡。",
+      "action": { "label": "新增訂單", "url": "/admin/orders/create" }
+    }
+  }
+}

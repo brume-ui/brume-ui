@@ -34,6 +34,7 @@ const PAGE: ListPage = {
   type: 'list',
   title: '使用者',
   description: '管理可以登入後台的人員。',
+  gridId: 'users',
   columns: [
     { key: 'name', label: '名稱' },
     { key: 'email', label: '信箱' },
@@ -48,6 +49,10 @@ const PAGE: ListPage = {
     status: STATUSES[i % STATUSES.length],
   })),
   pagination: { page: 2, perPage: 12, total: 96, lastPage: 8 },
+  query: { perPage: 12, filters: {} },
+  perPageOptions: [12],
+  appliedFilters: [],
+  actions: { row: [], batch: [], tools: [] },
 };
 
 const STATUS_LABEL = { active: '啟用', pending: '待審核', suspended: '停用' } as const;

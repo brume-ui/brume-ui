@@ -1,4 +1,4 @@
-import type { DashboardPage } from '@brume-ui/brume-schema';
+import { type DashboardPage, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BrumePageView } from './render-page';
@@ -21,7 +21,7 @@ describe('BrumePageView', () => {
     renderWithBrume(<BrumePageView envelope={{ schemaVersion: '1.0.0', page: dashboard }} />);
     const alert = screen.getByRole('alert');
     expect(alert.textContent).toContain('1.0.0');
-    expect(alert.textContent).toContain('0.1.0');
+    expect(alert.textContent).toContain(SCHEMA_VERSION);
     expect(screen.queryByRole('heading', { name: 'Overview' })).toBeNull();
   });
 });

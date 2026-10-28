@@ -9,6 +9,7 @@ import { renderWithBrume } from './test-utils';
 const page: ListPage = {
   type: 'list',
   title: 'Users',
+  gridId: 'users',
   columns: [
     { key: 'name', label: 'Name' },
     { key: 'orders', label: 'Orders', numeric: true },
@@ -20,6 +21,10 @@ const page: ListPage = {
     { id: 2, name: 'Bo', orders: 3, meta: [1, 2], note: 'x' },
   ],
   pagination: { page: 2, perPage: 2, total: 10, lastPage: 5 },
+  query: { perPage: 2, filters: {} },
+  perPageOptions: [2],
+  appliedFilters: [],
+  actions: { row: [], batch: [], tools: [] },
 };
 
 const Badge = (p: { tone: string; context?: { row: { name: string }; column: string } }) => (

@@ -5,8 +5,18 @@ export {
   type DashboardPage,
   DashboardPageSchema,
 } from './dashboard';
+export { type ErrorPage, ErrorPageSchema } from './error-page';
 export { emitJsonSchema } from './json-schema';
-export { type ListColumn, ListColumnSchema, type ListPage, ListPageSchema } from './list';
+export {
+  type GridRow,
+  GridRowSchema,
+  type ListColumn,
+  ListColumnSchema,
+  type ListPage,
+  ListPageSchema,
+  type RowMeta,
+  RowMetaSchema,
+} from './list';
 export {
   type BrumePage,
   BrumePageSchema,
@@ -15,6 +25,34 @@ export {
   type ValidationResult,
   validateEnvelope,
 } from './page';
+export { type ActionDef, ActionDefSchema } from './protocol/action';
+export {
+  type CellContent,
+  CellContentSchema,
+  type Display,
+  DisplaySchema,
+  type InlineEditor,
+  InlineEditorSchema,
+  type Option,
+  OptionSchema,
+  type Tone,
+  ToneSchema,
+} from './protocol/display';
+export {
+  type AppliedFilter,
+  AppliedFilterSchema,
+  type FilterDef,
+  FilterDefSchema,
+  type FilterInput,
+  FilterInputSchema,
+  type FilterPanel,
+  FilterPanelSchema,
+  FilterValueSchema,
+  type ScopeDef,
+  ScopeDefSchema,
+  type SelectorDef,
+  SelectorDefSchema,
+} from './protocol/filter';
 export {
   type FilterValue,
   GRID_PARAMS,

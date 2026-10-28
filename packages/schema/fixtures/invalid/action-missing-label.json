@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "0.2.0",
+  "page": {
+    "type": "list",
+    "title": "訂單",
+    "gridId": "orders",
+    "columns": [
+      {
+        "key": "status",
+        "label": "狀態"
+      }
+    ],
+    "rows": [
+      {
+        "id": 1,
+        "status": "paid"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "perPage": 20,
+      "total": 1,
+      "lastPage": 1
+    },
+    "query": {
+      "perPage": 20,
+      "filters": {}
+    },
+    "perPageOptions": [20],
+    "appliedFilters": [],
+    "actions": {
+      "row": [
+        {
+          "key": "delete"
+        }
+      ],
+      "batch": [],
+      "tools": []
+    }
+  }
+}

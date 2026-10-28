@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "0.2.0",
+  "page": {
+    "type": "error",
+    "status": "404",
+    "title": "找不到這個頁面",
+    "message": "網址可能打錯了，或這個頁面已經移除。"
+  }
+}

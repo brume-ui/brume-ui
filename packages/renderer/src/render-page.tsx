@@ -27,5 +27,7 @@ export function BrumePageView({ envelope }: { envelope: PageEnvelope }) {
     );
   }
   const { page } = envelope;
-  return page.type === 'list' ? <ListPageView page={page} /> : <DashboardPageView page={page} />;
+  if (page.type === 'list') return <ListPageView page={page} />;
+  if (page.type === 'dashboard') return <DashboardPageView page={page} />;
+  return null;
 }
