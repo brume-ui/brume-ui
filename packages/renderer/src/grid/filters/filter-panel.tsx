@@ -145,7 +145,7 @@ export function FilterPanelView({ id, open }: FilterPanelViewProps) {
             }}
           >
             <div
-              className="br:grid br:grid-cols-1 br:gap-4 br:sm:grid-cols-[repeat(var(--br-filter-columns),minmax(0,1fr))]"
+              className="br:grid br:gap-4 br:max-sm:grid-cols-1 br:sm:grid-cols-[repeat(var(--br-filter-columns),minmax(0,1fr))]"
               style={{ '--br-filter-columns': String(page.filters.columns) } as CSSProperties}
             >
               {placed.map(({ def, row, column, span }) => (

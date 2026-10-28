@@ -282,7 +282,7 @@ export function Sidebar({
     <aside
       data-collapsed={collapsed || undefined}
       className={cn(
-        'br:sticky br:top-0 br:hidden br:h-screen br:shrink-0 br:flex-col br:border-r br:border-border br:bg-surface br:p-3 br:md:flex',
+        'br:sticky br:top-0 br:max-md:hidden br:h-screen br:shrink-0 br:flex-col br:border-r br:border-border br:bg-surface br:p-3 br:md:flex',
         'br:transition-[width] br:duration-slow br:ease-emphasized',
         collapsed ? 'br:w-[68px]' : 'br:w-60',
       )}

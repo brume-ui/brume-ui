@@ -17,8 +17,8 @@ describe('dist/styles.css', () => {
       'br\\:border-danger',
       'br\\:text-danger',
       'br\\:grid',
-      'br\\:grid-cols-1',
-      'br\\:md\\:grid-cols-2',
+      'br\\:max-md\\:grid-cols-1',
+      'br\\:md\\:max-xl\\:grid-cols-2',
       'br\\:xl\\:grid-cols-3',
     ]) {
       expect(css, cls).toContain(`.${cls}`);

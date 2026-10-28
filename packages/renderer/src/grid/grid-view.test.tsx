@@ -82,6 +82,19 @@ describe('GridView navigation', () => {
     expect(lastVisit(adapter)?.args[1]).toEqual(ENVELOPE_ONLY);
   });
 
+  // An app bundles react, renderer and inertia styles.css into one file, and the bundler merges
+  // duplicate rules: a plain `br:w-full` (in every package) can land after the renderer's
+  // `@media (sm) { br:sm:w-72 }` and win at every width. Widths that change at a breakpoint use
+  // mutually exclusive variants, so their order cannot matter.
+  it('sizes the quick search box with breakpoint-exclusive widths only', () => {
+    renderWithBrume(<GridView page={orders} />);
+    const box = screen.getByRole('searchbox').closest('.br\\:sm\\:w-72');
+    expect(box?.className.split(' ')).toEqual(
+      expect.arrayContaining(['br:max-sm:w-full', 'br:sm:w-72']),
+    );
+    expect(box?.className.split(' ')).not.toContain('br:w-full');
+  });
+
   it('hides quick search when the page does not offer it', () => {
     renderWithBrume(<GridView page={{ ...orders, quickSearch: undefined }} />);
     expect(screen.queryByRole('searchbox')).toBeNull();

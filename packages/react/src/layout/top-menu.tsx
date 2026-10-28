@@ -25,7 +25,7 @@ export function TopMenu({
   const { adapter, t } = useBrume();
   const currentItem = findCurrentItem(items, currentUrl, homeUrl);
   return (
-    <nav aria-label={t('shell.mainNav')} className="br:hidden br:md:block">
+    <nav aria-label={t('shell.mainNav')} className="br:max-md:hidden br:md:block">
       <ul className="br:flex br:items-center br:gap-1">
         {items.map((item) => {
           const Icon = resolveIcon(item.icon);

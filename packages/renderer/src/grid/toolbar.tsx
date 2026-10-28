@@ -33,12 +33,12 @@ export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarP
   const { t } = useBrume();
   const { navigate, refresh } = useGridNavigation();
   return (
-    <div className="br:flex br:flex-wrap br:items-center br:justify-between br:gap-2 br:max-sm:justify-start">
+    <div className="br:flex br:flex-wrap br:items-center br:gap-2 br:sm:justify-between br:max-sm:justify-start">
       {/* On phones both halves dissolve into the toolbar's one wrapping row, so the icons wrap
           with the buttons instead of onto a line of their own. */}
-      <div className="br:flex br:min-w-0 br:flex-1 br:flex-wrap br:items-center br:gap-2 br:max-sm:contents">
+      <div className="br:min-w-0 br:flex-1 br:flex-wrap br:items-center br:gap-2 br:sm:flex br:max-sm:contents">
         {page.quickSearch ? (
-          <div className="br:w-full br:sm:w-72">
+          <div className="br:max-sm:w-full br:sm:w-72">
             <SearchInput
               value={page.query.q ?? ''}
               onSearch={(q) => navigate({ q: q || undefined })}
@@ -49,8 +49,8 @@ export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarP
         ) : null}
         {start}
       </div>
-      <div className="br:flex br:flex-wrap br:items-center br:gap-1 br:max-sm:contents">
-        <div className="br:flex br:flex-wrap br:items-center br:gap-2 br:empty:hidden br:max-sm:contents">
+      <div className="br:flex-wrap br:items-center br:gap-1 br:sm:flex br:max-sm:contents">
+        <div className="br:flex-wrap br:items-center br:gap-2 br:empty:hidden br:sm:flex br:max-sm:contents">
           {end}
         </div>
         {/* The two icons stay together (neither wraps onto a line alone) and keep to the end edge. */}

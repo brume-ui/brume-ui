@@ -34,7 +34,7 @@ export function UserMenu({ user, logoutUrl }: { user: ShellUser; logoutUrl: stri
             className="br:flex br:size-8 br:items-center br:justify-center br:rounded-pill br:bg-surface-selected br:text-sm br:font-semibold br:before:content-[attr(data-initial)]"
           />
         )}
-        <span className="br:hidden br:max-w-32 br:truncate br:sm:inline">{user.name}</span>
+        <span className="br:max-sm:hidden br:max-w-32 br:truncate br:sm:inline">{user.name}</span>
       </Dropdown.Trigger>
       <Dropdown.Portal>
         <MenuContent align="end" sideOffset={6}>
