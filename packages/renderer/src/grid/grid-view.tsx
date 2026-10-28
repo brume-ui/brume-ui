@@ -74,7 +74,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
     [expansionPrefix],
   );
 
-  const { rows, rowById, beginRowSave, replaceRow } = useRowSaves(page.rows);
+  const { rows, rowById, beginRowSave, endRowSave, replaceRow } = useRowSaves(page.rows);
 
   // Actions in flight. The ref answers at once (a second click in the same tick sees the first);
   // the state re-renders the buttons and menus.
@@ -97,6 +97,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
       rows,
       rowById,
       beginRowSave,
+      endRowSave,
       replaceRow,
       selection,
       setSelection,
@@ -113,6 +114,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
       rows,
       rowById,
       beginRowSave,
+      endRowSave,
       replaceRow,
       selection,
       onEdit,

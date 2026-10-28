@@ -379,7 +379,7 @@ describe('success feedback and row overrides', () => {
     /** Saves customer (request 0), then toggles published (request 1) before either answers. */
     async function saveBoth() {
       const { respond, settle } = deferred();
-      const { user } = setup(respond);
+      const { user, adapter } = setup(respond);
       await user.click(row1().getByRole('button', { name: '編輯客戶：Ann' }));
       await user.type(row1().getByRole('textbox', { name: '客戶' }), 'e{Enter}');
       await user.click(row1().getByRole('switch', { name: '上架' }));
@@ -390,31 +390,107 @@ describe('success feedback and row overrides', () => {
         published: row1().getByRole('switch', { name: '上架' }).getAttribute('aria-checked'),
         no: row1().getByText(/^ORD-1/).textContent,
       });
-      return { answer, values };
+      const reloads = () => adapter.calls.filter((c) => c.fn === 'reload').length;
+      return { answer, values, reloads };
     }
 
     it('server ran customer first; the customer response arrives last', async () => {
-      const { answer, values } = await saveBoth();
+      const { answer, values, reloads } = await saveBoth();
       await answer(1, { customer: 'Anne', published: true }, 'ORD-1 #2');
+      expect(reloads()).toBe(0);
       // Its row was computed before the switch was saved: published false is stale.
       await answer(0, { customer: 'Anne', published: false }, 'ORD-1 #1');
       expect(values()).toEqual({ customer: 'Anne', published: 'true', no: 'ORD-1 #2' });
+      // The saves overlapped: once both settled, the server's rows decide the rest.
+      expect(reloads()).toBe(1);
     });
 
     it('server ran the switch first; the switch response arrives last', async () => {
-      const { answer, values } = await saveBoth();
+      const { answer, values, reloads } = await saveBoth();
       await answer(0, { customer: 'Anne', published: true }, 'ORD-1 #1');
       // Its row was computed before the customer was saved: customer Ann is stale.
       await answer(1, { customer: 'Ann', published: true }, 'ORD-1 #2');
       expect(values()).toEqual({ customer: 'Anne', published: 'true', no: 'ORD-1 #2' });
+      expect(reloads()).toBe(1);
     });
 
     it('server ran the switch first; the customer response arrives last', async () => {
-      const { answer, values } = await saveBoth();
+      const { answer, values, reloads } = await saveBoth();
       await answer(1, { customer: 'Ann', published: true }, 'ORD-1 #2');
       await answer(0, { customer: 'Anne', published: true }, 'ORD-1 #1');
+      // Both saved cells are right; `no` may be the older server state until the refresh.
       expect(values()).toEqual({ customer: 'Anne', published: 'true', no: 'ORD-1 #2' });
+      expect(reloads()).toBe(1);
     });
+
+    it('a failed overlapping save still lets the server decide once both settle', async () => {
+      const { respond, settle } = deferred();
+      const { user, adapter } = setup(respond);
+      await user.click(row1().getByRole('switch', { name: '上架' }));
+      await user.click(row1().getByRole('switch', { name: '熱門' }));
+      await act(async () => settle(0, { status: 500, data: {} }));
+      await act(async () =>
+        settle(
+          1,
+          saved()({
+            body: { column: 'flags', value: { hot: true } },
+          } as HttpRequest) as HttpResponse,
+        ),
+      );
+      expect(adapter.calls.filter((c) => c.fn === 'reload')).toHaveLength(1);
+    });
+  });
+
+  it('a later save that did not overlap brings the whole server row, cascades included', async () => {
+    const { user, adapter } = setup((req) => {
+      const { column, value } = req.body as { column: string; value: unknown };
+      // Archiving (status pending here) also takes the product off the shelf.
+      if (column === 'status') {
+        return { status: 200, data: { row: { ...rows[0], status: value, published: false } } };
+      }
+      return saved()(req);
+    });
+    const sw = () => row1().getByRole('switch', { name: '上架' });
+    await user.click(sw());
+    await waitFor(() => expect(sw().hasAttribute('aria-busy')).toBe(false));
+    expect(sw().getAttribute('aria-checked')).toBe('true');
+
+    await user.click(row1().getByRole('button', { name: '編輯狀態：已付款' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('radio', { name: '待付款' }),
+    );
+    await waitFor(() =>
+      expect(row1().getByRole('button', { name: '編輯狀態：待付款' })).toBeTruthy(),
+    );
+    await waitFor(() =>
+      expect(
+        row1().getByRole('button', { name: '編輯狀態：待付款' }).hasAttribute('aria-busy'),
+      ).toBe(false),
+    );
+    expect(sw().getAttribute('aria-checked')).toBe('false');
+    // Nothing overlapped, so nothing to reload.
+    expect(adapter.calls.filter((c) => c.fn === 'reload')).toHaveLength(0);
+  });
+
+  it('a 422 on a list value survives new row objects with the same list', async () => {
+    let n = 0;
+    const { user } = setup((req) =>
+      n++ === 0
+        ? { status: 422, data: { message: '資料有誤', errors: { tags: ['最多選一個'] } } }
+        : saved({ tags: ['gift'] })(req),
+    );
+    await user.click(row1().getByRole('button', { name: '編輯標籤：禮品' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('checkbox', { name: '急件' }),
+    );
+    await user.click(document.body);
+    expect((await row1().findByRole('alert')).textContent).toBe('最多選一個');
+    // Another cell's save replaces the row object; tags is a new array with the same content.
+    await user.click(row1().getByRole('switch', { name: '上架' }));
+    await waitFor(() =>
+      expect(row1().getByRole('switch', { name: '上架' }).hasAttribute('aria-busy')).toBe(false),
+    );
+    expect(row1().getByRole('alert').textContent).toBe('最多選一個');
   });
 
   it('a 422 error goes away when new rows bring another value', async () => {

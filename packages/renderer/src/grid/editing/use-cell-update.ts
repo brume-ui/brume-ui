@@ -1,10 +1,15 @@
-import { toast, useBrume } from '@brume-ui/brume-react';
+import { type HttpResponse, toast, useBrume } from '@brume-ui/brume-react';
 import type { CellUpdateResponse, ErrorResponse, GridRow } from '@brume-ui/brume-schema';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { applyFeedback } from '../actions/feedback';
 import { failureMessage } from '../actions/run-action';
 import { useGrid } from '../grid-context';
 import { useGridNavigation } from '../use-grid-navigation';
+import type { RowSaveTicket } from './row-saves';
+
+function sameValue(a: unknown, b: unknown): boolean {
+  return Object.is(a, b) || JSON.stringify(a) === JSON.stringify(b);
+}
 
 /** The value an editor starts from: `_meta.raw[column]` when the server sent one, else the cell. */
 export function editValue(row: GridRow, column: string): unknown {
@@ -34,7 +39,7 @@ export interface CellUpdate {
 export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate {
   const { adapter, t } = useBrume();
   const { refresh } = useGridNavigation();
-  const { page, rowById, beginRowSave, replaceRow } = useGrid();
+  const { page, rowById, beginRowSave, endRowSave, replaceRow } = useGrid();
   const endpoint = page.endpoints?.cell;
   const row = rowById.get(String(rowId));
   const confirmed = row ? editValue(row, column) : undefined;
@@ -62,47 +67,67 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
   const commit = useCallback(
     async (next: unknown, shown: unknown = next) => {
       if (!endpoint) return;
+      /** Applies one response; true when it already refreshes the page (or leaves it). */
+      function settle(
+        seq: number,
+        res: HttpResponse<Partial<CellUpdateResponse & ErrorResponse>>,
+        ticket: RowSaveTicket,
+        shown: unknown,
+      ): boolean {
+        const newest = seq === issued.current;
+        if (res.status >= 200 && res.status < 300) {
+          let outdated = false;
+          let refreshed = false;
+          if (seq > applied.current) {
+            applied.current = seq;
+            const returned = res.data?.row;
+            outdated = returned ? replaceRow(returned, ticket, column) === 'outdated' : false;
+            // Rows that changed under the save may predate it: let the server's rows decide.
+            const feedback = outdated
+              ? { ...res.data?.feedback, refresh: true }
+              : res.data?.feedback;
+            if (feedback) {
+              applyFeedback(feedback, { adapter, refresh });
+              refreshed = Boolean(feedback.refresh || feedback.redirect);
+            }
+          }
+          if (newest) {
+            setOptimistic(outdated ? { seq, value: shown, heldOn: pageRows.current } : null);
+            setError(null);
+          }
+          return refreshed;
+        }
+        // A failed call that a newer one replaced has nothing on screen to revert.
+        if (!newest) return false;
+        setOptimistic(null);
+        const fieldError = res.status === 422 ? res.data?.errors?.[column]?.[0] : undefined;
+        if (fieldError) {
+          setError({ message: fieldError, at: confirmedRef.current });
+        } else {
+          toast.error(failureMessage(res, t));
+        }
+        return false;
+      }
+
       const seq = ++issued.current;
-      const ticket = beginRowSave();
+      const ticket = beginRowSave(rowId);
       setOptimistic({ seq, value: shown });
       const res = await adapter.request<Partial<CellUpdateResponse & ErrorResponse>>({
         method: 'patch',
         url: endpoint.replaceAll('{id}', encodeURIComponent(String(rowId))),
         body: { column, value: next },
       });
-      const newest = seq === issued.current;
-      if (res.status >= 200 && res.status < 300) {
-        let outdated = false;
-        if (seq > applied.current) {
-          applied.current = seq;
-          const returned = res.data?.row;
-          outdated = returned ? replaceRow(returned, ticket, column) === 'outdated' : false;
-          const feedback = res.data?.feedback;
-          // Rows that changed under the save may predate it: let the server's rows decide.
-          if (outdated) applyFeedback({ ...feedback, refresh: true }, { adapter, refresh });
-          else if (feedback) applyFeedback(feedback, { adapter, refresh });
-        }
-        if (newest) {
-          setOptimistic(outdated ? { seq, value: shown, heldOn: pageRows.current } : null);
-          setError(null);
-        }
-        return;
-      }
-      // A failed call that a newer one replaced has nothing on screen to revert.
-      if (!newest) return;
-      setOptimistic(null);
-      const fieldError = res.status === 422 ? res.data?.errors?.[column]?.[0] : undefined;
-      if (fieldError) {
-        setError({ message: fieldError, at: confirmedRef.current });
-      } else {
-        toast.error(failureMessage(res, t));
-      }
+      const refreshed = settle(seq, res, ticket, shown);
+      // Saves of this row overlapped: only the server knows the order it ran them in, so once the
+      // last one settles its rows decide (unless this response already refreshes or leaves).
+      if (endRowSave(ticket) && !refreshed) refresh();
     },
-    [adapter, t, refresh, endpoint, rowId, column, beginRowSave, replaceRow],
+    [adapter, t, refresh, endpoint, rowId, column, beginRowSave, endRowSave, replaceRow],
   );
 
   const showing = optimistic && (!optimistic.heldOn || optimistic.heldOn === page.rows);
-  const visibleError = error && Object.is(error.at, confirmed) ? error.message : null;
+  // By content: rows bring new arrays and objects even when the value is the same.
+  const visibleError = error && sameValue(error.at, confirmed) ? error.message : null;
   return useMemo(
     () => ({
       value: showing ? optimistic.value : confirmed,

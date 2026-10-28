@@ -12,7 +12,9 @@ export interface GridContextValue {
   /** `rows` by id (as a string). */
   rowById: ReadonlyMap<string, GridRow>;
   /** Taken when a cell save starts; `replaceRow` uses it to order the rows saves return. */
-  beginRowSave(): RowSaveTicket;
+  beginRowSave(rowId: GridRow['id']): RowSaveTicket;
+  /** Called when that save settles; true when it was the last of saves of the row that overlapped. */
+  endRowSave(ticket: RowSaveTicket): boolean;
   /**
    * Puts a row returned by a cell save in place of the row with its id (see `useRowSaves` for
    * the ordering). `column` is the saved column.
