@@ -31,9 +31,16 @@ export function seriesColor(series: Pick<ChartSeries, 'color'>, index: number): 
 
 /** Numeric value of a field; null for missing / non-numeric (drawn as a gap, listed as "—"). */
 export function readValue(datum: ChartDatum | undefined, key: string): number | null {
-  const raw = datum?.[key];
+  return toNumber(datum?.[key]);
+}
+
+/**
+ * A number from a number or numeric string (PHP/PDO sends DECIMAL sums as strings); null for
+ * anything else.
+ */
+export function toNumber(raw: unknown): number | null {
   if (raw === null || raw === undefined || raw === '') return null;
-  const n = typeof raw === 'number' ? raw : Number(raw);
+  const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : Number.NaN;
   return Number.isFinite(n) ? n : null;
 }
 
@@ -120,13 +127,30 @@ export function makeFormatter(
   return (value) => f.format(value);
 }
 
+/** True when `label` (from `f`) shows `value` exactly, only scaled by a power of ten (萬, K, %). */
+function isExact(f: Intl.NumberFormat, value: number): boolean {
+  if (value === 0) return true;
+  let digits = '';
+  for (const part of f.formatToParts(value)) {
+    if (part.type === 'integer' || part.type === 'fraction') digits += part.value;
+    else if (part.type === 'decimal') digits += '.';
+  }
+  const shown = Number(digits);
+  if (!shown) return false;
+  const exponent = Math.log10(Math.abs(value) / shown);
+  return Math.abs(exponent - Math.round(exponent)) < 1e-9;
+}
+
 /**
- * Axis labels: compact from 1,000 up (1.2K, 1.2萬) in the locale; values below stay plain. When
- * the series format is a currency or percent, ticks keep that style compactly.
+ * Axis labels for `ticks`: compact from 1,000 up (1.2K, 1.25萬) in the locale, keeping a currency
+ * or percent style. The fraction digits come from the ticks themselves: the fewest (0–3) that show
+ * every tick exactly, so 12,500 never reads 「1.3萬」 and two ticks never share a label. Falls back
+ * to the full number when no compact form is exact.
  */
 export function axisFormatter(
   locale: string,
   format: ValueFormat | undefined,
+  ticks: readonly number[] = [],
 ): (value: number) => string {
   if (typeof format === 'function') return format;
   const base: Intl.NumberFormatOptions = format
@@ -137,7 +161,12 @@ export function axisFormatter(
         unit: format.unit,
       }
     : {};
-  return makeFormatter(locale, { ...base, notation: 'compact', maximumFractionDigits: 1 });
+  for (let digits = 0; digits <= 3; digits++) {
+    const f = numberFormat(locale, { ...base, notation: 'compact', maximumFractionDigits: digits });
+    if (ticks.every((tick) => isExact(f, tick))) return (value) => f.format(value);
+  }
+  const plain = numberFormat(locale, { ...base, maximumFractionDigits: 3 });
+  return (value) => plain.format(value);
 }
 
 /** X values: Date, ISO string or epoch ms. */
@@ -174,7 +203,15 @@ export function foldSlices<T extends { label: string; value: number }>(
   otherLabel: string,
 ): Array<T | { label: string; value: number; other: true }> {
   if (slices.length <= max) return [...slices];
-  const head = slices.slice(0, Math.max(1, max - 1));
-  const rest = slices.slice(head.length).reduce((sum, s) => sum + s.value, 0);
+  // Keep the largest slices, in their original order (colour follows the entity, not its rank).
+  const keep = new Set(
+    slices
+      .map((s, i) => ({ v: s.value, i }))
+      .sort((a, b) => b.v - a.v || a.i - b.i)
+      .slice(0, Math.max(1, max - 1))
+      .map((x) => x.i),
+  );
+  const head = slices.filter((_, i) => keep.has(i));
+  const rest = slices.filter((_, i) => !keep.has(i)).reduce((sum, s) => sum + s.value, 0);
   return [...head, { label: otherLabel, value: rest, other: true as const }];
 }

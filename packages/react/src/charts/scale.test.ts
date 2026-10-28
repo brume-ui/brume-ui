@@ -124,9 +124,35 @@ describe('formatting', () => {
   });
 
   it('compacts axis labels from 1,000 up in the locale', () => {
-    expect(axisFormatter('en', undefined)(1500)).toBe('1.5K');
-    expect(axisFormatter('en', undefined)(800)).toBe('800');
-    expect(axisFormatter('zh-TW', undefined)(25000)).toBe('2.5萬');
-    expect(axisFormatter('en', { style: 'currency', currency: 'USD' })(2_000_000)).toBe('$2M');
+    expect(axisFormatter('en', undefined, [0, 1500])(1500)).toBe('1.5K');
+    expect(axisFormatter('en', undefined, [0, 800])(800)).toBe('800');
+    expect(axisFormatter('zh-TW', undefined, [0, 25000])(25000)).toBe('2.5萬');
+    expect(axisFormatter('en', { style: 'currency', currency: 'USD' }, [0, 2e6])(2e6)).toBe('$2M');
+  });
+
+  const labels = (locale: string, lo: number, hi: number, includeZero = true) => {
+    const { ticks } = niceScale(lo, hi, 5, includeZero);
+    const f = axisFormatter(locale, undefined, ticks);
+    return ticks.map(f);
+  };
+
+  it('takes axis decimals from the tick step so every label is exact and distinct (zh-TW)', () => {
+    expect(labels('zh-TW', 0, 12000)).toEqual(['0', '2500', '5000', '7500', '1萬', '1.25萬']);
+    const close = labels('zh-TW', 10200, 11300, false);
+    expect(new Set(close).size).toBe(close.length);
+    expect(close).toContain('1.05萬');
+  });
+
+  it('takes axis decimals from the tick step (en)', () => {
+    expect(labels('en', 0, 1_200_000)).toEqual(['0', '250K', '500K', '750K', '1M', '1.25M']);
+    const close = labels('en', 10200, 11300, false);
+    expect(new Set(close).size).toBe(close.length);
+    expect(close).toContain('10.5K');
+  });
+
+  it('formats very large values compactly and exactly', () => {
+    expect(labels('en', 0, 3.2e9)).toEqual(['0', '1B', '2B', '3B', '4B']);
+    expect(labels('zh-TW', 0, 3.2e9)).toEqual(['0', '10億', '20億', '30億', '40億']);
+    expect(labels('zh-TW', 0, 1.2e8)).toEqual(['0', '2500萬', '5000萬', '7500萬', '1億', '1.25億']);
   });
 });
