@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { cn } from '../cn';
 import { usePrefersReducedMotion } from '../motion/reduced-motion';
 import { useBrume } from '../provider';
@@ -52,9 +52,12 @@ export function RollingNumber({
 }: RollingNumberProps) {
   const brume = useBrume();
   const reduced = usePrefersReducedMotion();
+  // Keyed by the options' value, so an inline `format={{...}}` does not rebuild it every render.
+  const formatKey = JSON.stringify(format ?? null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: formatKey stands in for `format`
   const formatter = useMemo(
     () => new Intl.NumberFormat(locale ?? brume.locale, format),
-    [locale, brume.locale, format],
+    [locale, brume.locale, formatKey],
   );
   const formatted = formatter.format(value);
   const [settled, setSettled] = useState(!animateOnMount || reduced);
@@ -94,11 +97,13 @@ export function RollingNumber({
             >
               <span
                 data-digit={shown}
-                className="br:flex br:flex-col br:transition-transform br:duration-[calc(var(--br-duration-slow)*2)] br:ease-emphasized"
-                style={{
-                  transform: `translateY(${-shown * 10}%)`,
-                  transitionDelay: `${fromRight * COLUMN_STAGGER_MS}ms`,
-                }}
+                className="br:flex br:flex-col br:transition-transform br:duration-[calc(var(--br-duration-slow)*2)] br:ease-emphasized br:[transition-delay:var(--br-column-delay,0ms)] br:motion-reduce:[transition-delay:0ms]"
+                style={
+                  {
+                    transform: `translateY(${-shown * 10}%)`,
+                    '--br-column-delay': `${fromRight * COLUMN_STAGGER_MS}ms`,
+                  } as CSSProperties
+                }
               >
                 {DIGITS.map((d) => (
                   <span key={d} className="br:h-[1lh]">

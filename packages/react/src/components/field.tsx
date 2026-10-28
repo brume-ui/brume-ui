@@ -1,4 +1,7 @@
-import { cloneElement, type ReactElement, useId } from 'react';
+import { cloneElement, type ReactElement, useId, useRef } from 'react';
+import { cn } from '../cn';
+
+const DROP_IN = 'br:animate-[br-drop-in_var(--br-duration-base)_var(--br-ease-out)]';
 
 export interface FieldProps {
   label: string;
@@ -10,6 +13,8 @@ export interface FieldProps {
 
 export function Field({ label, description, error, required, children }: FieldProps) {
   const autoId = useId();
+  // The hint present on first render is part of the page; one that appears or changes later drops in.
+  const initialDescription = useRef(description);
   const id = (children.props.id as string | undefined) ?? autoId;
   const descriptionId = description ? `${id}-description` : undefined;
   const errorId = error ? `${id}-error` : undefined;
@@ -33,18 +38,21 @@ export function Field({ label, description, error, required, children }: FieldPr
         ) : null}
       </label>
       {description ? (
-        <p id={descriptionId} className="br:text-sm br:text-text-muted">
+        <p
+          key={description}
+          id={descriptionId}
+          className={cn(
+            'br:text-sm br:text-text-muted',
+            description !== initialDescription.current && DROP_IN,
+          )}
+        >
           {description}
         </p>
       ) : null}
       {cloneElement(children, injected)}
       {error ? (
         // Keyed by the message so each new error drops in again (fade-only under reduced motion).
-        <p
-          key={error}
-          id={errorId}
-          className="br:text-sm br:text-danger br:animate-[br-drop-in_var(--br-duration-base)_var(--br-ease-out)]"
-        >
+        <p key={error} id={errorId} className={cn('br:text-sm br:text-danger', DROP_IN)}>
           {error}
         </p>
       ) : null}

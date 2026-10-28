@@ -60,4 +60,20 @@ describe('Field', () => {
     expect(ids).toContain(screen.getByText('錯了').id);
     expect(input.getAttribute('aria-required')).toBe('true');
   });
+
+  it('drops in a hint or error that appears later, not the one present on first render', () => {
+    const { rerender } = render(
+      <Field label="帳號" description="使用 Email">
+        <TextInput />
+      </Field>,
+    );
+    expect(screen.getByText('使用 Email').className).not.toContain('br-drop-in');
+    rerender(
+      <Field label="帳號" description="至少 8 個字" error="這個帳號已被使用，換一個再試。">
+        <TextInput />
+      </Field>,
+    );
+    expect(screen.getByText('至少 8 個字').className).toContain('br-drop-in');
+    expect(screen.getByText('這個帳號已被使用，換一個再試。').className).toContain('br-drop-in');
+  });
 });

@@ -1,5 +1,13 @@
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
 import { EmptyState, type EmptyStateProps } from './empty-state';
@@ -30,7 +38,7 @@ const SKELETON_ROWS = 5;
 const ROW_STAGGER_MS = 30;
 const ROW_STAGGER_MAX = 8;
 const ROW_ENTER =
-  'br:group/row br:animate-[br-fade-in_var(--br-duration-base)_var(--br-ease-out)_backwards]';
+  'br:group/row br:animate-[br-fade-in_var(--br-duration-base)_var(--br-ease-out)_backwards] br:[animation-delay:var(--br-row-delay,0ms)] br:motion-reduce:[animation-delay:0ms]';
 /**
  * Floor for columns without a fixed width, so narrow screens scroll instead of squeezing.
  * 10rem leaves 128px of text, enough for a `Y-m-d H:i` timestamp.
@@ -160,7 +168,11 @@ export function DataTable<T>({
                 <tr
                   key={row.id}
                   className={ROW_ENTER}
-                  style={{ animationDelay: `${Math.min(i, ROW_STAGGER_MAX) * ROW_STAGGER_MS}ms` }}
+                  style={
+                    {
+                      '--br-row-delay': `${Math.min(i, ROW_STAGGER_MAX) * ROW_STAGGER_MS}ms`,
+                    } as CSSProperties
+                  }
                 >
                   {row.getVisibleCells().map((cell) => {
                     const col = meta.get(cell.column.id);

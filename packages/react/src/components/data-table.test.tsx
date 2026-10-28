@@ -160,4 +160,20 @@ describe('DataTable', () => {
       expect(screen.queryByRole('region')).toBeNull();
     });
   });
+
+  it('staggers row fade-in through a delay variable that reduced motion zeroes', () => {
+    rtlRender(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <DataTable
+          columns={[{ key: 'name', header: '名稱' }]}
+          rows={[{ name: 'a' }, { name: 'b' }]}
+          getRowId={(r) => r.name}
+          empty={{ title: '空', description: '沒有資料' }}
+        />
+      </BrumeProvider>,
+    );
+    const rows = screen.getAllByRole('row').slice(1);
+    expect(rows.map((r) => r.style.getPropertyValue('--br-row-delay'))).toEqual(['0ms', '30ms']);
+    expect(rows[0]?.className).toContain('br:motion-reduce:[animation-delay:0ms]');
+  });
 });

@@ -170,6 +170,8 @@ function NavGroup({
       {children.mounted ? (
         // grid-template-rows 0fr -> 1fr animates to the content's own height.
         <div
+          // Leaving children are out of the tab order and the a11y tree while they collapse.
+          inert={!children.shown || undefined}
           className={cn(
             'br:grid br:transition-[grid-template-rows,opacity] br:duration-base br:ease-emphasized',
             children.shown

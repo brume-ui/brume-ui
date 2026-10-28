@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Circle, LayoutDashboard } from 'lucide-react';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -28,6 +28,18 @@ describe('Sidebar', () => {
     expect(within(sidebar()).queryByRole('link', { name: '使用者' })).toBeNull();
     await userEvent.click(group);
     expect(within(sidebar()).getByRole('link', { name: '使用者' })).toBeTruthy();
+  });
+
+  it('makes the children of a collapsing group inert until they are gone', async () => {
+    render(renderShell().ui());
+    const group = within(sidebar()).getByRole('button', { name: '內容' });
+    await userEvent.click(group);
+    expect(group.getAttribute('aria-expanded')).toBe('false');
+    const leaving = within(sidebar()).queryByRole('link', { name: '使用者' });
+    if (leaving) expect(leaving.closest('[inert]')).not.toBeNull();
+    await waitFor(() =>
+      expect(within(sidebar()).queryByRole('link', { name: '使用者' })).toBeNull(),
+    );
   });
 
   it('visits through the adapter but keeps a real href and ignores modified clicks', async () => {

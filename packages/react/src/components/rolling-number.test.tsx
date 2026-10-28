@@ -83,17 +83,29 @@ describe('RollingNumber', () => {
     expect(digits(container)).toBe('407');
   });
 
-  it('rolls existing columns to a new value', () => {
+  it('rolls the existing units column when the number gains a digit', () => {
+    const units = (c: HTMLElement) => [...c.querySelectorAll<HTMLElement>('[data-digit]')].at(-1);
     const { container, rerender } = renderNumber(
-      <RollingNumber value={95} animateOnMount={false} />,
+      <RollingNumber value={99} animateOnMount={false} />,
     );
-    const units = container.querySelector('[data-digit]:last-of-type');
+    const before = units(container);
+    expect(before?.dataset.digit).toBe('9');
     rerender(
       <BrumeProvider adapter={createMemoryAdapter()}>
-        <RollingNumber value={96} animateOnMount={false} />
+        <RollingNumber value={100} animateOnMount={false} />
       </BrumeProvider>,
     );
-    expect(digits(container)).toBe('96');
-    expect(units?.isConnected).toBe(true);
+    expect(digits(container)).toBe('100');
+    // Same element, new digit: it rolls instead of being replaced.
+    expect(units(container)).toBe(before);
+    expect(before?.dataset.digit).toBe('0');
+  });
+
+  it('staggers columns through a variable that reduced motion zeroes', () => {
+    const { container } = renderNumber(<RollingNumber value={12} animateOnMount={false} />);
+    const [tens, ones] = [...container.querySelectorAll<HTMLElement>('[data-digit]')];
+    expect(ones?.style.getPropertyValue('--br-column-delay')).toBe('0ms');
+    expect(tens?.style.getPropertyValue('--br-column-delay')).toBe('30ms');
+    expect(tens?.className).toContain('br:motion-reduce:[transition-delay:0ms]');
   });
 });
