@@ -1,4 +1,13 @@
 import { PageEnvelopeSchema } from './page';
+import {
+  ActionRequestSchema,
+  ActionResponseSchema,
+  CellUpdateRequestSchema,
+  CellUpdateResponseSchema,
+  ErrorResponseSchema,
+} from './protocol/http';
+import { OptionsResponseSchema, PickerSearchResponseSchema } from './protocol/options';
+import { UploadTempResponseSchema, UploadValueSchema } from './protocol/upload';
 import { MenuItemSchema, SharedPropsSchema } from './shared';
 
 const MENU_ITEM_REF = '#/$defs/MenuItem';
@@ -15,6 +24,8 @@ function hoistMenuItem(node: unknown): unknown {
   return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, hoistMenuItem(v)]));
 }
 
+const plain = (schema: unknown): unknown => JSON.parse(JSON.stringify(schema));
+
 function menuItemDef(): unknown {
   const { $id: _id, ...rest } = JSON.parse(JSON.stringify(MenuItemSchema)) as Record<
     string,
@@ -23,7 +34,7 @@ function menuItemDef(): unknown {
   return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, hoistMenuItem(v)]));
 }
 
-/** v0.json 的內容：JSON Schema 2020-12，根為 PageEnvelope，`$defs` 收錄 PageEnvelope、SharedProps、MenuItem。 */
+/** v0.json 的內容：JSON Schema 2020-12，根為 PageEnvelope，`$defs` 收錄頁面、共用屬性與請求／回應協定。 */
 export function emitJsonSchema(): string {
   const doc = {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -32,6 +43,15 @@ export function emitJsonSchema(): string {
       PageEnvelope: hoistMenuItem(JSON.parse(JSON.stringify(PageEnvelopeSchema))),
       SharedProps: hoistMenuItem(JSON.parse(JSON.stringify(SharedPropsSchema))),
       MenuItem: menuItemDef(),
+      ActionRequest: plain(ActionRequestSchema),
+      ActionResponse: plain(ActionResponseSchema),
+      CellUpdateRequest: plain(CellUpdateRequestSchema),
+      CellUpdateResponse: plain(CellUpdateResponseSchema),
+      ErrorResponse: plain(ErrorResponseSchema),
+      OptionsResponse: plain(OptionsResponseSchema),
+      PickerSearchResponse: plain(PickerSearchResponseSchema),
+      UploadTempResponse: plain(UploadTempResponseSchema),
+      UploadValue: plain(UploadValueSchema),
     },
   };
   return `${JSON.stringify(doc, null, 2)}\n`;

@@ -1,0 +1,6 @@
+{
+  "message": "bad",
+  "errors": {
+    "name": ["required"]
+  }
+}

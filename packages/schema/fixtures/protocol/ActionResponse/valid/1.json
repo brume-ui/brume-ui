@@ -1,0 +1,12 @@
+{
+  "feedback": {
+    "toast": {
+      "type": "success",
+      "message": "ok"
+    },
+    "download": {
+      "url": "/x.xlsx",
+      "filename": "x.xlsx"
+    }
+  }
+}

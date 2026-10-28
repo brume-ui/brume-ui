@@ -1,0 +1,15 @@
+{
+  "data": [
+    {
+      "value": "1",
+      "label": "A",
+      "group": "g",
+      "description": "d"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "perPage": 20,
+    "hasMore": false
+  }
+}

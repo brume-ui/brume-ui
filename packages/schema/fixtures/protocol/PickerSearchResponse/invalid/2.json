@@ -1,0 +1,13 @@
+{
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "perPage": 20,
+    "hasMore": false
+  },
+  "sections": [
+    {
+      "key": "a"
+    }
+  ]
+}

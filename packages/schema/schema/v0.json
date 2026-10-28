@@ -2098,6 +2098,618 @@
           }
         }
       }
+    },
+    "ActionRequest": {
+      "type": "object",
+      "required": [
+        "target",
+        "ids"
+      ],
+      "properties": {
+        "target": {
+          "anyOf": [
+            {
+              "const": "row",
+              "type": "string"
+            },
+            {
+              "const": "batch",
+              "type": "string"
+            },
+            {
+              "const": "tool",
+              "type": "string"
+            }
+          ]
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "ActionResponse": {
+      "type": "object",
+      "required": [
+        "feedback"
+      ],
+      "properties": {
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "toast": {
+              "type": "object",
+              "required": [
+                "type",
+                "message"
+              ],
+              "properties": {
+                "type": {
+                  "anyOf": [
+                    {
+                      "const": "success",
+                      "type": "string"
+                    },
+                    {
+                      "const": "error",
+                      "type": "string"
+                    },
+                    {
+                      "const": "info",
+                      "type": "string"
+                    },
+                    {
+                      "const": "warning",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            },
+            "refresh": {
+              "type": "boolean"
+            },
+            "redirect": {
+              "type": "string"
+            },
+            "download": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CellUpdateRequest": {
+      "type": "object",
+      "required": [
+        "column",
+        "value"
+      ],
+      "properties": {
+        "column": {
+          "type": "string"
+        },
+        "value": {}
+      }
+    },
+    "CellUpdateResponse": {
+      "type": "object",
+      "required": [
+        "row"
+      ],
+      "properties": {
+        "row": {
+          "allOf": [
+            {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "_meta": {
+                  "type": "object",
+                  "properties": {
+                    "editUrl": {
+                      "type": "string"
+                    },
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "href": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^(.*)$": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "content": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^(.*)$": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "type",
+                                "text"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "const": "text",
+                                  "type": "string"
+                                },
+                                "text": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "type",
+                                "columns",
+                                "rows"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "const": "table",
+                                  "type": "string"
+                                },
+                                "columns": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "required": [
+                                      "key",
+                                      "label"
+                                    ],
+                                    "properties": {
+                                      "key": {
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "rows": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                      "^(.*)$": {}
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "type",
+                                "name"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "const": "component",
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "props": {
+                                  "type": "object",
+                                  "patternProperties": {
+                                    "^(.*)$": {}
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "raw": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^(.*)$": {}
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {}
+              }
+            }
+          ]
+        },
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "toast": {
+              "type": "object",
+              "required": [
+                "type",
+                "message"
+              ],
+              "properties": {
+                "type": {
+                  "anyOf": [
+                    {
+                      "const": "success",
+                      "type": "string"
+                    },
+                    {
+                      "const": "error",
+                      "type": "string"
+                    },
+                    {
+                      "const": "info",
+                      "type": "string"
+                    },
+                    {
+                      "const": "warning",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            },
+            "refresh": {
+              "type": "boolean"
+            },
+            "redirect": {
+              "type": "string"
+            },
+            "download": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "OptionsResponse": {
+      "type": "object",
+      "required": [
+        "data",
+        "pagination"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "allOf": [
+              {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "group": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "pagination": {
+          "type": "object",
+          "required": [
+            "page",
+            "perPage",
+            "hasMore"
+          ],
+          "properties": {
+            "page": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "perPage": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "hasMore": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "PickerSearchResponse": {
+      "type": "object",
+      "required": [
+        "data",
+        "pagination"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "value",
+                      "label"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "columns": {
+                    "type": "object",
+                    "patternProperties": {
+                      "^(.*)$": {}
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "pagination": {
+          "type": "object",
+          "required": [
+            "page",
+            "perPage",
+            "hasMore"
+          ],
+          "properties": {
+            "page": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "perPage": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "hasMore": {
+              "type": "boolean"
+            }
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "UploadTempResponse": {
+      "type": "object",
+      "required": [
+        "token",
+        "name",
+        "size",
+        "mime",
+        "expiresAt"
+      ],
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "mime": {
+          "type": "string"
+        },
+        "previewUrl": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        }
+      }
+    },
+    "UploadValue": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "token"
+          ],
+          "properties": {
+            "token": {
+              "type": "string"
+            },
+            "extra": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {}
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "path",
+            "url"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "extra": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {}
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

@@ -54,6 +54,30 @@ export {
   SelectorDefSchema,
 } from './protocol/filter';
 export {
+  type ActionRequest,
+  ActionRequestSchema,
+  type ActionResponse,
+  ActionResponseSchema,
+  type CellUpdateRequest,
+  CellUpdateRequestSchema,
+  type CellUpdateResponse,
+  CellUpdateResponseSchema,
+  type ErrorResponse,
+  ErrorResponseSchema,
+  type Feedback,
+  FeedbackSchema,
+  type ToastType,
+  ToastTypeSchema,
+} from './protocol/http';
+export {
+  type OptionItem,
+  OptionItemSchema,
+  type OptionsResponse,
+  OptionsResponseSchema,
+  type PickerSearchResponse,
+  PickerSearchResponseSchema,
+} from './protocol/options';
+export {
   type FilterValue,
   GRID_PARAMS,
   type GridQuery,
@@ -62,6 +86,12 @@ export {
   serializeGridQuery,
   withGridQuery,
 } from './protocol/query';
+export {
+  type UploadTempResponse,
+  UploadTempResponseSchema,
+  type UploadValue,
+  UploadValueSchema,
+} from './protocol/upload';
 export {
   type Flash,
   FlashSchema,

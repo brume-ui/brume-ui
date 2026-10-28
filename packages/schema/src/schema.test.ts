@@ -141,8 +141,12 @@ describe('v0.json', () => {
     expect(readFileSync(pkg('schema/v0.json'), 'utf8')).toBe(emitJsonSchema());
   });
 
-  it('roots at PageEnvelope and defines SharedProps and MenuItem', () => {
+  it('roots at PageEnvelope and starts $defs with the page defs', () => {
     expect(v0.$ref).toBe('#/$defs/PageEnvelope');
-    expect(Object.keys(v0.$defs as object)).toEqual(['PageEnvelope', 'SharedProps', 'MenuItem']);
+    expect(Object.keys(v0.$defs as object).slice(0, 3)).toEqual([
+      'PageEnvelope',
+      'SharedProps',
+      'MenuItem',
+    ]);
   });
 });
