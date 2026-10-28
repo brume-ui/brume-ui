@@ -83,19 +83,16 @@ export function LineChart({
 }: LineChartProps) {
   const { t, locale } = useBrume();
   const plotRef = useRef<HTMLDivElement>(null);
-  const width = useChartWidth(plotRef);
+  const measured = useChartWidth(plotRef);
+  const width = measured ?? 0;
   const play = useEnterAnimation(animate);
   const keys = useMemo(() => series.map((s) => s.key), [series]);
   const { hidden, toggle } = useHiddenKeys(keys);
   const visible = series.filter((s) => !hidden.has(s.key));
   const n = data.length;
-  const { index: active, source, setActive, onKeyDown, onFocus, onBlur } = useActiveIndex(n);
+  const { index: active, source, keyboard, pointer } = useActiveIndex(n);
 
   const format = useMemo(() => makeFormatter(locale, valueFormat), [locale, valueFormat]);
-  const tickFormat = useMemo(
-    () => (axisFormat ? makeFormatter(locale, axisFormat) : axisFormatter(locale, valueFormat)),
-    [locale, axisFormat, valueFormat],
-  );
   const dateFormat = useMemo(
     () => makeDateFormatter(locale, xFormat, { month: 'numeric', day: 'numeric' }),
     [locale, xFormat],
@@ -118,6 +115,9 @@ export function LineChart({
     visible.map((s) => s.key),
   );
   const scale = niceScale(lo, hi, tickCountFor(height - 32), includeZero);
+  const tickFormat = axisFormat
+    ? makeFormatter(locale, axisFormat)
+    : axisFormatter(locale, valueFormat, scale.ticks);
   const tickLabels = scale.ticks.map(tickFormat);
   const labels = data.map((_, i) => labelAt(i));
   const widestX = Math.max(0, ...labels.map((l) => textWidth(l)));
@@ -185,9 +185,9 @@ export function LineChart({
     return best;
   };
 
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+  const pointerIndex = (e: PointerEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setActive(nearest(e.clientX - rect.left));
+    return nearest(e.clientX - rect.left);
   };
 
   const rowsFor = (i: number) =>
@@ -257,105 +257,107 @@ export function LineChart({
         tabIndex={0}
         className={cn(PLOT_FOCUS, 'br:touch-pan-y br:select-none')}
         style={{ height }}
-        onKeyDown={onKeyDown}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        onPointerMove={onPointerMove}
-        onPointerLeave={() => setActive(null)}
+        {...keyboard}
+        {...pointer(pointerIndex)}
         data-chart="line"
       >
-        <svg
-          width={width}
-          height={height}
-          aria-hidden="true"
-          className="br:block br:overflow-visible"
-        >
-          <ValueGrid
-            ticks={scale.ticks}
-            scale={y}
-            orientation="vertical"
-            start={plotLeft}
-            end={plotRight}
-            format={tickFormat}
-          />
-          {shownLabels.map((i) => (
-            <text key={i} {...AXIS_TEXT} x={xs[i]} y={plotBottom + 17} textAnchor="middle">
-              {labels[i]}
-            </text>
-          ))}
-          {Number.isFinite(activeX) ? (
-            <line
-              x1={Math.round(activeX) + 0.5}
-              x2={Math.round(activeX) + 0.5}
-              y1={plotTop}
-              y2={plotBottom}
-              stroke="var(--br-chart-axis)"
-              strokeWidth={1}
-            />
-          ) : null}
-          {lines.map((l) =>
-            l.area ? (
-              <path
-                key={`${l.series.key}-area`}
-                d={l.area}
-                fill={l.color}
-                fillOpacity={0.1}
-                className={cn(
-                  play &&
-                    'br:animate-[br-fade-in_var(--br-duration-slow)_var(--br-ease-out)_both] br:motion-reduce:animate-none',
-                )}
-                style={play ? { animationDelay: `${l.delay + 120}ms` } : undefined}
+        {/* Nothing until measured: a guessed width could overflow the box. */}
+        {measured === null ? null : (
+          <>
+            <svg
+              width={width}
+              height={height}
+              aria-hidden="true"
+              className="br:block br:overflow-visible"
+            >
+              <ValueGrid
+                ticks={scale.ticks}
+                scale={y}
+                orientation="vertical"
+                start={plotLeft}
+                end={plotRight}
+                format={tickFormat}
               />
-            ) : null,
-          )}
-          {lines.map((l) => (
-            <g key={l.series.key} data-series={l.series.key}>
-              <path
-                d={l.line}
-                pathLength={1}
-                fill="none"
-                stroke={l.color}
-                strokeWidth={2}
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                className={cn(
-                  play &&
-                    'br:animate-[br-chart-draw_calc(var(--br-duration-slow)*1.6)_var(--br-ease-out)_both] br:motion-reduce:animate-none',
-                )}
-                style={play ? ({ animationDelay: `${l.delay}ms` } as CSSProperties) : undefined}
-              />
-              {l.singles.map(([cx, cy]) => (
-                <circle key={`${cx}`} cx={cx} cy={cy} r={3} fill={l.color} />
+              {shownLabels.map((i) => (
+                <text key={i} {...AXIS_TEXT} x={xs[i]} y={plotBottom + 17} textAnchor="middle">
+                  {labels[i]}
+                </text>
               ))}
-            </g>
-          ))}
-          {active !== null
-            ? lines.map((l) => {
-                const p = l.pts[active];
-                return p ? (
-                  <circle
-                    key={l.series.key}
-                    data-active-point={l.series.key}
-                    cx={p[0]}
-                    cy={p[1]}
-                    r={4}
+              {Number.isFinite(activeX) ? (
+                <line
+                  x1={Math.round(activeX) + 0.5}
+                  x2={Math.round(activeX) + 0.5}
+                  y1={plotTop}
+                  y2={plotBottom}
+                  stroke="var(--br-chart-axis)"
+                  strokeWidth={1}
+                />
+              ) : null}
+              {lines.map((l) =>
+                l.area ? (
+                  <path
+                    key={`${l.series.key}-area`}
+                    d={l.area}
                     fill={l.color}
-                    stroke="var(--br-surface)"
-                    strokeWidth={2}
+                    fillOpacity={0.1}
+                    className={cn(
+                      play &&
+                        'br:animate-[br-fade-in_var(--br-duration-slow)_var(--br-ease-out)_both] br:motion-reduce:animate-none',
+                    )}
+                    style={play ? { animationDelay: `${l.delay + 120}ms` } : undefined}
                   />
-                ) : null;
-              })
-            : null}
-        </svg>
-        {active !== null && Number.isFinite(activeX) ? (
-          <ChartTooltip
-            x={activeX + (activeX > width * 0.6 ? -4 : 4)}
-            y={plotTop}
-            flip={activeX > width * 0.6}
-            title={labelAt(active)}
-            rows={rowsFor(active)}
-          />
-        ) : null}
+                ) : null,
+              )}
+              {lines.map((l) => (
+                <g key={l.series.key} data-series={l.series.key}>
+                  <path
+                    d={l.line}
+                    pathLength={1}
+                    fill="none"
+                    stroke={l.color}
+                    strokeWidth={2}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    className={cn(
+                      play &&
+                        'br:animate-[br-chart-draw_calc(var(--br-duration-slow)*1.6)_var(--br-ease-out)_both] br:motion-reduce:animate-none',
+                    )}
+                    style={play ? ({ animationDelay: `${l.delay}ms` } as CSSProperties) : undefined}
+                  />
+                  {l.singles.map(([cx, cy]) => (
+                    <circle key={`${cx}`} cx={cx} cy={cy} r={3} fill={l.color} />
+                  ))}
+                </g>
+              ))}
+              {active !== null
+                ? lines.map((l) => {
+                    const p = l.pts[active];
+                    return p ? (
+                      <circle
+                        key={l.series.key}
+                        data-active-point={l.series.key}
+                        cx={p[0]}
+                        cy={p[1]}
+                        r={4}
+                        fill={l.color}
+                        stroke="var(--br-surface)"
+                        strokeWidth={2}
+                      />
+                    ) : null;
+                  })
+                : null}
+            </svg>
+            {active !== null && Number.isFinite(activeX) ? (
+              <ChartTooltip
+                x={activeX + (activeX > width * 0.6 ? -4 : 4)}
+                y={plotTop}
+                flip={activeX > width * 0.6}
+                title={labelAt(active)}
+                rows={rowsFor(active)}
+              />
+            ) : null}
+          </>
+        )}
       </div>
     </ChartFrame>
   );

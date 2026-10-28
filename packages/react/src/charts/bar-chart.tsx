@@ -109,7 +109,8 @@ export function BarChart({
 }: BarChartProps) {
   const { t, locale } = useBrume();
   const plotRef = useRef<HTMLDivElement>(null);
-  const width = useChartWidth(plotRef);
+  const measured = useChartWidth(plotRef);
+  const width = measured ?? 0;
   const play = useEnterAnimation(animate);
   const keys = useMemo(() => series.map((s) => s.key), [series]);
   const { hidden, toggle } = useHiddenKeys(keys);
@@ -119,13 +120,9 @@ export function BarChart({
   const stacked = layout === 'stacked';
   const n = data.length;
   const height = heightProp ?? (horizontal ? Math.max(120, n * 36 + 28) : 240);
-  const { index: active, source, setActive, onKeyDown, onFocus, onBlur } = useActiveIndex(n);
+  const { index: active, source, keyboard, pointer } = useActiveIndex(n);
 
   const format = useMemo(() => makeFormatter(locale, valueFormat), [locale, valueFormat]);
-  const tickFormat = useMemo(
-    () => (axisFormat ? makeFormatter(locale, axisFormat) : axisFormatter(locale, valueFormat)),
-    [locale, axisFormat, valueFormat],
-  );
   const labelAt = (i: number) => String(data[i]?.[categoryKey] ?? '');
   const colorOf = (key: string) => {
     const i = keys.indexOf(key);
@@ -136,6 +133,9 @@ export function BarChart({
   const [lo, hi] = valueExtent(data, visibleKeys, stacked);
   const valueLength = horizontal ? width : height;
   const scale = niceScale(lo, hi, tickCountFor(valueLength - 32, horizontal ? 80 : 48));
+  const tickFormat = axisFormat
+    ? makeFormatter(locale, axisFormat)
+    : axisFormatter(locale, valueFormat, scale.ticks);
   const tickLabels = scale.ticks.map(tickFormat);
   const categoryLabels = data.map((_, i) => labelAt(i));
   const pad = { top: 8, right: 8, bottom: 24, left: 8 };
@@ -170,53 +170,37 @@ export function BarChart({
     const out: Bar[] = [];
     if (stacked) {
       const row = stacks[i] ?? {};
-      const lastUp = [...visibleKeys].reverse().find((key) => (row[key]?.[1] ?? 0) > 0);
-      const lastDown = [...visibleKeys].reverse().find((key) => (row[key]?.[0] ?? 0) < 0);
-      for (const key of visibleKeys) {
+      // Segments with height; a zero series stacked on top never takes the rounded end.
+      const extent = (key: string) => {
         const e = row[key];
-        if (!e || e[0] === e[1]) continue;
-        const positive = e[1] > 0;
+        return e && e[1] > e[0] ? e : undefined;
+      };
+      const reversed = [...visibleKeys].reverse();
+      const lastUp = reversed.find((key) => (extent(key)?.[0] ?? -1) >= 0);
+      const lastDown = reversed.find((key) => (extent(key)?.[1] ?? 1) <= 0);
+      for (const key of visibleKeys) {
+        const e = extent(key);
+        if (!e) continue;
+        const positive = e[0] >= 0;
         const isEnd = key === (positive ? lastUp : lastDown);
-        const atBase = positive ? e[0] === 0 : e[1] === 0;
-        let a = value(e[0]);
-        let b = value(e[1]);
+        const baseValue = positive ? e[0] : e[1];
+        const far = value(positive ? e[1] : e[0]);
+        let near = value(baseValue);
+        const dir = Math.sign(far - near);
+        // A 2px surface gap at the join with the previous segment; a segment thinner than the
+        // gap is dropped rather than flipped.
+        if (baseValue !== 0) near += dir * GAP;
+        const length = Math.max(0, (far - near) * dir);
+        if (length <= 0) continue;
+        const start = Math.min(near, far);
         const pos = center - thickness / 2;
-        if (horizontal) {
-          // a <= b in px for positives; keep a 2px gap at the join with the previous segment.
-          if (!atBase) {
-            if (positive) a += GAP;
-            else b -= GAP;
-          }
-          const x = Math.min(a, b);
-          out.push({
-            key,
-            color: colorOf(key),
-            d: barPath(
-              x,
-              pos,
-              Math.abs(b - a),
-              thickness,
-              isEnd ? (positive ? 'right' : 'left') : null,
-            ),
-          });
-        } else {
-          if (!atBase) {
-            if (positive) a -= GAP;
-            else b += GAP;
-          }
-          const y = Math.min(a, b);
-          out.push({
-            key,
-            color: colorOf(key),
-            d: barPath(
-              pos,
-              y,
-              thickness,
-              Math.abs(b - a),
-              isEnd ? (positive ? 'top' : 'bottom') : null,
-            ),
-          });
-        }
+        out.push({
+          key,
+          color: colorOf(key),
+          d: horizontal
+            ? barPath(start, pos, length, thickness, isEnd ? (positive ? 'right' : 'left') : null)
+            : barPath(pos, start, thickness, length, isEnd ? (positive ? 'top' : 'bottom') : null),
+        });
       }
     } else {
       visibleKeys.forEach((key, j) => {
@@ -259,7 +243,7 @@ export function BarChart({
     ? new Set(data.map((_, i) => i))
     : new Set(thinLabels(n, slot, Math.max(0, ...categoryLabels.map((l) => textWidth(l)))));
 
-  const pointerIndex = (e: PointerEvent<HTMLDivElement>) => {
+  const pointerIndex = (e: PointerEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const p = horizontal ? e.clientY - rect.top : e.clientX - rect.left;
     const i = Math.floor((p - bandStart) / slot);
@@ -370,93 +354,95 @@ export function BarChart({
         tabIndex={0}
         className={cn(PLOT_FOCUS, 'br:touch-pan-y br:select-none')}
         style={{ height }}
-        onKeyDown={onKeyDown}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        onPointerMove={(e) => setActive(pointerIndex(e))}
-        onPointerLeave={() => setActive(null)}
+        {...keyboard}
+        {...pointer(pointerIndex)}
         data-chart="bar"
       >
-        <svg
-          width={width}
-          height={height}
-          aria-hidden="true"
-          className="br:block br:overflow-visible"
-        >
-          {active !== null ? (
-            <rect
-              x={horizontal ? plotLeft : bandStart + slot * active}
-              y={horizontal ? bandStart + slot * active : plotTop}
-              width={horizontal ? plotRight - plotLeft : slot}
-              height={horizontal ? slot : plotBottom - plotTop}
-              rx={6}
-              fill="var(--br-surface-canvas)"
-              opacity={0.7}
-            />
-          ) : null}
-          <ValueGrid
-            ticks={scale.ticks}
-            scale={value}
-            orientation={orientation}
-            start={horizontal ? plotTop : plotLeft}
-            end={horizontal ? plotBottom : plotRight}
-            format={tickFormat}
-          />
-          {data.map((_, i) => {
-            const center = bandStart + slot * (i + 0.5);
-            const label = labelAt(i);
-            if (!shown.has(i)) return null;
-            return horizontal ? (
-              <text
-                // biome-ignore lint/suspicious/noArrayIndexKey: one label per row
-                key={i}
-                x={plotLeft - 12}
-                y={center}
-                textAnchor="end"
-                dominantBaseline="middle"
-                fill="var(--br-text-muted)"
-                fontSize={12}
-              >
-                {fitLabel(label, pad.left - 12, (s) => textWidth(s))}
-              </text>
-            ) : (
-              <text
-                // biome-ignore lint/suspicious/noArrayIndexKey: one label per column
-                key={i}
-                x={center}
-                y={plotBottom + 17}
-                textAnchor="middle"
-                fill="var(--br-text-muted)"
-                fontSize={12}
-              >
-                {label}
-              </text>
-            );
-          })}
-          {bars.map((group, i) => (
-            <g
-              // biome-ignore lint/suspicious/noArrayIndexKey: bars follow the data order
-              key={i}
-              data-bar-group={i}
-              className={cn(
-                'br:transition-opacity br:duration-fast br:ease-out',
-                play && growClass,
-              )}
-              style={
-                {
-                  opacity: active !== null && active !== i ? 0.6 : 1,
-                  transformOrigin: horizontal ? `${base}px 0px` : `0px ${base}px`,
-                  animationDelay: play ? `${enterDelay(i, n)}ms` : undefined,
-                } as CSSProperties
-              }
+        {/* Nothing until measured: a guessed width could overflow the box. */}
+        {measured === null ? null : (
+          <>
+            <svg
+              width={width}
+              height={height}
+              aria-hidden="true"
+              className="br:block br:overflow-visible"
             >
-              {group.map((bar) => (
-                <path key={bar.key} d={bar.d} fill={bar.color} data-series={bar.key} />
+              {active !== null ? (
+                <rect
+                  x={horizontal ? plotLeft : bandStart + slot * active}
+                  y={horizontal ? bandStart + slot * active : plotTop}
+                  width={horizontal ? plotRight - plotLeft : slot}
+                  height={horizontal ? slot : plotBottom - plotTop}
+                  rx={6}
+                  fill="var(--br-surface-canvas)"
+                  opacity={0.7}
+                />
+              ) : null}
+              <ValueGrid
+                ticks={scale.ticks}
+                scale={value}
+                orientation={orientation}
+                start={horizontal ? plotTop : plotLeft}
+                end={horizontal ? plotBottom : plotRight}
+                format={tickFormat}
+              />
+              {data.map((_, i) => {
+                const center = bandStart + slot * (i + 0.5);
+                const label = labelAt(i);
+                if (!shown.has(i)) return null;
+                return horizontal ? (
+                  <text
+                    // biome-ignore lint/suspicious/noArrayIndexKey: one label per row
+                    key={i}
+                    x={plotLeft - 12}
+                    y={center}
+                    textAnchor="end"
+                    dominantBaseline="middle"
+                    fill="var(--br-text-muted)"
+                    fontSize={12}
+                  >
+                    {fitLabel(label, pad.left - 12, (s) => textWidth(s))}
+                  </text>
+                ) : (
+                  <text
+                    // biome-ignore lint/suspicious/noArrayIndexKey: one label per column
+                    key={i}
+                    x={center}
+                    y={plotBottom + 17}
+                    textAnchor="middle"
+                    fill="var(--br-text-muted)"
+                    fontSize={12}
+                  >
+                    {label}
+                  </text>
+                );
+              })}
+              {bars.map((group, i) => (
+                <g
+                  // biome-ignore lint/suspicious/noArrayIndexKey: bars follow the data order
+                  key={i}
+                  data-bar-group={i}
+                  className={cn(
+                    'br:transition-opacity br:duration-fast br:ease-out',
+                    play && growClass,
+                  )}
+                  style={
+                    {
+                      opacity: active !== null && active !== i ? 0.6 : 1,
+                      transformOrigin: horizontal ? `${base}px 0px` : `0px ${base}px`,
+                      animationDelay: play ? `${enterDelay(i, n)}ms` : undefined,
+                    } as CSSProperties
+                  }
+                >
+                  {group.map((bar) => (
+                    <path key={bar.key} d={bar.d} fill={bar.color} data-series={bar.key} />
+                  ))}
+                </g>
               ))}
-            </g>
-          ))}
-        </svg>
-        {tooltip}
+            </svg>
+            {tooltip}
+          </>
+        )}
       </div>
     </ChartFrame>
   );

@@ -2,12 +2,13 @@ import { useMemo, useRef } from 'react';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
 import { monotonePath } from './curve';
-import { makeFormatter, seriesColor, type ValueFormat } from './data';
+import { makeFormatter, seriesColor, toNumber, type ValueFormat } from './data';
 import { linearScale } from './scale';
 import { useChartWidth, useEnterAnimation } from './use-chart';
 
 export interface SparklineProps {
-  data: number[];
+  /** Oldest first. Numeric strings are accepted (PHP DECIMAL); anything else is skipped. */
+  data: Array<number | string>;
   /**
    * What the trend is of (「營收」). Gives the sparkline an accessible description (first, last,
    * low, high); without it the sparkline is decorative and hidden from assistive tech.
@@ -40,13 +41,13 @@ export function Sparkline({
   const width = useChartWidth(ref);
   const play = useEnterAnimation(animate);
   const format = useMemo(() => makeFormatter(locale, valueFormat), [locale, valueFormat]);
-  const values = data.filter(Number.isFinite);
+  const values = data.map(toNumber).filter((v): v is number => v !== null);
   const stroke = seriesColor({ color }, 0);
 
   const pad = 4;
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const x = linearScale([0, Math.max(1, values.length - 1)], [pad, width - pad]);
+  const x = linearScale([0, Math.max(1, values.length - 1)], [pad, (width ?? 0) - pad]);
   const y = linearScale(min === max ? [min - 1, max + 1] : [min, max], [height - pad, pad]);
   const pts = values.map((v, i) => [x(i), y(v)] as [number, number]);
   const line = monotonePath(pts);
@@ -71,7 +72,7 @@ export function Sparkline({
       {...(description ? { role: 'img', 'aria-label': description } : { 'aria-hidden': true })}
       data-sparkline=""
     >
-      {values.length > 1 ? (
+      {width !== null && values.length > 1 ? (
         <svg
           width={width}
           height={height}

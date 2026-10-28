@@ -1,14 +1,15 @@
-import { type CSSProperties, useMemo, useRef } from 'react';
+import { type CSSProperties, type PointerEvent, useMemo, useRef } from 'react';
 import { cn } from '../cn';
 import { RollingNumber } from '../components/rolling-number';
 import { useBrume } from '../provider';
 import { ChartFrame, ChartLegend, ChartTooltip, PLOT_FOCUS } from './chart-frame';
-import { foldSlices, makeFormatter, seriesColor, type ValueFormat } from './data';
+import { foldSlices, makeFormatter, seriesColor, toNumber, type ValueFormat } from './data';
 import { enterDelay, useActiveIndex, useEnterAnimation, useHiddenKeys } from './use-chart';
 
 export interface DonutSlice {
   label: string;
-  value: number;
+  /** A number or numeric string (PHP DECIMAL sums arrive as strings). */
+  value: number | string;
   /** Stable id for the legend; defaults to the label. */
   key?: string;
   /** Categorical slot 1–8; defaults to the slice's position. */
@@ -89,19 +90,25 @@ export function DonutChart({
   const slices = useMemo(
     () =>
       foldSlices(
-        data.map((d, i) => ({ ...d, key: d.key ?? d.label, index: i })),
+        data.map((d) => ({
+          ...d,
+          key: d.key ?? d.label,
+          value: Math.max(0, toNumber(d.value) ?? 0),
+        })),
         maxSlices,
         t('chart.other'),
       ).map((s, i) => ({
         key: 'other' in s ? '__other' : s.key,
         label: s.label,
-        value: Math.max(0, s.value),
+        value: s.value,
         color: 'other' in s ? 'var(--br-chart-muted)' : seriesColor(s, i),
       })),
     [data, maxSlices, t],
   );
   const keys = useMemo(() => slices.map((s) => s.key), [slices]);
-  const { hidden, toggle } = useHiddenKeys(keys);
+  // Only slices with a value keep the ring from going blank.
+  const counted = useMemo(() => slices.filter((s) => s.value > 0).map((s) => s.key), [slices]);
+  const { hidden, toggle } = useHiddenKeys(keys, counted);
   const shown = slices.filter((s) => !hidden.has(s.key));
   const total = shown.reduce((sum, s) => sum + s.value, 0);
   const grandTotal = slices.reduce((sum, s) => sum + s.value, 0);
@@ -120,14 +127,12 @@ export function DonutChart({
   }
   const drawn = arcs.filter((a) => a.value > 0);
 
-  const {
-    index: active,
-    source,
-    setActive,
-    onKeyDown,
-    onFocus,
-    onBlur,
-  } = useActiveIndex(drawn.length);
+  const { index: active, source, keyboard, pointer } = useActiveIndex(drawn.length);
+  // The slice under the pointer, from the path's data-index (the hole picks nothing).
+  const pickSlice = (e: PointerEvent<HTMLElement>): number | null => {
+    const raw = (e.target as Element).closest?.('[data-index]')?.getAttribute('data-index');
+    return raw == null ? null : Number(raw);
+  };
   const activeArc = active !== null ? drawn[active] : undefined;
 
   let tooltip = null;
@@ -200,10 +205,8 @@ export function DonutChart({
           tabIndex={0}
           className={cn(PLOT_FOCUS, 'br:shrink-0 br:rounded-full')}
           style={{ width: size, height: size }}
-          onKeyDown={onKeyDown}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          onPointerLeave={() => setActive(null)}
+          {...keyboard}
+          {...pointer(pickSlice)}
           data-chart="donut"
         >
           <svg
@@ -234,7 +237,7 @@ export function DonutChart({
                   fill="none"
                   stroke={arc.color}
                   data-series={arc.key}
-                  onPointerEnter={() => setActive(i)}
+                  data-index={i}
                   className={cn(
                     'br:transition-[opacity,stroke-width] br:duration-fast br:ease-out',
                     play &&
@@ -272,6 +275,7 @@ export function DonutChart({
             label: s.label,
             color: s.color,
             shape: 'rect',
+            empty: s.value <= 0,
             detail: hidden.has(s.key) || total === 0 ? undefined : percent(s.value / total),
           }))}
         />

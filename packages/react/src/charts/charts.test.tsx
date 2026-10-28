@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { mockReducedMotion } from '../motion/test-utils';
 import { BrumeProvider } from '../provider';
@@ -9,7 +9,15 @@ import { BarChart } from './bar-chart';
 import { monotonePath, segments } from './curve';
 import { DonutChart } from './donut-chart';
 import { LineChart } from './line-chart';
-import { toggleHidden } from './use-chart';
+import { stubLayoutWidth } from './test-width';
+import { pruneHidden, toggleHidden } from './use-chart';
+
+beforeEach(() => {
+  stubLayoutWidth();
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function renderChart(ui: ReactElement, locale: 'zh-TW' | 'en' = 'zh-TW') {
   return render(
@@ -345,5 +353,266 @@ describe('DonutChart', () => {
   it('is empty when every value is zero', () => {
     renderChart(<DonutChart title="訂單狀態" data={[{ label: 'A', value: 0 }]} />);
     expect(screen.getByText('目前沒有資料')).toBeTruthy();
+  });
+});
+
+describe('pointer and touch', () => {
+  it('a tap activates the tapped category, not the first, and is not announced', () => {
+    const { container } = renderChart(
+      <BarChart title="營收" data={SALES} categoryKey="category" series={SERIES} />,
+    );
+    const plot = container.querySelector('[data-chart="bar"]') as HTMLElement;
+    fireEvent.pointerDown(plot, { clientX: 600, clientY: 100, pointerType: 'touch' });
+    act(() => plot.focus());
+    expect(tooltip(container)?.textContent).toContain('3C');
+    expect(container.querySelector('[aria-live]')?.textContent).toBe('');
+    // The finger lifting fires pointerleave; the tapped item stays.
+    fireEvent.pointerLeave(plot, { pointerType: 'touch' });
+    expect(tooltip(container)?.textContent).toContain('3C');
+  });
+
+  it('a tap on a line chart picks the nearest x', () => {
+    const { container } = renderChart(
+      <LineChart
+        title="營收"
+        data={REVENUE}
+        xKey="date"
+        series={[{ key: 'revenue', label: '營收' }]}
+      />,
+    );
+    const plot = container.querySelector('[data-chart="line"]') as HTMLElement;
+    fireEvent.pointerDown(plot, { clientX: 630, clientY: 50, pointerType: 'touch' });
+    act(() => plot.focus());
+    expect(tooltip(container)?.textContent).toContain('143,000');
+  });
+
+  it('a tap on a donut slice activates that slice', () => {
+    const { container } = renderChart(
+      <DonutChart title="訂單狀態" data={STATUS} animate={false} />,
+    );
+    const plot = container.querySelector('[data-chart="donut"]') as HTMLElement;
+    const slice = container.querySelector('path[data-series="處理中"]') as SVGPathElement;
+    fireEvent.pointerDown(slice, { pointerType: 'touch' });
+    act(() => plot.focus());
+    expect(tooltip(container)?.textContent).toContain('處理中');
+  });
+});
+
+describe('BarChart geometry', () => {
+  it('grows negative bars down from the zero line', () => {
+    const { container } = renderChart(
+      <BarChart
+        title="損益"
+        data={[
+          { m: '1月', v: 1200 },
+          { m: '2月', v: -800 },
+        ]}
+        categoryKey="m"
+        series={[{ key: 'v', label: '損益' }]}
+      />,
+      'en',
+    );
+    const zero = [...container.querySelectorAll('svg text')].find((t) => t.textContent === '0');
+    const zeroY = Number(zero?.getAttribute('y'));
+    const [up, down] = [...container.querySelectorAll<SVGPathElement>('[data-bar-group] path')];
+    // Both paths start on the zero line and run up (positive) or down (negative) from it.
+    const start = (d: string) => (/^M[\d.]+,([\d.]+)V([\d.]+)/.exec(d) ?? []).slice(1).map(Number);
+    const [upBase, upEnd] = start(up?.getAttribute('d') ?? '');
+    const [downBase, downEnd] = start(down?.getAttribute('d') ?? '');
+    expect(Math.abs((upBase as number) - zeroY)).toBeLessThan(1);
+    expect(Math.abs((downBase as number) - zeroY)).toBeLessThan(1);
+    expect(upEnd).toBeLessThan(zeroY);
+    expect(downEnd).toBeGreaterThan(zeroY);
+    expect([...container.querySelectorAll('svg text')].map((t) => t.textContent)).toContain('-1K');
+  });
+
+  it('gives the rounded end to the real top segment when a zero series is stacked above it', () => {
+    const { container } = renderChart(
+      <BarChart
+        title="營收"
+        data={[{ c: 'A', a: 500, b: 300, z: 0 }]}
+        categoryKey="c"
+        series={[
+          { key: 'a', label: 'A' },
+          { key: 'b', label: 'B' },
+          { key: 'z', label: 'Z' },
+        ]}
+        layout="stacked"
+      />,
+    );
+    const top = container.querySelector('path[data-series="b"]')?.getAttribute('d') ?? '';
+    const bottom = container.querySelector('path[data-series="a"]')?.getAttribute('d') ?? '';
+    expect(top).toContain('Q');
+    expect(bottom).not.toContain('Q');
+    expect(container.querySelector('path[data-series="z"]')).toBeNull();
+  });
+
+  it('drops a stacked segment thinner than the gap instead of flipping it', () => {
+    const { container } = renderChart(
+      <BarChart
+        title="營收"
+        data={[{ c: 'A', a: 1000, b: 1 }]}
+        categoryKey="c"
+        series={[
+          { key: 'a', label: 'A' },
+          { key: 'b', label: 'B' },
+        ]}
+        layout="stacked"
+      />,
+    );
+    expect(container.querySelector('path[data-series="b"]')).toBeNull();
+  });
+
+  it('lays horizontal bars out with categories on the left and steps them with arrows', async () => {
+    const user = userEvent.setup();
+    const { container } = renderChart(
+      <BarChart
+        title="熱銷"
+        data={[
+          { n: '耳機', u: 1284 },
+          { n: '背包', u: 702 },
+        ]}
+        categoryKey="n"
+        series={[{ key: 'u', label: '件數' }]}
+        orientation="horizontal"
+      />,
+    );
+    const label = [...container.querySelectorAll('svg text')].find((t) => t.textContent === '耳機');
+    expect(label?.getAttribute('text-anchor')).toBe('end');
+    const bar = container.querySelector('path[data-series="u"]')?.getAttribute('d') ?? '';
+    // Rounded at the right (data) end: the curve sits at the far x.
+    expect(bar).toMatch(/Q/);
+    act(() => (container.querySelector('[data-chart="bar"]') as HTMLElement).focus());
+    await user.keyboard('{ArrowDown}');
+    expect(tooltip(container)?.textContent).toContain('背包');
+  });
+
+  it('formats very large values on the axis without collisions', () => {
+    const { container } = renderChart(
+      <BarChart
+        title="營收"
+        data={[
+          { c: 'A', v: 2.4e9 },
+          { c: 'B', v: 1.25e9 },
+        ]}
+        categoryKey="c"
+        series={[{ key: 'v', label: '營收' }]}
+      />,
+      'en',
+    );
+    const ticks = [...container.querySelectorAll('svg text')]
+      .map((t) => t.textContent ?? '')
+      .filter((t) => /\d/.test(t));
+    expect(new Set(ticks).size).toBe(ticks.length);
+    expect(ticks).toContain('2B');
+  });
+});
+
+describe('measuring', () => {
+  it('draws nothing until the box has a width, keeping its height', () => {
+    vi.restoreAllMocks();
+    stubLayoutWidth(0);
+    const { container } = renderChart(
+      <BarChart title="營收" data={SALES} categoryKey="category" series={SERIES} height={200} />,
+    );
+    const plot = container.querySelector('[data-chart="bar"]') as HTMLElement;
+    expect(plot.style.height).toBe('200px');
+    expect(plot.querySelector('svg')).toBeNull();
+  });
+
+  it('re-lays the chart out when ResizeObserver reports a new width', () => {
+    let notify: () => void = () => {};
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(cb: () => void) {
+          notify = cb;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const resize = stubLayoutWidth(640);
+    const { container } = renderChart(
+      <BarChart title="營收" data={SALES} categoryKey="category" series={SERIES} />,
+    );
+    expect(container.querySelector('svg')?.getAttribute('width')).toBe('640');
+    resize(320);
+    act(() => notify());
+    expect(container.querySelector('svg')?.getAttribute('width')).toBe('320');
+  });
+});
+
+describe('hidden series and slices', () => {
+  it('prunes stale keys and never hides every series', () => {
+    expect([...pruneHidden(new Set(['gone', 'a']), ['a', 'b'], ['a', 'b'])]).toEqual(['a']);
+    expect([...pruneHidden(new Set(['a']), ['a'], ['a'])]).toEqual([]);
+  });
+
+  it('a series hidden earlier cannot blank the chart when it is the only one left', async () => {
+    const user = userEvent.setup();
+    const { container, rerender } = renderChart(
+      <BarChart title="營收" data={SALES} categoryKey="category" series={SERIES} />,
+    );
+    await user.click(screen.getByRole('button', { name: '線上' }));
+    rerender(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <BarChart title="營收" data={SALES} categoryKey="category" series={[SERIES[0] as never]} />
+      </BrumeProvider>,
+    );
+    expect(container.querySelectorAll('path[data-series="online"]')).toHaveLength(3);
+  });
+
+  it('the donut keeps one non-zero slice visible; zero slices do not count', async () => {
+    const user = userEvent.setup();
+    renderChart(
+      <DonutChart
+        title="狀態"
+        data={[
+          { label: 'A', value: 10 },
+          { label: 'B', value: 0 },
+        ]}
+        animate={false}
+      />,
+    );
+    const a = screen.getByRole('button', { name: /^A/ });
+    expect(a.getAttribute('aria-disabled')).toBe('true');
+    await user.click(a);
+    expect(a.getAttribute('aria-pressed')).toBe('true');
+    const b = screen.getByRole('button', { name: /^B/ });
+    expect(b.hasAttribute('aria-disabled')).toBe(false);
+  });
+
+  it('folds the smallest slices, wherever they are listed, keeping input order', () => {
+    const data = [
+      { label: 'tiny', value: 1 },
+      { label: 'big', value: 50 },
+      { label: 'mid', value: 20 },
+      { label: 'small', value: 2 },
+      { label: 'large', value: 40 },
+    ];
+    renderChart(<DonutChart title="分類" data={data} maxSlices={4} animate={false} />);
+    const legend = screen.getByRole('list', { name: /圖例/ });
+    expect(
+      within(legend)
+        .getAllByRole('button')
+        .map((b) => b.textContent?.replace(/[\d.%]+$/, '')),
+    ).toEqual(['big', 'mid', 'large', '其他']);
+  });
+
+  it('accepts numeric strings (PHP DECIMAL) for donut values', () => {
+    renderChart(
+      <DonutChart
+        title="狀態"
+        data={[
+          { label: 'A', value: '600.50' },
+          { label: 'B', value: '399.50' },
+        ]}
+        animate={false}
+      />,
+    );
+    expect(describedBy(screen.getByRole('figure'))).toBe(
+      '共 2 項，總計 1,000，最多的是 A（60.1%）。',
+    );
   });
 });

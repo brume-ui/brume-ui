@@ -1,22 +1,24 @@
 import {
-  type FocusEvent,
   type KeyboardEvent,
+  type FocusEvent as ReactFocusEvent,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
   useCallback,
   useLayoutEffect,
+  useMemo,
+  useRef,
   useState,
 } from 'react';
 import { usePrefersReducedMotion } from '../motion/reduced-motion';
 
-/** Width used before (or without) layout, e.g. on the server and in jsdom. */
-export const FALLBACK_WIDTH = 640;
-
 /**
- * Live content width of `ref` via ResizeObserver. The chart's height is fixed by props, so a
- * width change only re-lays the SVG out inside the same box (no layout shift).
+ * Live content width of `ref` via ResizeObserver; null until the box has been measured (on the
+ * server, before layout), when charts draw nothing inside their fixed-height box rather than
+ * guess a width that could overflow it. The height is fixed by props, so a width change only
+ * re-lays the SVG out inside the same box (no layout shift).
  */
-export function useChartWidth(ref: RefObject<HTMLElement | null>): number {
-  const [width, setWidth] = useState(FALLBACK_WIDTH);
+export function useChartWidth(ref: RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -64,23 +66,46 @@ export function toggleHidden(
   return next;
 }
 
-export function useHiddenKeys(keys: readonly string[]) {
-  const [hidden, setHidden] = useState<Set<string>>(() => new Set());
+/**
+ * Hidden legend keys, pruned to the current `keys` (stale keys from earlier `series` are dropped)
+ * and never covering every key that `counts`, so new data can't leave a blank chart without a
+ * legend. `counts` (default: all keys) are the items that keep the chart from going blank; a
+ * donut passes only its non-zero slices.
+ */
+export function useHiddenKeys(keys: readonly string[], counts: readonly string[] = keys) {
+  const [stored, setStored] = useState<Set<string>>(() => new Set());
+  const hidden = useMemo(() => pruneHidden(stored, keys, counts), [stored, keys, counts]);
   const toggle = useCallback(
-    (key: string) => setHidden((prev) => toggleHidden(prev, key, keys)),
-    [keys],
+    (key: string) =>
+      setStored((prev) => toggleHidden(pruneHidden(prev, keys, counts), key, counts)),
+    [keys, counts],
   );
   return { hidden, toggle };
+}
+
+export function pruneHidden(
+  hidden: ReadonlySet<string>,
+  keys: readonly string[],
+  counts: readonly string[],
+): Set<string> {
+  const next = new Set([...hidden].filter((k) => keys.includes(k)));
+  if (counts.length > 0 && counts.every((k) => next.has(k))) {
+    for (const k of counts) next.delete(k);
+  }
+  return next;
 }
 
 export type ActiveSource = 'pointer' | 'keyboard';
 
 /**
  * The highlighted datum, driven by pointer or keyboard. Arrow keys step through `count` items
- * (Left/Up back, Right/Down forward), Home/End jump, Escape clears; focusing the plot shows the
- * first item so keyboard users get the same tooltip as hover.
+ * (Left/Up back, Right/Down forward), Home/End jump, Escape clears. Keyboard focus shows the
+ * first item so keyboard users get the same tooltip as hover; a tap or click (which also focuses
+ * the plot) shows the item under the pointer instead and is never announced as a keyboard move.
+ * `pointer(pick)` gives the pointer handlers, where `pick` maps an event to the item under it.
  */
 export function useActiveIndex(count: number) {
+  const pointerFocus = useRef(false);
   const [active, setActiveState] = useState<{ index: number; source: ActiveSource } | null>(null);
   const index = active && active.index < count ? active.index : null;
 
@@ -127,14 +152,42 @@ export function useActiveIndex(count: number) {
   );
 
   const onFocus = useCallback(
-    (e: FocusEvent) => {
+    (e: ReactFocusEvent) => {
+      // Pointer-driven focus: the pointerdown already chose the item.
+      if (pointerFocus.current) {
+        pointerFocus.current = false;
+        return;
+      }
       // Only the plot itself: focus moving inside (none today) must not reset the position.
       if (e.target === e.currentTarget && count > 0) setActive(index ?? 0, 'keyboard');
     },
     [count, index, setActive],
   );
 
-  const onBlur = useCallback(() => setActive(null), [setActive]);
+  const onBlur = useCallback(() => {
+    pointerFocus.current = false;
+    setActive(null);
+  }, [setActive]);
 
-  return { index, source: active?.source ?? null, setActive, onKeyDown, onFocus, onBlur };
+  const pointer = (pick: (e: ReactPointerEvent<HTMLElement>) => number | null) => ({
+    onPointerDown(e: ReactPointerEvent<HTMLElement>) {
+      pointerFocus.current = true;
+      setActive(pick(e), 'pointer');
+    },
+    onPointerMove(e: ReactPointerEvent<HTMLElement>) {
+      setActive(pick(e), 'pointer');
+    },
+    // A finger "leaves" as it lifts: keep the tapped item until the next tap or blur.
+    onPointerLeave(e: ReactPointerEvent<HTMLElement>) {
+      if (e.pointerType !== 'touch') setActive(null);
+    },
+  });
+
+  return {
+    index,
+    source: active?.source ?? null,
+    setActive,
+    keyboard: { onKeyDown, onFocus, onBlur },
+    pointer,
+  };
 }

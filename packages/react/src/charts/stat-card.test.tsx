@@ -1,11 +1,19 @@
 import { render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { mockReducedMotion } from '../motion/test-utils';
 import { BrumeProvider } from '../provider';
 import { Sparkline } from './sparkline';
 import { deltaDirection, StatCard } from './stat-card';
+import { stubLayoutWidth } from './test-width';
+
+beforeEach(() => {
+  stubLayoutWidth();
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function renderCard(ui: ReactElement, locale: 'zh-TW' | 'en' = 'zh-TW') {
   return render(
@@ -110,7 +118,35 @@ describe('StatCard', () => {
   });
 });
 
+describe('numeric strings from PHP', () => {
+  it('StatCard and its sparkline accept DECIMAL strings', () => {
+    renderCard(
+      <StatCard
+        label="營收"
+        value="1284000.00"
+        delta={{ value: '0.124' }}
+        trend={['3', '1.5', 'n/a', '5']}
+        animate={false}
+      />,
+      'en',
+    );
+    expect(screen.getByText('1,284,000').className).toContain('sr-only');
+    expect(screen.getByText('Up 12.4% vs previous period')).toBeTruthy();
+    expect(
+      screen.getByRole('img', { name: '營收 trend: from 3 to 5, low 1.5, high 5' }),
+    ).toBeTruthy();
+  });
+});
+
 describe('Sparkline', () => {
+  it('draws nothing until its box is measured', () => {
+    vi.restoreAllMocks();
+    stubLayoutWidth(0);
+    const { container } = renderCard(<Sparkline data={[1, 2, 3]} />);
+    expect(container.querySelector('svg')).toBeNull();
+    expect((container.querySelector('[data-sparkline]') as HTMLElement).style.height).toBe('36px');
+  });
+
   it('is decorative without a label', () => {
     const { container } = renderCard(<Sparkline data={[1, 2, 3]} />);
     expect(container.querySelector('[data-sparkline]')?.getAttribute('aria-hidden')).toBe('true');

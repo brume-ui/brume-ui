@@ -4,13 +4,13 @@ import { cn } from '../cn';
 import { RollingNumber } from '../components/rolling-number';
 import { Skeleton } from '../components/skeleton';
 import { useBrume } from '../provider';
-import { makeFormatter } from './data';
+import { makeFormatter, toNumber } from './data';
 import { Sparkline } from './sparkline';
 import { useEnterAnimation } from './use-chart';
 
 export interface StatDelta {
-  /** Change vs the previous period as a fraction: 0.124 is +12.4%. */
-  value: number;
+  /** Change vs the previous period as a fraction: 0.124 is +12.4%. Numeric strings are accepted. */
+  value: number | string;
   /** How to show the change. Default: signed percent with one decimal. */
   format?: Intl.NumberFormatOptions;
   /** The period compared against (「上月」). Default 「上期」. */
@@ -25,12 +25,13 @@ export interface StatDelta {
 export interface StatCardProps {
   /** Sentence-case label, no trailing colon (「本月營收」). */
   label: string;
-  value: number;
+  /** A number or numeric string (PHP DECIMAL sums arrive as strings). */
+  value: number | string;
   /** Intl options for the value (currency, percent, compact…). */
   format?: Intl.NumberFormatOptions;
   delta?: StatDelta;
   /** Recent values for a sparkline, oldest first (e.g. the last 12 periods). */
-  trend?: number[];
+  trend?: Array<number | string>;
   /** Small footer line (「統計至 10/28 12:00」). */
   hint?: ReactNode;
   /** Skeleton placeholders in the same layout, so the card does not jump when data arrives. */
@@ -76,10 +77,11 @@ export function StatCard({
 
   let deltaNode: ReactNode = null;
   if (delta && !loading) {
-    const direction = deltaDirection(delta.value);
+    const change = toNumber(delta.value) ?? 0;
+    const direction = deltaDirection(change);
     const Icon = ICONS[direction];
     const period = delta.period ?? t('stat.previousPeriod');
-    const magnitude = deltaFormat(Math.abs(delta.value));
+    const magnitude = deltaFormat(Math.abs(change));
     const signed =
       direction === 'up' ? `+${magnitude}` : direction === 'down' ? `−${magnitude}` : magnitude;
     const good = delta.good ?? 'up';
@@ -143,7 +145,7 @@ export function StatCard({
             <Skeleton className="br:my-1.5 br:h-6 br:w-32" />
           </>
         ) : (
-          <RollingNumber value={value} format={format} animateOnMount={play} />
+          <RollingNumber value={toNumber(value) ?? 0} format={format} animateOnMount={play} />
         )}
       </div>
       {delta || trend ? (

@@ -136,6 +136,8 @@ export interface LegendItem {
   shape: 'rect' | 'line';
   /** Optional secondary text (a donut slice's share). */
   detail?: string;
+  /** Draws nothing (a zero slice): doesn't count toward the one item that must stay visible. */
+  empty?: boolean;
 }
 
 /**
@@ -154,7 +156,7 @@ export function ChartLegend({
   className?: string;
 }) {
   const { t } = useBrume();
-  const visibleCount = items.filter((i) => !hidden.has(i.key)).length;
+  const visibleCount = items.filter((i) => !hidden.has(i.key) && !i.empty).length;
   return (
     <ul
       aria-label={t('chart.legend')}
@@ -165,7 +167,7 @@ export function ChartLegend({
     >
       {items.map((item) => {
         const off = hidden.has(item.key);
-        const locked = !off && visibleCount <= 1;
+        const locked = !off && !item.empty && visibleCount <= 1;
         return (
           <li key={item.key}>
             <button
