@@ -354,7 +354,8 @@ export function Combobox({
             role="combobox"
             aria-label={label}
             aria-expanded={open}
-            aria-controls={open ? listboxId : undefined}
+            // Always set (APG): it names the popup even while it is closed and not rendered.
+            aria-controls={listboxId}
             aria-activedescendant={open && active >= 0 ? optionId(active) : undefined}
             aria-autocomplete="list"
             aria-invalid={isInvalid || undefined}
@@ -402,6 +403,10 @@ export function Combobox({
           />
         </div>
       </RadixPopover.Anchor>
+      {/* Mounted with the combobox, not the popover, so the first message after opening is announced. */}
+      <div role="status" className="br:sr-only">
+        {open ? status : ''}
+      </div>
       <RadixPopover.Portal>
         {/* biome-ignore lint/a11y/useValidAriaRole: clears Radix's role="dialog"; the listbox inside carries the semantics and focus stays in the input. */}
         <RadixPopover.Content
@@ -467,8 +472,9 @@ export function Combobox({
               );
             })}
           </div>
+          {/* The visible copy; screen readers hear it from the live region above. */}
           <div
-            role="status"
+            aria-hidden="true"
             className="br:px-3 br:py-2 br:text-sm br:text-text-muted br:empty:hidden"
           >
             {status}

@@ -52,10 +52,13 @@ describe('Combobox', () => {
     );
     const input = screen.getByRole('combobox', { name: '城市' });
     expect(input.getAttribute('aria-expanded')).toBe('false');
+    // aria-controls names the popup even while it is closed.
+    const controls = input.getAttribute('aria-controls');
+    expect(controls).toBeTruthy();
     fireEvent.change(input, { target: { value: 'tai' } });
     expect(input.getAttribute('aria-expanded')).toBe('true');
     const listbox = screen.getByRole('listbox', { name: '城市' });
-    expect(input.getAttribute('aria-controls')).toBe(listbox.id);
+    expect(listbox.id).toBe(controls);
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Taipei', 'Tainan']);
     fireEvent.keyDown(input, { key: 'ArrowDown' });
     fireEvent.keyDown(input, { key: 'ArrowDown' });
@@ -282,5 +285,15 @@ describe('Combobox', () => {
     await flush();
     expect(resolveLabels).toHaveBeenCalledWith(['7']);
     expect(screen.getByRole('button', { name: '移除「User 7」' })).toBeTruthy();
+  });
+
+  it('keeps its live region mounted while closed, so the first message is announced', async () => {
+    render(<Harness label="城市" initial="" spy={vi.fn()} options={opts('Taipei')} />);
+    const live = screen.getByRole('status');
+    expect(live.textContent).toBe('');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'zzz' } });
+    // The same element announces, rather than one that mounts together with its text.
+    expect(screen.getByRole('status')).toBe(live);
+    expect(live.textContent).toBe('沒有符合的選項');
   });
 });
