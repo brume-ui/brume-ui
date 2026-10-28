@@ -118,6 +118,22 @@ describe('row actions (B + C)', () => {
     expect(menuItems()).toEqual(dropdown);
   });
 
+  it('the primary link and the open ⋯ dropdown keep the browser menu', async () => {
+    const { user } = setup();
+    const first = row('ORD-1');
+    // fireEvent returns false when the native menu was prevented.
+    expect(fireEvent.contextMenu(within(first).getByRole('link', { name: 'ORD-1' }))).toBe(true);
+    expect(screen.queryByRole('menu')).toBeNull();
+
+    await user.click(within(first).getByRole('button', { name: 'ORD-1 的更多操作' }));
+    const dropdown = await screen.findByRole('menu');
+    // The dropdown is portaled out of the row but still inside it in the React tree.
+    expect(fireEvent.contextMenu(within(dropdown).getByRole('menuitem', { name: /封存/ }))).toBe(
+      true,
+    );
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
+  });
+
   it('a row with _meta.actions only offers those actions', async () => {
     const { user } = setup();
     const second = row('ORD-2');

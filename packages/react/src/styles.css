@@ -11,6 +11,10 @@
     font-family: var(--br-font-sans);
     font-variant-numeric: tabular-nums;
   }
+  /* A row with a context menu turns the touch callout off (Radix); links and fields keep theirs. */
+  [data-br-row-menu] :is(a[href], input, textarea, select) {
+    -webkit-touch-callout: default;
+  }
 }
 
 /* Nunito subsets (latin + latin-ext); woff2 files are copied into dist/files by scripts/copy-fonts.mjs */

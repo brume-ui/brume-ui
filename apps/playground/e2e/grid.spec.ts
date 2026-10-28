@@ -150,6 +150,26 @@ test('right-clicking a row opens the same menu as its ⋯', async ({ page }) => 
   await expect(menu).toBeHidden();
 });
 
+test('right-clicking the inline editor keeps the browser menu (paste, spell-check)', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.addEventListener('contextmenu', (event) => {
+      (window as unknown as { menuPrevented: boolean }).menuPrevented = event.defaultPrevented;
+    });
+  });
+  const row = page.getByRole('row', { name: /ORD-2610048/ });
+  await row.getByRole('button', { name: /^編輯客戶：/ }).click();
+  const input = row.getByRole('textbox', { name: '客戶' });
+  await input.click({ button: 'right' });
+  const prevented = await page.evaluate(
+    () => (window as unknown as { menuPrevented?: boolean }).menuPrevented,
+  );
+  expect(prevented).toBe(false);
+  await expect(page.getByRole('menu')).toBeHidden();
+  await expect(input).toBeVisible();
+});
+
 test.describe('at 1440×900', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
