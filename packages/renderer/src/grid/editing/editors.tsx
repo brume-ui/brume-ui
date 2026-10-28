@@ -42,7 +42,9 @@ export function TextEditor({
   describedBy?: string;
   onClose(value: unknown, reason: CloseReason): void;
 }) {
-  const start = toDraft(initial);
+  // Frozen when editing begins: a save of this cell that settles meanwhile must not make an
+  // untouched draft look changed.
+  const [start] = useState(() => toDraft(initial));
   const [draft, setDraft] = useState(start);
   const closed = useRef(false);
 

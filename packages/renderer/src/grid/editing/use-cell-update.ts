@@ -1,6 +1,6 @@
 import { toast, useBrume } from '@brume-ui/brume-react';
 import type { CellUpdateResponse, ErrorResponse, GridRow } from '@brume-ui/brume-schema';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { applyFeedback } from '../actions/feedback';
 import { failureMessage } from '../actions/run-action';
 import { useGrid } from '../grid-context';
@@ -34,13 +34,28 @@ export interface CellUpdate {
 export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate {
   const { adapter, t } = useBrume();
   const { refresh } = useGridNavigation();
-  const { page, rows, replaceRow } = useGrid();
+  const { page, rowById, beginRowSave, replaceRow } = useGrid();
   const endpoint = page.endpoints?.cell;
-  const row = rows.find((r) => String(r.id) === String(rowId));
+  const row = rowById.get(String(rowId));
   const confirmed = row ? editValue(row, column) : undefined;
+  const pageRows = useRef(page.rows);
+  useLayoutEffect(() => {
+    pageRows.current = page.rows;
+  }, [page.rows]);
 
-  const [optimistic, setOptimistic] = useState<{ seq: number; value: unknown } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // `heldOn`: the save succeeded after `page.rows` changed, so its row could not be used; the
+  // value stays on screen until the refresh that brings the server's rows arrives.
+  const [optimistic, setOptimistic] = useState<{
+    seq: number;
+    value: unknown;
+    heldOn?: GridRow[];
+  } | null>(null);
+  // `at`: the confirmed value the error was about; new rows with another value make it stale.
+  const [error, setError] = useState<{ message: string; at: unknown } | null>(null);
+  const confirmedRef = useRef(confirmed);
+  useLayoutEffect(() => {
+    confirmedRef.current = confirmed;
+  }, [confirmed]);
   const issued = useRef(0);
   const applied = useRef(0);
 
@@ -48,6 +63,7 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
     async (next: unknown, shown: unknown = next) => {
       if (!endpoint) return;
       const seq = ++issued.current;
+      const ticket = beginRowSave();
       setOptimistic({ seq, value: shown });
       const res = await adapter.request<Partial<CellUpdateResponse & ErrorResponse>>({
         method: 'patch',
@@ -56,13 +72,18 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
       });
       const newest = seq === issued.current;
       if (res.status >= 200 && res.status < 300) {
+        let outdated = false;
         if (seq > applied.current) {
           applied.current = seq;
-          if (res.data?.row) replaceRow(res.data.row);
-          if (res.data?.feedback) applyFeedback(res.data.feedback, { adapter, refresh });
+          const returned = res.data?.row;
+          outdated = returned ? replaceRow(returned, ticket, column) === 'outdated' : false;
+          const feedback = res.data?.feedback;
+          // Rows that changed under the save may predate it: let the server's rows decide.
+          if (outdated) applyFeedback({ ...feedback, refresh: true }, { adapter, refresh });
+          else if (feedback) applyFeedback(feedback, { adapter, refresh });
         }
         if (newest) {
-          setOptimistic(null);
+          setOptimistic(outdated ? { seq, value: shown, heldOn: pageRows.current } : null);
           setError(null);
         }
         return;
@@ -72,22 +93,24 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
       setOptimistic(null);
       const fieldError = res.status === 422 ? res.data?.errors?.[column]?.[0] : undefined;
       if (fieldError) {
-        setError(fieldError);
+        setError({ message: fieldError, at: confirmedRef.current });
       } else {
         toast.error(failureMessage(res, t));
       }
     },
-    [adapter, t, refresh, endpoint, rowId, column, replaceRow],
+    [adapter, t, refresh, endpoint, rowId, column, beginRowSave, replaceRow],
   );
 
+  const showing = optimistic && (!optimistic.heldOn || optimistic.heldOn === page.rows);
+  const visibleError = error && Object.is(error.at, confirmed) ? error.message : null;
   return useMemo(
     () => ({
-      value: optimistic ? optimistic.value : confirmed,
-      pending: optimistic !== null,
-      error,
+      value: showing ? optimistic.value : confirmed,
+      pending: Boolean(showing && !optimistic.heldOn),
+      error: visibleError,
       commit,
       canSave: Boolean(endpoint),
     }),
-    [optimistic, confirmed, error, commit, endpoint],
+    [showing, optimistic, confirmed, visibleError, commit, endpoint],
   );
 }

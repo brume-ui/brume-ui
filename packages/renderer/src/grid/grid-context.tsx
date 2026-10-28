@@ -1,5 +1,6 @@
 import type { GridRow, ListPage } from '@brume-ui/brume-schema';
 import { createContext, useContext } from 'react';
+import type { RowSaveResult, RowSaveTicket } from './editing/row-saves';
 
 export interface GridContextValue {
   page: ListPage;
@@ -8,8 +9,15 @@ export interface GridContextValue {
    * until `page.rows` changes (a refresh or another view).
    */
   rows: GridRow[];
-  /** Puts a row returned by the server (a saved cell) in place of the row with its id. */
-  replaceRow(row: GridRow): void;
+  /** `rows` by id (as a string). */
+  rowById: ReadonlyMap<string, GridRow>;
+  /** Taken when a cell save starts; `replaceRow` uses it to order the rows saves return. */
+  beginRowSave(): RowSaveTicket;
+  /**
+   * Puts a row returned by a cell save in place of the row with its id (see `useRowSaves` for
+   * the ordering). `column` is the saved column.
+   */
+  replaceRow(row: GridRow, ticket: RowSaveTicket, column: string): RowSaveResult;
   /** Selected row ids as strings (the batch actions, Task 11). */
   selection: ReadonlySet<string>;
   setSelection(next: Set<string>): void;

@@ -12,6 +12,7 @@ import { BatchBar } from './actions/batch-bar';
 import { hasRowActions, PrimaryCell, RowActions, RowMenu, rowLabel } from './actions/row-actions';
 import { readHiddenColumns, writeHiddenColumns } from './column-visibility';
 import { RowExpansion, renderCell } from './displays';
+import { useRowSaves } from './editing/row-saves';
 import { useGridEmptyState } from './empty';
 import { ColumnFilter } from './filters/column-filter';
 import { FilterChips } from './filters/filter-chips';
@@ -73,31 +74,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
     [expansionPrefix],
   );
 
-  // Rows returned by saved cells, by id. They belong to the `page.rows` they were saved on, so a
-  // refresh or another view drops them, and a response that lands after that is ignored.
-  const [overrides, setOverrides] = useState<{
-    base: GridRow[];
-    byId: ReadonlyMap<string, GridRow>;
-  }>(() => ({ base: page.rows, byId: new Map() }));
-  const pageRows = page.rows;
-  const latestRows = useRef(pageRows);
-  latestRows.current = pageRows;
-  // Callers keep the replaceRow of the render they saved from; when its rows are gone, drop it.
-  const replaceRow = useCallback(
-    (row: GridRow) => {
-      if (latestRows.current !== pageRows) return;
-      setOverrides((prev) => {
-        const byId = new Map(prev.base === pageRows ? prev.byId : []);
-        byId.set(String(row.id), row);
-        return { base: pageRows, byId };
-      });
-    },
-    [pageRows],
-  );
-  const rows = useMemo(() => {
-    if (overrides.base !== pageRows || overrides.byId.size === 0) return pageRows;
-    return pageRows.map((row) => overrides.byId.get(String(row.id)) ?? row);
-  }, [overrides, pageRows]);
+  const { rows, rowById, beginRowSave, replaceRow } = useRowSaves(page.rows);
 
   // Actions in flight. The ref answers at once (a second click in the same tick sees the first);
   // the state re-renders the buttons and menus.
@@ -118,6 +95,8 @@ export function GridView({ page, onEdit }: GridViewProps) {
     () => ({
       page,
       rows,
+      rowById,
+      beginRowSave,
       replaceRow,
       selection,
       setSelection,
@@ -132,6 +111,8 @@ export function GridView({ page, onEdit }: GridViewProps) {
     [
       page,
       rows,
+      rowById,
+      beginRowSave,
       replaceRow,
       selection,
       onEdit,

@@ -341,10 +341,12 @@ describe('success feedback and row overrides', () => {
     expect(row1().getByRole('switch', { name: '上架' }).getAttribute('aria-checked')).toBe('false');
   });
 
-  it('a response that lands after the rows changed does not replace the new row', async () => {
+  it('a response that lands after the rows changed keeps the saved value and refreshes', async () => {
     const { respond, settle } = deferred();
-    const { user, rerenderPage } = setup(respond);
-    await user.click(row1().getByRole('switch', { name: '上架' }));
+    const { user, adapter, rerenderPage } = setup(respond);
+    const sw = () => row1().getByRole('switch', { name: '上架' });
+    const reloads = () => adapter.calls.filter((c) => c.fn === 'reload').length;
+    await user.click(sw());
     const fresh = { ...rows[0], no: 'ORD-1 新' } as GridRow;
     rerenderPage({ ...orders, rows: [fresh] });
     // A save on the new rows…
@@ -354,13 +356,98 @@ describe('success feedback and row overrides', () => {
       settle(1, { status: 200, data: { row: { ...fresh, customer: 'Anne' } } }),
     );
     expect(row1().getByRole('button', { name: '編輯客戶：Anne' })).toBeTruthy();
-    // …then the old response lands: it neither replaces the row nor drops the newer save.
+    expect(reloads()).toBe(0);
+    // …then the old response lands: it neither replaces the row nor drops the newer save,
     await act(async () =>
       settle(0, { status: 200, data: { row: { ...rows[0], published: true, no: 'ORD-1 舊' } } }),
     );
     expect(row1().getByText('ORD-1 新')).toBeTruthy();
     expect(row1().queryByText('ORD-1 舊')).toBeNull();
     expect(row1().getByRole('button', { name: '編輯客戶：Anne' })).toBeTruthy();
+    // the switch keeps the saved value (not the older rows' false) and the server is asked again.
+    expect(sw().getAttribute('aria-checked')).toBe('true');
+    expect(sw().hasAttribute('aria-busy')).toBe(false);
+    expect(reloads()).toBe(1);
+    // The refreshed rows decide.
+    rerenderPage({ ...orders, rows: [{ ...fresh, published: true } as GridRow] });
+    expect(sw().getAttribute('aria-checked')).toBe('true');
+    rerenderPage({ ...orders, rows: [{ ...fresh, published: false } as GridRow] });
+    expect(sw().getAttribute('aria-checked')).toBe('false');
+  });
+
+  describe('two cells of one row answered out of order', () => {
+    /** Saves customer (request 0), then toggles published (request 1) before either answers. */
+    async function saveBoth() {
+      const { respond, settle } = deferred();
+      const { user } = setup(respond);
+      await user.click(row1().getByRole('button', { name: '編輯客戶：Ann' }));
+      await user.type(row1().getByRole('textbox', { name: '客戶' }), 'e{Enter}');
+      await user.click(row1().getByRole('switch', { name: '上架' }));
+      const answer = (i: number, row: Partial<GridRow>, no: string) =>
+        act(async () => settle(i, { status: 200, data: { row: { ...rows[0], ...row, no } } }));
+      const values = () => ({
+        customer: row1().getByRole('button', { name: /^編輯客戶：/ }).textContent,
+        published: row1().getByRole('switch', { name: '上架' }).getAttribute('aria-checked'),
+        no: row1().getByText(/^ORD-1/).textContent,
+      });
+      return { answer, values };
+    }
+
+    it('server ran customer first; the customer response arrives last', async () => {
+      const { answer, values } = await saveBoth();
+      await answer(1, { customer: 'Anne', published: true }, 'ORD-1 #2');
+      // Its row was computed before the switch was saved: published false is stale.
+      await answer(0, { customer: 'Anne', published: false }, 'ORD-1 #1');
+      expect(values()).toEqual({ customer: 'Anne', published: 'true', no: 'ORD-1 #2' });
+    });
+
+    it('server ran the switch first; the switch response arrives last', async () => {
+      const { answer, values } = await saveBoth();
+      await answer(0, { customer: 'Anne', published: true }, 'ORD-1 #1');
+      // Its row was computed before the customer was saved: customer Ann is stale.
+      await answer(1, { customer: 'Ann', published: true }, 'ORD-1 #2');
+      expect(values()).toEqual({ customer: 'Anne', published: 'true', no: 'ORD-1 #2' });
+    });
+
+    it('server ran the switch first; the customer response arrives last', async () => {
+      const { answer, values } = await saveBoth();
+      await answer(1, { customer: 'Ann', published: true }, 'ORD-1 #2');
+      await answer(0, { customer: 'Anne', published: true }, 'ORD-1 #1');
+      expect(values()).toEqual({ customer: 'Anne', published: 'true', no: 'ORD-1 #2' });
+    });
+  });
+
+  it('a 422 error goes away when new rows bring another value', async () => {
+    const { user, rerenderPage } = setup(() => ({
+      status: 422,
+      data: { message: '資料有誤', errors: { customer: ['客戶不能超過 5 個字'] } },
+    }));
+    await user.click(row1().getByRole('button', { name: '編輯客戶：Ann' }));
+    await user.type(row1().getByRole('textbox', { name: '客戶' }), 'Lovelace{Enter}');
+    await row1().findByRole('alert');
+    // Same value after a refresh: still relevant.
+    rerenderPage({ ...orders, rows: [{ ...rows[0] } as GridRow] });
+    expect(row1().getByRole('alert')).toBeTruthy();
+    rerenderPage({ ...orders, rows: [{ ...rows[0], customer: 'Ada' } as GridRow] });
+    expect(row1().queryByRole('alert')).toBeNull();
+    expect(
+      row1().getByRole('button', { name: '編輯客戶：Ada' }).hasAttribute('aria-describedby'),
+    ).toBe(false);
+  });
+
+  it('an open editor keeps its starting value when an earlier save of the cell settles', async () => {
+    const { respond, settle } = deferred();
+    const { user, adapter } = setup(respond);
+    await user.click(row1().getByRole('button', { name: '編輯客戶：Ann' }));
+    await user.clear(row1().getByRole('textbox', { name: '客戶' }));
+    await user.type(row1().getByRole('textbox', { name: '客戶' }), 'ann{Enter}');
+    // Reopened while 'ann' is pending; the server answers with a normalised value.
+    await user.click(row1().getByRole('button', { name: '編輯客戶：ann' }));
+    await act(async () =>
+      settle(0, { status: 200, data: { row: { ...rows[0], customer: 'Ann' } } }),
+    );
+    await user.keyboard('{Enter}');
+    expect(requests(adapter)).toHaveLength(1);
   });
 });
 
