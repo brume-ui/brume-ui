@@ -8,7 +8,7 @@ import {
   useConfirm,
 } from '@brume-ui/brume-react';
 import type { ActionDef, ActionRequest, ActionResponse, ListPage } from '@brume-ui/brume-schema';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useGrid } from '../grid-context';
 import { useGridNavigation } from '../use-grid-navigation';
 import { applyFeedback } from './feedback';
@@ -22,8 +22,11 @@ export interface RunActionDeps {
   refresh(): void;
   /** `page.endpoints.action`, with its `{action}` placeholder. */
   endpoint: string;
-  /** Called once the request is about to go out (after any confirmation). */
-  onRequest?(): void;
+  /**
+   * Called once the request is about to go out (after any confirmation). Returning false stops
+   * it (the same run is already in flight).
+   */
+  onRequest?(): boolean | undefined;
 }
 
 /** The action endpoint of `page` for `key`, or undefined when the page has none. */
@@ -63,7 +66,7 @@ export async function runAction(
     });
     if (!ok) return false;
   }
-  deps.onRequest?.();
+  if (deps.onRequest?.() === false) return false;
   const res = await deps.adapter.request<Partial<ActionResponse>>({
     method: 'post',
     url: deps.endpoint.replaceAll('{action}', encodeURIComponent(def.key)),
@@ -84,8 +87,10 @@ export async function runAction(
 }
 
 /**
- * `run(def, target, ids)` for the grid in context, plus the key of the run in flight (so its
- * button can show a spinner and not be pressed twice). `run` is undefined without an endpoint.
+ * `run(def, target, ids)` for the grid in context, plus `isRunning(def, target, ids)` so its
+ * buttons and menu items can show a spinner and not be pressed twice. The runs in flight live in
+ * the grid, so every runner of a row (buttons, ⋯, right-click menu) shares them, and a run that is
+ * already in flight is not sent again. `run` is undefined without an endpoint.
  */
 export function useActionRunner(): {
   run?(
@@ -93,19 +98,23 @@ export function useActionRunner(): {
     target: ActionRequest['target'],
     ids: ActionRequest['ids'],
   ): Promise<boolean>;
-  pending: string | null;
+  isRunning(def: ActionDef, target: ActionRequest['target'], ids: ActionRequest['ids']): boolean;
 } {
   const { adapter, t } = useBrume();
   const confirm = useConfirm();
   const { refresh } = useGridNavigation();
-  const endpoint = useGrid().page.endpoints?.action;
-  const [pending, setPending] = useState<string | null>(null);
+  const { page, runningActions, startAction, endAction } = useGrid();
+  const endpoint = page.endpoints?.action;
 
   const run = useCallback(
     async (def: ActionDef, target: ActionRequest['target'], ids: ActionRequest['ids']) => {
       if (!endpoint) return false;
       const key = runKey(def, target, ids);
-      const onRequest = () => setPending(key);
+      let started = false;
+      const onRequest = () => {
+        started = startAction(key);
+        return started;
+      };
       try {
         return await runAction(
           def,
@@ -113,12 +122,20 @@ export function useActionRunner(): {
           { adapter, t, confirm, refresh, endpoint, onRequest },
         );
       } finally {
-        setPending((current) => (current === key ? null : current));
+        if (started) endAction(key);
       }
     },
-    [adapter, t, confirm, refresh, endpoint],
+    [adapter, t, confirm, refresh, endpoint, startAction, endAction],
   );
-  return useMemo(() => ({ run: endpoint ? run : undefined, pending }), [endpoint, run, pending]);
+  const isRunning = useCallback(
+    (def: ActionDef, target: ActionRequest['target'], ids: ActionRequest['ids']) =>
+      runningActions.has(runKey(def, target, ids)),
+    [runningActions],
+  );
+  return useMemo(
+    () => ({ run: endpoint ? run : undefined, isRunning }),
+    [endpoint, run, isRunning],
+  );
 }
 
 /** Identifies one run of an action on some rows (for `pending`). */

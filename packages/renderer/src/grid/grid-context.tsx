@@ -13,6 +13,14 @@ export interface GridContextValue {
   toggleExpanded(rowId: string, key: string): void;
   /** DOM id of that cell's expanded content (for aria-controls). */
   expansionId(rowId: string, key: string): string;
+  /**
+   * The actions in flight (their `runKey`s), one set for the whole grid so the exposed buttons,
+   * the ⋯ menu and the right-click menu of a row all see the same run.
+   */
+  runningActions: ReadonlySet<string>;
+  /** Marks `key` as running; false when it already is (the caller must not send it again). */
+  startAction(key: string): boolean;
+  endAction(key: string): void;
 }
 
 export const GridContext = createContext<GridContextValue | null>(null);

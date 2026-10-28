@@ -61,7 +61,10 @@ const ok = (feedback: object = {}): HttpResponse => ({ status: 200, data: { feed
 
 function setup(
   page: ListPage = orders,
-  opts: { onEdit?(row: GridRow): void; respond?(req: HttpRequest): HttpResponse } = {},
+  opts: {
+    onEdit?(row: GridRow): void;
+    respond?(req: HttpRequest): HttpResponse | Promise<HttpResponse>;
+  } = {},
 ) {
   const user = userEvent.setup();
   const view = (p: ListPage) => (
@@ -177,6 +180,54 @@ describe('row actions (B + C)', () => {
     });
     await user.click(within(row('ORD-1')).getByRole('button', { name: '標記出貨' }));
     await waitFor(() => expect(toasts.error).toHaveBeenCalledWith('操作沒有完成：已經出貨了'));
+  });
+
+  it('one run per row: buttons, ⋯ and the right-click menu are disabled while it runs', async () => {
+    let finish: (res: HttpResponse) => void = () => {};
+    const { user, adapter } = setup(orders, {
+      respond: () => new Promise<HttpResponse>((resolve) => (finish = resolve)),
+    });
+    const isDisabled = (name: string) =>
+      screen.getByRole('menuitem', { name }).getAttribute('aria-disabled') === 'true';
+
+    // Started from the right-click menu…
+    fireEvent.contextMenu(within(row('ORD-1')).getByText('Ada'));
+    await user.click(screen.getByRole('menuitem', { name: '標記出貨' }));
+    await waitFor(() => expect(requests(adapter)).toHaveLength(1));
+    // …the exposed button of the same row shows it and cannot send it again,
+    const button = within(row('ORD-1')).getByRole('button', { name: '標記出貨' });
+    expect(button.hasAttribute('disabled')).toBe(true);
+    // the ⋯ menu and the right-click menu have the item disabled,
+    await user.click(within(row('ORD-1')).getByRole('button', { name: 'ORD-1 的更多操作' }));
+    expect(isDisabled('標記出貨')).toBe(true);
+    expect(isDisabled('寄送提醒')).toBe(false);
+    await user.click(screen.getByRole('menuitem', { name: '標記出貨' }));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+    fireEvent.contextMenu(within(row('ORD-1')).getByText('Ada'));
+    expect(isDisabled('標記出貨')).toBe(true);
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+    // and another row is not affected.
+    const other = within(row('ORD-2')).getByRole('button', { name: '標記出貨' });
+    expect(other.hasAttribute('disabled')).toBe(false);
+    expect(requests(adapter)).toHaveLength(1);
+
+    finish(ok());
+    await waitFor(() => expect(button.hasAttribute('disabled')).toBe(false));
+    await user.click(within(row('ORD-1')).getByRole('button', { name: 'ORD-1 的更多操作' }));
+    expect(isDisabled('標記出貨')).toBe(false);
+  });
+
+  it('a run already in flight is not sent again, even within the same tick', async () => {
+    const { user, adapter } = setup(orders, { respond: () => new Promise<HttpResponse>(() => {}) });
+    const button = within(row('ORD-1')).getByRole('button', { name: '標記出貨' });
+    // Two clicks before React re-renders the button as disabled.
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.contextMenu(within(row('ORD-1')).getByText('Ada'));
+    await user.click(screen.getByRole('menuitem', { name: '標記出貨' }));
+    await waitFor(() => expect(requests(adapter)).toHaveLength(1));
   });
 
   it('hides row actions when the page has no action endpoint', () => {

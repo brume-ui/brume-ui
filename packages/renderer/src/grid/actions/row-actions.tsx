@@ -13,7 +13,7 @@ import { Pencil } from 'lucide-react';
 import type { MouseEvent, ReactElement, ReactNode } from 'react';
 import { formatCell, GridCell } from '../displays';
 import { useGrid } from '../grid-context';
-import { runKey, useActionRunner } from './run-action';
+import { useActionRunner } from './run-action';
 
 /** At most this many exposed actions show as buttons on the row (row-actions mockup B). */
 const MAX_EXPOSED = 2;
@@ -23,6 +23,8 @@ export interface RowMenuHandlers {
   edit?(): void;
   /** Runs a row action on this row; without it the row actions are left out. */
   run?(def: ActionDef): void;
+  /** Whether that action is already running on this row (its item is disabled meanwhile). */
+  isRunning?(def: ActionDef): boolean;
 }
 
 /** The row actions this row allows (`_meta.actions` narrows them; omitted means all). */
@@ -42,7 +44,7 @@ export function rowMenuItems(
   t: (key: 'grid.edit') => string,
 ): MenuAction[] {
   const items: MenuAction[] = [];
-  const { edit, run } = handlers;
+  const { edit, run, isRunning } = handlers;
   if (edit) {
     items.push({
       key: '__edit',
@@ -60,6 +62,7 @@ export function rowMenuItems(
         icon: def.icon ? resolveIcon(def.icon) : undefined,
         shortcut: def.shortcut,
         tone: def.tone,
+        disabled: isRunning?.(def) || undefined,
         onSelect: () => run(def),
       });
     }
@@ -94,11 +97,15 @@ function useRowMenu(row: GridRow) {
   const { t } = useBrume();
   const edit = useEditHandler(row);
   const runner = useActionRunner();
-  const { run } = runner;
+  const { run, isRunning } = runner;
   const items = rowMenuItems(
     page,
     row,
-    { edit, run: run ? (def) => void run(def, 'row', [row.id]) : undefined },
+    {
+      edit,
+      run: run ? (def) => void run(def, 'row', [row.id]) : undefined,
+      isRunning: (def) => isRunning(def, 'row', [row.id]),
+    },
     t,
   );
   return { items, runner };
@@ -109,7 +116,7 @@ export function RowActions({ row }: { row: GridRow }) {
   const { page } = useGrid();
   const { t } = useBrume();
   const { items, runner } = useRowMenu(row);
-  const { run, pending } = runner;
+  const { run, isRunning } = runner;
   if (items.length === 0) return null;
   const exposed = run
     ? allowedRowActions(page, row)
@@ -123,7 +130,7 @@ export function RowActions({ row }: { row: GridRow }) {
           key={def.key}
           variant="outline"
           size="sm"
-          loading={pending === runKey(def, 'row', [row.id])}
+          loading={isRunning(def, 'row', [row.id])}
           onClick={() => void run?.(def, 'row', [row.id])}
         >
           {def.label}

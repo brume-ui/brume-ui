@@ -7,7 +7,7 @@ import {
   useBrume,
 } from '@brume-ui/brume-react';
 import type { GridRow, ListPage } from '@brume-ui/brume-schema';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { BatchBar } from './actions/batch-bar';
 import { hasRowActions, PrimaryCell, RowActions, RowMenu, rowLabel } from './actions/row-actions';
 import { readHiddenColumns, writeHiddenColumns } from './column-visibility';
@@ -73,6 +73,21 @@ export function GridView({ page, onEdit }: GridViewProps) {
     [expansionPrefix],
   );
 
+  // Actions in flight. The ref answers at once (a second click in the same tick sees the first);
+  // the state re-renders the buttons and menus.
+  const running = useRef(new Set<string>());
+  const [runningActions, setRunningActions] = useState<ReadonlySet<string>>(() => new Set());
+  const startAction = useCallback((key: string) => {
+    if (running.current.has(key)) return false;
+    running.current.add(key);
+    setRunningActions(new Set(running.current));
+    return true;
+  }, []);
+  const endAction = useCallback((key: string) => {
+    if (!running.current.delete(key)) return;
+    setRunningActions(new Set(running.current));
+  }, []);
+
   const grid = useMemo<GridContextValue>(
     () => ({
       page,
@@ -82,8 +97,21 @@ export function GridView({ page, onEdit }: GridViewProps) {
       isExpanded: (rowId, key) => expanded.has(`${rowId}\u0000${key}`),
       toggleExpanded,
       expansionId,
+      runningActions,
+      startAction,
+      endAction,
     }),
-    [page, selection, onEdit, expanded, toggleExpanded, expansionId],
+    [
+      page,
+      selection,
+      onEdit,
+      expanded,
+      toggleExpanded,
+      expansionId,
+      runningActions,
+      startAction,
+      endAction,
+    ],
   );
 
   const filterPanelId = useId();

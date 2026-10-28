@@ -11,7 +11,7 @@ import {
 import { Columns3, Download, RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { triggerDownload } from './actions/feedback';
-import { runKey, useActionRunner } from './actions/run-action';
+import { useActionRunner } from './actions/run-action';
 import { useGrid } from './grid-context';
 import { useGridNavigation } from './use-grid-navigation';
 
@@ -89,14 +89,14 @@ function ColumnToggle({ hidden, onHiddenChange }: Omit<GridToolbarProps, 'start'
 /** Tool actions (no rows): one button each, before the export menu. */
 export function ToolActions() {
   const { page } = useGrid();
-  const { run, pending } = useActionRunner();
+  const { run, isRunning } = useActionRunner();
   if (!run || page.actions.tools.length === 0) return null;
   return page.actions.tools.map((def) => (
     <Button
       key={def.key}
       variant={def.tone === 'danger' ? 'danger' : 'secondary'}
       iconStart={def.icon ? resolveIcon(def.icon) : undefined}
-      loading={pending === runKey(def, 'tool', [])}
+      loading={isRunning(def, 'tool', [])}
       onClick={() => void run(def, 'tool', [])}
     >
       {def.label}
