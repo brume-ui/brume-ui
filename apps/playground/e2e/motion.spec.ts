@@ -45,6 +45,23 @@ test.describe('motion page', () => {
     await expect(toast).toHaveCount(0);
   });
 
+  test('dragging to select an error message keeps the toast', async ({ page }) => {
+    await openPage(page, 'motion', 'light');
+    await page.getByRole('button', { name: '送出三則通知' }).click();
+    const error = page.getByRole('status').filter({ hasText: '付款失敗' });
+    await settle(page);
+    const text = error.getByText('付款失敗', { exact: false });
+    const box = await text.boundingBox();
+    if (!box) throw new Error('no text');
+    await page.mouse.move(box.x + 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 120, box.y + box.height / 2, { steps: 8 });
+    await page.mouse.up();
+    expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).not.toBe('');
+    await page.waitForTimeout(400);
+    await expect(error).toBeVisible();
+  });
+
   test('the pagination pill slides under the new current page', async ({ page }) => {
     await openPage(page, 'motion', 'light');
     const nav = page.getByRole('navigation', { name: '分頁' });
