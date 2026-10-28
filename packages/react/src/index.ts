@@ -3,6 +3,12 @@ export type {
   SubmitOptions,
   VisitOptions,
 } from './adapter';
+export { BarChart, type BarChartProps } from './charts/bar-chart';
+export type { ChartDatum, ChartSeries, DateFormat, ValueFormat } from './charts/data';
+export { DonutChart, type DonutChartProps, type DonutSlice } from './charts/donut-chart';
+export { LineChart, type LineChartProps } from './charts/line-chart';
+export { Sparkline, type SparklineProps } from './charts/sparkline';
+export { StatCard, type StatCardProps, type StatDelta } from './charts/stat-card';
 export { cn } from './cn';
 export { COLOR_SCHEME_STORAGE_KEY, type ColorScheme, useColorScheme } from './color-scheme';
 export { Button, type ButtonProps } from './components/button';

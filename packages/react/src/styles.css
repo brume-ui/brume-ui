@@ -95,8 +95,47 @@
     background-position: -100% 0;
   }
 }
+/* Charts: bars grow from the baseline (origin set per element), lines and donut arcs draw in. */
+@keyframes br-chart-grow-y {
+  from {
+    opacity: 0;
+    transform: scaleY(0.6);
+  }
+}
+@keyframes br-chart-grow-x {
+  from {
+    opacity: 0;
+    transform: scaleX(0.6);
+  }
+}
+/* Needs pathLength="1" on the path; the dash only exists while the animation runs. */
+@keyframes br-chart-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
+  @keyframes br-chart-grow-y {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes br-chart-grow-x {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes br-chart-draw {
+    from {
+      opacity: 0;
+    }
+  }
   @keyframes br-pop-in {
     from {
       opacity: 0;
