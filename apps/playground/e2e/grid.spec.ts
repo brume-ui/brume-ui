@@ -153,6 +153,7 @@ test('right-clicking a row opens the same menu as its ⋯', async ({ page }) => 
 test.describe('at 1440×900', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
+  // #/grid sits in a real AppShell with the sidebar expanded: an app's content width.
   test('the default columns fit: the table does not scroll sideways', async ({ page }) => {
     const wrapper = page.getByRole('table').locator('xpath=..');
     const { scrollWidth, clientWidth } = await wrapper.evaluate((el) => ({

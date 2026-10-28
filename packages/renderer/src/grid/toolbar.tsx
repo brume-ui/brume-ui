@@ -53,8 +53,8 @@ export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarP
         <div className="br:flex br:flex-wrap br:items-center br:gap-2 br:empty:hidden br:max-sm:contents">
           {end}
         </div>
-        {/* The two icons stay together, so neither wraps onto a line alone. */}
-        <div className="br:flex br:shrink-0 br:items-center br:gap-1">
+        {/* The two icons stay together (neither wraps onto a line alone) and keep to the end edge. */}
+        <div className="br:flex br:shrink-0 br:items-center br:gap-1 br:max-sm:ms-auto">
           <ColumnToggle hidden={hidden} onHiddenChange={onHiddenChange} />
           <IconButton icon={RefreshCw} label={t('grid.refresh')} onClick={refresh} />
         </div>

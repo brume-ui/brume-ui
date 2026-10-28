@@ -1,4 +1,5 @@
 import {
+  AppShell,
   type BrumeAdapter,
   BrumeProvider,
   createMemoryAdapter,
@@ -11,8 +12,9 @@ import {
   GridView,
   RegistryProvider,
 } from '@brume-ui/brume-renderer';
-import { type GridRow, SCHEMA_VERSION } from '@brume-ui/brume-schema';
+import { type GridRow, type MenuItem, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { type ReactNode, useMemo, useState } from 'react';
+import { useSettings } from '../settings';
 import {
   buildOrdersPage,
   createOrderDb,
@@ -37,6 +39,19 @@ function RiskScore({ context }: { context?: { row: GridRow } }) {
     </span>
   );
 }
+
+const MENU: MenuItem[] = [
+  { title: '儀表板', icon: 'layout-dashboard', url: '/admin' },
+  {
+    title: '銷售',
+    icon: 'shopping-cart',
+    children: [
+      { title: '訂單', url: ORDERS_URL },
+      { title: '退款', url: '/admin/refunds' },
+    ],
+  },
+  { title: '設定', icon: 'settings', url: '/admin/settings' },
+];
 
 const pathOf = (url: string) => url.split(/[?#]/)[0];
 
@@ -73,16 +88,32 @@ function useOrdersServer(db: OrderDb) {
 
 function OrdersGrid({ name, db }: { name: string; db: OrderDb }) {
   const { locale } = useBrume();
+  const { accent, menuPosition } = useSettings();
   const { adapter, page } = useOrdersServer(db);
   const registry = useMemo(() => createRegistry({ mode: 'vite', components: { RiskScore } }), []);
   return (
-    <main className="pg-page pg-page-wide" data-testid={`pg-${name}`}>
+    // Inside a real AppShell (sidebar expanded on desktop), so the grid gets an app's content width.
+    <div data-testid={`pg-${name}`}>
       <BrumeProvider adapter={adapter} locale={locale}>
-        <RegistryProvider registry={registry}>
-          <GridView page={page} onEdit={(row) => toast.info(`開啟 ${String(row.no)} 的編輯表單`)} />
-        </RegistryProvider>
+        <AppShell
+          appName="Brume"
+          menu={MENU}
+          homeUrl="/admin"
+          currentUrl={ORDERS_URL}
+          user={{ name: 'Herb' }}
+          breadcrumbs={[{ title: '首頁', url: '/admin' }, { title: '訂單' }]}
+          layout={{ menuPosition, accent, sidebarCollapsible: true, breadcrumbs: true }}
+          logoutUrl="/admin/logout"
+        >
+          <RegistryProvider registry={registry}>
+            <GridView
+              page={page}
+              onEdit={(row) => toast.info(`開啟 ${String(row.no)} 的編輯表單`)}
+            />
+          </RegistryProvider>
+        </AppShell>
       </BrumeProvider>
-    </main>
+    </div>
   );
 }
 

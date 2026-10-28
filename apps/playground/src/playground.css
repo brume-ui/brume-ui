@@ -80,9 +80,6 @@ body {
   margin: 0 auto;
   padding: 24px 16px 64px;
 }
-.pg-page-wide {
-  max-width: 1400px;
-}
 .pg-page h1 {
   margin: 0 0 4px;
   font-size: 24px;
