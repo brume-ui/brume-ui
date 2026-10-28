@@ -25,6 +25,7 @@ export const PAGES = [
   'card',
   'shell',
   'fonts',
+  'motion',
 ] as const;
 export type PageName = (typeof PAGES)[number];
 
@@ -44,6 +45,25 @@ export async function openPage(page: Page, name: PageName, scheme: Scheme): Prom
   await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
   await expect(page.getByTestId(`pg-${name}`)).toBeVisible();
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await animationsIdle(page);
+}
+
+/**
+ * Waits for every finite animation/transition (entrances, row fades, indicator slides) to finish,
+ * so axe and screenshots see the settled page. Infinite ones (skeleton shimmer, spinners) are skipped.
+ */
+export async function animationsIdle(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const finite = () =>
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().endTime !== Number.POSITIVE_INFINITY);
+    // Effects can start new animations (e.g. rows after a frame), so settle twice.
+    for (let i = 0; i < 2; i++) {
+      await Promise.all(finite().map((a) => a.finished.catch(() => undefined)));
+      await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+    }
+  });
 }
 
 /**

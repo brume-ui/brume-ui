@@ -1,4 +1,4 @@
-import { expect, openPage, PAGES, SCHEMES, SLOW_PAGES, test } from './support';
+import { animationsIdle, expect, openPage, PAGES, SCHEMES, SLOW_PAGES, test } from './support';
 
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
@@ -25,6 +25,7 @@ for (const viewport of VIEWPORTS) {
         await openPage(page, 'shell', scheme);
         await page.getByRole('button', { name: '新增使用者' }).click();
         await expect(page.getByRole('dialog', { name: '新增使用者' })).toBeVisible();
+        await animationsIdle(page);
         await expect(page).toHaveScreenshot(`shell-dialog-${scheme}-${viewport.name}.png`);
       });
     }

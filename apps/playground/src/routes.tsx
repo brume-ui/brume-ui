@@ -11,6 +11,7 @@ import {
 import { DataTablePage, EmptyStatePage, PaginationPage, SkeletonPage } from './pages/data';
 import { FontsPage } from './pages/fonts';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
+import { MotionPage } from './pages/motion';
 import { ConfirmPage, DialogPage, ToastPage } from './pages/overlays';
 
 export interface Route {
@@ -41,6 +42,7 @@ export const ROUTES: Route[] = [
   { name: 'page-header', title: 'PageHeader', Component: PageHeaderPage },
   { name: 'card', title: 'Card', Component: CardPage },
   { name: 'fonts', title: 'Fonts (中文字體比較)', Component: FontsPage },
+  { name: 'motion', title: '動效', Component: MotionPage },
 ];
 
 export const INDEX_ENTRIES: Array<{ name: string; title: string }> = [

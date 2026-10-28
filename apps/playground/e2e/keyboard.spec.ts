@@ -74,30 +74,36 @@ test('a toast does not move focus', async ({ page }) => {
   await expect(trigger).toBeFocused();
 });
 
-test('toasts do not animate transform under prefers-reduced-motion', async ({ page }) => {
+/** Computed transition durations of a toast, by property. */
+async function toastDurations(page: Page): Promise<Record<string, string>> {
+  const toast = page.getByRole('status').filter({ hasText: '有 3 筆新資料。' });
+  await expect(toast).toBeVisible();
+  return toast.evaluate((el) => {
+    const s = getComputedStyle(el);
+    const props = s.transitionProperty.split(', ');
+    const durations = s.transitionDuration.split(', ');
+    return Object.fromEntries(props.map((p, i) => [p, durations[i] ?? '']));
+  });
+}
+
+test('toasts only fade under prefers-reduced-motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openPage(page, 'toast', 'light');
   await tabTo(page, page.getByRole('button', { name: 'info', exact: true }));
   await page.keyboard.press('Enter');
-
-  const toast = page.getByRole('status').filter({ hasText: '有 3 筆新資料。' });
-  await expect(toast).toBeVisible();
-  const style = await toast.evaluate((el) => {
-    const s = getComputedStyle(el);
-    return { animationName: s.animationName, transform: s.transform };
-  });
-  expect(style).toEqual({ animationName: 'none', transform: 'none' });
+  expect(await toastDurations(page)).toEqual({ transform: '0s', height: '0s', opacity: '0.1s' });
 });
 
-test('toasts do animate in without reduced motion (control)', async ({ page }) => {
+test('toasts slide and fade without reduced motion (control)', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await openPage(page, 'toast', 'light');
   await tabTo(page, page.getByRole('button', { name: 'info', exact: true }));
   await page.keyboard.press('Enter');
-
-  const toast = page.getByRole('status').filter({ hasText: '有 3 筆新資料。' });
-  await expect(toast).toBeVisible();
-  expect(await toast.evaluate((el) => getComputedStyle(el).animationName)).toBe('br-toast-in');
+  expect(await toastDurations(page)).toEqual({
+    transform: '0.28s',
+    height: '0.28s',
+    opacity: '0.15s',
+  });
 });
 
 async function outline(target: Locator): Promise<{ style: string; width: string }> {
