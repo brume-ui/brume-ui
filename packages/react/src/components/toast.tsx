@@ -35,10 +35,6 @@ const DURATION_MS = 4000;
 /** Horizontal travel before a press turns into a swipe (and captures the pointer). */
 const SWIPE_START_PX = 4;
 
-function hasTextSelection(): boolean {
-  return typeof window !== 'undefined' && (window.getSelection?.()?.toString() ?? '') !== '';
-}
-
 /** Vertical padding (py-3) + border of a toast; heights are measured on the content box. */
 const CHROME_PX = 26;
 
@@ -138,18 +134,16 @@ function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewP
     setDx(0);
   }
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
-    if (removing || e.button !== 0 || (e.target as Element).closest('button')) return;
-    // No capture yet: a press on the message may become a text selection rather than a swipe.
+    const target = e.target as Element;
+    // Presses on the message select text (to read or copy an error), never swipe; the rest of
+    // the toast (padding, icon) is the swipe handle.
+    if (removing || e.button !== 0 || target.closest('button, [data-toast-message]')) return;
+    // Capture only once it is clearly a swipe, so a plain click stays a click.
     drag.current = { x: e.clientX, at: Date.now(), id: e.pointerId, captured: false };
   }
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
     const start = drag.current;
     if (start?.id !== e.pointerId) return;
-    // Selecting text (to read or copy an error) must never swipe the toast away.
-    if (hasTextSelection()) {
-      cancelDrag();
-      return;
-    }
     const moved = e.clientX - start.x;
     if (!start.captured && Math.abs(moved) >= SWIPE_START_PX) {
       start.captured = true;
@@ -162,11 +156,7 @@ function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewP
     const start = drag.current;
     if (start?.id !== e.pointerId) return;
     const moved = e.clientX - start.x;
-    const dismiss =
-      !cancelled &&
-      start.captured &&
-      !hasTextSelection() &&
-      shouldDismiss(moved, Date.now() - start.at);
+    const dismiss = !cancelled && start.captured && shouldDismiss(moved, Date.now() - start.at);
     cancelDrag();
     if (dismiss) dismissToast(item.id, 'swipe');
   }
@@ -222,7 +212,9 @@ function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewP
         )}
       >
         <Icon aria-hidden="true" className={`br:mt-0.5 br:size-5 br:shrink-0 ${color}`} />
-        <span className="br:min-w-0 br:flex-1 br:py-0.5 br:select-text">{item.message}</span>
+        <span data-toast-message="" className="br:min-w-0 br:flex-1 br:py-0.5 br:select-text">
+          {item.message}
+        </span>
         <IconButton
           icon={X}
           label={t('common.close')}

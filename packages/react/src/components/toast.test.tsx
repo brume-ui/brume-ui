@@ -243,21 +243,22 @@ describe('toast', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('selecting the message text never swipes the toast away', () => {
+  it('a press on the message text never swipes; the rest of the toast still does', () => {
     render(<Toaster />);
     act(() => toast.error('付款失敗：卡片被拒絕。'));
     const el = screen.getByRole('status');
-    const selection = vi
-      .spyOn(window, 'getSelection')
-      .mockReturnValue({ toString: () => '付款失敗' } as Selection);
-    act(() => {
-      fireEvent.pointerDown(el, { button: 0, pointerId: 1, clientX: 100 });
-      fireEvent.pointerMove(el, { pointerId: 1, clientX: 220 });
-      fireEvent.pointerUp(el, { pointerId: 1, clientX: 220 });
-    });
-    selection.mockRestore();
+    const message = screen.getByText('付款失敗：卡片被拒絕。');
+    const drag = (from: Element) => {
+      fireEvent.pointerDown(from, { button: 0, pointerId: 1, clientX: 100 });
+      fireEvent.pointerMove(from, { pointerId: 1, clientX: 220 });
+      fireEvent.pointerUp(from, { pointerId: 1, clientX: 220 });
+    };
+    // No selection exists yet (as at the start of a slow drag over a CJK glyph): still no swipe.
+    act(() => drag(message));
     expect(screen.getByRole('status').textContent).toContain('付款失敗');
     expect(document.querySelector('[data-removing]')).toBeNull();
+    act(() => drag(el));
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('resumes the countdown after the pointer leaves the stack', () => {

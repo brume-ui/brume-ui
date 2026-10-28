@@ -37,7 +37,8 @@ test.describe('motion page', () => {
     await settle(page);
     const box = await toast.boundingBox();
     if (!box) throw new Error('no toast');
-    await page.mouse.move(box.x + 40, box.y + box.height / 2);
+    // Start on the padding: presses on the message text select instead of swiping.
+    await page.mouse.move(box.x + 8, box.y + box.height / 2);
     await page.mouse.down();
     await page.mouse.move(box.x + 80, box.y + box.height / 2, { steps: 4 });
     await page.mouse.move(box.x + 160, box.y + box.height / 2, { steps: 4 });
@@ -58,6 +59,32 @@ test.describe('motion page', () => {
     await page.mouse.move(box.x + 120, box.y + box.height / 2, { steps: 8 });
     await page.mouse.up();
     expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).not.toBe('');
+    await page.waitForTimeout(400);
+    await expect(error).toBeVisible();
+  });
+
+  test('a slow selection drag from the first character keeps a sticky error toast', async ({
+    page,
+  }) => {
+    await openPage(page, 'motion', 'light');
+    await page.getByRole('button', { name: '送出三則通知' }).click();
+    const error = page.getByRole('status').filter({ hasText: '付款失敗' });
+    await settle(page);
+    // Left edge of the first glyph: a CJK glyph only gets selected after its midpoint (~7px).
+    const start = await error.evaluate((el) => {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const node = walker.nextNode();
+      if (!node) throw new Error('no text');
+      const range = document.createRange();
+      range.setStart(node, 0);
+      range.setEnd(node, 1);
+      const r = range.getBoundingClientRect();
+      return { x: r.left + 0.5, y: r.top + r.height / 2 };
+    });
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    for (let dx = 1; dx <= 120; dx++) await page.mouse.move(start.x + dx, start.y);
+    await page.mouse.up();
     await page.waitForTimeout(400);
     await expect(error).toBeVisible();
   });
