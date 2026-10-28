@@ -1,8 +1,16 @@
-import { type BrumeAdapter, toast } from '@brume-ui/brume-react';
+import { type BrumeAdapter, isSafeHref, toast } from '@brume-ui/brume-react';
 import type { Feedback } from '@brume-ui/brume-schema';
 
-/** Starts a file download through a temporary `<a download>` (never through the adapter). */
+/**
+ * Starts a file download through a temporary `<a download>` (never through the adapter). The URL
+ * comes from the server and bypasses React's `javascript:` guard, so only relative and http(s)
+ * URLs are followed.
+ */
 export function triggerDownload(url: string, filename?: string): void {
+  if (!isSafeHref(url)) {
+    console.error(`[brume] Refused to download from an unsafe URL: ${url}`);
+    return;
+  }
   const a = document.createElement('a');
   a.href = url;
   a.download = filename ?? '';

@@ -285,6 +285,15 @@ describe('batch actions', () => {
   const check = (user: ReturnType<typeof userEvent.setup>, name: string) =>
     user.click(screen.getByRole('checkbox', { name: `選取 ${name}` }));
 
+  it('announces the count from a live region that is there before the first selection', async () => {
+    const { user } = setup();
+    const live = document.querySelector('[aria-live="polite"]') as HTMLElement;
+    expect(live.textContent).toBe('');
+    await check(user, 'ORD-1');
+    expect(document.querySelector('[aria-live="polite"]')).toBe(live);
+    expect(live.textContent).toBe('已選取 1 筆');
+  });
+
   it('shows the bar while rows are selected and clears the selection after a run', async () => {
     const { user, adapter } = setup();
     expect(screen.queryByRole('region', { name: '批次操作' })).toBeNull();
@@ -326,7 +335,9 @@ describe('batch actions', () => {
     await check(user, 'ORD-1');
     await check(user, 'ORD-2');
     rerenderPage({ ...orders, rows: [rows[1] as GridRow] });
-    expect(screen.getByText('已選取 1 筆')).toBeTruthy();
+    expect(
+      within(screen.getByRole('region', { name: '批次操作' })).getByText('已選取 1 筆'),
+    ).toBeTruthy();
     expect(
       (screen.getByRole('checkbox', { name: '選取 ORD-2' }) as HTMLButtonElement).getAttribute(
         'aria-checked',
@@ -369,11 +380,26 @@ describe('batch actions', () => {
     await waitFor(() =>
       expect(toasts.error).toHaveBeenCalledWith('頁面已過期，請重新整理後再試一次。'),
     );
-    expect(screen.getByText('已選取 1 筆')).toBeTruthy();
+    expect(
+      within(screen.getByRole('region', { name: '批次操作' })).getByText('已選取 1 筆'),
+    ).toBeTruthy();
   });
 });
 
 describe('tool actions', () => {
+  it('a throwing adapter is a network error toast, not an unhandled rejection', async () => {
+    const { user } = setup(orders, {
+      respond: () => {
+        throw new TypeError('boom');
+      },
+    });
+    await user.click(screen.getByRole('button', { name: '同步庫存' }));
+    await waitFor(() =>
+      expect(toasts.error).toHaveBeenCalledWith('連不上伺服器，請檢查網路後再試一次。'),
+    );
+    expect(screen.getByRole('button', { name: '同步庫存' }).hasAttribute('disabled')).toBe(false);
+  });
+
   it('post with target tool and no ids', async () => {
     const { user, adapter } = setup();
     await user.click(screen.getByRole('button', { name: '同步庫存' }));
@@ -442,6 +468,13 @@ describe('applyFeedback', () => {
     applyFeedback({ redirect: '/admin/orders/9', refresh: true }, d);
     expect(d.adapter.calls).toEqual([{ fn: 'visit', args: ['/admin/orders/9'] }]);
     expect(d.refresh).not.toHaveBeenCalled();
+  });
+
+  it('does not follow an unsafe download URL', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    applyFeedback({ download: { url: 'javascript:alert(1)' } }, deps());
+    expect(clicked).toEqual([]);
+    expect(error).toHaveBeenCalledOnce();
   });
 
   it('refreshes only when asked', () => {

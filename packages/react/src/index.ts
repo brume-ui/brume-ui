@@ -36,7 +36,7 @@ export { Checkbox, type CheckboxProps } from './components/checkbox';
 export { CheckboxGroup, type CheckboxGroupProps } from './components/checkbox-group';
 export { Chip, type ChipProps } from './components/chip';
 export { Combobox, type ComboboxLoader, type ComboboxProps } from './components/combobox';
-export { CompactTable, type CompactTableProps } from './components/compact-table';
+export { CompactTable, type CompactTableProps, formatCell } from './components/compact-table';
 export { ConfirmHost, type ConfirmOptions, useConfirm } from './components/confirm';
 export { type DataColumn, DataTable, type DataTableProps } from './components/data-table';
 export { DateInput, type DateInputProps } from './components/date-input';
@@ -68,7 +68,14 @@ export { TextInput, type TextInputProps } from './components/text-input';
 export { Textarea, type TextareaProps } from './components/textarea';
 export { Thumbnail, type ThumbnailProps } from './components/thumbnail';
 export { Toaster, type ToastOptions, toast } from './components/toast';
-export { errorMessage, fetchJson, type HttpRequest, type HttpResponse } from './http';
+export {
+  errorMessage,
+  failureMessage,
+  fetchJson,
+  type HttpRequest,
+  type HttpResponse,
+  isSafeHref,
+} from './http';
 export {
   createTranslator,
   type Locale,
@@ -78,10 +85,10 @@ export {
 export { AppShell, type AppShellProps, SIDEBAR_COLLAPSED_STORAGE_KEY } from './layout/app-shell';
 export type { BreadcrumbItem } from './layout/breadcrumbs';
 export { Card, type CardProps } from './layout/card';
-export { resolveIcon } from './layout/menu-utils';
+export { isPlainClick, resolveIcon } from './layout/menu-utils';
 export { ColorSchemeMenu } from './layout/navbar-menus';
 export { PageHeader, type PageHeaderProps } from './layout/page-header';
 export type { ShellUser } from './layout/user-menu';
-export { createMemoryAdapter } from './memory-adapter';
+export { createMemoryAdapter, type MemoryAdapterOptions } from './memory-adapter';
 export { prefersReducedMotion, usePrefersReducedMotion } from './motion/reduced-motion';
 export { BrumeProvider, useBrume } from './provider';

@@ -1,8 +1,7 @@
-import { type HttpResponse, toast, useBrume } from '@brume-ui/brume-react';
+import { failureMessage, type HttpResponse, toast, useBrume } from '@brume-ui/brume-react';
 import type { CellUpdateResponse, ErrorResponse, GridRow } from '@brume-ui/brume-schema';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { applyFeedback } from '../actions/feedback';
-import { failureMessage } from '../actions/run-action';
 import { useGrid } from '../grid-context';
 import { useGridNavigation } from '../use-grid-navigation';
 import type { RowSaveTicket } from './row-saves';
@@ -22,6 +21,11 @@ export interface CellUpdate {
   value: unknown;
   /** A save of the value shown is in flight. */
   pending: boolean;
+  /**
+   * The save succeeded after the rows changed, so `value` is held until the refresh lands: the
+   * cell must show `value`, not the row's (older) one.
+   */
+  held: boolean;
   /** The validation error (422) of the last save, until a later save succeeds. */
   error: string | null;
   /**
@@ -142,6 +146,7 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
     () => ({
       value: showing ? optimistic.value : confirmed,
       pending: Boolean(showing && !optimistic.heldOn),
+      held: Boolean(showing && optimistic.heldOn),
       error: visibleError,
       commit,
       canSave: Boolean(endpoint),

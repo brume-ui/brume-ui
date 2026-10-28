@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { errorMessage, fetchJson } from './http';
+import { errorMessage, failureMessage, fetchJson, isSafeHref } from './http';
 import { createTranslator } from './i18n';
 
 function stubFetch(impl: (url: string, init: RequestInit) => Promise<Response>) {
@@ -65,5 +65,42 @@ describe('fetchJson', () => {
     expect(errorMessage(r0, t)).toBe('連不上伺服器，請檢查網路後再試一次。');
     expect(errorMessage({ status: 401, data: {} }, t)).toBe('登入已逾時，請重新登入。');
     expect(errorMessage({ status: 422, data: { message: '名稱必填' } }, t)).toBe('名稱必填');
+  });
+
+  it('sends a FormData body as multipart and passes the abort signal', async () => {
+    const fetchMock = stubFetch(async () => new Response('{}'));
+    const body = new FormData();
+    body.append('field', 'avatar');
+    const controller = new AbortController();
+    await fetchJson({ method: 'post', url: '/u', body, signal: controller.signal });
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.body).toBe(body);
+    expect(init.headers).not.toHaveProperty('Content-Type');
+    expect(init.signal).toBe(controller.signal);
+  });
+});
+
+describe('failureMessage', () => {
+  const t = createTranslator('zh-TW');
+  it('wraps a server message, and says network/expired/signed-out errors as they are', () => {
+    expect(failureMessage({ status: 500, data: { message: '庫存不足' } }, t)).toBe(
+      '操作沒有完成：庫存不足',
+    );
+    expect(failureMessage({ status: 0, data: {} }, t)).toBe('連不上伺服器，請檢查網路後再試一次。');
+  });
+});
+
+describe('isSafeHref', () => {
+  it.each([
+    ['/admin/orders/1', true],
+    ['orders?x=1', true],
+    ['https://cdn.example.com/a.xlsx', true],
+    ['HTTP://example.com', true],
+    ['javascript:alert(1)', false],
+    [' java\tscript:alert(1)', false],
+    ['data:text/html,x', false],
+    ['vbscript:x', false],
+  ])('%s → %s', (url, safe) => {
+    expect(isSafeHref(url)).toBe(safe);
   });
 });

@@ -1,13 +1,18 @@
 import {
   type BrumeAdapter,
   type ConfirmOptions,
-  errorMessage,
+  failureMessage,
   type HttpResponse,
   toast,
   useBrume,
   useConfirm,
 } from '@brume-ui/brume-react';
-import type { ActionDef, ActionRequest, ActionResponse, ListPage } from '@brume-ui/brume-schema';
+import type {
+  ActionDef,
+  ActionRequest,
+  ActionResponse,
+  ErrorResponse,
+} from '@brume-ui/brume-schema';
 import { useCallback, useMemo } from 'react';
 import { useGrid } from '../grid-context';
 import { useGridNavigation } from '../use-grid-navigation';
@@ -29,24 +34,9 @@ export interface RunActionDeps {
   onRequest?(): boolean | undefined;
 }
 
-/** The action endpoint of `page` for `key`, or undefined when the page has none. */
-export function actionUrl(page: ListPage, key: string): string | undefined {
-  return page.endpoints?.action?.replaceAll('{action}', encodeURIComponent(key));
-}
-
 /** `{count}` in a confirm text is the number of rows the action runs on (batch confirms). */
 function withCount(text: string, count: number): string {
   return text.replaceAll('{count}', String(count));
-}
-
-/**
- * The toast for a failed request (an action or a cell save). Network, expired and signed-out
- * errors say it all; anything else is 「操作沒有完成：{message}」, or the generic copy without one.
- */
-export function failureMessage(res: HttpResponse, t: Translate): string {
-  const message = errorMessage(res, t);
-  if (res.status === 0 || res.status === 401 || res.status === 419) return message;
-  return message ? t('action.failed', { message }) : t('action.failedUnknown');
 }
 
 /**
@@ -70,11 +60,17 @@ export async function runAction(
     if (!ok) return false;
   }
   if (deps.onRequest?.() === false) return false;
-  const res = await deps.adapter.request<Partial<ActionResponse>>({
-    method: 'post',
-    url: deps.endpoint.replaceAll('{action}', encodeURIComponent(def.key)),
-    body: req,
-  });
+  let res: HttpResponse<Partial<ActionResponse & ErrorResponse>>;
+  try {
+    res = await deps.adapter.request<Partial<ActionResponse & ErrorResponse>>({
+      method: 'post',
+      url: deps.endpoint.replaceAll('{action}', encodeURIComponent(def.key)),
+      body: req,
+    });
+  } catch (error) {
+    // Adapters resolve every outcome; one that throws anyway counts as a network error.
+    res = { status: 0, data: { message: error instanceof Error ? error.message : '' } };
+  }
   if (res.status < 200 || res.status >= 300) {
     toast.error(failureMessage(res, deps.t));
     return false;

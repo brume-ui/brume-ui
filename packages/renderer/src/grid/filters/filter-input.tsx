@@ -18,7 +18,7 @@ import { useGrid } from '../grid-context';
 const OPTIONS_PER_PAGE = 20;
 
 function optionsUrl(endpoint: string, source: string): string {
-  return endpoint.replace('{source}', () => encodeURIComponent(source));
+  return endpoint.replaceAll('{source}', () => encodeURIComponent(source));
 }
 
 async function requestOptions(
