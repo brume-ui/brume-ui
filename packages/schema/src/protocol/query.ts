@@ -40,6 +40,9 @@ const OWNED_SCALARS: string[] = [
 // filter[name] / filter[name][] / filter[name][sub]
 const FILTER_KEY = /^filter\[([^\][]+)\](?:\[([^\][]*)\])?$/;
 
+// 篩選名稱不得是會改到原型的鍵
+const UNSAFE_FILTER_NAMES = new Set(['__proto__', 'constructor', 'prototype']);
+
 function toParams(search: string | URLSearchParams): URLSearchParams {
   return typeof search === 'string' ? new URLSearchParams(search) : search;
 }
@@ -73,7 +76,7 @@ function resolveFilter(d: FilterDraft): FilterValue | undefined {
 
 export function parseGridQuery(search: string | URLSearchParams): GridQuery {
   const params = toParams(search);
-  const query: GridQuery = { filters: {} };
+  const query: GridQuery = { filters: Object.create(null) as Record<string, FilterValue> };
 
   const page = positiveInt(params.get(GRID_PARAMS.page));
   if (page !== undefined) query.page = page;
@@ -99,6 +102,7 @@ export function parseGridQuery(search: string | URLSearchParams): GridQuery {
     const match = FILTER_KEY.exec(key);
     if (!match) continue;
     const name = match[1] as string;
+    if (UNSAFE_FILTER_NAMES.has(name)) continue;
     const sub = match[2];
     let draft = drafts.get(name);
     if (!draft) {
@@ -120,13 +124,30 @@ export function parseGridQuery(search: string | URLSearchParams): GridQuery {
   return query;
 }
 
+/** toString() 時篩選鍵保留字面的 `[`、`]`（例：`filter[status][]=paid`），值仍照常編碼。 */
+class GridSearchParams extends URLSearchParams {
+  override toString(): string {
+    const pairs: string[] = [];
+    for (const [key, value] of this) {
+      const encoded = new URLSearchParams([[key, value]]).toString();
+      const eq = encoded.indexOf('=');
+      const encodedKey = encoded.slice(0, eq).replace(/%5B/gi, '[').replace(/%5D/gi, ']');
+      pairs.push(encodedKey + encoded.slice(eq));
+    }
+    return pairs.join('&');
+  }
+}
+
 function isOwned(key: string): boolean {
   return OWNED_SCALARS.includes(key) || FILTER_KEY.test(key);
 }
 
-/** 把 query 寫成參數；base 內非本協定的參數原樣保留，本協定的參數由 query 取代。 */
+/**
+ * 把 query 寫成參數；base 內非本協定的參數原樣保留，本協定的參數由 query 取代。
+ * 回傳值的 toString() 在鍵裡保留字面的 `[`、`]`。
+ */
 export function serializeGridQuery(query: GridQuery, base?: URLSearchParams): URLSearchParams {
-  const out = new URLSearchParams();
+  const out = new GridSearchParams();
   if (base) {
     for (const [key, value] of base) {
       if (!isOwned(key)) out.append(key, value);
