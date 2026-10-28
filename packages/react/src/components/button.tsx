@@ -9,6 +9,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md';
   loading?: boolean;
   iconStart?: LucideIcon;
+  /** A number after the label in the accent colour (how many filters are applied); hidden at 0. */
+  count?: number;
 }
 
 const VARIANTS = {
@@ -25,6 +27,7 @@ export function Button({
   size = 'md',
   loading = false,
   iconStart: Icon,
+  count,
   className,
   children,
   disabled,
@@ -55,6 +58,11 @@ export function Button({
       >
         {Icon ? <Icon aria-hidden="true" className="br:size-4" /> : null}
         {children}
+        {count ? (
+          <span data-count="" className="br:text-accent br:tabular-nums">
+            {count}
+          </span>
+        ) : null}
       </span>
       {loading ? (
         // Fades in over the hidden label; the spin itself stops under reduced motion.

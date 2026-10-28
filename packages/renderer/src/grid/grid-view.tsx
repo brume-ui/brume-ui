@@ -7,10 +7,15 @@ import {
   useBrume,
 } from '@brume-ui/brume-react';
 import type { GridRow, ListColumn, ListPage } from '@brume-ui/brume-schema';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useId, useMemo, useState } from 'react';
 import { ComponentSlot } from '../component-slot';
 import { readHiddenColumns, writeHiddenColumns } from './column-visibility';
 import { useGridEmptyState } from './empty';
+import { ColumnFilter } from './filters/column-filter';
+import { FilterChips } from './filters/filter-chips';
+import { FilterPanelToggle, FilterPanelView } from './filters/filter-panel';
+import { GridScopes } from './filters/scopes';
+import { GridSelectors } from './filters/selectors';
 import { GridContext, type GridContextValue, useGrid } from './grid-context';
 import { GridToolbar } from './toolbar';
 import { GRID_VISIT, hrefForPage, useGridNavigation } from './use-grid-navigation';
@@ -54,13 +59,31 @@ export function GridView({ page, onEdit }: GridViewProps) {
     [page, selection, onEdit],
   );
 
+  const filterPanelId = useId();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   return (
     <GridContext.Provider value={grid}>
       <div className="br:flex br:flex-col br:gap-4">
         <PageHeader title={page.title} description={page.description} />
         {/* Task 11: the batch bar (shown while rows are selected) goes above the toolbar. */}
-        <GridToolbar hidden={hidden} onHiddenChange={changeHidden} />
-        {/* Task 9: the filter panel opens here, then selectors sit above the table. */}
+        <GridToolbar
+          hidden={hidden}
+          onHiddenChange={changeHidden}
+          start={
+            <>
+              <GridScopes />
+              <FilterPanelToggle
+                open={filtersOpen}
+                onToggle={() => setFiltersOpen((open) => !open)}
+                panelId={filterPanelId}
+              />
+            </>
+          }
+        />
+        <FilterPanelView id={filterPanelId} open={filtersOpen} />
+        <FilterChips />
+        <GridSelectors />
         <GridTable hidden={hidden} />
         <GridFooter />
       </div>
@@ -73,6 +96,7 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
   const { navigate } = useGridNavigation();
   const empty = useGridEmptyState();
   const sort = page.query.sort;
+  const { columnFilters } = page;
 
   const columns = useMemo<DataColumn<GridRow>[]>(
     () =>
@@ -100,9 +124,12 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
               },
             }
           : undefined,
-        // Task 9: headerAccessory for column filters.
+        headerAccessory: (() => {
+          const def = col.filter ? columnFilters?.find((f) => f.key === col.filter) : undefined;
+          return def ? <ColumnFilter def={def} /> : undefined;
+        })(),
       })),
-    [page.columns, hidden, sort, navigate],
+    [page.columns, columnFilters, hidden, sort, navigate],
   );
 
   return (

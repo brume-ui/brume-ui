@@ -35,3 +35,24 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: '登入' })).toBeTruthy();
   });
 });
+
+describe('Button count', () => {
+  it('shows a count after the label in the accent colour, only when positive', () => {
+    const { rerender } = render(<Button variant="secondary">篩選</Button>);
+    expect(screen.getByRole('button').querySelector('[data-count]')).toBeNull();
+    rerender(
+      <Button variant="secondary" count={0}>
+        篩選
+      </Button>,
+    );
+    expect(screen.getByRole('button').querySelector('[data-count]')).toBeNull();
+    rerender(
+      <Button variant="secondary" count={2}>
+        篩選
+      </Button>,
+    );
+    const count = screen.getByRole('button').querySelector('[data-count]');
+    expect(count?.textContent).toBe('2');
+    expect(count?.className).toContain('br:text-accent');
+  });
+});

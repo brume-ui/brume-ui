@@ -1,0 +1,99 @@
+import type { Option } from '@brume-ui/brume-schema';
+import * as RadixRadioGroup from '@radix-ui/react-radio-group';
+import { useId } from 'react';
+import { cn } from '../cn';
+import { PRESS } from '../motion/classes';
+import { FOCUS_RING } from './focus';
+
+/** A small outlined pill; the chosen one takes the selected surface (no accent: it is not a count). */
+const PILL = cn(
+  'br:inline-flex br:h-8 br:items-center br:rounded-pill br:border br:px-3 br:text-sm br:font-semibold br:whitespace-nowrap br:disabled:cursor-not-allowed br:disabled:opacity-50',
+  'br:border-border br:bg-surface br:text-text-muted br:enabled:hover:border-border-strong br:enabled:hover:text-text',
+  'br:aria-checked:border-border-strong br:aria-checked:bg-surface-selected br:aria-checked:text-text',
+  'br:aria-pressed:border-border-strong br:aria-pressed:bg-surface-selected br:aria-pressed:text-text',
+  PRESS,
+  FOCUS_RING,
+);
+
+const ROW = 'br:flex br:flex-wrap br:items-center br:gap-2';
+
+export interface PillRadioGroupProps {
+  options: Option[];
+  /** May be '' (an 「all」 choice that maps to no value). */
+  value: string;
+  onChange(value: string): void;
+  /** Accessible name of the group. */
+  label: string;
+}
+
+/** One choice shown as pills (list scopes). A radio group: arrow keys move and select. */
+export function PillRadioGroup({ options, value, onChange, label }: PillRadioGroupProps) {
+  return (
+    <RadixRadioGroup.Root value={value} onValueChange={onChange} aria-label={label} className={ROW}>
+      {options.map((o) => (
+        <RadixRadioGroup.Item key={o.value} value={o.value} disabled={o.disabled} className={PILL}>
+          {o.label}
+        </RadixRadioGroup.Item>
+      ))}
+    </RadixRadioGroup.Root>
+  );
+}
+
+export interface PillToggleGroupProps {
+  options: Option[];
+  value: string[];
+  /** The new selection, in option order. */
+  onChange(value: string[]): void;
+  /** Accessible name of the group; shown before the pills with `showLabel`. */
+  label: string;
+  showLabel?: boolean;
+  /** Several pills may be on; otherwise a click picks one, and clicking the picked one clears it. */
+  multiple?: boolean;
+}
+
+/** Toggle buttons shown as pills (list selectors). Each pill is a button with `aria-pressed`. */
+export function PillToggleGroup({
+  options,
+  value,
+  onChange,
+  label,
+  showLabel = false,
+  multiple = false,
+}: PillToggleGroupProps) {
+  const labelId = useId();
+  const toggle = (v: string) => {
+    const on = value.includes(v);
+    if (!multiple) return onChange(on ? [] : [v]);
+    const next = new Set(value);
+    if (on) next.delete(v);
+    else next.add(v);
+    onChange(options.map((o) => o.value).filter((x) => next.has(x)));
+  };
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: a fieldset's legend cannot sit inline with the pills.
+    <div
+      role="group"
+      aria-label={showLabel ? undefined : label}
+      aria-labelledby={showLabel ? labelId : undefined}
+      className={ROW}
+    >
+      {showLabel ? (
+        <span id={labelId} className="br:mr-1 br:text-sm br:text-text-muted">
+          {label}
+        </span>
+      ) : null}
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          aria-pressed={value.includes(o.value)}
+          disabled={o.disabled}
+          onClick={() => toggle(o.value)}
+          className={PILL}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}

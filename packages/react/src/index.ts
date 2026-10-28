@@ -32,6 +32,12 @@ export { Field, type FieldProps } from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Pagination, type PaginationProps } from './components/pagination';
 export { PasswordInput, type PasswordInputProps } from './components/password-input';
+export {
+  PillRadioGroup,
+  type PillRadioGroupProps,
+  PillToggleGroup,
+  type PillToggleGroupProps,
+} from './components/pill-group';
 export { Popover, type PopoverProps } from './components/popover';
 export { QrCode, type QrCodeProps } from './components/qr-code';
 export { RadioGroup, type RadioGroupProps } from './components/radio-group';
