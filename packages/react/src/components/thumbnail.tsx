@@ -13,15 +13,19 @@ export interface ThumbnailProps {
   onClick(): void;
 }
 
-/** A small square image that opens something larger. */
+/**
+ * A small image that opens something larger. In a row of thumbnails it may shrink (down to 24px
+ * wide, the image cropped to fit) so a narrow cell still shows all of them.
+ */
 export function Thumbnail({ src, alt, label, width = 40, height = 40, onClick }: ThumbnailProps) {
   return (
     <button
       type="button"
       aria-label={label}
       onClick={onClick}
+      style={{ width: width + 2, height: height + 2 }}
       className={cn(
-        'br:inline-flex br:shrink-0 br:overflow-hidden br:rounded-input br:border br:border-border br:bg-surface-canvas',
+        'br:box-border br:inline-flex br:min-w-6 br:shrink br:overflow-hidden br:rounded-input br:border br:border-border br:bg-surface-canvas',
         PRESS,
         FOCUS_RING,
       )}
@@ -32,8 +36,7 @@ export function Thumbnail({ src, alt, label, width = 40, height = 40, onClick }:
         width={width}
         height={height}
         loading="lazy"
-        className="br:block br:object-cover"
-        style={{ width, height }}
+        className="br:block br:size-full br:object-cover"
       />
     </button>
   );

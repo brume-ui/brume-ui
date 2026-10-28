@@ -37,7 +37,8 @@ export function ImageDisplay({ column, display, value }: Props<'image'>) {
   if (urls.length === 0) return null;
   const rest = urls.length - MAX_THUMBNAILS;
   return (
-    <span className="br:inline-flex br:items-center br:gap-1">
+    // Fits the cell: thumbnails shrink (Thumbnail's min 24px) while 「+N」 keeps its size.
+    <span data-images="" className="br:flex br:max-w-full br:min-w-0 br:items-center br:gap-1">
       {urls.slice(0, MAX_THUMBNAILS).map((url, i) => (
         <Thumbnail
           // biome-ignore lint/suspicious/noArrayIndexKey: the same image can repeat
@@ -51,9 +52,11 @@ export function ImageDisplay({ column, display, value }: Props<'image'>) {
         />
       ))}
       {rest > 0 ? (
-        <Badge count spokenLabel={t('grid.display.moreImages', { count: rest })}>
-          +{rest}
-        </Badge>
+        <span data-more="" className="br:shrink-0">
+          <Badge count spokenLabel={t('grid.display.moreImages', { count: rest })}>
+            +{rest}
+          </Badge>
+        </span>
       ) : null}
       <Dialog
         open={open !== null}

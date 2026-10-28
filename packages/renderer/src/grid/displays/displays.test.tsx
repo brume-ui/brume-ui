@@ -84,6 +84,18 @@ describe('grid displays', () => {
       expect(pill.getAttribute('data-tone')).toBe('neutral');
     });
 
+    it('with options, an unknown value is neutral even when the column has a tone', () => {
+      renderGrid(
+        [{ ...status, display: { ...status.display, tone: 'warning' } as ListColumn['display'] }],
+        [
+          { id: 1, status: 'paid' },
+          { id: 2, status: 'pending' },
+        ],
+      );
+      expect(within(cell(0, 0)).getByText('已付款').getAttribute('data-tone')).toBe('success');
+      expect(within(cell(0, 1)).getByText('pending').getAttribute('data-tone')).toBe('neutral');
+    });
+
     it('without options uses the display tone; arrays become one pill each', () => {
       renderGrid(
         [{ key: 'tags', label: '標籤', display: { type: 'label', tone: 'info' } }],
@@ -158,6 +170,23 @@ describe('grid displays', () => {
       expect(within(cell()).getAllByRole('img', { hidden: true })[0]?.getAttribute('alt')).toBe(
         '照片',
       );
+    });
+
+    it('fits a default-width cell: thumbnails shrink, +N keeps its size', () => {
+      renderGrid([photo], [{ id: 1, photo: ['/1.png', '/2.png', '/3.png', '/4.png'] }]);
+      // jsdom has no layout: check the flex contract that keeps 3 thumbnails and +N inside the
+      // 128px a fluid column leaves (3 × 24px minimum + gaps + pill fit; 40px each shrink).
+      const strip = cell().querySelector('[data-images]') as HTMLElement;
+      expect(strip.className).toContain('br:min-w-0');
+      expect(strip.className).toContain('br:max-w-full');
+      expect(strip.className).toContain('br:flex');
+      for (const thumb of within(cell()).getAllByRole('button')) {
+        expect(thumb.className).toContain('br:shrink');
+        expect(thumb.className).toContain('br:min-w-6');
+      }
+      const more = cell().querySelector('[data-more]') as HTMLElement;
+      expect(more.className).toContain('br:shrink-0');
+      expect(more.textContent).toContain('+1');
     });
 
     it('opens the full image in a dialog', async () => {

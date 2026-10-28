@@ -12,8 +12,12 @@ describe('ProgressBar', () => {
     expect(screen.getByText('12%')).toBeTruthy();
   });
 
-  it('clamps the fill to the track', () => {
-    render(<ProgressBar value={150} max={100} label="完成度" />);
+  it('clamps the value to 0…max for the bar and aria-valuenow', () => {
+    const { rerender } = render(<ProgressBar value={150} max={100} label="完成度" />);
     expect(screen.getByText('100%')).toBeTruthy();
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('100');
+    rerender(<ProgressBar value={-5} max={100} label="完成度" />);
+    expect(screen.getByText('0%')).toBeTruthy();
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('0');
   });
 });

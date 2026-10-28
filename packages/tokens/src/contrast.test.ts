@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { contrastPairs, contrastRatio } from './contrast';
+import { contrastPairs, contrastRatio, mixOklab, pairColors } from './contrast';
 import { semantic } from './semantic';
 
 describe('contrast', () => {
@@ -17,11 +17,30 @@ describe('contrast', () => {
 
   test.each(['light', 'dark'] as const)('every declared pair passes in %s', (mode) => {
     for (const p of contrastPairs) {
-      expect(
-        contrastRatio(semantic[p.fg][mode], semantic[p.bg][mode]),
-        `${p.fg} on ${p.bg}`,
-      ).toBeGreaterThanOrEqual(p.min);
+      const { fg, bg } = pairColors(p, mode);
+      const on = p.bgMix ? `${p.bgMix.token} ${p.bgMix.percent}% over ${p.bg}` : p.bg;
+      expect(contrastRatio(fg, bg), `${p.fg} on ${on}`).toBeGreaterThanOrEqual(p.min);
     }
+  });
+
+  test('mixOklab matches color-mix(in oklab) at the ends and near the accent-tint fallback', () => {
+    expect(mixOklab('#0e7490', 100, '#ffffff')).toBe('#0e7490');
+    expect(mixOklab('#0e7490', 0, '#ffffff')).toBe('#ffffff');
+    // The fallback hex for accent-tint was hand-picked close to the derived value.
+    const derived = mixOklab(semantic.accent.light, 12, semantic.surface.light);
+    expect(contrastRatio(derived, semantic['accent-tint'].light)).toBeLessThan(1.05);
+  });
+
+  test('covers the Badge tones and the outline Button text', () => {
+    for (const tone of ['success', 'warning', 'danger', 'info'] as const) {
+      expect(contrastPairs).toContainEqual({
+        fg: tone,
+        bg: 'surface',
+        min: 4.5,
+        bgMix: { token: tone, percent: 8 },
+      });
+    }
+    expect(contrastPairs).toContainEqual({ fg: 'accent-tint-text', bg: 'surface', min: 4.5 });
   });
 
   test('text-muted passes on surface-canvas', () => {

@@ -11,10 +11,14 @@ function format(value: unknown): string {
   return String(value);
 }
 
-/** A small read-only table for nested data (inside a cell, a row detail or a dialog). */
+/**
+ * A small read-only table for nested data (inside a cell, a row detail or a dialog). It never
+ * grows past its container: cells wrap (anywhere, if they must) instead of being clipped, also
+ * inside a `truncate` table cell.
+ */
 export function CompactTable({ columns, rows, caption }: CompactTableProps) {
   return (
-    <table className="br:border-collapse br:text-xs br:text-text">
+    <table className="br:max-w-full br:border-collapse br:text-xs br:text-text">
       {caption ? <caption className="br:sr-only">{caption}</caption> : null}
       <thead>
         <tr>
@@ -22,7 +26,7 @@ export function CompactTable({ columns, rows, caption }: CompactTableProps) {
             <th
               key={col.key}
               scope="col"
-              className="br:border-b br:border-border br:px-2 br:py-1 br:text-left br:font-semibold br:text-text-muted"
+              className="br:border-b br:border-border br:px-2 br:py-1 br:text-left br:font-semibold br:whitespace-normal br:wrap-anywhere br:text-text-muted"
             >
               {col.label}
             </th>
@@ -34,7 +38,10 @@ export function CompactTable({ columns, rows, caption }: CompactTableProps) {
           // biome-ignore lint/suspicious/noArrayIndexKey: nested rows have no id
           <tr key={i}>
             {columns.map((col) => (
-              <td key={col.key} className="br:border-b br:border-border br:px-2 br:py-1">
+              <td
+                key={col.key}
+                className="br:border-b br:border-border br:px-2 br:py-1 br:whitespace-normal br:wrap-anywhere"
+              >
                 {format(row[col.key])}
               </td>
             ))}

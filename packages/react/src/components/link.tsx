@@ -20,13 +20,23 @@ export interface LinkProps
   children: ReactNode;
 }
 
+/** True when `href` leaves this origin (an adapter visit could not load it). */
+function isCrossOrigin(href: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return new URL(href, window.location.href).origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 const TEXT =
   'br:inline-flex br:max-w-full br:items-center br:gap-1 br:rounded-[4px] br:text-text br:underline br:decoration-border-strong br:underline-offset-2 br:transition-colors br:duration-fast br:hover:decoration-text';
 
 /**
  * A real `<a href>`: a plain left click on an internal link visits through the adapter, while
- * modified and middle clicks (new tab, new window) stay with the browser. External and download
- * links are always native.
+ * modified and middle clicks (new tab, new window) stay with the browser. External, download and
+ * other-origin links are always native.
  */
 export function Link({
   href,
@@ -40,7 +50,7 @@ export function Link({
   ...rest
 }: LinkProps) {
   const { adapter, t } = useBrume();
-  const native = external || rest.download !== undefined;
+  const native = external || rest.download !== undefined || isCrossOrigin(href);
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     onClick?.(event);

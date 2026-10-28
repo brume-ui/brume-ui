@@ -19,7 +19,10 @@ interface Props<K extends Display['type']> {
   value: unknown;
 }
 
-/** One pill per value: the option's label and tone; unknown values as they are (display tone or neutral). */
+/**
+ * One pill per value: the option's label and tone. With options, a value outside them shows as is
+ * in the neutral tone; without options every value takes the column's tone.
+ */
 export function LabelDisplay({ display, value }: Props<'label'>) {
   const values = (Array.isArray(value) ? value : [value]).filter(
     (v) => v !== null && v !== undefined && v !== '',
@@ -30,9 +33,10 @@ export function LabelDisplay({ display, value }: Props<'label'>) {
       {values.map((v, i) => {
         const key = formatCell(v);
         const option = display.options?.[key];
+        const tone = option?.tone ?? (display.options ? 'neutral' : (display.tone ?? 'neutral'));
         return (
           // biome-ignore lint/suspicious/noArrayIndexKey: values can repeat
-          <Badge key={i} tone={option?.tone ?? display.tone ?? 'neutral'}>
+          <Badge key={i} tone={tone}>
             {option?.label ?? key}
           </Badge>
         );

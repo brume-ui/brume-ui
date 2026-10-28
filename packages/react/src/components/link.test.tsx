@@ -46,6 +46,14 @@ describe('Link', () => {
     expect(visits(adapter)).toHaveLength(0);
   });
 
+  it('links to another origin are native even when not marked external', () => {
+    const adapter = setup(<Link href="https://other.example/x">別站</Link>);
+    const link = screen.getByRole('link', { name: '別站' });
+    expect(link.hasAttribute('target')).toBe(false);
+    expect(fireEvent.click(link)).toBe(true);
+    expect(visits(adapter)).toHaveLength(0);
+  });
+
   it('download links are native', () => {
     const adapter = setup(
       <Link href="/files/a.pdf" download="a.pdf" iconStart={Download}>

@@ -5,16 +5,19 @@ export interface ProgressBarProps {
   label: string;
 }
 
-/** A thin bar with its percentage beside it. The fill is ink, not the accent (one-accent rule). */
+/**
+ * A thin bar with its percentage beside it. The fill is ink, not the accent (one-accent rule).
+ * Values outside 0…max are clamped, for the bar and for assistive tech alike.
+ */
 export function ProgressBar({ value, max, label }: ProgressBarProps) {
-  const ratio = max > 0 ? Math.min(Math.max(value / max, 0), 1) : 0;
-  const percent = Math.round(ratio * 100);
+  const bounded = Math.min(Math.max(value, 0), Math.max(max, 0));
+  const percent = max > 0 ? Math.round((bounded / max) * 100) : 0;
   return (
     <span className="br:inline-flex br:w-full br:max-w-48 br:items-center br:gap-2">
       <span
         role="progressbar"
         aria-label={label}
-        aria-valuenow={value}
+        aria-valuenow={bounded}
         aria-valuemin={0}
         aria-valuemax={max}
         className="br:h-1.5 br:min-w-0 br:flex-1 br:overflow-hidden br:rounded-pill br:bg-surface-canvas"

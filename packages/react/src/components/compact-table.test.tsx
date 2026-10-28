@@ -29,4 +29,11 @@ describe('CompactTable', () => {
         .map((td) => td.textContent),
     ).toEqual(['茶葉', '2', '茶杯', '']);
   });
+
+  it('wraps instead of overflowing its container', () => {
+    render(<CompactTable columns={[{ key: 'a', label: 'A' }]} rows={[{ a: 'x' }]} />);
+    expect(screen.getByRole('table').className).toContain('br:max-w-full');
+    expect(screen.getByRole('cell').className).toContain('br:wrap-anywhere');
+    expect(screen.getByRole('columnheader').className).toContain('br:whitespace-normal');
+  });
 });

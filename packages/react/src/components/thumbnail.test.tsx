@@ -20,6 +20,10 @@ describe('Thumbnail', () => {
     expect(img?.getAttribute('alt')).toBe('照片');
     expect(img?.getAttribute('width')).toBe('48');
     expect(img?.getAttribute('height')).toBe('32');
+    // It may shrink in a narrow row (the 2px is the border).
+    expect(button.className).toContain('br:shrink');
+    expect(button.className).toContain('br:min-w-6');
+    expect(button.style.width).toBe('50px');
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
   });
