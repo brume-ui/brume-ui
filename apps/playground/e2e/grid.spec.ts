@@ -169,6 +169,25 @@ test.describe('at 1440×900', () => {
 test.describe('at 390×844', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
+  // Visually hidden text in the off-screen columns (sr-only is position: absolute) must resolve
+  // against the table's scroller, not the page, or the whole page scrolls sideways.
+  test('only the table scrolls sideways, not the page', async ({ page }) => {
+    const wrapper = page.getByRole('table').first().locator('xpath=..');
+    expect(await wrapper.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+    // The demo's last cells carry no hidden text of their own (an app's copy or modal cells do).
+    await wrapper.evaluate((el) => {
+      const hint = document.createElement('span');
+      hint.className = 'br:sr-only';
+      hint.textContent = '螢幕閱讀器提示';
+      el.querySelector('tbody tr td:nth-last-child(2)')?.append(hint);
+    });
+    const { scrollWidth, clientWidth } = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+  });
+
   test('the refresh icon never wraps onto a line alone', async ({ page }) => {
     const top = async (name: string) =>
       Math.round((await page.getByRole('button', { name, exact: true }).boundingBox())?.y ?? -1);

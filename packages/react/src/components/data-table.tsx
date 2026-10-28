@@ -186,7 +186,9 @@ export function DataTable<T>({
   return (
     <div
       ref={scrollRef}
-      className={cn('br:overflow-x-auto br:rounded-card', FOCUS_RING)}
+      // relative: visually hidden text (sr-only is absolute) in off-screen columns is positioned
+      // against this scroller, so it cannot widen the page.
+      className={cn('br:relative br:overflow-x-auto br:rounded-card', FOCUS_RING)}
       {...(scrolls
         ? {
             tabIndex: 0,
