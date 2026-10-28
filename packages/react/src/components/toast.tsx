@@ -32,6 +32,13 @@ export { clearToasts, type ToastOptions, toast } from './toast-store';
 
 /** Success, info and warning toasts dismiss themselves after this; errors stay until closed. */
 const DURATION_MS = 4000;
+/** Horizontal travel before a press turns into a swipe (and captures the pointer). */
+const SWIPE_START_PX = 4;
+
+function hasTextSelection(): boolean {
+  return typeof window !== 'undefined' && (window.getSelection?.()?.toString() ?? '') !== '';
+}
+
 /** Vertical padding (py-3) + border of a toast; heights are measured on the content box. */
 const CHROME_PX = 26;
 
@@ -98,19 +105,21 @@ function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewP
   const lastSlot = useRef<StackSlot | null>(slot);
   if (slot) lastSlot.current = slot;
   const place = slot ?? lastSlot.current;
-  const drag = useRef<{ x: number; at: number; id: number } | null>(null);
+  const drag = useRef<{ x: number; at: number; id: number; captured: boolean } | null>(null);
   const [dx, setDx] = useState(0);
   const dragging = dx !== 0 && !removing;
 
+  // Toasts waiting behind the visible ones do not count down unseen.
+  const halted = paused || !(slot?.visible ?? false);
   useEffect(() => {
-    if (sticky || paused || removing) return;
+    if (sticky || halted || removing) return;
     const startedAt = Date.now();
     const timer = setTimeout(() => dismissToast(item.id), remaining.current);
     return () => {
       clearTimeout(timer);
       remaining.current = Math.max(0, remaining.current - (Date.now() - startedAt));
     };
-  }, [sticky, paused, removing, item.id]);
+  }, [sticky, halted, removing, item.id]);
 
   useLayoutEffect(() => {
     const el = contentRef.current;
@@ -123,27 +132,43 @@ function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewP
     return () => observer.disconnect();
   }, [item.key, onHeight]);
 
+  function cancelDrag() {
+    if (drag.current?.captured) onSwipingChange(false);
+    drag.current = null;
+    setDx(0);
+  }
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     if (removing || e.button !== 0 || (e.target as Element).closest('button')) return;
-    drag.current = { x: e.clientX, at: e.timeStamp, id: e.pointerId };
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    onSwipingChange(true);
+    // No capture yet: a press on the message may become a text selection rather than a swipe.
+    drag.current = { x: e.clientX, at: Date.now(), id: e.pointerId, captured: false };
   }
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
-    if (drag.current?.id !== e.pointerId) return;
-    setDx(e.clientX - drag.current.x);
+    const start = drag.current;
+    if (start?.id !== e.pointerId) return;
+    // Selecting text (to read or copy an error) must never swipe the toast away.
+    if (hasTextSelection()) {
+      cancelDrag();
+      return;
+    }
+    const moved = e.clientX - start.x;
+    if (!start.captured && Math.abs(moved) >= SWIPE_START_PX) {
+      start.captured = true;
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      onSwipingChange(true);
+    }
+    if (start.captured) setDx(moved);
   }
   function endDrag(e: PointerEvent<HTMLDivElement>, cancelled: boolean) {
     const start = drag.current;
     if (start?.id !== e.pointerId) return;
-    drag.current = null;
-    onSwipingChange(false);
     const moved = e.clientX - start.x;
-    if (!cancelled && shouldDismiss(moved, e.timeStamp - start.at)) {
-      dismissToast(item.id, 'swipe');
-    } else {
-      setDx(0);
-    }
+    const dismiss =
+      !cancelled &&
+      start.captured &&
+      !hasTextSelection() &&
+      shouldDismiss(moved, Date.now() - start.at);
+    cancelDrag();
+    if (dismiss) dismissToast(item.id, 'swipe');
   }
 
   const visible = place?.visible ?? false;
@@ -236,9 +261,14 @@ export function Toaster() {
     if (list.length === 0) {
       setHovered(false);
       setSwiping(false);
-      setHeights({});
     }
-  }, [list.length]);
+    // Forget heights of toasts that have left.
+    const keys = new Set(list.map((t) => t.key));
+    setHeights((prev) => {
+      const kept = Object.entries(prev).filter(([k]) => keys.has(Number(k)));
+      return kept.length === Object.keys(prev).length ? prev : Object.fromEntries(kept);
+    });
+  }, [list]);
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: hover/focus only expand the stack and pause timers; every action is a real button
@@ -246,8 +276,9 @@ export function Toaster() {
       data-brume-toaster=""
       data-expanded={expanded || undefined}
       aria-live="polite"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      // Mouse only: a touch tap fires enter without a matching leave and would pin the stack open.
+      onPointerEnter={(e) => e.pointerType === 'mouse' && setHovered(true)}
+      onPointerLeave={(e) => e.pointerType === 'mouse' && setHovered(false)}
       onFocus={() => setFocusWithin(true)}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusWithin(false);

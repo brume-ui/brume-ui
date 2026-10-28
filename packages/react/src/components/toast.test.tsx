@@ -69,14 +69,14 @@ describe('toast', () => {
       vi.advanceTimersByTime(2000);
     });
     act(() => {
-      el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      el.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' }));
     });
     act(() => {
       vi.advanceTimersByTime(10_000);
     });
     expect(screen.queryByRole('status')).not.toBeNull();
     act(() => {
-      el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+      el.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse' }));
     });
     act(() => {
       vi.advanceTimersByTime(2100);
@@ -178,7 +178,9 @@ describe('toast', () => {
     expect(older?.dataset.front).toBeUndefined();
     const region = document.querySelector('[data-brume-toaster]') as HTMLElement;
     act(() => {
-      older?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      older?.dispatchEvent(
+        new PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' }),
+      );
     });
     expect(region.dataset.expanded).toBe('true');
     act(() => {
@@ -219,6 +221,110 @@ describe('toast', () => {
       vi.advanceTimersByTime(250);
     });
     expect(document.querySelector('[data-removing]')).toBeNull();
+  });
+
+  it('dismisses on a slow swipe past the distance threshold (not via the flick path)', () => {
+    render(<Toaster />);
+    act(() => toast.error('滑掉我'));
+    const el = screen.getByRole('status');
+    const slowDrag = (to: number) => {
+      fireEvent.pointerDown(el, { button: 0, pointerId: 1, clientX: 100 });
+      fireEvent.pointerMove(el, { pointerId: 1, clientX: 100 + to / 2 });
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      fireEvent.pointerMove(el, { pointerId: 1, clientX: 100 + to });
+      fireEvent.pointerUp(el, { pointerId: 1, clientX: 100 + to });
+    };
+    // 40px over 2s: under the 45px threshold and far too slow for a flick.
+    act(() => slowDrag(40));
+    expect(screen.queryByRole('status')).not.toBeNull();
+    act(() => slowDrag(50));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('selecting the message text never swipes the toast away', () => {
+    render(<Toaster />);
+    act(() => toast.error('付款失敗：卡片被拒絕。'));
+    const el = screen.getByRole('status');
+    const selection = vi
+      .spyOn(window, 'getSelection')
+      .mockReturnValue({ toString: () => '付款失敗' } as Selection);
+    act(() => {
+      fireEvent.pointerDown(el, { button: 0, pointerId: 1, clientX: 100 });
+      fireEvent.pointerMove(el, { pointerId: 1, clientX: 220 });
+      fireEvent.pointerUp(el, { pointerId: 1, clientX: 220 });
+    });
+    selection.mockRestore();
+    expect(screen.getByRole('status').textContent).toContain('付款失敗');
+    expect(document.querySelector('[data-removing]')).toBeNull();
+  });
+
+  it('resumes the countdown after the pointer leaves the stack', () => {
+    render(<Toaster />);
+    act(() => toast.success('已儲存'));
+    const el = screen.getByRole('status');
+    act(() => {
+      vi.advanceTimersByTime(1000);
+      el.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' }));
+    });
+    act(() => {
+      vi.advanceTimersByTime(20_000);
+    });
+    expect(screen.queryByRole('status')).not.toBeNull();
+    act(() => {
+      el.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse' }));
+    });
+    act(() => {
+      vi.advanceTimersByTime(3100);
+    });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('a touch tap does not pin the stack open', () => {
+    render(<Toaster />);
+    act(() => toast.success('已儲存'));
+    act(() => {
+      screen
+        .getByRole('status')
+        .dispatchEvent(new PointerEvent('pointerover', { bubbles: true, pointerType: 'touch' }));
+    });
+    expect(document.querySelector('[data-brume-toaster]')?.hasAttribute('data-expanded')).toBe(
+      false,
+    );
+    act(() => {
+      vi.advanceTimersByTime(4100);
+    });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('an error stays while other toasts come and go in the stack', () => {
+    render(<Toaster />);
+    act(() => {
+      toast.error('失敗');
+      toast.success('a');
+      toast.info('b');
+    });
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    const left = screen.getAllByRole('status');
+    expect(left).toHaveLength(1);
+    expect(left[0]?.textContent).toContain('失敗');
+  });
+
+  it('toasts beyond the visible three wait instead of expiring unseen', () => {
+    render(<Toaster />);
+    act(() => {
+      toast.info('第四則');
+      toast.error('e1');
+      toast.error('e2');
+      toast.error('e3');
+    });
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(screen.getAllByRole('status').map((t) => t.textContent)).toContain('第四則');
   });
 
   it('dismisses on a swipe and snaps back on a short drag', () => {
