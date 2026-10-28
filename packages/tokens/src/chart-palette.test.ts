@@ -91,12 +91,7 @@ describe.each(['light', 'dark'] as const)('chart palette in %s', (mode) => {
   });
 
   test('every mark clears 3:1 on the card surface', () => {
-    for (const c of [
-      ...palette,
-      ...Object.values(chartRoles)
-        .slice(0, 3)
-        .map((v) => v[mode]),
-    ]) {
+    for (const c of [...palette, chartRoles['chart-muted'][mode]]) {
       expect(contrastRatio(c, surface), c).toBeGreaterThanOrEqual(3);
     }
   });

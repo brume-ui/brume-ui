@@ -58,7 +58,7 @@ describe('build', () => {
     expect(dark).toContain('--br-chart-1: #3987e5;');
     expect(light).toContain('--br-chart-grid: #e3e8ee;');
     expect(buildThemeCss()).toContain('--color-chart-8: var(--br-chart-8);');
-    expect(JSON.parse(buildTokensJson()).chart['chart-positive'].light).toBe('#0ca30c');
+    expect(JSON.parse(buildTokensJson()).chart['chart-muted'].light).toBe('#8592a0');
   });
 
   test('tokens.json contains both modes', () => {

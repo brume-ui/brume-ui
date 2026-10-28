@@ -21,12 +21,11 @@ export const chartSeries = {
   'chart-8': { light: '#e34948', dark: '#e66767' },
 } as const satisfies Record<string, ModeValue>;
 
-/** Chart furniture and the meaning-carrying colours (never used as "series n"). */
+/**
+ * Chart furniture (never used as "series n"). Good/bad deltas use the semantic `success` and
+ * `danger` text tokens, which clear 4.5:1 as text.
+ */
 export const chartRoles = {
-  /** A value that went the good way (delta marks, up bars). Always paired with an icon or sign. */
-  'chart-positive': { light: '#0ca30c', dark: '#0ca30c' },
-  /** A value that went the bad way. Always paired with an icon or sign. */
-  'chart-negative': { light: '#d03b3b', dark: '#d03b3b' },
   /** De-emphasis and the folded "Other" slice. */
   'chart-muted': { light: '#8592a0', dark: '#6f7d8c' },
   /** Hairline gridlines, one step off the surface. */
