@@ -82,3 +82,31 @@ test.describe('charts', () => {
     expect(overflow).toBe(0);
   });
 });
+
+test.describe('charts on touch', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test('tapping shows the tapped datum, not the first one', async ({ page }) => {
+    await openPage(page, 'dashboard', 'light');
+    const bars = page.locator('[data-chart="bar"]');
+    await bars.scrollIntoViewIfNeeded();
+    const box = await bars.boundingBox();
+    if (!box) throw new Error('no plot');
+    // Last of six categories (運動).
+    await page.touchscreen.tap(box.x + box.width * 0.94, box.y + box.height * 0.75);
+    const tip = bars.locator('[data-chart-tooltip]');
+    await expect(tip).toContainText('運動');
+    await expect(bars.locator('xpath=ancestor::figure').locator('[aria-live]')).toHaveText('');
+
+    const slice = page.locator('[data-chart="donut"] path[data-series="已出貨"]');
+    await slice.scrollIntoViewIfNeeded();
+    const point = await slice.evaluate((el: SVGPathElement) => {
+      const p = el.getPointAtLength(el.getTotalLength() / 2);
+      const m = el.getScreenCTM();
+      if (!m) throw new Error('no CTM');
+      return { x: p.x * m.a + p.y * m.c + m.e, y: p.x * m.b + p.y * m.d + m.f };
+    });
+    await page.touchscreen.tap(point.x, point.y);
+    await expect(page.locator('[data-chart="donut"] [data-chart-tooltip]')).toContainText('已出貨');
+  });
+});
