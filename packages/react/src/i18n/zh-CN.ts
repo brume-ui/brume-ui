@@ -81,6 +81,8 @@ export const zhCN: Record<MessageKey, string> = {
   'grid.display.viewImage': '查看第 {n} 张{label}',
   'grid.display.moreImages': '还有 {count} 张',
   'grid.edit': '编辑',
+  'grid.editCell': '编辑{label}：{value}',
+  'grid.listSeparator': '、',
   'grid.selectedCount': '已选择 {count} 条',
   'grid.clearSelection': '取消选择',
   'grid.batchActions': '批量操作',

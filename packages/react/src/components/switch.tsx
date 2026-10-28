@@ -10,16 +10,26 @@ export interface SwitchProps {
   /** A save is in flight: announced with aria-busy and dimmed. Toggles still go through (latest wins). */
   pending?: boolean;
   disabled?: boolean;
+  /** E.g. the id of a save error shown next to the switch. */
+  'aria-describedby'?: string;
 }
 
 /** 30×17 switch; on is the accent colour. */
-export function Switch({ checked, onCheckedChange, label, pending, disabled }: SwitchProps) {
+export function Switch({
+  checked,
+  onCheckedChange,
+  label,
+  pending,
+  disabled,
+  'aria-describedby': describedBy,
+}: SwitchProps) {
   return (
     <RadixSwitch.Root
       checked={checked}
       onCheckedChange={onCheckedChange}
       disabled={disabled}
       aria-label={label}
+      aria-describedby={describedBy}
       aria-busy={pending || undefined}
       className={cn(
         'br:group br:relative br:inline-flex br:h-[17px] br:w-[30px] br:shrink-0 br:items-center br:rounded-pill br:bg-border-strong br:transition-[background-color,opacity] br:duration-fast br:ease-out br:data-[state=checked]:bg-accent br:disabled:cursor-not-allowed br:disabled:opacity-50 br:aria-busy:opacity-70',

@@ -1,6 +1,7 @@
 import type { GridRow, ListColumn } from '@brume-ui/brume-schema';
 import type { ReactNode } from 'react';
 import { ComponentSlot } from '../../component-slot';
+import { EditableCell } from '../editing/editable-cell';
 import {
   BadgeDisplay,
   CopyableDisplay,
@@ -17,10 +18,17 @@ export { RowExpansion } from './content';
 export { formatCell } from './format';
 
 /**
- * One table cell, dispatched on `column.display.type` (plain text without a display).
- * A component, so displays (and Task 12's inline editors) can use hooks.
+ * One table cell: an inline editor when the column has one, else its display. A component, so
+ * displays and editors can use hooks.
  */
 export function GridCell({ column, row }: { column: ListColumn; row: GridRow }): ReactNode {
+  const display = <DisplayCell column={column} row={row} />;
+  if (!column.editor) return display;
+  return <EditableCell column={column} row={row} editor={column.editor} display={display} />;
+}
+
+/** A cell's display, dispatched on `column.display.type` (plain text without a display). */
+function DisplayCell({ column, row }: { column: ListColumn; row: GridRow }): ReactNode {
   const display = column.display;
   const value = row[column.key];
   if (!display) return formatCell(value);

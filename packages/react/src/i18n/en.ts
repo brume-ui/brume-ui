@@ -81,6 +81,8 @@ export const en: Record<MessageKey, string> = {
   'grid.display.viewImage': 'View {label} {n}',
   'grid.display.moreImages': '{count} more',
   'grid.edit': 'Edit',
+  'grid.editCell': 'Edit {label}: {value}',
+  'grid.listSeparator': ', ',
   'grid.selectedCount': '{count} selected',
   'grid.clearSelection': 'Clear selection',
   'grid.batchActions': 'Bulk actions',

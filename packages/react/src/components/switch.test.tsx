@@ -46,4 +46,11 @@ describe('Switch', () => {
     expect(onChange).toHaveBeenCalledTimes(2);
     expect(onChange).toHaveBeenLastCalledWith(false);
   });
+
+  it('passes aria-describedby through (an error next to the switch)', () => {
+    render(
+      <Switch label="上架" checked={false} onCheckedChange={() => {}} aria-describedby="e1" />,
+    );
+    expect(screen.getByRole('switch').getAttribute('aria-describedby')).toBe('e1');
+  });
 });

@@ -17,6 +17,8 @@ export interface PopoverProps {
   align?: 'start' | 'end';
   open?: boolean;
   onOpenChange?(open: boolean): void;
+  /** Runs before an Esc closes the panel (e.g. to close without saving). */
+  onEscapeKeyDown?(event: KeyboardEvent): void;
 }
 
 /** A small non-modal panel (filters, column toggles). Esc or an outside click closes it. */
@@ -27,6 +29,7 @@ export function Popover({
   align = 'start',
   open,
   onOpenChange,
+  onEscapeKeyDown,
 }: PopoverProps) {
   const titleId = useId();
   return (
@@ -37,6 +40,7 @@ export function Popover({
           align={align}
           sideOffset={6}
           collisionPadding={8}
+          onEscapeKeyDown={onEscapeKeyDown}
           aria-labelledby={title ? titleId : undefined}
           className={cn(POPOVER_SURFACE, 'br:w-[min(20rem,calc(100vw-2rem))] br:p-4')}
         >

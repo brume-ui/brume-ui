@@ -79,6 +79,8 @@ export const zhTW = {
   'grid.display.viewImage': '查看第 {n} 張{label}',
   'grid.display.moreImages': '還有 {count} 張',
   'grid.edit': '編輯',
+  'grid.editCell': '編輯{label}：{value}',
+  'grid.listSeparator': '、',
   'grid.selectedCount': '已選取 {count} 筆',
   'grid.clearSelection': '取消選取',
   'grid.batchActions': '批次操作',

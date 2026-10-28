@@ -39,8 +39,11 @@ function withCount(text: string, count: number): string {
   return text.replaceAll('{count}', String(count));
 }
 
-/** Network, expired and signed-out errors say it all; anything else names the failed action. */
-function failureMessage(res: HttpResponse, t: Translate): string {
+/**
+ * The toast for a failed request (an action or a cell save). Network, expired and signed-out
+ * errors say it all; anything else is 「操作沒有完成：{message}」, or the generic copy without one.
+ */
+export function failureMessage(res: HttpResponse, t: Translate): string {
   const message = errorMessage(res, t);
   if (res.status === 0 || res.status === 401 || res.status === 419) return message;
   return message ? t('action.failed', { message }) : t('action.failedUnknown');

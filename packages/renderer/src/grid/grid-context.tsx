@@ -3,6 +3,13 @@ import { createContext, useContext } from 'react';
 
 export interface GridContextValue {
   page: ListPage;
+  /**
+   * `page.rows` with the rows that saved cells returned in their place. Those replacements last
+   * until `page.rows` changes (a refresh or another view).
+   */
+  rows: GridRow[];
+  /** Puts a row returned by the server (a saved cell) in place of the row with its id. */
+  replaceRow(row: GridRow): void;
   /** Selected row ids as strings (the batch actions, Task 11). */
   selection: ReadonlySet<string>;
   setSelection(next: Set<string>): void;

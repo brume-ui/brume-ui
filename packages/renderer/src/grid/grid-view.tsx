@@ -73,6 +73,32 @@ export function GridView({ page, onEdit }: GridViewProps) {
     [expansionPrefix],
   );
 
+  // Rows returned by saved cells, by id. They belong to the `page.rows` they were saved on, so a
+  // refresh or another view drops them, and a response that lands after that is ignored.
+  const [overrides, setOverrides] = useState<{
+    base: GridRow[];
+    byId: ReadonlyMap<string, GridRow>;
+  }>(() => ({ base: page.rows, byId: new Map() }));
+  const pageRows = page.rows;
+  const latestRows = useRef(pageRows);
+  latestRows.current = pageRows;
+  // Callers keep the replaceRow of the render they saved from; when its rows are gone, drop it.
+  const replaceRow = useCallback(
+    (row: GridRow) => {
+      if (latestRows.current !== pageRows) return;
+      setOverrides((prev) => {
+        const byId = new Map(prev.base === pageRows ? prev.byId : []);
+        byId.set(String(row.id), row);
+        return { base: pageRows, byId };
+      });
+    },
+    [pageRows],
+  );
+  const rows = useMemo(() => {
+    if (overrides.base !== pageRows || overrides.byId.size === 0) return pageRows;
+    return pageRows.map((row) => overrides.byId.get(String(row.id)) ?? row);
+  }, [overrides, pageRows]);
+
   // Actions in flight. The ref answers at once (a second click in the same tick sees the first);
   // the state re-renders the buttons and menus.
   const running = useRef(new Set<string>());
@@ -91,6 +117,8 @@ export function GridView({ page, onEdit }: GridViewProps) {
   const grid = useMemo<GridContextValue>(
     () => ({
       page,
+      rows,
+      replaceRow,
       selection,
       setSelection,
       onEdit,
@@ -103,6 +131,8 @@ export function GridView({ page, onEdit }: GridViewProps) {
     }),
     [
       page,
+      rows,
+      replaceRow,
       selection,
       onEdit,
       expanded,
@@ -153,7 +183,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
 }
 
 function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
-  const { page, isExpanded, selection, setSelection, onEdit } = useGrid();
+  const { page, rows, isExpanded, selection, setSelection, onEdit } = useGrid();
   const { navigate } = useGridNavigation();
   const empty = useGridEmptyState();
   const sort = page.query.sort;
@@ -207,13 +237,13 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
   const runnable = Boolean(page.endpoints?.action);
   // Checkboxes only when something acts on a selection: batch actions or 「已選取的 N 筆」 export.
   const selectable = (runnable && page.actions.batch.length > 0) || Boolean(page.export);
-  const canEdit = Boolean(onEdit) || page.rows.some((row) => row._meta?.editUrl);
+  const canEdit = Boolean(onEdit) || rows.some((row) => row._meta?.editUrl);
   const withRowActions = hasRowActions(page, canEdit);
 
   return (
     <DataTable
       columns={columns}
-      rows={page.rows}
+      rows={rows}
       getRowId={(row) => String(row.id)}
       caption={page.title}
       empty={empty}

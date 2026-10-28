@@ -26,6 +26,12 @@ export {
   type ButtonVariant,
   buttonClasses,
 } from './components/button';
+export {
+  CellEditButton,
+  type CellEditButtonProps,
+  CellError,
+  type CellErrorProps,
+} from './components/cell-edit';
 export { Checkbox, type CheckboxProps } from './components/checkbox';
 export { CheckboxGroup, type CheckboxGroupProps } from './components/checkbox-group';
 export { Chip, type ChipProps } from './components/chip';
@@ -59,6 +65,7 @@ export { Select, type SelectOption, type SelectProps } from './components/select
 export { Skeleton } from './components/skeleton';
 export { Switch, type SwitchProps } from './components/switch';
 export { TextInput, type TextInputProps } from './components/text-input';
+export { Textarea, type TextareaProps } from './components/textarea';
 export { Thumbnail, type ThumbnailProps } from './components/thumbnail';
 export { Toaster, type ToastOptions, toast } from './components/toast';
 export { errorMessage, fetchJson, type HttpRequest, type HttpResponse } from './http';
