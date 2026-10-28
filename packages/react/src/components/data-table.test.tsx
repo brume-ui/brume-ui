@@ -292,4 +292,29 @@ describe('DataTable', () => {
       ).toBeTruthy();
     });
   });
+
+  describe('rowExpansion', () => {
+    it('adds a full-width row under rows that return content', () => {
+      render(
+        <DataTable<Row>
+          columns={columns}
+          rows={[
+            { id: 'a', name: '甲', count: 1 },
+            { id: 'b', name: '乙', count: 2 },
+          ]}
+          getRowId={(r) => r.id}
+          empty={empty}
+          selection={{ selected: new Set(), onChange: () => {}, rowLabel: (r) => r.name }}
+          rowActions={() => null}
+          rowExpansion={(r) => (r.id === 'a' ? <p>甲的明細</p> : null)}
+        />,
+      );
+      const rowEls = screen.getAllByRole('row').slice(1);
+      expect(rowEls).toHaveLength(3);
+      const detail = within(rowEls[1] as HTMLElement).getByRole('cell');
+      // select + 2 data columns + actions
+      expect(detail.getAttribute('colspan')).toBe('4');
+      expect(detail.textContent).toBe('甲的明細');
+    });
+  });
 });

@@ -18,11 +18,19 @@ export {
   type MenuAction,
   orderMenuItems,
 } from './components/action-menu';
-export { Button, type ButtonProps } from './components/button';
+export { Badge, type BadgeProps } from './components/badge';
+export {
+  Button,
+  type ButtonProps,
+  type ButtonSize,
+  type ButtonVariant,
+  buttonClasses,
+} from './components/button';
 export { Checkbox, type CheckboxProps } from './components/checkbox';
 export { CheckboxGroup, type CheckboxGroupProps } from './components/checkbox-group';
 export { Chip, type ChipProps } from './components/chip';
 export { Combobox, type ComboboxLoader, type ComboboxProps } from './components/combobox';
+export { CompactTable, type CompactTableProps } from './components/compact-table';
 export { ConfirmHost, type ConfirmOptions, useConfirm } from './components/confirm';
 export { type DataColumn, DataTable, type DataTableProps } from './components/data-table';
 export { DateInput, type DateInputProps } from './components/date-input';
@@ -30,6 +38,7 @@ export { Dialog, type DialogProps } from './components/dialog';
 export { EmptyState, type EmptyStateProps } from './components/empty-state';
 export { Field, type FieldProps } from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
+export { Link, type LinkProps } from './components/link';
 export { Pagination, type PaginationProps } from './components/pagination';
 export { PasswordInput, type PasswordInputProps } from './components/password-input';
 export {
@@ -39,6 +48,7 @@ export {
   type PillToggleGroupProps,
 } from './components/pill-group';
 export { Popover, type PopoverProps } from './components/popover';
+export { ProgressBar, type ProgressBarProps } from './components/progress-bar';
 export { QrCode, type QrCodeProps } from './components/qr-code';
 export { RadioGroup, type RadioGroupProps } from './components/radio-group';
 export { RangeInput, type RangeInputProps, type RangeValue } from './components/range-input';
@@ -49,6 +59,7 @@ export { Select, type SelectOption, type SelectProps } from './components/select
 export { Skeleton } from './components/skeleton';
 export { Switch, type SwitchProps } from './components/switch';
 export { TextInput, type TextInputProps } from './components/text-input';
+export { Thumbnail, type ThumbnailProps } from './components/thumbnail';
 export { Toaster, type ToastOptions, toast } from './components/toast';
 export { errorMessage, fetchJson, type HttpRequest, type HttpResponse } from './http';
 export {

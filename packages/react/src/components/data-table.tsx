@@ -51,6 +51,8 @@ export interface DataTableProps<T> {
   rowWrapper?(row: T, tr: ReactElement): ReactElement;
   /** A fixed last column of row actions. */
   rowActions?(row: T): ReactNode;
+  /** Full-width content under a data row (an expanded detail); return null for none. */
+  rowExpansion?(row: T): ReactNode;
 }
 
 const SKELETON_ROWS = 5;
@@ -104,6 +106,7 @@ export function DataTable<T>({
   selection,
   rowWrapper,
   rowActions,
+  rowExpansion,
   columns: allColumns,
 }: DataTableProps<T>) {
   const columns = useMemo(() => allColumns.filter((c) => !c.hidden), [allColumns]);
@@ -339,8 +342,21 @@ export function DataTable<T>({
                     ) : null}
                   </tr>
                 );
+                const expansion = rowExpansion?.(row.original);
                 return (
-                  <Fragment key={row.id}>{rowWrapper ? rowWrapper(row.original, tr) : tr}</Fragment>
+                  <Fragment key={row.id}>
+                    {rowWrapper ? rowWrapper(row.original, tr) : tr}
+                    {expansion != null && expansion !== false ? (
+                      <tr data-expansion="">
+                        <td
+                          colSpan={columns.length + (selection ? 1 : 0) + (rowActions ? 1 : 0)}
+                          className="br:rounded-card br:bg-surface br:px-4 br:py-3 br:text-sm br:text-text br:shadow-row"
+                        >
+                          {expansion}
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
                 );
               })}
         </tbody>

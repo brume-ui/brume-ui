@@ -8,6 +8,11 @@ export interface GridContextValue {
   setSelection(next: Set<string>): void;
   /** Opens a row for editing (the primary column's edit entry, Task 11). */
   onEdit?(row: GridRow): void;
+  /** Whether the `expand` cell of `key` in row `rowId` is open. */
+  isExpanded(rowId: string, key: string): boolean;
+  toggleExpanded(rowId: string, key: string): void;
+  /** DOM id of that cell's expanded content (for aria-controls). */
+  expansionId(rowId: string, key: string): string;
 }
 
 export const GridContext = createContext<GridContextValue | null>(null);

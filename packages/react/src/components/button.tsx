@@ -4,9 +4,13 @@ import { cn } from '../cn';
 import { PRESS } from '../motion/classes';
 import { FOCUS_RING } from './focus';
 
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md';
+
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  size?: 'sm' | 'md';
+  /** `outline` is the tinted pill outline of exposed row actions (row-actions mockup B). */
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
   iconStart?: LucideIcon;
   /** A number after the label in the accent colour (how many filters are applied); hidden at 0. */
@@ -16,11 +20,24 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const VARIANTS = {
   primary: 'br:bg-accent br:text-text-on-accent br:border-transparent br:hover:brightness-95',
   secondary: 'br:bg-surface br:text-text br:border-border-strong br:hover:bg-surface-canvas',
+  outline:
+    'br:bg-surface br:text-accent-tint-text br:border-[color-mix(in_oklab,var(--br-accent)_35%,var(--br-surface))] br:hover:bg-accent-tint',
   ghost: 'br:bg-transparent br:text-text br:border-transparent br:hover:bg-surface-canvas',
   danger: 'br:bg-danger br:text-text-on-accent br:border-transparent br:hover:brightness-95',
 } as const;
 
 const SIZES = { sm: 'br:h-8 br:px-3 br:text-sm', md: 'br:h-10 br:px-5 br:text-sm' } as const;
+
+/** The pill look of a Button, shared with button-styled links. */
+export function buttonClasses(variant: ButtonVariant = 'primary', size: ButtonSize = 'md'): string {
+  return cn(
+    'br:relative br:inline-flex br:items-center br:justify-center br:gap-2 br:rounded-pill br:border br:font-semibold',
+    PRESS,
+    FOCUS_RING,
+    VARIANTS[variant],
+    SIZES[size],
+  );
+}
 
 export function Button({
   variant = 'primary',
@@ -41,11 +58,8 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'br:relative br:inline-flex br:items-center br:justify-center br:gap-2 br:rounded-pill br:border br:font-semibold br:disabled:opacity-50 br:disabled:cursor-not-allowed',
-        PRESS,
-        FOCUS_RING,
-        VARIANTS[variant],
-        SIZES[size],
+        buttonClasses(variant, size),
+        'br:disabled:opacity-50 br:disabled:cursor-not-allowed',
         className,
       )}
     >

@@ -1,4 +1,4 @@
-import { Button, type EmptyStateProps, useBrume } from '@brume-ui/brume-react';
+import { Button, type EmptyStateProps, Link, useBrume } from '@brume-ui/brume-react';
 import { useGrid } from './grid-context';
 import { useGridNavigation } from './use-grid-navigation';
 
@@ -8,7 +8,7 @@ import { useGridNavigation } from './use-grid-navigation';
  */
 export function useGridEmptyState(): Pick<EmptyStateProps, 'title' | 'description' | 'action'> {
   const { page } = useGrid();
-  const { adapter, t } = useBrume();
+  const { t } = useBrume();
   const { navigate } = useGridNavigation();
 
   if (page.appliedFilters.length > 0 || page.query.q) {
@@ -31,8 +31,11 @@ export function useGridEmptyState(): Pick<EmptyStateProps, 'title' | 'descriptio
   return {
     title: empty?.title ?? t('renderer.list.emptyTitle'),
     description: empty?.description ?? t('renderer.list.emptyDescription'),
+    // A real link, so it can open in a new tab; a plain click still visits through the adapter.
     action: next ? (
-      <Button onClick={() => adapter.visit(next.url)}>{next.label}</Button>
+      <Link href={next.url} variant="button" buttonVariant="primary" size="md">
+        {next.label}
+      </Link>
     ) : undefined,
   };
 }

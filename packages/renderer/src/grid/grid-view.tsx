@@ -6,10 +6,10 @@ import {
   Select,
   useBrume,
 } from '@brume-ui/brume-react';
-import type { GridRow, ListColumn, ListPage } from '@brume-ui/brume-schema';
-import { type ReactNode, useId, useMemo, useState } from 'react';
-import { ComponentSlot } from '../component-slot';
+import type { GridRow, ListPage } from '@brume-ui/brume-schema';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { readHiddenColumns, writeHiddenColumns } from './column-visibility';
+import { RowExpansion, renderCell } from './displays';
 import { useGridEmptyState } from './empty';
 import { ColumnFilter } from './filters/column-filter';
 import { FilterChips } from './filters/filter-chips';
@@ -26,20 +26,6 @@ export interface GridViewProps {
   onEdit?(row: GridRow): void;
 }
 
-function formatCell(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-}
-
-// Task 10 replaces this with renderCell(column, row), dispatching on display.type.
-function renderCell(col: ListColumn, row: GridRow): ReactNode {
-  if (col.display?.type === 'component') {
-    return <ComponentSlot ref={col.display} context={{ row, column: col.key }} />;
-  }
-  return formatCell(row[col.key]);
-}
-
 /** One list page: toolbar, table and pagination, all driven by the URL (see useGridNavigation). */
 export function GridView({ page, onEdit }: GridViewProps) {
   const [hidden, setHidden] = useState(() => readHiddenColumns(page));
@@ -54,9 +40,35 @@ export function GridView({ page, onEdit }: GridViewProps) {
   };
 
   const [selection, setSelection] = useState<ReadonlySet<string>>(() => new Set());
+
+  // Open `expand` cells, keyed "rowId␀columnKey".
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
+  const expansionPrefix = useId();
+  const toggleExpanded = useCallback((rowId: string, key: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      const id = `${rowId}\u0000${key}`;
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }, []);
+  const expansionId = useCallback(
+    (rowId: string, key: string) =>
+      `${expansionPrefix}-${encodeURIComponent(rowId)}-${encodeURIComponent(key)}`,
+    [expansionPrefix],
+  );
+
   const grid = useMemo<GridContextValue>(
-    () => ({ page, selection, setSelection, onEdit }),
-    [page, selection, onEdit],
+    () => ({
+      page,
+      selection,
+      setSelection,
+      onEdit,
+      isExpanded: (rowId, key) => expanded.has(`${rowId}\u0000${key}`),
+      toggleExpanded,
+      expansionId,
+    }),
+    [page, selection, onEdit, expanded, toggleExpanded, expansionId],
   );
 
   const filterPanelId = useId();
@@ -92,7 +104,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
 }
 
 function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
-  const { page } = useGrid();
+  const { page, isExpanded } = useGrid();
   const { navigate } = useGridNavigation();
   const empty = useGridEmptyState();
   const sort = page.query.sort;
@@ -132,6 +144,16 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
     [page.columns, columnFilters, hidden, sort, navigate],
   );
 
+  const expandColumns = page.columns.filter(
+    (col) => col.display?.type === 'expand' && !hidden.has(col.key),
+  );
+  const rowExpansion = (row: GridRow) => {
+    const open = expandColumns.filter(
+      (col) => row._meta?.content?.[col.key] && isExpanded(String(row.id), col.key),
+    );
+    return open.length > 0 ? <RowExpansion row={row} columns={open} /> : null;
+  };
+
   return (
     <DataTable
       columns={columns}
@@ -139,6 +161,7 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
       getRowId={(row) => String(row.id)}
       caption={page.title}
       empty={empty}
+      rowExpansion={expandColumns.length > 0 ? rowExpansion : undefined}
       // Task 11: selection, rowWrapper (context menu) and rowActions.
     />
   );

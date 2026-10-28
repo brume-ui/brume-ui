@@ -156,7 +156,7 @@ describe('GridView empty states', () => {
     expect(screen.getByRole('button', { name: '清除所有篩選' })).toBeTruthy();
   });
 
-  it('unfiltered empty state shows the next-step action', async () => {
+  it('unfiltered empty state shows the next-step action as a real link', async () => {
     const user = userEvent.setup();
     const { adapter } = renderWithBrume(
       <GridView
@@ -173,7 +173,9 @@ describe('GridView empty states', () => {
     );
     expect(screen.getByText('還沒有訂單')).toBeTruthy();
     expect(screen.queryByRole('button', { name: '清除所有篩選' })).toBeNull();
-    await user.click(screen.getByRole('button', { name: '新增訂單' }));
+    const link = screen.getByRole('link', { name: '新增訂單' });
+    expect(link.getAttribute('href')).toBe('/admin/orders/create');
+    await user.click(link);
     expect(lastVisit(adapter)?.args[0]).toBe('/admin/orders/create');
   });
 
