@@ -26,6 +26,8 @@ export const PAGES = [
   'shell',
   'fonts',
   'motion',
+  'charts',
+  'dashboard',
 ] as const;
 export type PageName = (typeof PAGES)[number];
 

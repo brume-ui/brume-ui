@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { ChartsPage, DashboardPage } from './pages/charts';
 import {
   ButtonPage,
   CheckboxPage,
@@ -43,6 +44,8 @@ export const ROUTES: Route[] = [
   { name: 'card', title: 'Card', Component: CardPage },
   { name: 'fonts', title: 'Fonts (中文字體比較)', Component: FontsPage },
   { name: 'motion', title: '動效', Component: MotionPage },
+  { name: 'charts', title: '圖表', Component: ChartsPage },
+  { name: 'dashboard', title: '儀表板範例', Component: DashboardPage },
 ];
 
 export const INDEX_ENTRIES: Array<{ name: string; title: string }> = [
