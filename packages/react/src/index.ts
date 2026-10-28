@@ -15,6 +15,7 @@ export { Field, type FieldProps } from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Pagination, type PaginationProps } from './components/pagination';
 export { PasswordInput, type PasswordInputProps } from './components/password-input';
+export { RollingNumber, type RollingNumberProps } from './components/rolling-number';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { Skeleton } from './components/skeleton';
 export { TextInput, type TextInputProps } from './components/text-input';
@@ -28,7 +29,9 @@ export {
 export { AppShell, type AppShellProps, SIDEBAR_COLLAPSED_STORAGE_KEY } from './layout/app-shell';
 export type { BreadcrumbItem } from './layout/breadcrumbs';
 export { Card, type CardProps } from './layout/card';
+export { ColorSchemeMenu } from './layout/navbar-menus';
 export { PageHeader, type PageHeaderProps } from './layout/page-header';
 export type { ShellUser } from './layout/user-menu';
 export { createMemoryAdapter } from './memory-adapter';
+export { prefersReducedMotion, usePrefersReducedMotion } from './motion/reduced-motion';
 export { BrumeProvider, useBrume } from './provider';
