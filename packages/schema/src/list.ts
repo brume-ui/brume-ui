@@ -94,8 +94,10 @@ export const ListPageSchema = Type.Object({
       action: Type.Optional(Type.String()),
       /** 含 `{id}` */
       cell: Type.Optional(Type.String()),
-      /** 含 `{source}` */
+      /** 含 `{source}`；挑選器搜尋也用它，多帶 `section` 參數 */
       options: Type.Optional(Type.String()),
+      /** POST multipart 暫存上傳（`UploadTempResponse`），沒有佔位字 */
+      upload: Type.Optional(Type.String()),
     }),
   ),
   empty: Type.Optional(

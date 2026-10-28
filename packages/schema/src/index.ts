@@ -70,6 +70,7 @@ export {
   ToastTypeSchema,
 } from './protocol/http';
 export {
+  OPTIONS_PARAMS,
   type OptionItem,
   OptionItemSchema,
   type OptionsResponse,

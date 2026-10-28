@@ -4,13 +4,13 @@
 
 ## 端點
 
-| 用途                           | Method         | 請求                           | 成功回應                   |
-| ------------------------------ | -------------- | ------------------------------ | -------------------------- |
-| Action (`endpoints.action`)    | POST           | `ActionRequest`                | 200 `ActionResponse`       |
-| 行內編輯 (`endpoints.cell`)    | PATCH          | `CellUpdateRequest`            | 200 `CellUpdateResponse`   |
-| 遠端選項 (`endpoints.options`) | GET            | `?q=&page=&per_page=&value[]=` | 200 `OptionsResponse`      |
-| 挑選器搜尋                     | GET            | 同上，多一個 section 參數      | 200 `PickerSearchResponse` |
-| 上傳暫存                       | POST multipart | `file`、`field`                | 200 `UploadTempResponse`   |
+| 用途                             | Method         | 請求                           | 成功回應                   |
+| -------------------------------- | -------------- | ------------------------------ | -------------------------- |
+| Action (`endpoints.action`)      | POST           | `ActionRequest`                | 200 `ActionResponse`       |
+| 行內編輯 (`endpoints.cell`)      | PATCH          | `CellUpdateRequest`            | 200 `CellUpdateResponse`   |
+| 遠端選項 (`endpoints.options`)   | GET            | `?q=&page=&per_page=&value[]=` | 200 `OptionsResponse`      |
+| 挑選器搜尋 (`endpoints.options`) | GET            | 同上，多一個 `section=`        | 200 `PickerSearchResponse` |
+| 上傳暫存 (`endpoints.upload`)    | POST multipart | `file`、`field`                | 200 `UploadTempResponse`   |
 
 ## 狀態碼
 
@@ -32,8 +32,8 @@
 
 ## 上傳生命週期
 
-暫存（`UploadTempResponse.token`）→ 表單儲存時以 token 歸檔（`UploadValue` 的 `{ token }` 變成 `{ path, url }`）→ 孤兒檔在 `expiresAt` 後清除。上傳服務本身在子計畫 2 實作。
+`POST endpoints.upload`（multipart，欄位 `file` 與 `field`）暫存（`UploadTempResponse.token`）→ 表單儲存時以 token 歸檔（`UploadValue` 的 `{ token }` 變成 `{ path, url }`）→ 孤兒檔在 `expiresAt` 後清除。`UploadValue` 的兩種形狀互斥：不允許其他屬性，所以同時帶 `token` 與 `path` 的值不合法。上傳服務本身在子計畫 2 實作。
 
 ## 挑選器
 
-`PickerSearchResponse` 的 `columns` 與 `sections` 供挑選器顯示欄位與分區。挑選器 UI 在子計畫 3 實作。
+`PickerSearchResponse` 的 `columns` 與 `sections` 供挑選器顯示欄位與分區。挑選器搜尋打的是同一個 `endpoints.options`（`{source}` 為挑選器的來源鍵），多帶 `section=<key>` 選分區，`key` 取自 `sections[].key`；省略時為第一個分區。參數名稱定義在 `OPTIONS_PARAMS`。挑選器 UI 在子計畫 3 實作。

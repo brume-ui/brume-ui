@@ -13,6 +13,17 @@ const OptionsPaginationSchema = Type.Object({
   hasMore: Type.Boolean(),
 });
 
+/** 遠端選項與挑選器搜尋的查詢參數名稱（GET `endpoints.options`）。 */
+export const OPTIONS_PARAMS = {
+  q: 'q',
+  page: 'page',
+  perPage: 'per_page',
+  /** 帶已選的值換回標籤：`value[]=7&value[]=9` */
+  value: 'value[]',
+  /** 挑選器的分區鍵（`PickerSearchResponse.sections[].key`）；省略時為第一個分區。 */
+  section: 'section',
+} as const;
+
 /** GET endpoints.options?q=&page=&per_page=&value[]= */
 export const OptionsResponseSchema = Type.Object({
   data: Type.Array(OptionItemSchema),
@@ -22,7 +33,7 @@ export type OptionsResponse = Static<typeof OptionsResponseSchema>;
 
 const LabeledKeySchema = Type.Object({ key: Type.String(), label: Type.String() });
 
-/** 挑選器搜尋：比 OptionsResponse 多 `columns`、`sections`，請求多一個 section 參數。 */
+/** 挑選器搜尋：比 OptionsResponse 多 `columns`、`sections`，請求多一個 `section` 參數（`OPTIONS_PARAMS.section`）。 */
 export const PickerSearchResponseSchema = Type.Object({
   data: Type.Array(
     Type.Intersect([
