@@ -85,6 +85,12 @@ describe('ActionMenu', () => {
     expect(screen.getByRole('menuitem', { name: /刪除/ }).querySelector('kbd')?.textContent).toBe(
       '⌫',
     );
+    const keys = (name: RegExp) =>
+      screen.getByRole('menuitem', { name }).getAttribute('aria-keyshortcuts');
+    expect(keys(/編輯/)).toBe('E');
+    expect(keys(/刪除/)).toBe('Delete Backspace');
+    // Enter activates the highlighted item inside the menu, so it is not announced as a shortcut.
+    expect(keys(/查看詳情/)).toBeNull();
     await user.keyboard('{ArrowDown}');
     await user.keyboard('{Enter}');
     expect(copy).toHaveBeenCalledTimes(1);

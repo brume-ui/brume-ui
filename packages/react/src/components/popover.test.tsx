@@ -16,6 +16,7 @@ describe('Popover', () => {
     await user.click(trigger);
     const dialog = await screen.findByRole('dialog', { name: '篩選條件' });
     expect(dialog).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: '篩選條件' })).toBeNull();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(trigger);

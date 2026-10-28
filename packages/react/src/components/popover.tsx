@@ -38,9 +38,9 @@ export function Popover({
           )}
         >
           {title ? (
-            <h2 id={titleId} className="br:mb-3 br:text-sm br:font-semibold br:text-text">
+            <div id={titleId} className="br:mb-3 br:text-sm br:font-semibold br:text-text">
               {title}
-            </h2>
+            </div>
           ) : null}
           {children}
         </RadixPopover.Content>

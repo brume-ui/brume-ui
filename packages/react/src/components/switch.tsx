@@ -7,7 +7,7 @@ export interface SwitchProps {
   onCheckedChange(checked: boolean): void;
   /** Accessible name (the switch has no visible label, e.g. inside a grid cell). */
   label: string;
-  /** A save is in flight: announced with aria-busy, and further toggles are ignored until it ends. */
+  /** A save is in flight: announced with aria-busy and dimmed. Toggles still go through (latest wins). */
   pending?: boolean;
   disabled?: boolean;
 }
@@ -17,9 +17,7 @@ export function Switch({ checked, onCheckedChange, label, pending, disabled }: S
   return (
     <RadixSwitch.Root
       checked={checked}
-      onCheckedChange={(v) => {
-        if (!pending) onCheckedChange(v);
-      }}
+      onCheckedChange={onCheckedChange}
       disabled={disabled}
       aria-label={label}
       aria-busy={pending || undefined}

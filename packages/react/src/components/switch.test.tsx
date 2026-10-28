@@ -34,15 +34,16 @@ describe('Switch', () => {
     expect(sw.getAttribute('aria-checked')).toBe('false');
   });
 
-  it('marks pending with aria-busy and ignores toggles meanwhile', async () => {
+  it('marks pending with aria-busy and still forwards every toggle', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
     render(<Switch label="上架" checked pending onCheckedChange={onChange} />);
     const sw = screen.getByRole('switch', { name: '上架' });
     expect(sw.getAttribute('aria-busy')).toBe('true');
     expect(sw.getAttribute('aria-checked')).toBe('true');
-    sw.focus();
-    await user.keyboard(' ');
-    expect(onChange).not.toHaveBeenCalled();
+    await user.click(sw);
+    await user.click(sw);
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange).toHaveBeenLastCalledWith(false);
   });
 });

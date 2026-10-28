@@ -1,8 +1,9 @@
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { type LucideIcon, MoreHorizontal } from 'lucide-react';
-import type { ComponentType, KeyboardEvent, ReactElement, ReactNode } from 'react';
+import type { ComponentType, KeyboardEvent, ReactElement, ReactNode, Ref } from 'react';
 import { cn } from '../cn';
-import { MENU_ITEM, MenuContent } from '../layout/navbar-menus';
+import { MENU_CONTENT, MENU_ITEM } from '../layout/navbar-menus';
+import { HighlightIndicator, useHighlightIndicator } from '../motion/highlight';
 import { IconButton } from './icon-button';
 
 export interface MenuAction {
@@ -69,7 +70,27 @@ export function runShortcut(items: MenuAction[], event: KeyboardEvent<HTMLElemen
   el.click();
 }
 
-interface MenuParts {
+/** Value for aria-keyshortcuts. Enter is left out: inside the menu it activates the highlight. */
+function keyShortcuts(shortcut: string | undefined): string | undefined {
+  if (!shortcut) return undefined;
+  const s = shortcut.toLowerCase();
+  if (s === 'enter') return undefined;
+  if (ERASE.has(s)) return 'Delete Backspace';
+  return shortcut.length === 1 ? shortcut.toUpperCase() : shortcut;
+}
+
+type ContentPart = ComponentType<{
+  ref?: Ref<HTMLDivElement>;
+  className?: string;
+  align?: 'start' | 'center' | 'end';
+  sideOffset?: number;
+  onKeyDown?(event: KeyboardEvent<HTMLDivElement>): void;
+  children?: ReactNode;
+}>;
+
+/** The Radix parts of one menu flavour (dropdown or context menu). */
+export interface MenuParts {
+  Content: ContentPart;
   Item: ComponentType<{
     disabled?: boolean;
     onSelect?(event: Event): void;
@@ -79,10 +100,11 @@ interface MenuParts {
     'data-menu-key'?: string;
   }>;
   Separator: ComponentType<{ className?: string }>;
+  /** Class that points --br-origin at this flavour's Radix transform-origin var. */
+  origin: string;
 }
 
-/** The item list shared by ActionMenu and RowContextMenu (same order, look and shortcuts). */
-export function MenuItems({ items, parts }: { items: MenuAction[]; parts: MenuParts }) {
+function MenuItems({ items, parts }: { items: MenuAction[]; parts: MenuParts }) {
   const { Item, Separator } = parts;
   return orderMenuItems(items).map((item, index) => {
     if (item === 'separator') {
@@ -95,7 +117,7 @@ export function MenuItems({ items, parts }: { items: MenuAction[]; parts: MenuPa
         key={item.key}
         data-menu-key={item.key}
         disabled={item.disabled}
-        aria-keyshortcuts={item.shortcut}
+        aria-keyshortcuts={keyShortcuts(item.shortcut)}
         onSelect={() => item.onSelect()}
         className={cn(
           MENU_ITEM,
@@ -106,7 +128,7 @@ export function MenuItems({ items, parts }: { items: MenuAction[]; parts: MenuPa
         {Icon ? <Icon aria-hidden="true" className="br:size-4 br:shrink-0" /> : null}
         <span className="br:min-w-0 br:flex-1 br:truncate">{item.label}</span>
         {item.shortcut ? (
-          // The item carries aria-keyshortcuts; the glyph (↵, ⌫) is only a visual hint.
+          // The glyph (↵, ⌫) is only a visual hint; aria-keyshortcuts carries the keys.
           <span aria-hidden="true" className="br:ml-4 br:text-xs br:text-text-muted">
             <kbd className="br:font-sans">{formatShortcut(item.shortcut)}</kbd>
           </span>
@@ -116,7 +138,43 @@ export function MenuItems({ items, parts }: { items: MenuAction[]; parts: MenuPa
   });
 }
 
-const DROPDOWN_PARTS: MenuParts = { Item: Dropdown.Item, Separator: Dropdown.Separator };
+/**
+ * The menu panel shared by ActionMenu and RowContextMenu: same look, origin-aware motion, gliding
+ * highlight, item order and shortcuts. Only the Radix parts differ.
+ */
+export function ActionMenuContent({
+  items,
+  parts,
+  align,
+  sideOffset,
+}: {
+  items: MenuAction[];
+  parts: MenuParts;
+  align?: 'start' | 'center' | 'end';
+  sideOffset?: number;
+}) {
+  const highlight = useHighlightIndicator();
+  const { Content } = parts;
+  return (
+    <Content
+      ref={highlight.ref}
+      align={align}
+      sideOffset={sideOffset}
+      onKeyDown={(e) => runShortcut(items, e)}
+      className={cn(MENU_CONTENT, parts.origin)}
+    >
+      <HighlightIndicator state={highlight} />
+      <MenuItems items={items} parts={parts} />
+    </Content>
+  );
+}
+
+const DROPDOWN_PARTS: MenuParts = {
+  Content: Dropdown.Content,
+  Item: Dropdown.Item,
+  Separator: Dropdown.Separator,
+  origin: 'br:[--br-origin:var(--radix-dropdown-menu-content-transform-origin)]',
+};
 
 /** Row actions behind a 26px ⋯ button (or a custom trigger); danger items last. */
 export function ActionMenu({ items, label, trigger }: ActionMenuProps) {
@@ -132,9 +190,7 @@ export function ActionMenu({ items, label, trigger }: ActionMenuProps) {
         )}
       </Dropdown.Trigger>
       <Dropdown.Portal>
-        <MenuContent align="end" sideOffset={4} onKeyDown={(e) => runShortcut(items, e)}>
-          <MenuItems items={items} parts={DROPDOWN_PARTS} />
-        </MenuContent>
+        <ActionMenuContent items={items} parts={DROPDOWN_PARTS} align="end" sideOffset={4} />
       </Dropdown.Portal>
     </Dropdown.Root>
   );
