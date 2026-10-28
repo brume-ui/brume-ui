@@ -121,12 +121,11 @@ export function AppShell({
 
       <div className="br:flex br:min-w-0 br:flex-1 br:flex-col">
         <header className="br:sticky br:top-0 br:z-30 br:flex br:h-14 br:items-center br:gap-2 br:border-b br:border-border br:bg-surface br:px-4">
-          <IconButton
-            icon={Menu}
-            label={t('shell.menu')}
-            className="br:md:hidden"
-            onClick={() => setDrawerOpen(true)}
-          />
+          {/* The wrapper hides it: on IconButton itself, br:md:hidden would compete with its own
+              br:inline-flex, whose position in an app's merged stylesheet is not guaranteed. */}
+          <div className="br:max-md:flex br:md:hidden">
+            <IconButton icon={Menu} label={t('shell.menu')} onClick={() => setDrawerOpen(true)} />
+          </div>
           {sideMenu ? null : (
             <>
               <span className="br:mr-2 br:truncate br:text-base br:font-semibold">{appName}</span>
@@ -140,7 +139,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main id="brume-main" className="br:min-w-0 br:flex-1 br:px-4 br:py-6 br:md:px-8">
+        <main id="brume-main" className="br:min-w-0 br:flex-1 br:py-6 br:max-md:px-4 br:md:px-8">
           {layout.breadcrumbs ? <Breadcrumbs items={breadcrumbs} /> : null}
           {children}
         </main>
