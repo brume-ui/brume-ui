@@ -42,7 +42,7 @@ export { type DataColumn, DataTable, type DataTableProps } from './components/da
 export { DateInput, type DateInputProps } from './components/date-input';
 export { Dialog, type DialogProps } from './components/dialog';
 export { EmptyState, type EmptyStateProps } from './components/empty-state';
-export { Field, type FieldProps } from './components/field';
+export { Field, type FieldControlProps, type FieldProps } from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
 export { Pagination, type PaginationProps } from './components/pagination';

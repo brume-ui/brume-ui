@@ -1,5 +1,6 @@
 import { cn } from '../cn';
 import { useBrume } from '../provider';
+import { ariaOn, type FieldControlProps } from './field';
 import { CONTROL_BASE, CONTROL_BORDER, FOCUS_RING } from './focus';
 
 export interface RangeValue {
@@ -7,16 +8,13 @@ export interface RangeValue {
   end?: string;
 }
 
-export interface RangeInputProps {
+export interface RangeInputProps extends FieldControlProps {
   of: 'text' | 'number' | 'date' | 'datetime';
   value: RangeValue;
   /** Only the filled bounds are present: `{ start }` when just the start is set. */
   onChange(value: RangeValue): void;
   /** Accessible name of the group; each field is 「{label}（起）」/「{label}（迄）」. */
   label: string;
-  id?: string;
-  /** Names the group by a visible caption (Field with `group`); replaces `aria-label`. */
-  'aria-labelledby'?: string;
 }
 
 const INPUT_TYPE = {
@@ -26,7 +24,10 @@ const INPUT_TYPE = {
   datetime: 'datetime-local',
 } as const;
 
-/** Two fields, start – end, for range filters. */
+/**
+ * Two fields, start – end, for range filters. The group carries the description and error
+ * (`aria-describedby`); the invalid and required states go on both fields, which support them.
+ */
 export function RangeInput({
   of,
   value,
@@ -34,14 +35,21 @@ export function RangeInput({
   label,
   id,
   'aria-labelledby': labelledBy,
+  'aria-describedby': describedBy,
+  'aria-invalid': ariaInvalid,
+  'aria-required': ariaRequired,
+  invalid,
 }: RangeInputProps) {
   const { t } = useBrume();
+  const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
   const type = INPUT_TYPE[of];
   const field = (bound: 'start' | 'end') => (
     <input
       type={type}
       inputMode={of === 'number' ? 'decimal' : undefined}
       aria-label={t(bound === 'start' ? 'range.start' : 'range.end', { label })}
+      aria-invalid={isInvalid || undefined}
+      aria-required={ariaOn(ariaRequired) || undefined}
       value={value[bound] ?? ''}
       onChange={(e) => {
         const next: RangeValue = { ...value, [bound]: e.target.value };
@@ -50,7 +58,12 @@ export function RangeInput({
         if (next.end) out.end = next.end;
         onChange(out);
       }}
-      className={cn(CONTROL_BASE, CONTROL_BORDER, FOCUS_RING, 'br:w-full br:min-w-0')}
+      className={cn(
+        CONTROL_BASE,
+        isInvalid ? 'br:border-danger' : CONTROL_BORDER,
+        FOCUS_RING,
+        'br:w-full br:min-w-0',
+      )}
     />
   );
   return (
@@ -60,6 +73,7 @@ export function RangeInput({
       role="group"
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
       className="br:flex br:items-center br:gap-2"
     >
       {field('start')}

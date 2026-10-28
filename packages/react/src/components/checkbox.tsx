@@ -11,6 +11,8 @@ export interface CheckboxProps {
   id?: string;
   name?: string;
   disabled?: boolean;
+  /** The error state: danger border, `aria-invalid`. */
+  invalid?: boolean;
   className?: string;
 }
 
@@ -20,6 +22,7 @@ export function Checkbox({
   label,
   id,
   className,
+  invalid,
   ...rest
 }: CheckboxProps) {
   const autoId = useId();
@@ -30,9 +33,11 @@ export function Checkbox({
         id={inputId}
         {...rest}
         checked={checked}
+        aria-invalid={invalid || undefined}
         onCheckedChange={(v) => onCheckedChange(v === true)}
         className={cn(
-          'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-[6px] br:border br:border-border-strong br:bg-surface br:data-[state=checked]:border-accent br:data-[state=checked]:bg-accent br:data-[state=indeterminate]:border-accent br:data-[state=indeterminate]:bg-accent br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+          'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-[6px] br:border br:bg-surface br:data-[state=checked]:border-accent br:data-[state=checked]:bg-accent br:data-[state=indeterminate]:border-accent br:data-[state=indeterminate]:bg-accent br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+          invalid ? 'br:border-danger' : 'br:border-border-strong',
           // Press sinks a little; release settles with the spring curve.
           'br:transition-[background-color,border-color,scale] br:duration-fast br:ease-spring br:enabled:active:scale-90 br:motion-reduce:enabled:active:scale-100',
           FOCUS_RING,

@@ -2,9 +2,10 @@ import type { Option } from '@brume-ui/brume-schema';
 import * as RadixRadioGroup from '@radix-ui/react-radio-group';
 import { useId } from 'react';
 import { cn } from '../cn';
+import { ariaOn, type FieldControlProps } from './field';
 import { FOCUS_RING } from './focus';
 
-export interface RadioGroupProps {
+export interface RadioGroupProps extends FieldControlProps {
   options: Option[];
   value: string;
   onChange(value: string): void;
@@ -14,9 +15,6 @@ export interface RadioGroupProps {
   orientation?: 'horizontal' | 'vertical';
   name?: string;
   disabled?: boolean;
-  id?: string;
-  /** Names the group by a visible caption (Field with `group`); replaces `aria-label`. */
-  'aria-labelledby'?: string;
 }
 
 /** Single choice from a few options. Arrow keys move and select (Radix roving focus). */
@@ -30,8 +28,13 @@ export function RadioGroup({
   disabled,
   id,
   'aria-labelledby': labelledBy,
+  'aria-describedby': describedBy,
+  'aria-invalid': ariaInvalid,
+  'aria-required': ariaRequired,
+  invalid,
 }: RadioGroupProps) {
   const baseId = useId();
+  const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
   return (
     <RadixRadioGroup.Root
       id={id}
@@ -39,6 +42,10 @@ export function RadioGroup({
       onValueChange={onChange}
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
+      // The APG radio group carries the description, error and required state on the group.
+      aria-describedby={describedBy}
+      aria-invalid={isInvalid || undefined}
+      required={ariaOn(ariaRequired)}
       // Not passed to Radix as `orientation`: that would limit arrows to one axis, while the APG
       // radio group moves with all four arrow keys in any layout.
       aria-orientation={orientation}
@@ -58,8 +65,9 @@ export function RadioGroup({
               value={o.value}
               disabled={o.disabled}
               className={cn(
-                'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:border-border-strong br:bg-surface br:data-[state=checked]:border-accent br:disabled:cursor-not-allowed br:disabled:opacity-50',
+                'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:bg-surface br:data-[state=checked]:border-accent br:disabled:cursor-not-allowed br:disabled:opacity-50',
                 'br:transition-[border-color,scale] br:duration-fast br:ease-spring br:enabled:active:scale-90 br:motion-reduce:enabled:active:scale-100',
+                isInvalid ? 'br:border-danger' : 'br:border-border-strong',
                 FOCUS_RING,
               )}
             >

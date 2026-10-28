@@ -5,6 +5,26 @@ const CAPTION = 'br:text-sm br:font-semibold br:text-text';
 
 const DROP_IN = 'br:animate-[br-drop-in_var(--br-duration-base)_var(--br-ease-out)]';
 
+/**
+ * The props Field injects into its control. Group controls (RadioGroup, CheckboxGroup, RangeInput)
+ * and Switch accept them, so a group's description and error are announced like a text field's.
+ */
+export interface FieldControlProps {
+  id?: string;
+  /** Names the control by Field's visible caption (`group`); replaces `aria-label`. */
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean | 'true' | 'false';
+  'aria-required'?: boolean | 'true' | 'false';
+  /** Shows the error state (danger border) without a Field error. */
+  invalid?: boolean;
+}
+
+/** Whether an `aria-*` boolean prop is on. */
+export function ariaOn(value: boolean | 'true' | 'false' | undefined): boolean {
+  return value === true || value === 'true';
+}
+
 export interface FieldProps {
   label: string;
   description?: string;
