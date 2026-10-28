@@ -1,4 +1,4 @@
-import { act, render as rtlRender, screen } from '@testing-library/react';
+import { act, fireEvent, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -165,5 +165,76 @@ describe('toast', () => {
     });
     act(() => toast.info('B', { id: 'x' }));
     expect(screen.getByRole('status').textContent).toContain('B');
+  });
+
+  it('stacks newest in front and pauses every toast while the stack is hovered', () => {
+    render(<Toaster />);
+    act(() => {
+      toast.info('舊的');
+      toast.info('新的');
+    });
+    const [older, newer] = screen.getAllByRole('status');
+    expect(newer?.dataset.front).toBe('true');
+    expect(older?.dataset.front).toBeUndefined();
+    const region = document.querySelector('[data-brume-toaster]') as HTMLElement;
+    act(() => {
+      older?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+    expect(region.dataset.expanded).toBe('true');
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(screen.getAllByRole('status')).toHaveLength(2);
+  });
+
+  it('pauses while the tab is hidden', () => {
+    render(<Toaster />);
+    act(() => toast.success('背景'));
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(screen.queryByRole('status')).not.toBeNull();
+    visibility.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    act(() => {
+      vi.advanceTimersByTime(4100);
+    });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('a dismissed toast leaves the accessibility tree at once and the DOM after its exit', () => {
+    render(<Toaster />);
+    act(() => toast.error('失敗', { id: 'exit' }));
+    act(() => screen.getByRole('button', { name: '關閉' }).click());
+    expect(screen.queryByRole('status')).toBeNull();
+    const leaving = document.querySelector('[data-removing]');
+    expect(leaving?.getAttribute('aria-hidden')).toBe('true');
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(document.querySelector('[data-removing]')).toBeNull();
+  });
+
+  it('dismisses on a swipe and snaps back on a short drag', () => {
+    render(<Toaster />);
+    act(() => toast.error('滑掉我'));
+    const el = screen.getByRole('status');
+    const drag = (to: number) => {
+      fireEvent.pointerDown(el, { button: 0, pointerId: 1, clientX: 100 });
+      fireEvent.pointerMove(el, { pointerId: 1, clientX: 100 + to });
+      fireEvent.pointerUp(el, { pointerId: 1, clientX: 100 + to });
+    };
+    // Below the flick minimum: even an instant release snaps back.
+    act(() => drag(8));
+    expect(screen.queryByRole('status')).not.toBeNull();
+    act(() => drag(80));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(document.querySelector('[data-removing="swipe"]')).not.toBeNull();
   });
 });
