@@ -13,6 +13,7 @@ export const PAGES = [
   'field',
   'select',
   'checkbox',
+  'inputs',
   'dialog',
   'confirm',
   'toast',

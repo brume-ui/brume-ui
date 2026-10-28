@@ -3,6 +3,12 @@ import { type ReactElement, type ReactNode, useId } from 'react';
 import { cn } from '../cn';
 import { POPOVER_MOTION } from '../motion/classes';
 
+/** The floating card look (and pop-in from the anchor) shared by Popover and the Combobox list. */
+export const POPOVER_SURFACE = cn(
+  'br:z-50 br:rounded-card br:border br:border-border br:bg-surface br:text-sm br:text-text br:shadow-overlay br:outline-none br:[--br-origin:var(--radix-popover-content-transform-origin)]',
+  POPOVER_MOTION,
+);
+
 export interface PopoverProps {
   trigger: ReactElement;
   /** Shown as the panel heading and used as its accessible name. */
@@ -32,10 +38,7 @@ export function Popover({
           sideOffset={6}
           collisionPadding={8}
           aria-labelledby={title ? titleId : undefined}
-          className={cn(
-            'br:z-50 br:w-[min(20rem,calc(100vw-2rem))] br:rounded-card br:border br:border-border br:bg-surface br:p-4 br:text-sm br:text-text br:shadow-overlay br:outline-none br:[--br-origin:var(--radix-popover-content-transform-origin)]',
-            POPOVER_MOTION,
-          )}
+          className={cn(POPOVER_SURFACE, 'br:w-[min(20rem,calc(100vw-2rem))] br:p-4')}
         >
           {title ? (
             <div id={titleId} className="br:mb-3 br:text-sm br:font-semibold br:text-text">

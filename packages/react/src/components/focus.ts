@@ -10,8 +10,15 @@ export const FOCUS_RING =
 export const HIGHLIGHT_RING =
   'br:outline-none br:data-[highlighted]:outline-solid br:data-[highlighted]:outline-2 br:data-[highlighted]:-outline-offset-2 br:data-[highlighted]:outline-focus-ring';
 
-export const CONTROL_BASE =
-  'br:rounded-input br:border br:bg-surface br:text-text br:text-sm br:h-10 br:px-3 br:transition-[color,background-color,border-color] br:duration-fast br:ease-out br:disabled:opacity-50 br:disabled:cursor-not-allowed br:placeholder:text-text-muted';
+/**
+ * Border, colours, type, height and motion of text-like controls, without radius or padding.
+ * Controls with their own shape (the search pill) start from this: tailwind-merge does not know
+ * the radius tokens, so overriding `rounded-input` with `rounded-pill` would leave both classes.
+ */
+export const CONTROL_SKIN =
+  'br:border br:bg-surface br:text-text br:text-sm br:h-10 br:transition-[color,background-color,border-color] br:duration-fast br:ease-out br:disabled:opacity-50 br:disabled:cursor-not-allowed br:placeholder:text-text-muted';
+
+export const CONTROL_BASE = `br:rounded-input br:px-3 ${CONTROL_SKIN}`;
 
 /** Resting border of text-like controls; hover darkens it a step. */
 export const CONTROL_BORDER = 'br:border-border-strong br:enabled:hover:border-text-muted';

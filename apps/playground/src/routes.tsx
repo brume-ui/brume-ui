@@ -11,6 +11,7 @@ import {
 } from './pages/controls';
 import { DataTablePage, EmptyStatePage, PaginationPage, SkeletonPage } from './pages/data';
 import { FontsPage } from './pages/fonts';
+import { InputsPage } from './pages/inputs';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
 import { MotionPage } from './pages/motion';
 import { ConfirmPage, DialogPage, MenusPage, ToastPage } from './pages/overlays';
@@ -32,6 +33,7 @@ export const ROUTES: Route[] = [
   { name: 'field', title: 'Field', Component: FieldPage },
   { name: 'select', title: 'Select', Component: SelectPage },
   { name: 'checkbox', title: 'Checkbox', Component: CheckboxPage },
+  { name: 'inputs', title: 'Inputs', Component: InputsPage },
   { name: 'dialog', title: 'Dialog', Component: DialogPage },
   { name: 'confirm', title: 'useConfirm', Component: ConfirmPage },
   { name: 'toast', title: 'toast', Component: ToastPage },
