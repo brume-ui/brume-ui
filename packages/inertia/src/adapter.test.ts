@@ -1,5 +1,6 @@
+import type { NavigationTarget } from '@brume-ui/brume-react';
 import { router } from '@inertiajs/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createInertiaAdapter } from './adapter';
 
 afterEach(() => vi.restoreAllMocks());
@@ -61,12 +62,14 @@ describe('createInertiaAdapter request', () => {
 });
 
 describe('createInertiaAdapter guardNavigation', () => {
+  beforeEach(() => window.history.replaceState(null, '', '/'));
+
   type Before = (event: {
-    detail: { visit: { method: string; url: URL } };
+    detail: { visit: { method: string; url: URL; only: string[]; prefetch: boolean } };
     preventDefault(): void;
   }) => void;
 
-  function setup(allow: (url: string) => boolean) {
+  function setup(allow: (target: NavigationTarget) => boolean) {
     const off = vi.fn();
     let before: Before | undefined;
     const on = vi.spyOn(router, 'on').mockImplementation(((name: string, cb: Before) => {
@@ -75,9 +78,21 @@ describe('createInertiaAdapter guardNavigation', () => {
     }) as never);
     const remove = vi.spyOn(window, 'removeEventListener');
     const unregister = createInertiaAdapter().guardNavigation(allow);
-    const fire = (method: string, href: string) => {
+    const fire = (
+      method: string,
+      href: string,
+      extra: { only?: string[]; prefetch?: boolean } = {},
+    ) => {
       const event = {
-        detail: { visit: { method, url: new URL(href, 'http://localhost') } },
+        detail: {
+          visit: {
+            method,
+            url: new URL(href, 'http://localhost'),
+            only: [],
+            prefetch: false,
+            ...extra,
+          },
+        },
         preventDefault: vi.fn(),
       };
       before?.(event);
@@ -90,7 +105,7 @@ describe('createInertiaAdapter guardNavigation', () => {
     const allow = vi.fn(() => false);
     const { fire, unregister } = setup(allow);
     const event = fire('get', '/admin/users?page=2#top');
-    expect(allow).toHaveBeenCalledWith('/admin/users?page=2#top');
+    expect(allow).toHaveBeenCalledWith({ url: '/admin/users?page=2#top' });
     expect(event.preventDefault).toHaveBeenCalledOnce();
     unregister();
   });
@@ -108,6 +123,31 @@ describe('createInertiaAdapter guardNavigation', () => {
       expect(fire(method, '/save').preventDefault).not.toHaveBeenCalled();
     }
     expect(allow).not.toHaveBeenCalled();
+    unregister();
+  });
+
+  it('does not guard same-page GETs, partial reloads or prefetches', () => {
+    window.history.replaceState(null, '', '/admin/users?page=2');
+    const allow = vi.fn(() => false);
+    const { fire, unregister } = setup(allow);
+    const events = [
+      fire('get', '/admin/users?page=2'),
+      fire('get', '/admin/users?page=2#top'),
+      fire('get', '/admin/users?page=3', { only: ['rows'] }),
+      fire('get', '/admin/other', { prefetch: true }),
+    ];
+    for (const event of events) expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(allow).not.toHaveBeenCalled();
+    expect(fire('get', '/admin/users?page=3').preventDefault).toHaveBeenCalledOnce();
+    expect(allow).toHaveBeenCalledWith({ url: '/admin/users?page=3' });
+    unregister();
+  });
+
+  it('asks with { unload: true } on tab close', () => {
+    const allow = vi.fn(() => false);
+    const { unregister } = setup(allow);
+    window.dispatchEvent(new Event('beforeunload', { cancelable: true }));
+    expect(allow).toHaveBeenCalledWith({ unload: true });
     unregister();
   });
 

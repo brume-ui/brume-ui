@@ -42,7 +42,7 @@ describe('createMemoryAdapter guardNavigation', () => {
     const allow = vi.fn(() => false);
     const off = a.guardNavigation(allow);
     a.visit('/blocked');
-    expect(allow).toHaveBeenCalledWith('/blocked');
+    expect(allow).toHaveBeenCalledWith({ url: '/blocked' });
     expect(a.calls).toEqual([]);
     expect(a.currentUrl()).toBe('/start');
     off();
@@ -54,6 +54,30 @@ describe('createMemoryAdapter guardNavigation', () => {
     const a = createMemoryAdapter();
     a.guardNavigation(() => true);
     a.guardNavigation(() => false);
+    a.visit('/x');
+    expect(a.calls).toEqual([]);
+  });
+
+  it('never guards a visit that stays on the current page', () => {
+    const a = createMemoryAdapter('/users?page=2');
+    const allow = vi.fn(() => false);
+    a.guardNavigation(allow);
+    a.visit('/users?page=2');
+    a.visit('/users?page=2#top');
+    a.visit('/users?page=3', { only: ['rows'] });
+    a.reload({ only: ['rows'] });
+    expect(allow).not.toHaveBeenCalled();
+    expect(a.calls.map((c) => c.fn)).toEqual(['visit', 'visit', 'visit', 'reload']);
+    a.visit('/orders');
+    expect(allow).toHaveBeenCalledWith({ url: '/orders' });
+  });
+
+  it('registering the same function twice and unregistering once leaves one guard', () => {
+    const a = createMemoryAdapter();
+    const allow = () => false;
+    const off = a.guardNavigation(allow);
+    a.guardNavigation(allow);
+    off();
     a.visit('/x');
     expect(a.calls).toEqual([]);
   });

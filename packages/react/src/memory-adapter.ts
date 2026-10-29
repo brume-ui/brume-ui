@@ -1,8 +1,16 @@
-import type { BrumeAdapter } from './adapter';
+import type { BrumeAdapter, NavigationTarget, VisitOptions } from './adapter';
 import type { HttpRequest, HttpResponse } from './http';
 
 export interface MemoryAdapterOptions {
   respond?(req: HttpRequest): HttpResponse | Promise<HttpResponse>;
+}
+
+const pathAndQuery = (url: string) => url.split('#')[0];
+
+/** Mirrors the Inertia adapter: a visit that stays on the current page is never guarded. */
+function isSamePage(target: string, current: string, options?: VisitOptions): boolean {
+  if (options?.only?.length) return true;
+  return pathAndQuery(target) === pathAndQuery(current);
 }
 
 export function createMemoryAdapter(
@@ -10,12 +18,14 @@ export function createMemoryAdapter(
   opts: MemoryAdapterOptions = {},
 ): BrumeAdapter & { calls: Array<{ fn: string; args: unknown[] }> } {
   let url = initialUrl;
-  const guards = new Set<(url: string) => boolean>();
+  const guards: Array<{ allow: (target: NavigationTarget) => boolean }> = [];
   const calls: Array<{ fn: string; args: unknown[] }> = [];
   return {
     calls,
     visit(...args) {
-      for (const allow of [...guards]) if (!allow(args[0])) return;
+      if (!isSamePage(args[0], url, args[1])) {
+        for (const guard of [...guards]) if (!guard.allow({ url: args[0] })) return;
+      }
       calls.push({ fn: 'visit', args });
       url = args[0];
     },
@@ -26,9 +36,11 @@ export function createMemoryAdapter(
       calls.push({ fn: 'submit', args });
     },
     guardNavigation(allow) {
-      guards.add(allow);
+      const guard = { allow };
+      guards.push(guard);
       return () => {
-        guards.delete(allow);
+        const index = guards.indexOf(guard);
+        if (index >= 0) guards.splice(index, 1);
       };
     },
     currentUrl: () => url,

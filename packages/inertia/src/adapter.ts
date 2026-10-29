@@ -31,13 +31,16 @@ export function createInertiaAdapter(): BrumeAdapter {
     guardNavigation(allow) {
       // Only GET visits are checked, so the form's own POST/PUT saves pass through.
       const offBefore = router.on('before', (event) => {
-        const { method, url } = event.detail.visit;
-        if (method !== 'get') return;
-        if (!allow(url.pathname + url.search + url.hash)) event.preventDefault();
+        const { method, url, only, prefetch } = event.detail.visit;
+        // Only a real page change is guarded: not a POST/PUT, a prefetch, a partial reload, or a
+        // GET to the current page (`router.reload()`, a hash-only change).
+        if (method !== 'get' || prefetch || only.length > 0) return;
+        if (url.pathname + url.search === window.location.pathname + window.location.search) return;
+        if (!allow({ url: url.pathname + url.search + url.hash })) event.preventDefault();
       });
-      // Closing or reloading the tab has no target url, so ask about the current one.
+      // Closing or reloading the tab has no target url, so it is its own kind of target.
       const onBeforeUnload = (event: BeforeUnloadEvent) => {
-        if (allow(currentUrl())) return;
+        if (allow({ unload: true })) return;
         event.preventDefault();
         event.returnValue = '';
       };

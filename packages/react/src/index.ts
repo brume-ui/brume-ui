@@ -1,5 +1,6 @@
 export type {
   BrumeAdapter,
+  NavigationTarget,
   SubmitOptions,
   VisitOptions,
 } from './adapter';
