@@ -31,6 +31,9 @@ export function BrumePageView({ envelope }: { envelope: PageEnvelope }) {
       return <DashboardPageView page={page} />;
     case 'error':
       return <ErrorPageView page={page} />;
+    case 'form':
+      // 暫時不渲染：子計畫 2 Task 13 換成 FormPageView。
+      return null;
     default: {
       const unknown: never = page;
       return unknown;

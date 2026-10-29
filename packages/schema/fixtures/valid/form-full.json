@@ -1,0 +1,327 @@
+{
+  "schemaVersion": "0.3.0",
+  "page": {
+    "type": "form",
+    "title": "編輯訂單",
+    "description": "修改訂單內容後按儲存。",
+    "formId": "orders",
+    "name": "訂單",
+    "mode": "edit",
+    "record": { "id": 42, "label": "#A1042" },
+    "form": {
+      "layout": "stacked",
+      "sections": "tabs",
+      "nodes": [
+        {
+          "type": "section",
+          "key": "basic",
+          "title": "基本資料",
+          "description": "訂單的基本資訊",
+          "children": [
+            {
+              "type": "field",
+              "field": {
+                "type": "text",
+                "name": "title",
+                "label": "標題",
+                "help": "顯示在列表上",
+                "placeholder": "輸入標題",
+                "required": true,
+                "span": "auto",
+                "maxLength": 120,
+                "rules": [
+                  { "rule": "required", "message": "標題為必填。" },
+                  { "rule": "maxLength", "value": 120, "message": "標題不能超過 120 個字。" },
+                  { "rule": "pattern", "pattern": "^\\p{L}+$", "message": "標題只能包含文字。" }
+                ]
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "textarea",
+                "name": "note",
+                "label": "備註",
+                "rows": 4,
+                "maxLength": 500,
+                "span": "full",
+                "rules": [{ "rule": "minLength", "value": 2, "message": "備註至少 2 個字。" }]
+              }
+            },
+            {
+              "type": "row",
+              "children": [
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "email",
+                    "name": "email",
+                    "label": "Email",
+                    "width": 6,
+                    "rules": [{ "rule": "email", "message": "Email 格式不正確。" }]
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "url",
+                    "name": "website",
+                    "label": "網站",
+                    "width": 6,
+                    "rules": [{ "rule": "url", "message": "網址格式不正確。" }]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "columns",
+              "columns": [
+                {
+                  "width": 8,
+                  "children": [
+                    {
+                      "type": "field",
+                      "field": { "type": "mobile", "name": "mobile", "label": "手機" }
+                    },
+                    {
+                      "type": "field",
+                      "field": {
+                        "type": "password",
+                        "name": "password",
+                        "label": "密碼",
+                        "help": "留空表示不修改"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "width": 4,
+                  "children": [
+                    {
+                      "type": "field",
+                      "field": { "type": "hidden", "name": "token", "label": "Token" }
+                    },
+                    {
+                      "type": "field",
+                      "field": {
+                        "type": "display",
+                        "name": "created_at",
+                        "label": "建立時間",
+                        "readOnly": true
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            { "type": "divider", "label": "金額" },
+            {
+              "type": "block",
+              "title": "金額",
+              "children": [
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "number",
+                    "name": "quantity",
+                    "label": "數量",
+                    "min": 0,
+                    "max": 999,
+                    "step": 1,
+                    "rules": [
+                      { "rule": "integer", "message": "數量必須是整數。" },
+                      { "rule": "min", "value": 0, "message": "數量不能小於 0。" },
+                      { "rule": "max", "value": 999, "message": "數量不能大於 999。" }
+                    ]
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "decimal",
+                    "name": "weight",
+                    "label": "重量",
+                    "decimals": 3,
+                    "rules": [{ "rule": "numeric", "message": "重量必須是數字。" }]
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "currency",
+                    "name": "total",
+                    "label": "總額",
+                    "decimals": 2,
+                    "symbol": "NT$",
+                    "min": 0,
+                    "disabled": true
+                  }
+                }
+              ]
+            },
+            { "type": "block", "children": [] }
+          ]
+        },
+        {
+          "type": "section",
+          "key": "schedule",
+          "title": "時間與選項",
+          "children": [
+            { "type": "field", "field": { "type": "date", "name": "ship_on", "label": "出貨日" } },
+            {
+              "type": "field",
+              "field": { "type": "datetime", "name": "paid_at", "label": "付款時間" }
+            },
+            {
+              "type": "field",
+              "field": { "type": "dateRange", "name": "promo", "label": "活動期間" }
+            },
+            {
+              "type": "field",
+              "field": { "type": "datetimeRange", "name": "window", "label": "配送時段" }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "select",
+                "name": "category",
+                "label": "分類",
+                "searchable": true,
+                "clearable": true,
+                "options": [
+                  { "value": "1", "label": "服飾", "depth": 0 },
+                  { "value": "2", "label": "上衣", "depth": 1, "group": "服飾" },
+                  { "value": "3", "label": "停售", "disabled": true, "description": "已下架" }
+                ]
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "multipleSelect",
+                "name": "labels",
+                "label": "標籤",
+                "max": 3,
+                "options": [
+                  { "value": "hot", "label": "熱賣" },
+                  { "value": "new", "label": "新品" }
+                ]
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "radio",
+                "name": "status",
+                "label": "狀態",
+                "orientation": "horizontal",
+                "options": [
+                  { "value": "draft", "label": "草稿" },
+                  { "value": "paid", "label": "已付款" }
+                ]
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "checkbox",
+                "name": "channels",
+                "label": "通路",
+                "orientation": "vertical",
+                "options": [
+                  { "value": "web", "label": "網站" },
+                  { "value": "store", "label": "門市" }
+                ]
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "switch",
+                "name": "is_gift",
+                "label": "禮品",
+                "onLabel": "是",
+                "offLabel": "否"
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "tags",
+                "name": "keywords",
+                "label": "關鍵字",
+                "max": 10,
+                "maxLength": 20,
+                "options": [{ "value": "sale", "label": "特價" }]
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "upload",
+                "name": "cover",
+                "label": "封面",
+                "kind": "image",
+                "multiple": false,
+                "accept": ["image/jpeg", "image/png"],
+                "maxSize": 2097152
+              }
+            }
+          ]
+        },
+        {
+          "type": "embeds",
+          "name": "meta",
+          "label": "附加資料",
+          "children": [
+            { "type": "field", "field": { "type": "text", "name": "color", "label": "顏色" } },
+            {
+              "type": "field",
+              "field": {
+                "type": "upload",
+                "name": "images",
+                "label": "圖片",
+                "kind": "image",
+                "multiple": true,
+                "accept": ["image/jpeg", "image/png", "image/webp"],
+                "maxSize": 5242880,
+                "maxFiles": 6,
+                "sortable": true,
+                "rules": [{ "rule": "maxFiles", "value": 6, "message": "最多 6 個檔案。" }],
+                "extra": [
+                  { "type": "text", "name": "link", "label": "連結" },
+                  { "type": "switch", "name": "visible", "label": "顯示" }
+                ]
+              }
+            },
+            {
+              "type": "field",
+              "field": {
+                "type": "upload",
+                "name": "manual",
+                "label": "說明書",
+                "kind": "file",
+                "multiple": false,
+                "accept": ["application/pdf"],
+                "maxSize": 10485760
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "values": {
+      "title": "春季訂單",
+      "password": "",
+      "total": "1280.50",
+      "promo": { "start": "2026-03-01", "end": "2026-03-31" },
+      "meta": { "color": "red", "images": [] }
+    },
+    "submit": { "method": "put", "url": "/admin/orders/42", "label": "儲存" },
+    "after": { "options": ["list", "edit", "create", "view"], "default": "list" },
+    "presentation": "page",
+    "size": "lg",
+    "listUrl": "/admin/orders",
+    "uploadUrl": "/admin/orders/upload"
+  }
+}

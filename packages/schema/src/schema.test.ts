@@ -3,9 +3,12 @@ import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020';
 import { describe, expect, it } from 'vitest';
 import {
+  ClientRuleSchema,
   DisplaySchema,
   emitJsonSchema,
+  FieldDefSchema,
   FilterInputSchema,
+  FormNodeSchema,
   InlineEditorSchema,
   SCHEMA_VERSION,
   validateEnvelope,
@@ -22,13 +25,43 @@ const ajv = new Ajv2020({ strict: true });
 const checkEnvelope = ajv.compile(v0);
 const checkShared = ajv.compile({ $ref: '#/$defs/SharedProps', $defs: v0.$defs });
 
-/** union 各分支 `type` 欄位的所有字面值。 */
-function variantTypes(union: { anyOf: unknown[] }): string[] {
-  return union.anyOf.flatMap((branch) => {
-    const t = (branch as { properties: { type: { const?: string; anyOf?: { const: string }[] } } })
-      .properties.type;
+type Literals = { const?: string; anyOf?: { const: string }[] };
+
+/** union 各分支判別欄位（預設 `type`）的所有字面值。 */
+function variantTypes(union: unknown, key = 'type'): string[] {
+  return (union as { anyOf: unknown[] }).anyOf.flatMap((branch) => {
+    const t = (branch as { properties: Record<string, Literals> }).properties[key] as Literals;
     return t.anyOf ? t.anyOf.map((l) => l.const) : [t.const as string];
   });
+}
+
+const fixture = (dir: string, name: string): unknown => load(dir).find(([n]) => n === name)?.[1];
+
+type AnyNode = {
+  type: string;
+  field?: AnyField;
+  children?: AnyNode[];
+  columns?: { children: AnyNode[] }[];
+};
+type AnyField = { type: string; rules?: { rule: string }[]; extra?: AnyField[] };
+
+/** 走訪版型樹，收集所有節點、欄位（含 upload.extra）與其所在的 embeds 深度。 */
+function walk(nodes: AnyNode[], inEmbeds = false) {
+  const out = { nodes: [] as AnyNode[], fields: [] as AnyField[], uploadsInEmbedsWithExtra: 0 };
+  const visitField = (f: AnyField, embeds: boolean) => {
+    out.fields.push(f);
+    if (f.type === 'upload' && embeds && (f.extra?.length ?? 0) > 0) out.uploadsInEmbedsWithExtra++;
+    for (const e of f.extra ?? []) visitField(e, embeds);
+  };
+  const visit = (n: AnyNode, embeds: boolean) => {
+    out.nodes.push(n);
+    if (n.field) visitField(n.field, embeds);
+    const nested = embeds || n.type === 'embeds';
+    for (const c of n.children ?? []) visit(c, nested);
+    for (const col of n.columns ?? []) for (const c of col.children) visit(c, nested);
+  };
+  for (const n of nodes) visit(n, inEmbeds);
+  return out;
 }
 
 type GridFull = {
@@ -40,9 +73,61 @@ type GridFull = {
   };
 };
 
-describe('schema 0.2', () => {
-  it('is version 0.2.0', () => {
-    expect(SCHEMA_VERSION).toBe('0.2.0');
+describe('schema 0.3', () => {
+  it('is version 0.3.0', () => {
+    expect(SCHEMA_VERSION).toBe('0.3.0');
+  });
+
+  it('form-full.json covers every field type, node type and client rule, and an upload with extra inside embeds', () => {
+    const full = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: AnyNode[] } };
+    };
+    const { nodes, fields, uploadsInEmbedsWithExtra } = walk(full.page.form.nodes);
+    const sorted = (xs: Iterable<string>) => [...new Set(xs)].sort();
+    expect(sorted(nodes.map((n) => n.type))).toEqual(sorted(variantTypes(FormNodeSchema)));
+    expect(sorted(fields.map((f) => f.type))).toEqual(sorted(variantTypes(FieldDefSchema)));
+    expect(sorted(fields.flatMap((f) => (f.rules ?? []).map((r) => r.rule)))).toEqual(
+      sorted(variantTypes(ClientRuleSchema, 'rule')),
+    );
+    expect(uploadsInEmbedsWithExtra).toBeGreaterThan(0);
+  });
+
+  it('accepts a form page envelope', () => {
+    expect(validateEnvelope(fixture('fixtures/valid', 'form-horizontal.json'))).toEqual({
+      ok: true,
+    });
+  });
+
+  it('rejects an upload inside upload.extra on both validators', () => {
+    const base = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: { children: { field: { extra: unknown[] } }[] }[] } };
+    };
+    const copy = structuredClone(base);
+    const images = copy.page.form.nodes[2]?.children[1]?.field;
+    images?.extra.push({
+      type: 'upload',
+      name: 'nested',
+      label: '巢狀',
+      kind: 'file',
+      multiple: false,
+      accept: ['application/pdf'],
+      maxSize: 1,
+    });
+    expect(validateEnvelope(copy).ok).toBe(false);
+    expect(checkEnvelope(copy)).toBe(false);
+  });
+
+  it('rejects a column width outside 1–12 on both validators', () => {
+    const base = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: { children: { columns?: { width: number }[] }[] }[] } };
+    };
+    for (const width of [0, 13, 2.5]) {
+      const copy = structuredClone(base);
+      const columns = copy.page.form.nodes[0]?.children[3]?.columns;
+      if (columns?.[0]) columns[0].width = width;
+      expect(validateEnvelope(copy).ok, `width=${width}`).toBe(false);
+      expect(checkEnvelope(copy), `ajv width=${width}`).toBe(false);
+    }
   });
 
   it('grid-full.json covers every display, editor, filter input, newline and _meta', () => {
@@ -148,5 +233,12 @@ describe('v0.json', () => {
       'SharedProps',
       'MenuItem',
     ]);
+  });
+
+  it('hoists the recursive form types to $defs and refers to them by #/$defs refs', () => {
+    const text = JSON.stringify(v0);
+    expect(text.includes('"$ref":"#/$defs/FormNode"')).toBe(true);
+    expect(text.includes('"$ref":"#/$defs/FieldDef"')).toBe(true);
+    expect(/"\$ref":"(?!#\/\$defs\/)/.test(text)).toBe(false);
   });
 });

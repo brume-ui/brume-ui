@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "0.3.0",
+  "page": {
+    "type": "form",
+    "title": "新增訂單",
+    "formId": "orders",
+    "name": "訂單",
+    "mode": "create",
+    "form": {
+      "layout": "horizontal",
+      "nodes": [
+        {
+          "type": "field",
+          "field": { "type": "text", "name": "title", "label": "標題", "required": true }
+        },
+        { "type": "field", "field": { "type": "switch", "name": "active", "label": "啟用" } }
+      ]
+    },
+    "values": { "title": "", "active": true },
+    "submit": { "method": "post", "url": "/admin/orders", "label": "儲存" },
+    "after": { "options": ["list", "create"], "default": "list" },
+    "presentation": "modal",
+    "size": "md"
+  }
+}

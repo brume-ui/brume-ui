@@ -2,9 +2,15 @@ import { type Static, Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { DashboardPageSchema } from './dashboard';
 import { ErrorPageSchema } from './error-page';
+import { FormPageSchema } from './form/form-page';
 import { ListPageSchema } from './list';
 
-export const BrumePageSchema = Type.Union([ListPageSchema, DashboardPageSchema, ErrorPageSchema]);
+export const BrumePageSchema = Type.Union([
+  ListPageSchema,
+  DashboardPageSchema,
+  ErrorPageSchema,
+  FormPageSchema,
+]);
 export type BrumePage = Static<typeof BrumePageSchema>;
 
 export const PageEnvelopeSchema = Type.Object({

@@ -3,7 +3,12 @@ import { OptionSchema } from './display';
 
 export const OptionItemSchema = Type.Intersect([
   OptionSchema,
-  Type.Object({ group: Type.Optional(Type.String()), description: Type.Optional(Type.String()) }),
+  Type.Object({
+    group: Type.Optional(Type.String()),
+    description: Type.Optional(Type.String()),
+    /** 縮排層級，0 起算（樹狀選項攤平後的深度） */
+    depth: Type.Optional(Type.Integer({ minimum: 0 })),
+  }),
 ]);
 export type OptionItem = Static<typeof OptionItemSchema>;
 

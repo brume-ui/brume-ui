@@ -8,10 +8,9 @@ const read = (p: string) => JSON.parse(readFileSync(pkg(p), 'utf8')) as unknown;
 const v0 = read('schema/v0.json') as { $defs: Record<string, unknown> };
 const ajv = new Ajv2020({ strict: true });
 
-const ORDER = [
-  'PageEnvelope',
-  'SharedProps',
-  'MenuItem',
+const PAGE_DEFS = ['PageEnvelope', 'SharedProps', 'MenuItem'];
+/** 有 fixtures/protocol/<def> 的請求／回應定義。 */
+const PROTOCOL_DEFS = [
   'ActionRequest',
   'ActionResponse',
   'CellUpdateRequest',
@@ -22,6 +21,9 @@ const ORDER = [
   'UploadTempResponse',
   'UploadValue',
 ];
+/** 表單的遞迴型別，由 PageEnvelope 的 fixtures 涵蓋。 */
+const FORM_DEFS = ['FormNode', 'FieldDef'];
+const ORDER = [...PAGE_DEFS, ...PROTOCOL_DEFS, ...FORM_DEFS];
 
 const defs = readdirSync(pkg('fixtures/protocol')).sort();
 const files = (def: string, kind: string) =>
@@ -33,7 +35,7 @@ describe('protocol $defs', () => {
   });
 
   it('has fixtures for every protocol def', () => {
-    expect(defs).toEqual(ORDER.slice(3).sort());
+    expect(defs).toEqual([...PROTOCOL_DEFS].sort());
   });
 
   describe.each(defs)('%s', (def) => {
