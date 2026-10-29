@@ -32,9 +32,9 @@
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify && node scripts/copy-fonts.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/nunito": "^5.3.0",
     "@brume-ui/brume-schema": "workspace:*",
     "@brume-ui/brume-tokens": "workspace:*",
+    "@fontsource-variable/nunito": "^5.3.0",
     "@radix-ui/react-alert-dialog": "^1.2.1",
     "@radix-ui/react-checkbox": "^1.4.1",
     "@radix-ui/react-context-menu": "^2.4.1",
@@ -44,6 +44,7 @@
     "@radix-ui/react-radio-group": "^1.5.1",
     "@radix-ui/react-select": "^2.4.1",
     "@radix-ui/react-switch": "^1.4.1",
+    "@radix-ui/react-tabs": "^1.2.1",
     "@radix-ui/react-tooltip": "^1.4.1",
     "@tanstack/react-table": "^8.21.3",
     "clsx": "^2.1.1",

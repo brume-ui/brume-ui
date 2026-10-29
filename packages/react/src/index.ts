@@ -48,6 +48,7 @@ export { EmptyState, type EmptyStateProps } from './components/empty-state';
 export { Field, type FieldControlProps, type FieldProps } from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
+export { NumberInput, type NumberInputProps } from './components/number-input';
 export { Pagination, type PaginationProps } from './components/pagination';
 export { PasswordInput, type PasswordInputProps } from './components/password-input';
 export {
@@ -67,6 +68,8 @@ export { SearchInput, type SearchInputProps } from './components/search-input';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { Skeleton } from './components/skeleton';
 export { Switch, type SwitchProps } from './components/switch';
+export { type TabItem, Tabs, type TabsProps } from './components/tabs';
+export { TagsInput, type TagsInputProps } from './components/tags-input';
 export { TextInput, type TextInputProps } from './components/text-input';
 export { Textarea, type TextareaProps } from './components/textarea';
 export { Thumbnail, type ThumbnailProps } from './components/thumbnail';

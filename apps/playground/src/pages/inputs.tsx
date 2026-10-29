@@ -4,11 +4,14 @@ import {
   type ComboboxLoader,
   DateInput,
   Field,
+  NumberInput,
   QrCode,
   RadioGroup,
   RangeInput,
   type RangeValue,
   SearchInput,
+  Tabs,
+  TagsInput,
 } from '@brume-ui/brume-react';
 import type { OptionItem } from '@brume-ui/brume-schema';
 import { useState } from 'react';
@@ -43,6 +46,18 @@ const loadUsers: ComboboxLoader = ({ q, page }) =>
   });
 const resolveUsers = async (values: string[]) => USERS.filter((u) => values.includes(u.value));
 
+const TAG_SUGGESTIONS = [
+  { value: 'new', label: '新品' },
+  { value: 'sale', label: '特價' },
+  { value: 'limited', label: '限量' },
+];
+
+const TABS = [
+  { key: 'basic', label: '基本資料' },
+  { key: 'price', label: '價格', badge: 'error' as const },
+  { key: 'stock', label: '庫存' },
+];
+
 const STATUS = [
   { value: 'draft', label: '草稿' },
   { value: 'published', label: '上架' },
@@ -60,11 +75,16 @@ export function InputsPage() {
   const [dateTime, setDateTime] = useState('2026-10-28T09:30');
   const [price, setPrice] = useState<RangeValue>({ start: '100' });
   const [created, setCreated] = useState<RangeValue>({});
+  const [amount, setAmount] = useState('1280.50');
+  const [qty, setQty] = useState('12');
+  const [tags, setTags] = useState<string[]>(['new', '夏季']);
+  const [freeTags, setFreeTags] = useState<string[]>([]);
+  const [tab, setTab] = useState('basic');
   return (
     <Page
       name="inputs"
       title="Inputs"
-      lead="SearchInput, Combobox, RadioGroup, CheckboxGroup, DateInput, RangeInput and QrCode."
+      lead="SearchInput, Combobox, RadioGroup, CheckboxGroup, DateInput, RangeInput, NumberInput, TagsInput, Tabs and QrCode."
     >
       <Section title="search">
         <Panel>
@@ -139,6 +159,48 @@ export function InputsPage() {
             <p className="pg-label">建立日期</p>
             <RangeInput label="建立日期" of="date" value={created} onChange={setCreated} />
           </div>
+        </Panel>
+      </Section>
+      <Section title="number + tags">
+        <Panel>
+          <div className="pg-stack">
+            <Field label="售價" description="失焦時補齊兩位小數並加上千分位">
+              <NumberInput
+                value={amount}
+                onChange={setAmount}
+                decimals={2}
+                prefix="NT$"
+                grouping
+                min={0}
+              />
+            </Field>
+            <span data-testid="number-wire">送出：「{amount}」</span>
+            <Field label="數量">
+              <NumberInput value={qty} onChange={setQty} decimals={0} min={0} />
+            </Field>
+            <Field label="標籤" description="最多 5 個">
+              <TagsInput
+                label="標籤"
+                options={TAG_SUGGESTIONS}
+                value={tags}
+                onChange={setTags}
+                max={5}
+                maxLength={20}
+              />
+            </Field>
+            <Field label="關鍵字">
+              <TagsInput label="關鍵字" value={freeTags} onChange={setFreeTags} />
+            </Field>
+          </div>
+        </Panel>
+      </Section>
+      <Section title="tabs">
+        <Panel>
+          <Tabs label="商品" items={TABS} value={tab} onValueChange={setTab}>
+            {(key) => (
+              <p className="pg-label">「{TABS.find((t) => t.key === key)?.label}」的欄位</p>
+            )}
+          </Tabs>
         </Panel>
       </Section>
       <Section title="qr code">
