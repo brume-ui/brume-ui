@@ -80,6 +80,18 @@
           "keys": [{ "key": "featured", "label": "精選" }, { "key": "hot", "label": "熱門" }]
         }
       },
+      { "key": "shipped_at", "label": "出貨時間", "editor": { "type": "date", "withTime": true } },
+      {
+        "key": "discount",
+        "label": "折扣",
+        "numeric": true,
+        "editor": { "type": "currency", "symbol": "NT$", "decimals": 2 }
+      },
+      {
+        "key": "labels",
+        "label": "標籤",
+        "editor": { "type": "tags", "options": [{ "value": "vip", "label": "VIP" }] }
+      },
       {
         "key": "site",
         "label": "網站",
@@ -283,14 +295,58 @@
           "shortcut": "Delete"
         }
       ],
-      "batch": [{ "key": "delete", "label": "刪除", "tone": "danger" }],
-      "tools": [{ "key": "sync", "label": "同步庫存", "tone": "default" }]
+      "batch": [
+        { "key": "delete", "label": "刪除", "tone": "danger" },
+        {
+          "key": "reassign",
+          "label": "轉派",
+          "form": {
+            "title": "轉派訂單",
+            "description": "選擇新的負責人。",
+            "submitLabel": "轉派",
+            "fields": [
+              {
+                "type": "select",
+                "name": "owner",
+                "label": "負責人",
+                "required": true,
+                "options": [{ "value": "1", "label": "王小明" }],
+                "rules": [{ "rule": "required", "message": "負責人為必填。" }]
+              },
+              { "type": "textarea", "name": "reason", "label": "原因", "rows": 3 }
+            ]
+          }
+        }
+      ],
+      "tools": [
+        { "key": "sync", "label": "同步庫存", "tone": "default" },
+        {
+          "key": "import",
+          "label": "匯入",
+          "form": { "fields": [{ "type": "switch", "name": "overwrite", "label": "覆蓋既有資料" }] }
+        }
+      ]
     },
     "export": { "url": "/admin/orders/_brume/export" },
     "endpoints": {
       "action": "/admin/orders/_brume/action/{action}",
       "cell": "/admin/orders/_brume/cell/{id}",
-      "options": "/admin/orders/_brume/options/{source}"
+      "options": "/admin/orders/_brume/options/{source}",
+      "upload": "/admin/orders/_brume/upload"
+    },
+    "resource": {
+      "name": "訂單",
+      "createUrl": "/admin/orders/create",
+      "editUrl": "/admin/orders/{id}/edit",
+      "presentation": "modal"
+    },
+    "quickCreate": {
+      "label": "快速新增",
+      "submitUrl": "/admin/orders",
+      "fields": [
+        { "type": "text", "name": "customer", "label": "客戶", "required": true },
+        { "type": "currency", "name": "amount", "label": "金額", "decimals": 2, "symbol": "NT$" }
+      ]
     },
     "empty": {
       "title": "目前沒有資料",

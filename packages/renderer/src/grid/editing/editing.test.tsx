@@ -269,6 +269,24 @@ describe('text editors', () => {
   });
 });
 
+describe('editors without an inline control yet', () => {
+  it('date, currency and tags cells show their display, read-only', () => {
+    const page: ListPage = {
+      ...orders,
+      columns: [
+        { key: 'no', label: '編號' },
+        { key: 'customer', label: '客戶', editor: { type: 'date' } },
+        { key: 'price', label: '價格', editor: { type: 'currency', symbol: 'NT$', decimals: 0 } },
+        { key: 'tags', label: '標籤', editor: { type: 'tags' } },
+      ],
+    };
+    setup(saved(), page);
+    expect(row1().getByText('Ann')).toBeTruthy();
+    expect(row1().getByText('NT$1,200')).toBeTruthy();
+    expect(row1().queryAllByRole('button')).toHaveLength(0);
+  });
+});
+
 describe('errors', () => {
   const invalid: HttpResponse = {
     status: 422,

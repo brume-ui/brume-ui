@@ -26,6 +26,8 @@ const IdSchema = Type.Union([Type.String(), Type.Number()]);
 export const ActionRequestSchema = Type.Object({
   target: Type.Union([Type.Literal('row'), Type.Literal('batch'), Type.Literal('tool')]),
   ids: Type.Array(IdSchema),
+  /** `ActionDef.form` 收集的值；422 的鍵是 input 內的值路徑，不加 `input.` 前綴 */
+  input: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
 });
 export type ActionRequest = Static<typeof ActionRequestSchema>;
 
@@ -45,7 +47,10 @@ export const CellUpdateResponseSchema = Type.Object({
 });
 export type CellUpdateResponse = Static<typeof CellUpdateResponseSchema>;
 
-/** 4xx / 5xx，與 Laravel 預設 JSON 錯誤相容。 */
+/**
+ * 4xx / 5xx，與 Laravel 預設 JSON 錯誤相容。422 的 `errors` 鍵是值的點路徑
+ * （`meta.color`、`images.2.extra.link`），相對於送出值的根。
+ */
 export const ErrorResponseSchema = Type.Object({
   message: Type.String(),
   errors: Type.Optional(Type.Record(Type.String(), Type.Array(Type.String()))),

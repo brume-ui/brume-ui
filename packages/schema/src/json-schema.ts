@@ -1,6 +1,7 @@
 import { FieldDefSchema } from './form/field';
 import { FormNodeSchema } from './form/layout';
 import { PageEnvelopeSchema } from './page';
+import { FormSubmitRequestSchema, FormSubmitResponseSchema } from './protocol/form';
 import {
   ActionRequestSchema,
   ActionResponseSchema,
@@ -12,7 +13,7 @@ import { OptionsResponseSchema, PickerSearchResponseSchema } from './protocol/op
 import { UploadTempResponseSchema, UploadValueSchema } from './protocol/upload';
 import { MenuItemSchema, SharedPropsSchema } from './shared';
 
-/** 以 `$id` 表示的遞迴型別；輸出時一律 hoist 到 `$defs`。 */
+/** 以 `$id` 表示的具名型別（MenuItem、FormNode 為遞迴）；輸出時一律 hoist 到 `$defs`。 */
 const RECURSIVE_IDS = new Set(['MenuItem', 'FormNode', 'FieldDef']);
 
 /**
@@ -32,7 +33,7 @@ function hoist(node: unknown): unknown {
 
 const plain = (schema: unknown): unknown => JSON.parse(JSON.stringify(schema));
 
-/** 遞迴型別本身的定義：拿掉最外層的 `$id`，內部 hoist。 */
+/** 具名型別本身的定義：拿掉最外層的 `$id`，內部 hoist。 */
 function recursiveDef(schema: unknown): unknown {
   const { $id: _id, ...rest } = plain(schema) as Record<string, unknown>;
   return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, hoist(v)]));
@@ -58,6 +59,8 @@ export function emitJsonSchema(): string {
       UploadValue: plain(UploadValueSchema),
       FormNode: recursiveDef(FormNodeSchema),
       FieldDef: recursiveDef(FieldDefSchema),
+      FormSubmitRequest: plain(FormSubmitRequestSchema),
+      FormSubmitResponse: plain(FormSubmitResponseSchema),
     },
   };
   return `${JSON.stringify(doc, null, 2)}\n`;

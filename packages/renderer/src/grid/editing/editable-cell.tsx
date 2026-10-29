@@ -37,8 +37,13 @@ export function EditableCell(props: CellProps) {
     case 'radio':
     case 'checkbox':
       return <ChoiceCell {...props} editor={editor} />;
-    default:
+    case 'text':
+    case 'textarea':
+    case 'number':
       return <TextCell {...props} editor={editor} />;
+    default:
+      // date, currency and tags (schema 0.3) have no inline editor yet; the cell stays read-only.
+      return props.display;
   }
 }
 

@@ -1,0 +1,15 @@
+{
+  "id": 12,
+  "feedback": {
+    "toast": {
+      "type": "success",
+      "message": "已新增訂單"
+    }
+  },
+  "urls": {
+    "list": "/admin/orders",
+    "edit": "/admin/orders/12/edit",
+    "create": "/admin/orders/create",
+    "view": "/admin/orders/12"
+  }
+}

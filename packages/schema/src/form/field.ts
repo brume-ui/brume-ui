@@ -106,9 +106,12 @@ export type FieldDef = FieldBase &
         maxFiles?: number;
         sortable?: boolean;
         /** 每個檔案的附加欄位，只能是非 upload 的扁平欄位 */
-        extra?: Exclude<FieldDef, { type: 'upload' }>[];
+        extra?: PlainFieldDef[];
       }
   );
+
+/** upload 以外的欄位：`upload.extra`、Action 的輸入欄位、快速新增用。 */
+export type PlainFieldDef = Exclude<FieldDef, { type: 'upload' }>;
 
 const literals = <T extends string>(...values: T[]) =>
   values.length === 1
@@ -193,3 +196,12 @@ export const FieldDefRaw = Type.Union(
 );
 
 export const FieldDefSchema = FieldDefRaw as unknown as TSchema & { static: FieldDef };
+
+/**
+ * upload 以外的欄位。輸出到 v0.json 時是 `FieldDef` 的 `$ref` 加上 `not upload`，
+ * 不重複整份定義。用於 Action 的輸入欄位與快速新增，兩者都不經過上傳流程。
+ */
+export const PlainFieldDefSchema = Type.Intersect([
+  FieldDefSchema,
+  Type.Not(Type.Object({ type: Type.Literal('upload') })),
+]) as unknown as TSchema & { static: PlainFieldDef };

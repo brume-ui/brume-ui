@@ -66,6 +66,9 @@ function walk(nodes: AnyNode[], inEmbeds = false) {
 
 type GridFull = {
   page: {
+    resource?: { presentation: string };
+    quickCreate?: { fields: unknown[] };
+    actions: Record<'row' | 'batch' | 'tools', { form?: { fields: unknown[] } }[]>;
     columns: { display?: { type: string }; editor?: { type: string } }[];
     rows: { _meta?: unknown }[];
     filters: { items: { type?: string; input?: { type: string } }[] };
@@ -143,6 +146,38 @@ describe('schema 0.3', () => {
     expect([...inputs].sort()).toEqual(variantTypes(FilterInputSchema).sort());
     expect(filters.items.some((i) => i.type === 'newline')).toBe(true);
     expect(rows.some((r) => r._meta !== undefined)).toBe(true);
+    expect(full.page.resource?.presentation).toBe('modal');
+    expect(full.page.quickCreate?.fields.length).toBeGreaterThan(0);
+    const actions = [
+      ...full.page.actions.row,
+      ...full.page.actions.batch,
+      ...full.page.actions.tools,
+    ];
+    expect(actions.some((a) => (a.form?.fields.length ?? 0) > 0)).toBe(true);
+  });
+
+  it('rejects an upload in an action form or in quick create on both validators', () => {
+    const base = fixture('fixtures/valid', 'grid-full.json') as GridFull;
+    const upload = {
+      type: 'upload',
+      name: 'file',
+      label: '檔案',
+      kind: 'file',
+      multiple: false,
+      accept: ['text/csv'],
+      maxSize: 1024,
+    };
+    const inAction = structuredClone(base);
+    inAction.page.actions.tools.find((a) => a.form)?.form?.fields.push(upload);
+    const inQuickCreate = structuredClone(base);
+    inQuickCreate.page.quickCreate?.fields.push(upload);
+    for (const [name, copy] of [
+      ['action form', inAction],
+      ['quick create', inQuickCreate],
+    ] as const) {
+      expect(validateEnvelope(copy).ok, name).toBe(false);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(false);
+    }
   });
 });
 

@@ -1,4 +1,5 @@
 import { type Static, Type } from '@sinclair/typebox';
+import { PlainFieldDefSchema } from './form/field';
 import { ActionDefSchema } from './protocol/action';
 import { CellContentSchema, DisplaySchema, InlineEditorSchema } from './protocol/display';
 import {
@@ -98,6 +99,25 @@ export const ListPageSchema = Type.Object({
       options: Type.Optional(Type.String()),
       /** POST multipart 暫存上傳（`UploadTempResponse`），沒有佔位字 */
       upload: Type.Optional(Type.String()),
+    }),
+  ),
+  /** 列表對應的資源：新增、編輯表單的網址與呈現方式 */
+  resource: Type.Optional(
+    Type.Object({
+      /** 顯示名稱，例如「訂單」 */
+      name: Type.String(),
+      createUrl: Type.Optional(Type.String()),
+      /** 含 `{id}` */
+      editUrl: Type.Optional(Type.String()),
+      presentation: Type.Union([Type.Literal('modal'), Type.Literal('page')]),
+    }),
+  ),
+  /** POST `FormSubmitRequest` 到 `submitUrl`，回 `FormSubmitResponse`。欄位不可含 upload。 */
+  quickCreate: Type.Optional(
+    Type.Object({
+      label: Type.String(),
+      fields: Type.Array(PlainFieldDefSchema),
+      submitUrl: Type.String(),
     }),
   ),
   empty: Type.Optional(

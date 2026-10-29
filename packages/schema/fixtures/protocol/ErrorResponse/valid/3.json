@@ -1,0 +1,7 @@
+{
+  "message": "有 2 個欄位需要修正",
+  "errors": {
+    "meta.color": ["顏色格式不正確。"],
+    "images.2.extra.link": ["連結格式不正確。"]
+  }
+}

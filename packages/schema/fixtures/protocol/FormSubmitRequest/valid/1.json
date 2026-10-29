@@ -1,0 +1,23 @@
+{
+  "values": {
+    "title": "春季特賣",
+    "meta": {
+      "color": "#ff0000"
+    },
+    "images": [
+      {
+        "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "extra": {
+          "link": ""
+        }
+      },
+      {
+        "path": "orders/1/x.jpg",
+        "url": "/storage/orders/1/x.jpg"
+      }
+    ],
+    "amount": "1280.50",
+    "starts_at": "2026-10-29T09:30"
+  },
+  "after": "edit"
+}

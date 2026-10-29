@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020';
 import { describe, expect, it } from 'vitest';
+import { FORM_HEADER, UPLOAD_PARAMS } from '../index';
 
 const pkg = (p: string) => fileURLToPath(new URL(`../../${p}`, import.meta.url));
 const read = (p: string) => JSON.parse(readFileSync(pkg(p), 'utf8')) as unknown;
@@ -23,7 +24,9 @@ const PROTOCOL_DEFS = [
 ];
 /** 表單的遞迴型別，由 PageEnvelope 的 fixtures 涵蓋。 */
 const FORM_DEFS = ['FormNode', 'FieldDef'];
-const ORDER = [...PAGE_DEFS, ...PROTOCOL_DEFS, ...FORM_DEFS];
+/** 表單送出的請求／回應，有 fixtures/protocol/<def>。 */
+const FORM_PROTOCOL_DEFS = ['FormSubmitRequest', 'FormSubmitResponse'];
+const ORDER = [...PAGE_DEFS, ...PROTOCOL_DEFS, ...FORM_DEFS, ...FORM_PROTOCOL_DEFS];
 
 const defs = readdirSync(pkg('fixtures/protocol')).sort();
 const files = (def: string, kind: string) =>
@@ -35,7 +38,7 @@ describe('protocol $defs', () => {
   });
 
   it('has fixtures for every protocol def', () => {
-    expect(defs).toEqual([...PROTOCOL_DEFS].sort());
+    expect(defs).toEqual([...PROTOCOL_DEFS, ...FORM_PROTOCOL_DEFS].sort());
   });
 
   describe.each(defs)('%s', (def) => {
@@ -55,5 +58,12 @@ describe('protocol $defs', () => {
     it.each(files(def, 'invalid'))('rejects invalid/%s', (f) => {
       expect(check(read(`fixtures/protocol/${def}/invalid/${f}`))).toBe(false);
     });
+  });
+});
+
+describe('form protocol constants', () => {
+  it('names the form header and the upload parameters', () => {
+    expect(FORM_HEADER).toBe('X-Brume-Form');
+    expect(UPLOAD_PARAMS).toEqual({ file: 'file', field: 'field' });
   });
 });

@@ -98,5 +98,15 @@ export const InlineEditorSchema = Type.Union([
     type: Type.Literal('switchGroup'),
     keys: Type.Array(Type.Object({ key: Type.String(), label: Type.String() })),
   }),
+  /** 值為 `YYYY-MM-DD`；`withTime` 時為 `YYYY-MM-DDTHH:mm` */
+  Type.Object({ type: Type.Literal('date'), withTime: Type.Optional(Type.Boolean()) }),
+  /** 值為固定小數位數的字串（例如 `"1280.50"`）或 null */
+  Type.Object({
+    type: Type.Literal('currency'),
+    symbol: Type.String(),
+    decimals: Type.Integer({ minimum: 0 }),
+  }),
+  /** 值為 `string[]`；`options` 是建議值，仍可輸入其他值 */
+  Type.Object({ type: Type.Literal('tags'), options: Type.Optional(Type.Array(OptionSchema)) }),
 ]);
 export type InlineEditor = Static<typeof InlineEditorSchema>;

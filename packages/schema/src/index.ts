@@ -12,6 +12,8 @@ export {
   type FieldBase,
   type FieldDef,
   FieldDefSchema,
+  type PlainFieldDef,
+  PlainFieldDefSchema,
 } from './form/field';
 export { type AfterSave, AfterSaveSchema, type FormPage, FormPageSchema } from './form/form-page';
 export {
@@ -69,6 +71,13 @@ export {
   SelectorDefSchema,
 } from './protocol/filter';
 export {
+  FORM_HEADER,
+  type FormSubmitRequest,
+  FormSubmitRequestSchema,
+  type FormSubmitResponse,
+  FormSubmitResponseSchema,
+} from './protocol/form';
+export {
   type ActionRequest,
   ActionRequestSchema,
   type ActionResponse,
@@ -103,6 +112,7 @@ export {
   withGridQuery,
 } from './protocol/query';
 export {
+  UPLOAD_PARAMS,
   type UploadTempResponse,
   UploadTempResponseSchema,
   type UploadValue,

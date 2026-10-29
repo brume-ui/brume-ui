@@ -1,16 +1,19 @@
 # Brume 請求與回應協定
 
-端點網址一律來自 `page.endpoints`（含 `{action}`、`{id}`、`{source}` 佔位字，值需 `encodeURIComponent`）。型別定義在 `schema/v0.json` 的 `$defs`。
+端點網址一律來自 schema：列表的 `page.endpoints`（含 `{action}`、`{id}`、`{source}` 佔位字，值需 `encodeURIComponent`），表單的 `page.submit.url`、`page.uploadUrl`，以及 `ListPage.resource.*`、`ListPage.quickCreate.submitUrl`。型別定義在 `schema/v0.json` 的 `$defs`。表單的細節見 [forms.md](./forms.md)。
 
 ## 端點
 
-| 用途                             | Method         | 請求                           | 成功回應                   |
-| -------------------------------- | -------------- | ------------------------------ | -------------------------- |
-| Action (`endpoints.action`)      | POST           | `ActionRequest`                | 200 `ActionResponse`       |
-| 行內編輯 (`endpoints.cell`)      | PATCH          | `CellUpdateRequest`            | 200 `CellUpdateResponse`   |
-| 遠端選項 (`endpoints.options`)   | GET            | `?q=&page=&per_page=&value[]=` | 200 `OptionsResponse`      |
-| 挑選器搜尋 (`endpoints.options`) | GET            | 同上，多一個 `section=`        | 200 `PickerSearchResponse` |
-| 上傳暫存 (`endpoints.upload`)    | POST multipart | `file`、`field`                | 200 `UploadTempResponse`   |
+| 用途                                                    | Method                                       | 請求                             | 成功回應                                                                  |
+| ------------------------------------------------------- | -------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------- |
+| Action (`endpoints.action`)                             | POST                                         | `ActionRequest`                  | 200 `ActionResponse`                                                      |
+| 行內編輯 (`endpoints.cell`)                             | PATCH                                        | `CellUpdateRequest`              | 200 `CellUpdateResponse`                                                  |
+| 遠端選項 (`endpoints.options`)                          | GET                                          | `?q=&page=&per_page=&value[]=`   | 200 `OptionsResponse`                                                     |
+| 挑選器搜尋 (`endpoints.options`)                        | GET                                          | 同上，多一個 `section=`          | 200 `PickerSearchResponse`                                                |
+| 上傳暫存 (`endpoints.upload`、`page.uploadUrl`)         | POST multipart                               | `UPLOAD_PARAMS`：`file`、`field` | 200 `UploadTempResponse`                                                  |
+| 表單送出 (`page.submit.url`)                            | POST（新增）／PUT（更新）                    | `FormSubmitRequest`              | 200 `FormSubmitResponse`                                                  |
+| 快速新增 (`quickCreate.submitUrl`)                      | POST                                         | `FormSubmitRequest`              | 200 `FormSubmitResponse`                                                  |
+| 彈窗載入表單 (`resource.createUrl`、`resource.editUrl`) | GET，標頭 `FORM_HEADER`（`X-Brume-Form: 1`） | —                                | 200 `PageEnvelope`（`page.type === 'form'`），回應帶 `Vary: X-Brume-Form` |
 
 ## 狀態碼
 
@@ -19,7 +22,7 @@
 - 403：不允許。
 - 404：id 不在範圍內。
 - 419：CSRF 逾時。
-- 422：驗證錯誤。`ErrorResponse.errors` 的鍵為欄位名；行內編輯時為 column key。
+- 422：驗證錯誤。`ErrorResponse.errors` 的鍵是值的點路徑（`meta.color`、`images.2.extra.link`），相對於送出值的根：表單為 `values`，Action 為 `input`，都不加前綴；行內編輯時為 column key。
 - 其他 4xx / 5xx：`ErrorResponse`，與 Laravel 預設 JSON 錯誤相容。
 
 ## 回饋（Feedback）
@@ -32,7 +35,7 @@
 
 ## 上傳生命週期
 
-`POST endpoints.upload`（multipart，欄位 `file` 與 `field`）暫存（`UploadTempResponse.token`）→ 表單儲存時以 token 歸檔（`UploadValue` 的 `{ token }` 變成 `{ path, url }`）→ 孤兒檔在 `expiresAt` 後清除。`UploadValue` 的兩種形狀互斥：不允許其他屬性，所以同時帶 `token` 與 `path` 的值不合法。上傳服務本身在子計畫 2 實作。
+見 [forms.md 的上傳生命週期](./forms.md#上傳生命週期)。
 
 ## 挑選器
 

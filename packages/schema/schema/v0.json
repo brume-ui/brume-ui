@@ -550,6 +550,75 @@
                                 }
                               }
                             }
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "type"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": "date",
+                                "type": "string"
+                              },
+                              "withTime": {
+                                "type": "boolean"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "type",
+                              "symbol",
+                              "decimals"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": "currency",
+                                "type": "string"
+                              },
+                              "symbol": {
+                                "type": "string"
+                              },
+                              "decimals": {
+                                "minimum": 0,
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "type"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": "tags",
+                                "type": "string"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ],
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    },
+                                    "disabled": {
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              }
+                            }
                           }
                         ]
                       },
@@ -1559,6 +1628,47 @@
                           },
                           "exposed": {
                             "type": "boolean"
+                          },
+                          "form": {
+                            "type": "object",
+                            "required": [
+                              "fields"
+                            ],
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "fields": {
+                                "type": "array",
+                                "items": {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/$defs/FieldDef"
+                                    },
+                                    {
+                                      "not": {
+                                        "type": "object",
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "properties": {
+                                          "type": {
+                                            "const": "upload",
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "submitLabel": {
+                                "type": "string"
+                              }
+                            }
                           }
                         }
                       }
@@ -1616,6 +1726,47 @@
                           },
                           "exposed": {
                             "type": "boolean"
+                          },
+                          "form": {
+                            "type": "object",
+                            "required": [
+                              "fields"
+                            ],
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "fields": {
+                                "type": "array",
+                                "items": {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/$defs/FieldDef"
+                                    },
+                                    {
+                                      "not": {
+                                        "type": "object",
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "properties": {
+                                          "type": {
+                                            "const": "upload",
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "submitLabel": {
+                                "type": "string"
+                              }
+                            }
                           }
                         }
                       }
@@ -1673,6 +1824,47 @@
                           },
                           "exposed": {
                             "type": "boolean"
+                          },
+                          "form": {
+                            "type": "object",
+                            "required": [
+                              "fields"
+                            ],
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "fields": {
+                                "type": "array",
+                                "items": {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/$defs/FieldDef"
+                                    },
+                                    {
+                                      "not": {
+                                        "type": "object",
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "properties": {
+                                          "type": {
+                                            "const": "upload",
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "submitLabel": {
+                                "type": "string"
+                              }
+                            }
                           }
                         }
                       }
@@ -1703,6 +1895,76 @@
                       "type": "string"
                     },
                     "upload": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "resource": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "presentation"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "createUrl": {
+                      "type": "string"
+                    },
+                    "editUrl": {
+                      "type": "string"
+                    },
+                    "presentation": {
+                      "anyOf": [
+                        {
+                          "const": "modal",
+                          "type": "string"
+                        },
+                        {
+                          "const": "page",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "quickCreate": {
+                  "type": "object",
+                  "required": [
+                    "label",
+                    "fields",
+                    "submitUrl"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/FieldDef"
+                          },
+                          {
+                            "not": {
+                              "type": "object",
+                              "required": [
+                                "type"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "const": "upload",
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "submitUrl": {
                       "type": "string"
                     }
                   }
@@ -2362,6 +2624,12 @@
                 "type": "number"
               }
             ]
+          }
+        },
+        "input": {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {}
           }
         }
       }
@@ -9448,6 +9716,136 @@
           }
         }
       ]
+    },
+    "FormSubmitRequest": {
+      "type": "object",
+      "required": [
+        "values"
+      ],
+      "properties": {
+        "values": {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {}
+          }
+        },
+        "after": {
+          "anyOf": [
+            {
+              "const": "list",
+              "type": "string"
+            },
+            {
+              "const": "edit",
+              "type": "string"
+            },
+            {
+              "const": "create",
+              "type": "string"
+            },
+            {
+              "const": "view",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "FormSubmitResponse": {
+      "type": "object",
+      "required": [
+        "id",
+        "urls"
+      ],
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "toast": {
+              "type": "object",
+              "required": [
+                "type",
+                "message"
+              ],
+              "properties": {
+                "type": {
+                  "anyOf": [
+                    {
+                      "const": "success",
+                      "type": "string"
+                    },
+                    {
+                      "const": "error",
+                      "type": "string"
+                    },
+                    {
+                      "const": "info",
+                      "type": "string"
+                    },
+                    {
+                      "const": "warning",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            },
+            "refresh": {
+              "type": "boolean"
+            },
+            "redirect": {
+              "type": "string"
+            },
+            "download": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "urls": {
+          "type": "object",
+          "required": [
+            "edit"
+          ],
+          "properties": {
+            "list": {
+              "type": "string"
+            },
+            "edit": {
+              "type": "string"
+            },
+            "create": {
+              "type": "string"
+            },
+            "view": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   }
 }

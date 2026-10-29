@@ -1,0 +1,11 @@
+{
+  "target": "batch",
+  "ids": [1, 2],
+  "input": {
+    "reason": "缺貨",
+    "notify": true,
+    "meta": {
+      "note": ""
+    }
+  }
+}

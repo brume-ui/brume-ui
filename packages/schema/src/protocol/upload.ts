@@ -2,7 +2,14 @@ import { type Static, Type } from '@sinclair/typebox';
 
 const ExtraSchema = Type.Optional(Type.Record(Type.String(), Type.Unknown()));
 
-/** POST multipart（`file`、`field`）到 `endpoints.upload` 暫存上傳。 */
+/** 暫存上傳的 multipart 欄位名稱（POST `page.uploadUrl` 或 `endpoints.upload`）。 */
+export const UPLOAD_PARAMS = {
+  file: 'file',
+  /** 欄位的完整值路徑，例如 `images` 或 `gallery.cover` */
+  field: 'field',
+} as const;
+
+/** POST multipart（`UPLOAD_PARAMS`）到 `page.uploadUrl` 或 `endpoints.upload` 暫存上傳。 */
 export const UploadTempResponseSchema = Type.Object({
   token: Type.String(),
   name: Type.String(),
