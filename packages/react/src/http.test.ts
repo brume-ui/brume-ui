@@ -8,6 +8,11 @@ function stubFetch(impl: (url: string, init: RequestInit) => Promise<Response>) 
   return fn;
 }
 
+function sentHeaders(fetchMock: ReturnType<typeof stubFetch>): Record<string, string> {
+  const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+  return init.headers as Record<string, string>;
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   // biome-ignore lint/suspicious/noDocumentCookie: tests seed the XSRF cookie directly
@@ -31,6 +36,45 @@ describe('fetchJson', () => {
       'X-XSRF-TOKEN': 'a=b/c',
       'Content-Type': 'application/json',
     });
+  });
+
+  it('sends PUT with a JSON body', async () => {
+    const fetchMock = stubFetch(async () => new Response('{}', { status: 200 }));
+    await fetchJson({ method: 'put', url: '/x/1', body: { a: 1 } });
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.method).toBe('PUT');
+    expect(init.body).toBe('{"a":1}');
+  });
+
+  it('custom headers are sent but cannot replace the CSRF header', async () => {
+    // biome-ignore lint/suspicious/noDocumentCookie: tests seed the XSRF cookie directly
+    document.cookie = 'XSRF-TOKEN=real';
+    const fetchMock = stubFetch(async () => new Response('{}', { status: 200 }));
+    await fetchJson({
+      method: 'get',
+      url: '/x',
+      headers: {
+        'X-Brume-Form': '1',
+        'x-xsrf-token': 'forged',
+        'X-XSRF-TOKEN': 'forged',
+        accept: 'text/html',
+        'X-Requested-With': 'evil',
+      },
+    });
+    const headers = sentHeaders(fetchMock);
+    expect(headers).toEqual({
+      'X-Brume-Form': '1',
+      Accept: 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-XSRF-TOKEN': 'real',
+    });
+  });
+
+  it('does not let a custom CSRF header through when there is no cookie', async () => {
+    const fetchMock = stubFetch(async () => new Response('{}', { status: 200 }));
+    await fetchJson({ method: 'get', url: '/x', headers: { 'X-XSRF-TOKEN': 'forged' } });
+    const headers = sentHeaders(fetchMock);
+    expect(headers['X-XSRF-TOKEN']).toBeUndefined();
   });
 
   it('omits the XSRF header and body for GET without a cookie', async () => {

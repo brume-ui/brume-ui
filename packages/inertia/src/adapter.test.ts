@@ -59,3 +59,80 @@ describe('createInertiaAdapter request', () => {
     }
   });
 });
+
+describe('createInertiaAdapter guardNavigation', () => {
+  type Before = (event: {
+    detail: { visit: { method: string; url: URL } };
+    preventDefault(): void;
+  }) => void;
+
+  function setup(allow: (url: string) => boolean) {
+    const off = vi.fn();
+    let before: Before | undefined;
+    const on = vi.spyOn(router, 'on').mockImplementation(((name: string, cb: Before) => {
+      if (name === 'before') before = cb;
+      return off;
+    }) as never);
+    const remove = vi.spyOn(window, 'removeEventListener');
+    const unregister = createInertiaAdapter().guardNavigation(allow);
+    const fire = (method: string, href: string) => {
+      const event = {
+        detail: { visit: { method, url: new URL(href, 'http://localhost') } },
+        preventDefault: vi.fn(),
+      };
+      before?.(event);
+      return event;
+    };
+    return { on, off, remove, unregister, fire };
+  }
+
+  it('prevents a GET visit when the guard refuses, passing the path', () => {
+    const allow = vi.fn(() => false);
+    const { fire, unregister } = setup(allow);
+    const event = fire('get', '/admin/users?page=2#top');
+    expect(allow).toHaveBeenCalledWith('/admin/users?page=2#top');
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    unregister();
+  });
+
+  it('lets a GET visit through when the guard allows it', () => {
+    const { fire, unregister } = setup(() => true);
+    expect(fire('get', '/a').preventDefault).not.toHaveBeenCalled();
+    unregister();
+  });
+
+  it('never asks the guard about POST/PUT visits', () => {
+    const allow = vi.fn(() => false);
+    const { fire, unregister } = setup(allow);
+    for (const method of ['post', 'put', 'patch', 'delete']) {
+      expect(fire(method, '/save').preventDefault).not.toHaveBeenCalled();
+    }
+    expect(allow).not.toHaveBeenCalled();
+    unregister();
+  });
+
+  it('blocks tab close while the guard refuses', () => {
+    const { unregister } = setup(() => false);
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    unregister();
+  });
+
+  it('does not block tab close when allowed', () => {
+    const { unregister } = setup(() => true);
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    unregister();
+  });
+
+  it('the unregister function removes both the router listener and beforeunload', () => {
+    const { off, unregister } = setup(() => false);
+    unregister();
+    expect(off).toHaveBeenCalledOnce();
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  });
+});

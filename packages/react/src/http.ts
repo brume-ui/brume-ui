@@ -2,14 +2,22 @@ import type { ErrorResponse } from '@brume-ui/brume-schema';
 import type { Translate } from './i18n';
 
 export interface HttpRequest {
-  method: 'get' | 'post' | 'patch' | 'delete';
+  method: 'get' | 'post' | 'put' | 'patch' | 'delete';
   url: string;
   /** Sent as JSON; a `FormData` body (an upload) is sent as multipart instead. */
   body?: unknown;
   query?: Record<string, string | string[]>;
   /** Aborts the request (e.g. a stale search); an aborted request resolves with status 0. */
   signal?: AbortSignal;
+  /**
+   * Extra request headers (e.g. `X-Brume-Form`). Merged under the safety headers: `Accept`,
+   * `X-Requested-With` and `X-XSRF-TOKEN` are always set by `fetchJson` itself, and a custom header
+   * with one of those names (any casing) is silently dropped rather than overriding them.
+   */
+  headers?: Record<string, string>;
 }
+
+const PROTECTED_HEADERS = new Set(['accept', 'x-requested-with', 'x-xsrf-token']);
 
 /** status 0 = 網路錯誤，此時 data = { message }。 */
 export interface HttpResponse<T = unknown> {
@@ -46,10 +54,14 @@ function buildUrl(url: string, query?: HttpRequest['query']): string {
 
 /** 帶 CSRF 的 JSON 請求。不論狀態碼都 resolve；網路錯誤回 status 0。 */
 export async function fetchJson<T = unknown>(req: HttpRequest): Promise<HttpResponse<T>> {
-  const headers: Record<string, string> = {
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries(req.headers ?? {})) {
+    if (!PROTECTED_HEADERS.has(name.toLowerCase())) headers[name] = value;
+  }
+  Object.assign(headers, {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
-  };
+  });
   const token = readXsrfToken();
   if (token) headers['X-XSRF-TOKEN'] = token;
   const init: RequestInit = {

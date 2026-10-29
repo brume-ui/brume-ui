@@ -35,3 +35,26 @@ describe('createMemoryAdapter request', () => {
     expect(a.calls[0]?.fn).toBe('request');
   });
 });
+
+describe('createMemoryAdapter guardNavigation', () => {
+  it('does not record a visit a guard refuses, and works again once unregistered', () => {
+    const a = createMemoryAdapter('/start');
+    const allow = vi.fn(() => false);
+    const off = a.guardNavigation(allow);
+    a.visit('/blocked');
+    expect(allow).toHaveBeenCalledWith('/blocked');
+    expect(a.calls).toEqual([]);
+    expect(a.currentUrl()).toBe('/start');
+    off();
+    a.visit('/ok');
+    expect(a.calls).toEqual([{ fn: 'visit', args: ['/ok'] }]);
+  });
+
+  it('refuses when any guard refuses', () => {
+    const a = createMemoryAdapter();
+    a.guardNavigation(() => true);
+    a.guardNavigation(() => false);
+    a.visit('/x');
+    expect(a.calls).toEqual([]);
+  });
+});
