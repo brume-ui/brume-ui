@@ -16,7 +16,10 @@ export interface TagsInputProps extends FieldControlProps {
   options?: Option[];
   /** At this many tags the text input is disabled (chips stay removable). */
   max?: number;
-  /** Longest tag, in characters. */
+  /**
+   * Longest tag, in UTF-16 units like a native `maxlength`, applied per tag: typed text stops
+   * there, a longer pasted or comma-split piece is cut, and longer option values are not offered.
+   */
   maxLength?: number;
   /** Default 「輸入後按 Enter 新增」. */
   placeholder?: string;
@@ -72,8 +75,11 @@ export function TagsInput({
   const atMax = max !== undefined && value.length >= max;
   const labelOf = (v: string) => options?.find((o) => o.value === v)?.label ?? v;
   const q = query.trim().toLowerCase();
+  const fits = (v: string) => maxLength === undefined || v.length <= maxLength;
+  const cut = (text: string) => (maxLength === undefined ? text : text.slice(0, maxLength));
   const visible = (options ?? []).filter(
-    (o) => !o.disabled && !value.includes(o.value) && o.label.toLowerCase().includes(q),
+    (o) =>
+      !o.disabled && fits(o.value) && !value.includes(o.value) && o.label.toLowerCase().includes(q),
   );
   const listOpen = open && !atMax && visible.length > 0;
 
@@ -93,14 +99,15 @@ export function TagsInput({
   /** A typed tag: trimmed; the exact label of an option stands for that option's value. */
   const toValue = (text: string) => {
     const trimmed = text.trim();
-    return options?.find((o) => o.label === trimmed && !o.disabled)?.value ?? trimmed;
+    return options?.find((o) => o.label === trimmed && !o.disabled)?.value ?? cut(trimmed);
   };
 
   /** Adds each non-empty value not already there, up to `max`. */
   const add = (values: string[]) => {
     const next = [...value];
     for (const v of values) {
-      if (v !== '' && !next.includes(v) && (max === undefined || next.length < max)) next.push(v);
+      if (v === '' || !fits(v) || next.includes(v)) continue;
+      if (max === undefined || next.length < max) next.push(v);
     }
     if (next.length === value.length) return;
     if (max !== undefined && next.length >= max) refocus.current = 'lastChip';
@@ -112,7 +119,8 @@ export function TagsInput({
     const parts = text.split(SEPARATOR);
     const rest = parts.pop() ?? '';
     if (parts.length > 0) add(parts.map(toValue));
-    setQuery(rest);
+    // Not the input's maxlength: that would cut a pasted 'a,b,c' as a whole.
+    setQuery(cut(rest));
     setActive(-1);
     setOpen(true);
   };
@@ -246,7 +254,6 @@ export function TagsInput({
             autoComplete="off"
             enterKeyHint="enter"
             disabled={disabled || atMax}
-            maxLength={maxLength}
             placeholder={value.length > 0 ? undefined : (placeholder ?? t('tags.placeholder'))}
             value={query}
             onChange={(e) => {

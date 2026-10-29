@@ -122,9 +122,28 @@ describe('TagsInput', () => {
     expect(document.activeElement).toBe(input());
   });
 
-  it('passes maxLength to the input', () => {
-    render(<Harness maxLength={20} />);
-    expect(input().maxLength).toBe(20);
+  it('applies maxLength to each tag: typed, split, pasted and from options', () => {
+    const spy = vi.fn();
+    const options = [
+      { value: 'ok', label: '可' },
+      { value: 'way-too-long', label: '長' },
+    ];
+    render(<Harness maxLength={3} options={options} spy={spy} />);
+    type('abcd');
+    expect(input().value).toBe('abc');
+    // A paste of several tags is not cut as a whole; each piece is.
+    type('abcdef,gh,ijklm');
+    expect(spy).toHaveBeenLastCalledWith(['abc', 'gh']);
+    expect(input().value).toBe('ijk');
+    type('');
+    // An option whose value is longer is neither suggested nor added by its label.
+    type('長');
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(spy).toHaveBeenCalledTimes(1);
+    type('可');
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(spy).toHaveBeenLastCalledWith(['abc', 'gh', 'ok']);
   });
 
   it('suggests options in a listbox; Enter picks the active one, free text still works', () => {

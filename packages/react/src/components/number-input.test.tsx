@@ -89,6 +89,109 @@ describe('NumberInput', () => {
     expect(input().value).toBe('');
   });
 
+  it('takes full-width digits, point and minus from an IME', () => {
+    const spy = vi.fn();
+    render(<Harness decimals={2} min={-100} spy={spy} />);
+    fireEvent.focus(input());
+    type('－１２．５');
+    expect(spy).toHaveBeenLastCalledWith('-12.5');
+    type('１，２８０．５');
+    expect(spy).toHaveBeenLastCalledWith('1280.5');
+  });
+
+  it('removes only commas that form thousands groups; "1,5" is refused', () => {
+    const spy = vi.fn();
+    render(<Harness decimals={2} spy={spy} />);
+    fireEvent.focus(input());
+    for (const text of ['1,5', '12,34', '1,2345']) type(text);
+    expect(spy).not.toHaveBeenCalled();
+    expect(input().value).toBe('');
+  });
+
+  describe('paste', () => {
+    const paste = (text: string) =>
+      fireEvent.paste(input(), { clipboardData: { getData: () => text } });
+    const cases: Array<[string, string]> = [
+      ['NT$1,280', '1280'],
+      ['1 280', '1280'],
+      ['１２８０ 元', '1280'],
+      ['1.255', '1.26'],
+      ['9.995', '10.00'],
+      ['-1,280.5', '-1280.5'],
+    ];
+    for (const [text, wire] of cases) {
+      it(`"${text}" pastes as ${wire}`, () => {
+        const spy = vi.fn();
+        render(<Harness decimals={2} min={-1e6} spy={spy} />);
+        fireEvent.focus(input());
+        paste(text);
+        expect(spy).toHaveBeenLastCalledWith(wire);
+        expect(input().value).toBe(wire);
+      });
+    }
+
+    it('"abc", "1,5" and a minus the field refuses change nothing', () => {
+      const spy = vi.fn();
+      render(<Harness decimals={2} initial="7" spy={spy} />);
+      fireEvent.focus(input());
+      for (const text of ['abc', '1,5', '-3']) paste(text);
+      expect(spy).not.toHaveBeenCalled();
+      expect(input().value).toBe('7.00');
+    });
+
+    it('rounds to an integer with decimals = 0', () => {
+      const spy = vi.fn();
+      render(<Harness decimals={0} spy={spy} />);
+      fireEvent.focus(input());
+      paste('$12.5');
+      expect(spy).toHaveBeenLastCalledWith('13');
+    });
+  });
+
+  it('shows an outside value with extra fraction digits rounded, sending nothing until edited', () => {
+    const spy = vi.fn();
+    render(<Harness decimals={2} initial="1.255" spy={spy} />);
+    expect(input().value).toBe('1.26');
+    fireEvent.focus(input());
+    expect(input().value).toBe('1.26');
+    fireEvent.blur(input());
+    expect(spy).not.toHaveBeenCalled();
+    fireEvent.focus(input());
+    type('1.2');
+    fireEvent.blur(input());
+    expect(spy).toHaveBeenLastCalledWith('1.20');
+  });
+
+  it('keeps a negative outside value editable without a negative min', () => {
+    const spy = vi.fn();
+    render(<Harness decimals={1} initial="-5" spy={spy} />);
+    fireEvent.focus(input());
+    type('-5.5');
+    expect(spy).toHaveBeenLastCalledWith('-5.5');
+  });
+
+  it('pads negatives and folds -0 on blur; any number of decimals when omitted', () => {
+    const spy = vi.fn();
+    render(<Harness decimals={2} min={-10} spy={spy} />);
+    fireEvent.focus(input());
+    type('-5.5');
+    fireEvent.blur(input());
+    expect(spy).toHaveBeenLastCalledWith('-5.50');
+    fireEvent.focus(input());
+    type('-0');
+    fireEvent.blur(input());
+    expect(spy).toHaveBeenLastCalledWith('0.00');
+  });
+
+  it('takes any number of fraction digits when `decimals` is omitted', () => {
+    const spy = vi.fn();
+    render(<Harness spy={spy} />);
+    fireEvent.focus(input());
+    type('3.14159');
+    fireEvent.blur(input());
+    expect(spy).toHaveBeenLastCalledWith('3.14159');
+  });
+
   it('accepts a pasted grouped number and sends it without separators', () => {
     const spy = vi.fn();
     render(<Harness decimals={2} spy={spy} />);

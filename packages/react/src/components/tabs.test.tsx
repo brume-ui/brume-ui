@@ -58,6 +58,30 @@ describe('Tabs', () => {
     expect(screen.getByRole('tabpanel').textContent).toBe('panel price');
   });
 
+  it('Space switches too', async () => {
+    const spy = vi.fn();
+    render(<Harness spy={spy} />);
+    const first = screen.getByRole('tab', { name: '基本資料' });
+    first.focus();
+    fireEvent.keyDown(first, { key: 'End' });
+    const last = screen.getByRole('tab', { name: '庫存' });
+    await waitFor(() => expect(document.activeElement).toBe(last));
+    expect(spy).not.toHaveBeenCalled();
+    fireEvent.keyDown(last, { key: ' ' });
+    expect(spy).toHaveBeenLastCalledWith('stock');
+    expect(screen.getByRole('tabpanel').textContent).toBe('panel stock');
+  });
+
+  it('every panel stays mounted, the others hidden; each tab controls an existing panel', () => {
+    render(<Harness />);
+    for (const tab of screen.getAllByRole('tab')) {
+      const panel = document.getElementById(tab.getAttribute('aria-controls') ?? '');
+      expect(panel?.getAttribute('role')).toBe('tabpanel');
+      expect(panel?.hidden).toBe(tab.getAttribute('aria-selected') !== 'true');
+    }
+    expect(screen.getAllByRole('tabpanel', { hidden: true })).toHaveLength(3);
+  });
+
   it('a tab with badge "error" says so in its name', () => {
     render(<Harness />);
     expect(screen.getByRole('tab', { name: '價格（有錯誤）' })).toBeTruthy();

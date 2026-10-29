@@ -1,4 +1,12 @@
-import { type InputHTMLAttributes, type Ref, useEffect, useId, useRef, useState } from 'react';
+import {
+  type ClipboardEvent,
+  type InputHTMLAttributes,
+  type Ref,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react';
 import { cn } from '../cn';
 import { ariaOn, type FieldControlProps } from './field';
 import { CONTROL_BORDER, CONTROL_SKIN } from './focus';
@@ -17,18 +25,25 @@ export interface NumberInputProps
       | 'min'
       | 'max'
       | 'prefix'
+      | 'onPaste'
     > {
   /** Wire format: '' (empty), '12', '-3', '1280.50'. Never grouped. */
   value: string;
   /** Receives the wire format, without grouping separators; '' when the field holds no number. */
   onChange(value: string): void;
-  /** Fraction digits: more are refused, blur pads to this many. 0 = integer. Omit for any. */
+  /**
+   * Fraction digits. Typing more is refused, a paste is rounded (half away from zero), blur pads
+   * to this many. An outside value with more is shown rounded and kept as is until edited.
+   * 0 = integer. Omit for any.
+   */
   decimals?: number;
   /** Visual prefix such as 'NT$'. Hidden from screen readers; it is added to the field's name instead. */
   prefix?: string;
-  /** A minus sign is accepted only when `min` < 0. Not clamped: validation reports out-of-range values. */
+  /**
+   * A minus sign is accepted only when `min` < 0 (or the value is already negative). Nothing is
+   * clamped: range checks are the validator's job (`ClientRule` min / max), so there is no `max`.
+   */
   min?: number;
-  max?: number;
   /** Thousands separators while not focused; focus shows the plain value for editing. */
   grouping?: boolean;
   ref?: Ref<HTMLInputElement>;
@@ -46,6 +61,40 @@ function toWire(text: string, decimals: number | undefined, pad: boolean): strin
 }
 
 const WIRE = /^-?\d*\.?\d*$/;
+
+/**
+ * Full-width input (zh IMEs) as ASCII: NFKC folds ０-９ ． ， － and the ideographic space; the
+ * minus sign U+2212 is folded by hand. Thousands separators are removed only where they form
+ * valid groups ('1,280.5'); any other comma ('1,5') makes the text not a number (null).
+ */
+function toAscii(text: string): string | null {
+  const ascii = text
+    .normalize('NFKC')
+    .replace(/\u2212/g, '-')
+    .trim();
+  if (!ascii.includes(',')) return ascii;
+  const [int = '', ...rest] = ascii.split('.');
+  if (!/^-?\d{1,3}(,\d{3})+$/.test(int)) return null;
+  return [int.replace(/,/g, ''), ...rest].join('.');
+}
+
+/** `text` (a wire-shaped number) rounded half away from zero to `decimals`, in string arithmetic. */
+function roundTo(text: string, decimals: number): string {
+  const negative = text.startsWith('-');
+  const [int = '', frac = ''] = (negative ? text.slice(1) : text).split('.');
+  if (frac.length <= decimals) return text;
+  const digits = (int + frac.slice(0, decimals)).split('').map(Number);
+  if (Number(frac[decimals]) >= 5) {
+    let i = digits.length - 1;
+    while (i >= 0 && digits[i] === 9) digits[i--] = 0;
+    if (i >= 0) digits[i] = (digits[i] ?? 0) + 1;
+    else digits.unshift(1);
+  }
+  const all = digits.join('');
+  const head = all.slice(0, all.length - decimals) || '0';
+  const out = decimals > 0 ? `${head}.${all.slice(all.length - decimals)}` : head;
+  return negative ? `-${out}` : out;
+}
 
 const group = (wire: string) => {
   const [int = '', frac] = wire.split('.');
@@ -65,7 +114,6 @@ export function NumberInput({
   decimals,
   prefix,
   min,
-  max: _max,
   grouping,
   invalid,
   id,
@@ -88,11 +136,15 @@ export function NumberInput({
   /** The last value sent; a `value` equal to it is our own echo, not an outside change. */
   const sent = useRef(value);
 
+  /** An outside value that is already negative stays editable even without a negative `min`. */
+  const negativeAtFocus = useRef(false);
+  const allowMinus = (min !== undefined && min < 0) || negativeAtFocus.current;
   const fraction =
     decimals === 0 ? '' : `(\\.\\d${decimals === undefined ? '*' : `{0,${decimals}}`})?`;
-  const accepts = new RegExp(`^${min !== undefined && min < 0 ? '-?' : ''}\\d*${fraction}$`);
+  const accepts = new RegExp(`^${allowMinus ? '-?' : ''}\\d*${fraction}$`);
 
-  const plain = (v: string) => (WIRE.test(v) ? toWire(v, decimals, true) : v);
+  const plain = (v: string) =>
+    WIRE.test(v) ? toWire(decimals === undefined ? v : roundTo(v, decimals), decimals, true) : v;
   const shown = focused ? draft : grouping ? group(plain(value)) : plain(value);
 
   // A value replaced from outside while editing (a form reset) replaces the draft.
@@ -109,6 +161,36 @@ export function NumberInput({
     if (next === value) return;
     sent.current = next;
     onChange(next);
+  };
+
+  /** Takes `text` as the new draft if it is a number this field accepts; false otherwise. */
+  const accept = (text: string): boolean => {
+    if (!accepts.test(text)) return false;
+    setDraft(text);
+    edited.current = true;
+    emit(toWire(text, decimals, false));
+    return true;
+  };
+
+  /**
+   * A paste keeps only the number: currency symbols, letters, spaces and thousands separators
+   * go ('NT$1,280', '1 280', '1,280.50 元'), and extra fraction digits are rounded. A paste with
+   * no number in it, or one this field would refuse, changes nothing.
+   */
+  const onPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const el = e.currentTarget;
+    const raw = e.clipboardData
+      .getData('text')
+      .normalize('NFKC')
+      .replace(/\u2212/g, '-');
+    const pasted = toAscii(raw.replace(/[^\d.,-]/g, ''));
+    if (pasted === null || !WIRE.test(pasted) || !/\d/.test(pasted)) return;
+    const start = el.selectionStart ?? draft.length;
+    const end = el.selectionEnd ?? draft.length;
+    const combined = draft.slice(0, start) + pasted + draft.slice(end);
+    if (!WIRE.test(combined)) return;
+    accept(decimals === undefined ? combined : roundTo(combined, decimals));
   };
 
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
@@ -131,19 +213,17 @@ export function NumberInput({
       aria-required={ariaOn(ariaRequired) || undefined}
       value={shown}
       onFocus={(e) => {
+        negativeAtFocus.current = value.startsWith('-');
         setDraft(plain(value));
         edited.current = false;
         setFocused(true);
         onFocus?.(e);
       }}
       onChange={(e) => {
-        // Separators are display only; a pasted '1,280.50' is taken as 1280.50.
-        const text = e.target.value.replace(/,/g, '').trim();
-        if (!accepts.test(text)) return;
-        setDraft(text);
-        edited.current = true;
-        emit(toWire(text, decimals, false));
+        const text = toAscii(e.target.value);
+        if (text !== null) accept(text);
       }}
+      onPaste={onPaste}
       onBlur={(e) => {
         setFocused(false);
         if (edited.current) emit(toWire(draft, decimals, true));

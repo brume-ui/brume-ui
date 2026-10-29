@@ -16,7 +16,10 @@ export interface TabsProps {
   items: TabItem[];
   value: string;
   onValueChange(key: string): void;
-  /** The panel of a tab; only the selected one is mounted. */
+  /**
+   * The panel of a tab. Every panel stays mounted (the others `hidden`), so fields in other tabs
+   * keep their DOM and state, and each tab's `aria-controls` names a panel that exists.
+   */
   children(key: string): ReactNode;
   /** Accessible name of the tab list. */
   label: string;
@@ -71,6 +74,9 @@ export function Tabs({ items, value, onValueChange, children, label }: TabsProps
         <RadixTabs.Content
           key={item.key}
           value={item.key}
+          forceMount
+          // Radix leaves force-mounted panels visible; inactive ones are hidden here.
+          hidden={item.key !== value}
           className={cn('br:rounded-input br:pt-4', FOCUS_RING)}
         >
           {children(item.key)}
