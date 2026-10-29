@@ -5,6 +5,15 @@
 @import "./fonts.css";
 
 @source "./";
+/*
+ * The renderer's and brume-inertia's utilities are compiled here too, so one Tailwind pass orders
+ * every utility once (px-3 before pl-10). Their own styles.css files are empty compatibility files.
+ * Test files hold fixture class strings that no page uses.
+ */
+@source "../../renderer/src";
+@source "../../inertia/src";
+@source not "../../renderer/src/**/*.test.{ts,tsx}";
+@source not "../../inertia/src/**/*.test.{ts,tsx}";
 
 @layer base {
   :where(html, .br-root, [data-brume]) {

@@ -1,8 +1,1 @@
-/* Utilities only: no preflight/base, so a host app's styles are never reset.
-   --br-* tokens come from brume-tokens' tokens.css, loaded by the app (via brume-react/styles.css). */
-@import "tailwindcss/theme.css" layer(theme) prefix(br);
-@import "tailwindcss/utilities.css" layer(utilities) prefix(br);
-@import "@brume-ui/brume-tokens/theme.css";
-@import "@brume-ui/brume-tokens/motion-theme.css";
-
-@source "./";
+/* Empty on purpose: brume-inertia's utilities are compiled into @brume-ui/brume-react/styles.css. Kept so existing imports keep working. */

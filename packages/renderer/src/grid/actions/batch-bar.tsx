@@ -1,4 +1,4 @@
-import { Button, useBrume } from '@brume-ui/brume-react';
+import { ActionBar, Button, useBrume } from '@brume-ui/brume-react';
 import { useGrid } from '../grid-context';
 import { useActionRunner } from './run-action';
 
@@ -23,13 +23,11 @@ export function BatchBar() {
   return (
     <>
       {live}
-      <section
+      {/* The live region above announces the count; the label repeats it for sighted users. */}
+      <ActionBar
         aria-label={t('grid.batchActions')}
-        className="br:flex br:flex-wrap br:items-center br:gap-2 br:rounded-card br:bg-surface br:px-4 br:py-2 br:shadow-row"
+        label={<span aria-hidden="true">{count}</span>}
       >
-        <p aria-hidden="true" className="br:mr-2 br:text-sm br:font-semibold br:text-text">
-          {count}
-        </p>
         {actions.map((def) => (
           <Button
             key={def.key}
@@ -46,7 +44,7 @@ export function BatchBar() {
         <Button variant="ghost" size="sm" onClick={() => setSelection(new Set())}>
           {t('grid.clearSelection')}
         </Button>
-      </section>
+      </ActionBar>
     </>
   );
 }

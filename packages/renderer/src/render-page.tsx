@@ -1,4 +1,4 @@
-import { useBrume } from '@brume-ui/brume-react';
+import { Alert, useBrume } from '@brume-ui/brume-react';
 import { type PageEnvelope, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { DashboardPageView } from './dashboard-page';
 import { ErrorPageView } from './error-page';
@@ -13,18 +13,14 @@ export function BrumePageView({ envelope }: { envelope: PageEnvelope }) {
   const { t } = useBrume();
   if (majorOf(envelope.schemaVersion) !== majorOf(SCHEMA_VERSION)) {
     return (
-      <div
-        role="alert"
-        className="br:rounded-card br:border br:border-danger br:bg-surface br:px-4 br:py-3 br:text-danger"
-      >
-        <p className="br:font-semibold">{t('renderer.version.title')}</p>
+      <Alert tone="danger" title={t('renderer.version.title')}>
         <p>
           {t('renderer.version.message', {
             received: envelope.schemaVersion,
             supported: SCHEMA_VERSION,
           })}
         </p>
-      </div>
+      </Alert>
     );
   }
   const { page } = envelope;

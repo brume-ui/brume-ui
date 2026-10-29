@@ -11,6 +11,7 @@ export { Sparkline, type SparklineProps } from './charts/sparkline';
 export { StatCard, type StatCardProps, type StatDelta } from './charts/stat-card';
 export { cn } from './cn';
 export { COLOR_SCHEME_STORAGE_KEY, type ColorScheme, useColorScheme } from './color-scheme';
+export { ActionBar, type ActionBarProps } from './components/action-bar';
 export {
   ActionMenu,
   type ActionMenuProps,
@@ -18,6 +19,7 @@ export {
   type MenuAction,
   orderMenuItems,
 } from './components/action-menu';
+export { Alert, type AlertProps, type AlertTone } from './components/alert';
 export { Badge, type BadgeProps } from './components/badge';
 export {
   Button,
@@ -83,7 +85,7 @@ export {
   type Messages,
 } from './i18n';
 export { AppShell, type AppShellProps, SIDEBAR_COLLAPSED_STORAGE_KEY } from './layout/app-shell';
-export type { BreadcrumbItem } from './layout/breadcrumbs';
+export { type BreadcrumbItem, Breadcrumbs } from './layout/breadcrumbs';
 export { Card, type CardProps } from './layout/card';
 export { isPlainClick, resolveIcon } from './layout/menu-utils';
 export { ColorSchemeMenu } from './layout/navbar-menus';

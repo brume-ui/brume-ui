@@ -4,11 +4,11 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 /**
- * An app bundles brume-react's, the renderer's and brume-inertia's styles.css into one file. Each
- * package's sheet is in Tailwind order on its own (base utilities before breakpoint variants), but
- * every package has its own copy of the common utilities, and the bundler keeps one copy of a
- * duplicate rule at its last position. So `.br:flex` from inertia's sheet can land after the
- * renderer's `@media (width >= 40rem) { .br:sm:hidden }` and win at every width.
+ * When each package compiled its own styles.css, every sheet had its own copy of the common
+ * utilities and the app's bundler kept one copy of a duplicate at its last position, so `.br:flex`
+ * from inertia's sheet could land after the renderer's `@media (width >= 40rem) { .br:sm:hidden }`
+ * and win at every width. brume-react now compiles one sheet for all three packages, which fixes
+ * the order at its root; this guard stays so a layout never depends on utility order again.
  *
  * The rule that keeps this harmless: a breakpoint utility never shares a property with an
  * unprefixed utility on the same element. Write both sides as mutually exclusive variants
