@@ -18,8 +18,8 @@ export type FormNode =
 
 const FieldNodeSchema = Type.Object({ type: Type.Literal('field'), field: FieldDefSchema });
 
-/** 遞迴用 `$id` 表示，輸出到 v0.json 時是 `#/$defs/FormNode`。 */
-export const FormNodeSchema = Type.Recursive(
+/** 遞迴用 `$id` 表示，輸出到 v0.json 時是 `#/$defs/FormNode`。未轉型，供型別測試比對 `FormNode`。 */
+export const FormNodeRaw = Type.Recursive(
   (This) =>
     Type.Union([
       FieldNodeSchema,
@@ -49,7 +49,9 @@ export const FormNodeSchema = Type.Recursive(
       }),
     ]),
   { $id: 'FormNode' },
-) as unknown as TSchema & { static: FormNode };
+);
+
+export const FormNodeSchema = FormNodeRaw as unknown as TSchema & { static: FormNode };
 
 export const FormDefSchema = Type.Object({
   layout: Type.Union([Type.Literal('stacked'), Type.Literal('horizontal')]),

@@ -14,14 +14,19 @@ export const ClientRuleSchema = Type.Union([
     ]),
     message: Type.String(),
   }),
+  /** `minLength`、`maxLength` 以 Unicode code point 計算；`maxFiles` 用於多檔上傳 */
   Type.Object({
     rule: Type.Union([
       Type.Literal('minLength'),
       Type.Literal('maxLength'),
-      Type.Literal('min'),
-      Type.Literal('max'),
       Type.Literal('maxFiles'),
     ]),
+    /** 整數，≥ 0 */
+    value: Type.Integer({ minimum: 0 }),
+    message: Type.String(),
+  }),
+  Type.Object({
+    rule: Type.Union([Type.Literal('min'), Type.Literal('max')]),
     value: Type.Number(),
     message: Type.String(),
   }),
@@ -52,7 +57,7 @@ export type FieldBase = {
   rules?: ClientRule[];
 };
 
-const fieldBase: TProperties = {
+const fieldBase = {
   name: Type.String(),
   label: Type.String(),
   help: Type.Optional(Type.String()),
@@ -63,7 +68,7 @@ const fieldBase: TProperties = {
   span: Type.Optional(Type.Union([Type.Literal('auto'), Type.Literal('full')])),
   width: Type.Optional(GridWidthSchema),
   rules: Type.Optional(Type.Array(ClientRuleSchema)),
-};
+} satisfies TProperties;
 
 export type FieldDef = FieldBase &
   (
@@ -101,7 +106,7 @@ export type FieldDef = FieldBase &
         maxFiles?: number;
         sortable?: boolean;
         /** 每個檔案的附加欄位，只能是非 upload 的扁平欄位 */
-        extra?: FieldDef[];
+        extra?: Exclude<FieldDef, { type: 'upload' }>[];
       }
   );
 
@@ -110,76 +115,81 @@ const literals = <T extends string>(...values: T[]) =>
     ? Type.Literal(values[0] as T)
     : Type.Union(values.map((v) => Type.Literal(v)));
 
-const variant = (type: TSchema, props: TProperties = {}) =>
-  Type.Object({ type, ...fieldBase, ...props });
+const variant = <T extends TSchema, P extends TProperties = Record<never, never>>(
+  type: T,
+  props: P = {} as P,
+) => Type.Object({ type, ...fieldBase, ...props });
 
 const count = () => Type.Optional(Type.Integer({ minimum: 0 }));
 
+/** 除了 upload 以外的欄位；也是 `upload.extra` 可用的欄位。 */
+const plainFields = [
+  variant(literals('text'), { maxLength: count() }),
+  variant(literals('textarea'), {
+    rows: Type.Optional(Type.Integer({ minimum: 1 })),
+    maxLength: count(),
+  }),
+  variant(literals('email')),
+  variant(literals('url')),
+  variant(literals('mobile')),
+  variant(literals('password')),
+  variant(literals('hidden')),
+  variant(literals('display')),
+  variant(literals('number'), {
+    min: Type.Optional(Type.Number()),
+    max: Type.Optional(Type.Number()),
+    step: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+  }),
+  variant(literals('decimal', 'currency'), {
+    decimals: Type.Integer({ minimum: 0 }),
+    symbol: Type.Optional(Type.String()),
+    min: Type.Optional(Type.Number()),
+    max: Type.Optional(Type.Number()),
+  }),
+  variant(literals('date', 'datetime', 'dateRange', 'datetimeRange')),
+  variant(literals('select'), {
+    options: Type.Array(OptionItemSchema),
+    searchable: Type.Optional(Type.Boolean()),
+    clearable: Type.Optional(Type.Boolean()),
+  }),
+  variant(literals('multipleSelect'), {
+    options: Type.Array(OptionItemSchema),
+    max: Type.Optional(Type.Integer({ minimum: 1 })),
+  }),
+  variant(literals('radio', 'checkbox'), {
+    options: Type.Array(OptionSchema),
+    orientation: Type.Optional(literals('horizontal', 'vertical')),
+  }),
+  variant(literals('switch'), {
+    onLabel: Type.Optional(Type.String()),
+    offLabel: Type.Optional(Type.String()),
+  }),
+  variant(literals('tags'), {
+    options: Type.Optional(Type.Array(OptionSchema)),
+    max: Type.Optional(Type.Integer({ minimum: 1 })),
+    maxLength: count(),
+  }),
+] as const;
+
 /**
- * 表單欄位，以 `type` 區分的 union。遞迴（`upload.extra`）用 `$id` 表示，
- * 輸出到 v0.json 時是 `#/$defs/FieldDef`。
+ * 表單欄位，以 `type` 區分的 union，輸出到 v0.json 時是 `#/$defs/FieldDef`。
+ * `upload.extra` 直接列出非 upload 的分支（不用遞迴加 `not`），推得的型別才會與
+ * `FieldDef` 一致。未轉型，供型別測試比對 `FieldDef`。
  */
-export const FieldDefSchema = Type.Recursive(
-  (This) =>
-    Type.Union([
-      variant(literals('text'), { maxLength: count() }),
-      variant(literals('textarea'), {
-        rows: Type.Optional(Type.Integer({ minimum: 1 })),
-        maxLength: count(),
-      }),
-      variant(literals('email')),
-      variant(literals('url')),
-      variant(literals('mobile')),
-      variant(literals('password')),
-      variant(literals('hidden')),
-      variant(literals('display')),
-      variant(literals('number'), {
-        min: Type.Optional(Type.Number()),
-        max: Type.Optional(Type.Number()),
-        step: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-      }),
-      variant(literals('decimal', 'currency'), {
-        decimals: Type.Integer({ minimum: 0 }),
-        symbol: Type.Optional(Type.String()),
-        min: Type.Optional(Type.Number()),
-        max: Type.Optional(Type.Number()),
-      }),
-      variant(literals('date', 'datetime', 'dateRange', 'datetimeRange')),
-      variant(literals('select'), {
-        options: Type.Array(OptionItemSchema),
-        searchable: Type.Optional(Type.Boolean()),
-        clearable: Type.Optional(Type.Boolean()),
-      }),
-      variant(literals('multipleSelect'), {
-        options: Type.Array(OptionItemSchema),
-        max: Type.Optional(Type.Integer({ minimum: 1 })),
-      }),
-      variant(literals('radio', 'checkbox'), {
-        options: Type.Array(OptionSchema),
-        orientation: Type.Optional(literals('horizontal', 'vertical')),
-      }),
-      variant(literals('switch'), {
-        onLabel: Type.Optional(Type.String()),
-        offLabel: Type.Optional(Type.String()),
-      }),
-      variant(literals('tags'), {
-        options: Type.Optional(Type.Array(OptionSchema)),
-        max: Type.Optional(Type.Integer({ minimum: 1 })),
-        maxLength: count(),
-      }),
-      variant(literals('upload'), {
-        kind: literals('image', 'file'),
-        multiple: Type.Boolean(),
-        accept: Type.Array(Type.String()),
-        maxSize: Type.Integer({ minimum: 1 }),
-        maxFiles: Type.Optional(Type.Integer({ minimum: 1 })),
-        sortable: Type.Optional(Type.Boolean()),
-        extra: Type.Optional(
-          Type.Array(
-            Type.Intersect([This, Type.Not(Type.Object({ type: Type.Literal('upload') }))]),
-          ),
-        ),
-      }),
-    ]),
+export const FieldDefRaw = Type.Union(
+  [
+    ...plainFields,
+    variant(literals('upload'), {
+      kind: literals('image', 'file'),
+      multiple: Type.Boolean(),
+      accept: Type.Array(Type.String()),
+      maxSize: Type.Integer({ minimum: 1 }),
+      maxFiles: Type.Optional(Type.Integer({ minimum: 1 })),
+      sortable: Type.Optional(Type.Boolean()),
+      extra: Type.Optional(Type.Array(Type.Union([...plainFields]))),
+    }),
+  ],
   { $id: 'FieldDef' },
-) as unknown as TSchema & { static: FieldDef };
+);
+
+export const FieldDefSchema = FieldDefRaw as unknown as TSchema & { static: FieldDef };

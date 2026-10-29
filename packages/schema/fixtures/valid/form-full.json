@@ -142,7 +142,10 @@
                     "name": "weight",
                     "label": "重量",
                     "decimals": 3,
-                    "rules": [{ "rule": "numeric", "message": "重量必須是數字。" }]
+                    "rules": [
+                      { "rule": "numeric", "message": "重量必須是數字。" },
+                      { "rule": "min", "value": 0.5, "message": "重量不能小於 0.5。" }
+                    ]
                   }
                 },
                 {

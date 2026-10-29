@@ -3243,15 +3243,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -3402,15 +3423,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -3565,15 +3607,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -3720,15 +3783,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -3875,15 +3959,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -4030,15 +4135,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -4185,15 +4311,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -4340,15 +4487,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -4495,15 +4663,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -4669,15 +4858,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -4853,15 +5063,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -5009,15 +5240,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -5212,15 +5464,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -5421,15 +5694,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -5609,15 +5903,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -5770,15 +6085,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -5958,15 +6294,36 @@
                             "type": "string"
                           },
                           {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
                             "const": "min",
                             "type": "string"
                           },
                           {
                             "const": "max",
-                            "type": "string"
-                          },
-                          {
-                            "const": "maxFiles",
                             "type": "string"
                           }
                         ]
@@ -6037,21 +6394,3051 @@
             "extra": {
               "type": "array",
               "items": {
-                "allOf": [
+                "anyOf": [
                   {
-                    "$ref": "#/$defs/FieldDef"
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "text",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "maxLength": {
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    }
                   },
                   {
-                    "not": {
-                      "type": "object",
-                      "required": [
-                        "type"
-                      ],
-                      "properties": {
-                        "type": {
-                          "const": "upload",
-                          "type": "string"
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "textarea",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
                         }
+                      },
+                      "rows": {
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "maxLength": {
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "email",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "url",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "mobile",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "password",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "hidden",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "display",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "number",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "min": {
+                        "type": "number"
+                      },
+                      "max": {
+                        "type": "number"
+                      },
+                      "step": {
+                        "exclusiveMinimum": 0,
+                        "type": "number"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label",
+                      "decimals"
+                    ],
+                    "properties": {
+                      "type": {
+                        "anyOf": [
+                          {
+                            "const": "decimal",
+                            "type": "string"
+                          },
+                          {
+                            "const": "currency",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "decimals": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "symbol": {
+                        "type": "string"
+                      },
+                      "min": {
+                        "type": "number"
+                      },
+                      "max": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "anyOf": [
+                          {
+                            "const": "date",
+                            "type": "string"
+                          },
+                          {
+                            "const": "datetime",
+                            "type": "string"
+                          },
+                          {
+                            "const": "dateRange",
+                            "type": "string"
+                          },
+                          {
+                            "const": "datetimeRange",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label",
+                      "options"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "select",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "allOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "value",
+                                "label"
+                              ],
+                              "properties": {
+                                "value": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "disabled": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "group": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "depth": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "searchable": {
+                        "type": "boolean"
+                      },
+                      "clearable": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label",
+                      "options"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "multipleSelect",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "allOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "value",
+                                "label"
+                              ],
+                              "properties": {
+                                "value": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "disabled": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "group": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "depth": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "max": {
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label",
+                      "options"
+                    ],
+                    "properties": {
+                      "type": {
+                        "anyOf": [
+                          {
+                            "const": "radio",
+                            "type": "string"
+                          },
+                          {
+                            "const": "checkbox",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "value",
+                            "label"
+                          ],
+                          "properties": {
+                            "value": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "disabled": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "orientation": {
+                        "anyOf": [
+                          {
+                            "const": "horizontal",
+                            "type": "string"
+                          },
+                          {
+                            "const": "vertical",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "switch",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "onLabel": {
+                        "type": "string"
+                      },
+                      "offLabel": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "name",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "tags",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "help": {
+                        "type": "string"
+                      },
+                      "placeholder": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "disabled": {
+                        "type": "boolean"
+                      },
+                      "span": {
+                        "anyOf": [
+                          {
+                            "const": "auto",
+                            "type": "string"
+                          },
+                          {
+                            "const": "full",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "maximum": 12,
+                        "type": "integer"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "required",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "email",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "url",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "integer",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "minLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxLength",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "maxFiles",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "value",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "anyOf": [
+                                    {
+                                      "const": "min",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "max",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "rule",
+                                "pattern",
+                                "message"
+                              ],
+                              "properties": {
+                                "rule": {
+                                  "const": "pattern",
+                                  "type": "string"
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "value",
+                            "label"
+                          ],
+                          "properties": {
+                            "value": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "disabled": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "max": {
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "maxLength": {
+                        "minimum": 0,
+                        "type": "integer"
                       }
                     }
                   }
