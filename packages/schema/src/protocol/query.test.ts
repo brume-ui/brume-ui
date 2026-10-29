@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { type GridQuery, parseGridQuery, serializeGridQuery, withGridQuery } from './query';
 
 describe('grid query protocol', () => {
@@ -158,5 +158,26 @@ describe('grid query protocol', () => {
     });
     expect(parseGridQuery('filter[a]=s&filter[a][start]=1').filters.a).toEqual({ start: '1' });
     expect(parseGridQuery('filter[a]=s').filters.a).toBe('s');
+  });
+});
+
+describe('serializeGridQuery without URLSearchParams.size', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  test('does not append a bare filter= when a filter was written', () => {
+    // Safari < 17 / Chrome < 113 have no `size`; simulate by making it undefined.
+    const desc = Object.getOwnPropertyDescriptor(URLSearchParams.prototype, 'size');
+    Object.defineProperty(URLSearchParams.prototype, 'size', {
+      configurable: true,
+      get: () => undefined,
+    });
+    try {
+      const out = serializeGridQuery({ filters: { status: 'paid' }, filtersCleared: true });
+      expect(out.toString()).toBe('filter[status]=paid');
+      expect(serializeGridQuery({ filters: {}, filtersCleared: true }).toString()).toBe('filter=');
+    } finally {
+      if (desc) Object.defineProperty(URLSearchParams.prototype, 'size', desc);
+      else Reflect.deleteProperty(URLSearchParams.prototype, 'size');
+    }
   });
 });

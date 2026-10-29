@@ -174,24 +174,38 @@ export function serializeGridQuery(query: GridQuery, base?: URLSearchParams): UR
   if (query.q) out.set(GRID_PARAMS.q, query.q);
   if (query.scope) out.set(GRID_PARAMS.scope, query.scope);
 
-  const before = out.size;
+  let wroteFilter = false;
   for (const [name, value] of Object.entries(query.filters)) {
     const prefix = `${GRID_PARAMS.filter}[${name}]`;
     if (typeof value === 'string') {
-      if (value) out.set(prefix, value);
+      if (value) {
+        out.set(prefix, value);
+        wroteFilter = true;
+      }
     } else if (Array.isArray(value)) {
-      for (const item of value) if (item) out.append(`${prefix}[]`, item);
+      for (const item of value) {
+        if (!item) continue;
+        out.append(`${prefix}[]`, item);
+        wroteFilter = true;
+      }
     } else if ('op' in value) {
       if (value.op && value.value) {
         out.set(`${prefix}[op]`, value.op);
         out.set(`${prefix}[value]`, value.value);
+        wroteFilter = true;
       }
     } else {
-      if (value.start) out.set(`${prefix}[start]`, value.start);
-      if (value.end) out.set(`${prefix}[end]`, value.end);
+      if (value.start) {
+        out.set(`${prefix}[start]`, value.start);
+        wroteFilter = true;
+      }
+      if (value.end) {
+        out.set(`${prefix}[end]`, value.end);
+        wroteFilter = true;
+      }
     }
   }
-  if (query.filtersCleared && out.size === before) out.set(GRID_PARAMS.filter, '');
+  if (query.filtersCleared && !wroteFilter) out.set(GRID_PARAMS.filter, '');
 
   return out;
 }
