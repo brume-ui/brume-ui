@@ -29,7 +29,9 @@ type Literals = { const?: string; anyOf?: { const: string }[] };
 
 /** union 各分支判別欄位（預設 `type`）的所有字面值。 */
 function variantTypes(union: unknown, key = 'type'): string[] {
-  return (union as { anyOf: unknown[] }).anyOf.flatMap((branch) => {
+  return (union as { anyOf: unknown[] }).anyOf.flatMap((branch): string[] => {
+    // 巢狀的 union（FieldDef 內的 PlainFieldDef）攤平
+    if ((branch as { anyOf?: unknown[] }).anyOf) return variantTypes(branch, key);
     const t = (branch as { properties: Record<string, Literals> }).properties[key] as Literals;
     return t.anyOf ? t.anyOf.map((l) => l.const) : [t.const as string];
   });

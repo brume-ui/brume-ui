@@ -1,6 +1,6 @@
 import { type Static, Type } from '@sinclair/typebox';
 import { AfterSaveSchema } from '../form/form-page';
-import { FeedbackSchema } from './http';
+import { FeedbackSchema, IdSchema } from './http';
 
 /**
  * 彈窗取得表單時帶的請求標頭，值固定為 `'1'`。伺服器回 `PageEnvelope`（`page.type === 'form'`），
@@ -19,7 +19,7 @@ export type FormSubmitRequest = Static<typeof FormSubmitRequestSchema>;
 
 /** 200。儲存後去向由前端依 `after` 和 `urls` 決定，`feedback.redirect` 存在時以它為準。 */
 export const FormSubmitResponseSchema = Type.Object({
-  id: Type.Union([Type.String(), Type.Number()]),
+  id: IdSchema,
   feedback: Type.Optional(FeedbackSchema),
   urls: Type.Object({
     list: Type.Optional(Type.String()),

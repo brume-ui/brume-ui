@@ -4,16 +4,24 @@
 
 ## 端點
 
-| 用途                                                    | Method                                       | 請求                             | 成功回應                                                                  |
-| ------------------------------------------------------- | -------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------- |
-| Action (`endpoints.action`)                             | POST                                         | `ActionRequest`                  | 200 `ActionResponse`                                                      |
-| 行內編輯 (`endpoints.cell`)                             | PATCH                                        | `CellUpdateRequest`              | 200 `CellUpdateResponse`                                                  |
-| 遠端選項 (`endpoints.options`)                          | GET                                          | `?q=&page=&per_page=&value[]=`   | 200 `OptionsResponse`                                                     |
-| 挑選器搜尋 (`endpoints.options`)                        | GET                                          | 同上，多一個 `section=`          | 200 `PickerSearchResponse`                                                |
-| 上傳暫存 (`endpoints.upload`、`page.uploadUrl`)         | POST multipart                               | `UPLOAD_PARAMS`：`file`、`field` | 200 `UploadTempResponse`                                                  |
-| 表單送出 (`page.submit.url`)                            | POST（新增）／PUT（更新）                    | `FormSubmitRequest`              | 200 `FormSubmitResponse`                                                  |
-| 快速新增 (`quickCreate.submitUrl`)                      | POST                                         | `FormSubmitRequest`              | 200 `FormSubmitResponse`                                                  |
-| 彈窗載入表單 (`resource.createUrl`、`resource.editUrl`) | GET，標頭 `FORM_HEADER`（`X-Brume-Form: 1`） | —                                | 200 `PageEnvelope`（`page.type === 'form'`），回應帶 `Vary: X-Brume-Form` |
+| 用途                                                    | Method                                       | 請求                             | 成功回應                                                                                                                        |
+| ------------------------------------------------------- | -------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Action (`endpoints.action`)                             | POST                                         | `ActionRequest`                  | 200 `ActionResponse`                                                                                                            |
+| 行內編輯 (`endpoints.cell`)                             | PATCH                                        | `CellUpdateRequest`              | 200 `CellUpdateResponse`                                                                                                        |
+| 遠端選項 (`endpoints.options`)                          | GET                                          | `?q=&page=&per_page=&value[]=`   | 200 `OptionsResponse`                                                                                                           |
+| 挑選器搜尋 (`endpoints.options`)                        | GET                                          | 同上，多一個 `section=`          | 200 `PickerSearchResponse`                                                                                                      |
+| 上傳暫存 (`endpoints.upload`、`page.uploadUrl`)         | POST multipart                               | `UPLOAD_PARAMS`：`file`、`field` | 200 `UploadTempResponse`                                                                                                        |
+| 表單送出 (`page.submit.url`)                            | POST（新增）／PUT（更新）                    | `FormSubmitRequest`              | 200 `FormSubmitResponse`                                                                                                        |
+| 快速新增 (`quickCreate.submitUrl`)                      | POST                                         | `FormSubmitRequest`              | 200 `FormSubmitResponse`                                                                                                        |
+| 彈窗載入表單 (`resource.createUrl`、`resource.editUrl`) | GET，標頭 `FORM_HEADER`（`X-Brume-Form: 1`） | —                                | 200 JSON `PageEnvelope`（`page.type === 'form'`）；401／403／404 `ErrorResponse`。帶與不帶標頭的回應都要有 `Vary: X-Brume-Form` |
+
+## 請求
+
+所有 API 請求（不含換頁）的共同約定：
+
+- 標頭帶 `Accept: application/json`、`X-Requested-With: XMLHttpRequest`，同源送出 cookie（`credentials: 'same-origin'`）。
+- 有 body 時為 JSON（`Content-Type: application/json`）；上傳為 multipart。
+- **CSRF**：伺服器以 cookie `XSRF-TOKEN` 發放 token（值可經 URL 編碼，前端可讀）。前端讀出 cookie、解碼後放在 `X-XSRF-TOKEN` 標頭送出。所有寫入（POST / PUT / PATCH / DELETE）都要檢查，不符或逾時回 419。
 
 ## 狀態碼
 
@@ -35,7 +43,7 @@
 
 ## 上傳生命週期
 
-見 [forms.md 的上傳生命週期](./forms.md#上傳生命週期)。
+見 [forms.md 的上傳生命週期](./forms.md#上傳生命週期)。`UploadTempResponse.expiresAt` 為 ISO 8601 的 UTC 時間，例如 `2026-10-29T03:00:00Z`。
 
 ## 挑選器
 

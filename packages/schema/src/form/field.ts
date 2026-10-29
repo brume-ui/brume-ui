@@ -175,13 +175,23 @@ const plainFields = [
 ] as const;
 
 /**
- * 表單欄位，以 `type` 區分的 union，輸出到 v0.json 時是 `#/$defs/FieldDef`。
- * `upload.extra` 直接列出非 upload 的分支（不用遞迴加 `not`），推得的型別才會與
- * `FieldDef` 一致。未轉型，供型別測試比對 `FieldDef`。
+ * upload 以外的欄位，輸出到 v0.json 時是 `#/$defs/PlainFieldDef`。用於 `upload.extra`、
+ * Action 的輸入欄位與快速新增，三者都不經過上傳流程。未轉型，供型別測試比對 `PlainFieldDef`。
+ */
+export const PlainFieldDefRaw = Type.Union([...plainFields], { $id: 'PlainFieldDef' });
+
+export const PlainFieldDefSchema = PlainFieldDefRaw as unknown as TSchema & {
+  static: PlainFieldDef;
+};
+
+/**
+ * 表單欄位，以 `type` 區分的 union，輸出到 v0.json 時是 `#/$defs/FieldDef`：
+ * `PlainFieldDef` 或 upload。`upload.extra` 引用 `PlainFieldDef`（不用遞迴加 `not`），
+ * 推得的型別才會與 `FieldDef` 一致。未轉型，供型別測試比對 `FieldDef`。
  */
 export const FieldDefRaw = Type.Union(
   [
-    ...plainFields,
+    PlainFieldDefRaw,
     variant(literals('upload'), {
       kind: literals('image', 'file'),
       multiple: Type.Boolean(),
@@ -189,19 +199,10 @@ export const FieldDefRaw = Type.Union(
       maxSize: Type.Integer({ minimum: 1 }),
       maxFiles: Type.Optional(Type.Integer({ minimum: 1 })),
       sortable: Type.Optional(Type.Boolean()),
-      extra: Type.Optional(Type.Array(Type.Union([...plainFields]))),
+      extra: Type.Optional(Type.Array(PlainFieldDefRaw)),
     }),
   ],
   { $id: 'FieldDef' },
 );
 
 export const FieldDefSchema = FieldDefRaw as unknown as TSchema & { static: FieldDef };
-
-/**
- * upload 以外的欄位。輸出到 v0.json 時是 `FieldDef` 的 `$ref` 加上 `not upload`，
- * 不重複整份定義。用於 Action 的輸入欄位與快速新增，兩者都不經過上傳流程。
- */
-export const PlainFieldDefSchema = Type.Intersect([
-  FieldDefSchema,
-  Type.Not(Type.Object({ type: Type.Literal('upload') })),
-]) as unknown as TSchema & { static: PlainFieldDef };

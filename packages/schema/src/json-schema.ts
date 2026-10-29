@@ -1,4 +1,4 @@
-import { FieldDefSchema } from './form/field';
+import { FieldDefSchema, PlainFieldDefSchema } from './form/field';
 import { FormNodeSchema } from './form/layout';
 import { PageEnvelopeSchema } from './page';
 import { FormSubmitRequestSchema, FormSubmitResponseSchema } from './protocol/form';
@@ -14,7 +14,7 @@ import { UploadTempResponseSchema, UploadValueSchema } from './protocol/upload';
 import { MenuItemSchema, SharedPropsSchema } from './shared';
 
 /** 以 `$id` 表示的具名型別（MenuItem、FormNode 為遞迴）；輸出時一律 hoist 到 `$defs`。 */
-const RECURSIVE_IDS = new Set(['MenuItem', 'FormNode', 'FieldDef']);
+const RECURSIVE_IDS = new Set(['MenuItem', 'FormNode', 'FieldDef', 'PlainFieldDef']);
 
 /**
  * TypeBox 的遞迴型別用 `$id` 加相對 `$ref` 表示；輸出時把它們（含巢狀出現的整份定義）
@@ -59,6 +59,7 @@ export function emitJsonSchema(): string {
       UploadValue: plain(UploadValueSchema),
       FormNode: recursiveDef(FormNodeSchema),
       FieldDef: recursiveDef(FieldDefSchema),
+      PlainFieldDef: recursiveDef(PlainFieldDefSchema),
       FormSubmitRequest: plain(FormSubmitRequestSchema),
       FormSubmitResponse: plain(FormSubmitResponseSchema),
     },

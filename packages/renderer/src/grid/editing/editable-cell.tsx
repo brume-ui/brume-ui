@@ -41,9 +41,15 @@ export function EditableCell(props: CellProps) {
     case 'textarea':
     case 'number':
       return <TextCell {...props} editor={editor} />;
-    default:
-      // date, currency and tags (schema 0.3) have no inline editor yet; the cell stays read-only.
+    case 'date':
+    case 'currency':
+    case 'tags':
+      // No inline editor for these yet (schema 0.3); the cell stays read-only.
       return props.display;
+    default: {
+      const unhandled: never = editor;
+      return unhandled;
+    }
   }
 }
 

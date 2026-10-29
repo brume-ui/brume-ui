@@ -1,6 +1,6 @@
 import type { Static } from '@sinclair/typebox';
 import { describe, expect, it } from 'vitest';
-import type { FieldDef, FieldDefRaw } from './field';
+import type { FieldDef, FieldDefRaw, PlainFieldDef, PlainFieldDefRaw } from './field';
 import type { FormNode, FormNodeRaw } from './layout';
 
 /**
@@ -9,11 +9,14 @@ import type { FormNode, FormNodeRaw } from './layout';
  */
 type FieldDefInferred = Static<typeof FieldDefRaw>;
 type FormNodeInferred = Static<typeof FormNodeRaw>;
+type PlainFieldDefInferred = Static<typeof PlainFieldDefRaw>;
 
 const fieldToSchema = (x: FieldDef): FieldDefInferred => x;
 const schemaToField = (x: FieldDefInferred): FieldDef => x;
 const nodeToSchema = (x: FormNode): FormNodeInferred => x;
 const schemaToNode = (x: FormNodeInferred): FormNode => x;
+const plainToSchema = (x: PlainFieldDef): PlainFieldDefInferred => x;
+const schemaToPlain = (x: PlainFieldDefInferred): PlainFieldDef => x;
 
 // 把關本身會失敗：多一個分支、少一個分支、選填屬性型別不同
 type ExtraBranch = FieldDef | { type: 'bogus'; name: string; label: string };
@@ -31,16 +34,19 @@ type NestedUpload = Omit<Extract<FieldDef, { type: 'upload' }>, 'extra'> & { ext
 const nestedUpload = (x: NestedUpload): FieldDefInferred => x;
 
 describe('form types agree with their schemas', () => {
-  it('is checked at compile time', () => {
+  // 真正的檢查是 tsc（pnpm typecheck）；這裡只讓 vitest 載入本檔，通過不代表型別一致。
+  it('is a compile-time guard: pnpm typecheck fails on drift, not this test', () => {
     expect([
       fieldToSchema,
       schemaToField,
       nodeToSchema,
       schemaToNode,
+      plainToSchema,
+      schemaToPlain,
       extraBranch,
       missingBranch,
       wrongOptional,
       nestedUpload,
-    ]).toHaveLength(8);
+    ]).toHaveLength(10);
   });
 });

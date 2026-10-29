@@ -16,6 +16,7 @@ export const UploadTempResponseSchema = Type.Object({
   size: Type.Integer({ minimum: 0 }),
   mime: Type.String(),
   previewUrl: Type.Optional(Type.String()),
+  /** ISO 8601 UTC，例如 `2026-10-29T03:00:00Z` */
   expiresAt: Type.String(),
 });
 export type UploadTempResponse = Static<typeof UploadTempResponseSchema>;

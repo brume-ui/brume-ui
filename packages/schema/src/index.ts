@@ -90,6 +90,7 @@ export {
   ErrorResponseSchema,
   type Feedback,
   FeedbackSchema,
+  IdSchema,
   type ToastType,
   ToastTypeSchema,
 } from './protocol/http';

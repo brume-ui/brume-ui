@@ -1,4 +1,5 @@
 import { type Static, Type } from '@sinclair/typebox';
+import { IdSchema } from '../protocol/http';
 import { FormDefSchema } from './layout';
 
 export const AfterSaveSchema = Type.Union([
@@ -19,7 +20,7 @@ export const FormPageSchema = Type.Object({
   mode: Type.Union([Type.Literal('create'), Type.Literal('edit')]),
   record: Type.Optional(
     Type.Object({
-      id: Type.Union([Type.String(), Type.Number()]),
+      id: IdSchema,
       label: Type.Optional(Type.String()),
     }),
   ),

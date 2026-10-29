@@ -22,8 +22,8 @@ const PROTOCOL_DEFS = [
   'UploadTempResponse',
   'UploadValue',
 ];
-/** 表單的遞迴型別，由 PageEnvelope 的 fixtures 涵蓋。 */
-const FORM_DEFS = ['FormNode', 'FieldDef'];
+/** 表單的具名型別，由 PageEnvelope 的 fixtures 涵蓋。 */
+const FORM_DEFS = ['FormNode', 'FieldDef', 'PlainFieldDef'];
 /** 表單送出的請求／回應，有 fixtures/protocol/<def>。 */
 const FORM_PROTOCOL_DEFS = ['FormSubmitRequest', 'FormSubmitResponse'];
 const ORDER = [...PAGE_DEFS, ...PROTOCOL_DEFS, ...FORM_DEFS, ...FORM_PROTOCOL_DEFS];

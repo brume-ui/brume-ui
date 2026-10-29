@@ -20,7 +20,8 @@ export const FeedbackSchema = Type.Object({
 });
 export type Feedback = Static<typeof FeedbackSchema>;
 
-const IdSchema = Type.Union([Type.String(), Type.Number()]);
+/** 資料的 id：字串或數字。 */
+export const IdSchema = Type.Union([Type.String(), Type.Number()]);
 
 /** POST endpoints.action */
 export const ActionRequestSchema = Type.Object({
