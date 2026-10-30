@@ -80,8 +80,17 @@ touched/submitting state, establishes a new clean baseline when supplied, or
 restores the existing baseline. Initial prop rerenders do not reset edits.
 
 `trackUpload()` increments the pending count and returns an idempotent completion
-callback. Call it exactly when the upload settles, including failures. Reset
-leaves outstanding uploads counted until their callbacks finish.
+callback. Finish it when the upload settles or is canceled, including failures.
+Reset leaves outstanding uploads counted until their callbacks finish; controls
+use `resetVersion` to cancel their requests and release their own pending counts.
+
+`form.resetVersion` is a readonly counter incremented only by explicit `reset(values?)`,
+including resets to equal values or the same baseline object. Stateful controls
+use it to discard local transient state and cancel requests on reset. Ordinary
+value writes, pending upload accounting, touch/errors and submitting updates do
+not increment it. A proposed field value may be a semantic no-op: `setValue`
+then retains the accepted value reference. Controls must distinguish the last
+accepted prop from a proposed emission when synchronizing local state.
 
 ## Future custom fields (subplan 3)
 

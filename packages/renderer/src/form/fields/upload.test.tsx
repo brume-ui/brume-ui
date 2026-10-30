@@ -221,3 +221,98 @@ it('scopes single-upload extras without an array index', () => {
     extra: { link: 'https://single.example' },
   });
 });
+
+function FormHarness({ initial }: { initial: unknown }) {
+  const form = useFormState({ layout: 'stacked', nodes: [] }, { images: initial });
+  return (
+    <>
+      <UploadField
+        def={def}
+        value={form.getValue('images')}
+        onChange={(value) => form.setValue('images', value)}
+        onBlur={() => form.touch('images')}
+        errors={{}}
+        path="images"
+        id="real-upload"
+        invalid={false}
+        readOnly={false}
+        disabled={false}
+        form={form}
+        uploadUrl="/upload"
+      />
+      <output data-testid="value">{JSON.stringify(form.getValue('images'))}</output>
+      <output data-testid="pending">{form.pendingUploads}</output>
+      <button type="button" onClick={() => form.setValue('other', true)}>
+        Refresh form
+      </button>
+      <button type="button" onClick={() => form.reset()}>
+        Reset form
+      </button>
+      <button
+        type="button"
+        onClick={() => form.reset({ images: [{ path: 'next', url: '/next' }] })}
+      >
+        Next record
+      </button>
+    </>
+  );
+}
+it.each([{ initial: [] }, { initial: [{ path: 'a', url: '/a' }] }])(
+  'keeps a pending upload through real form no-op writes ($initial)',
+  async ({ initial }) => {
+    let respond!: (response: HttpResponse) => void;
+    let signal: AbortSignal | undefined;
+    const { container } = renderWithBrume(<FormHarness initial={initial} />, {
+      respond: (req) => {
+        signal = req.signal;
+        return new Promise((resolve) => {
+          respond = resolve;
+        });
+      },
+    });
+    select(container);
+    expect(screen.getByTestId('pending').textContent).toBe('1');
+    expect(signal?.aborted).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh form' }));
+    expect(screen.getByText('file.txt')).toBeTruthy();
+    await act(async () => respond(success));
+    expect(JSON.parse(screen.getByTestId('value').textContent ?? 'null')).toEqual([
+      ...(initial as unknown[]),
+      { token: 'temp' },
+    ]);
+    expect(screen.getByTestId('pending').textContent).toBe('0');
+  },
+);
+it('keeps a transient local error through an unrelated real form refresh', () => {
+  const { container } = renderWithBrume(<FormHarness initial={[]} />);
+  fireEvent.change(container.querySelector('input[type=file]') as HTMLInputElement, {
+    target: { files: [new File(['x'.repeat(1001)], 'too-large.txt')] },
+  });
+  expect(screen.getByText('too-large.txt')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh form' }));
+  expect(screen.getByText('too-large.txt')).toBeTruthy();
+});
+it.each(['Reset form', 'Next record'])(
+  'cancels a real form upload on %s and ignores its eventual response',
+  async (action) => {
+    let respond!: (response: HttpResponse) => void;
+    let signal: AbortSignal | undefined;
+    const { container } = renderWithBrume(<FormHarness initial={[]} />, {
+      respond: (req) => {
+        signal = req.signal;
+        return new Promise((resolve) => {
+          respond = resolve;
+        });
+      },
+    });
+    select(container);
+    expect(screen.getByTestId('pending').textContent).toBe('1');
+    fireEvent.click(screen.getByRole('button', { name: action }));
+    expect(signal?.aborted).toBe(true);
+    expect(screen.getByTestId('pending').textContent).toBe('0');
+    await act(async () => respond(success));
+    expect(JSON.parse(screen.getByTestId('value').textContent ?? 'null')).toEqual(
+      action === 'Reset form' ? [] : [{ path: 'next', url: '/next' }],
+    );
+  },
+);

@@ -5,6 +5,8 @@ import { getAt, setAt } from './paths';
 import { collectFields, validateValue } from './validate';
 
 export interface FormApi {
+  /** Changes only on explicit reset, including resets to identical values. */
+  readonly resetVersion: number;
   values: Record<string, unknown>;
   dirty: boolean;
   submitting: boolean;
@@ -43,6 +45,7 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
     server: {} as FieldErrors,
     submitting: false,
     pendingUploads: 0,
+    resetVersion: 0,
   });
   const current = state.current;
   const fields = collectFields(form.nodes);
@@ -60,6 +63,7 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
   };
   return {
     values: current.values,
+    resetVersion: current.resetVersion,
     dirty: stable(current.values) !== current.baselineKey,
     submitting: current.submitting,
     pendingUploads: current.pendingUploads,
@@ -94,6 +98,7 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
       notify();
     },
     reset(values = current.baseline) {
+      current.resetVersion += 1;
       current.values = values;
       current.baseline = values;
       current.baselineKey = stable(values);

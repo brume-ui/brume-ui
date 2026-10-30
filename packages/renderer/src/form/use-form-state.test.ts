@@ -156,3 +156,24 @@ it('uses current values for multiple synchronous writes and validateAll', () => 
   });
   expect(result.current.values).toEqual({ sku: 'ok', meta: { name: 'ok' } });
 });
+it('increments resetVersion only on explicit resets including same-reference baselines', () => {
+  const initial = { sku: 'a' };
+  const { result } = renderHook(() => useFormState(form, initial));
+  expect(result.current.resetVersion).toBe(0);
+  let finish!: () => void;
+  act(() => {
+    result.current.setValue('sku', 'a');
+    result.current.touch('sku');
+    result.current.setSubmitting(true);
+    finish = result.current.trackUpload();
+    result.current.setServerErrors({ sku: ['error'] });
+  });
+  expect(result.current.resetVersion).toBe(0);
+  act(() => finish());
+  expect(result.current.resetVersion).toBe(0);
+  act(() => result.current.reset());
+  expect(result.current.values).toBe(initial);
+  expect(result.current.resetVersion).toBe(1);
+  act(() => result.current.reset(initial));
+  expect(result.current.resetVersion).toBe(2);
+});

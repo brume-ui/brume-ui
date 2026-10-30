@@ -21,14 +21,23 @@ import { ReadOnlyField } from './misc';
 type UploadDef = Extract<FieldProps['def'], { type: 'upload' }>;
 
 export function UploadField(props: FieldProps) {
+  const accepted = useRef(props.value);
   const emitted = useRef(props.value);
   const generation = useRef(0);
   const context = useRef(props.path);
-  if (props.value !== emitted.current || context.current !== props.path) {
+  const resetVersion = useRef(props.form.resetVersion);
+  // No-op form writes may retain the accepted prop instead of the proposed emission.
+  if (
+    (props.value !== accepted.current && props.value !== emitted.current) ||
+    context.current !== props.path ||
+    resetVersion.current !== props.form.resetVersion
+  ) {
     emitted.current = props.value;
     context.current = props.path;
+    resetVersion.current = props.form.resetVersion;
     generation.current++;
   }
+  accepted.current = props.value;
   if (props.def.type !== 'upload') return null;
   if (props.readOnly) {
     const values = Array.isArray(props.value) ? props.value : props.value ? [props.value] : [];
