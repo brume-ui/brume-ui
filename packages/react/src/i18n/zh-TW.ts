@@ -1,4 +1,8 @@
 export const zhTW = {
+  'form.sections': '本頁段落',
+  'form.sectionError': '（有錯誤）',
+  'form.dirty': '有未儲存的變更',
+  'form.discard': '捨棄變更',
   'form.after': '儲存後',
   'form.list': '回到列表',
   'form.edit': '繼續編輯',
@@ -12,7 +16,6 @@ export const zhTW = {
   'form.loading': '載入中',
 
   'form.errorSummary': '有 {count} 個欄位需要修正',
-  'form.sections': '本頁段落',
   'common.close': '關閉',
   'common.cancel': '取消',
   'common.save': '儲存',

@@ -25,6 +25,7 @@ export interface NodesProps {
   prefix?: string;
   uploadUrl?: string;
   row?: boolean;
+  sectionIdPrefix?: string;
 }
 export function Nodes(props: NodesProps) {
   const { nodes, api, idPrefix, layout, prefix = '', uploadUrl, row } = props;
@@ -78,10 +79,14 @@ export function Nodes(props: NodesProps) {
         let content: ReactNode;
         switch (node.type) {
           case 'section': {
-            const id = `${idPrefix}-section-${encodeURIComponent(node.key)}`;
+            const id = props.sectionIdPrefix
+              ? `${props.sectionIdPrefix}-${encodeURIComponent(node.key)}`
+              : `${idPrefix}-section-${encodeURIComponent(node.key)}`;
             content = (
               <section aria-labelledby={id} className="br:grid br:gap-4">
-                <FormHeading id={id}>{node.title}</FormHeading>
+                <FormHeading id={id} sectionKey={node.key}>
+                  {node.title}
+                </FormHeading>
                 {node.description ? <p>{node.description}</p> : null}
                 {children(node.children)}
               </section>

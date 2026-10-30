@@ -1,6 +1,10 @@
 import type { MessageKey } from './index';
 
 export const en: Record<MessageKey, string> = {
+  'form.sections': 'Page sections',
+  'form.sectionError': ' (has errors)',
+  'form.dirty': 'Unsaved changes',
+  'form.discard': 'Discard changes',
   'form.after': 'After saving',
   'form.list': 'Back to list',
   'form.edit': 'Continue editing',
@@ -13,7 +17,6 @@ export const en: Record<MessageKey, string> = {
   'form.pendingUploads': 'Files are still uploading. Wait until uploads finish before saving.',
   'form.loading': 'Loading',
   'form.errorSummary': '{count} fields need correction',
-  'form.sections': 'Page sections',
   'common.close': 'Close',
   'common.cancel': 'Cancel',
   'common.save': 'Save',

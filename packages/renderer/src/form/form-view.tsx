@@ -34,9 +34,10 @@ export const FormView = forwardRef<
     api: FormApi;
     uploadUrl?: string;
     idPrefix?: string;
+    sectionIdPrefix?: string;
     sectionsAs?: 'stack' | 'tabs';
   }
->(function FormView({ form, api, uploadUrl, idPrefix, sectionsAs }, ref) {
+>(function FormView({ form, api, uploadUrl, idPrefix, sectionsAs, sectionIdPrefix }, ref) {
   const instance = useId();
   const prefix = `${idPrefix ?? 'form'}-${instance}`;
   const root = useRef<HTMLDivElement>(null);
@@ -114,7 +115,14 @@ export const FormView = forwardRef<
         : false,
   }));
   const render = (nodes: FormDef['nodes']) => (
-    <Nodes nodes={nodes} api={api} idPrefix={prefix} layout={form.layout} uploadUrl={uploadUrl} />
+    <Nodes
+      nodes={nodes}
+      api={api}
+      idPrefix={prefix}
+      layout={form.layout}
+      uploadUrl={uploadUrl}
+      sectionIdPrefix={sectionIdPrefix}
+    />
   );
   return (
     <FieldLayoutContext.Provider value={form.layout}>

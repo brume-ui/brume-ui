@@ -104,7 +104,7 @@ export {
 export { AppShell, type AppShellProps, SIDEBAR_COLLAPSED_STORAGE_KEY } from './layout/app-shell';
 export { type BreadcrumbItem, Breadcrumbs } from './layout/breadcrumbs';
 export { Card, type CardProps } from './layout/card';
-export { FormDivider, FormHeading } from './layout/form-structure';
+export { FormDivider, FormHeading, FormSectionLink } from './layout/form-structure';
 export { isPlainClick, resolveIcon } from './layout/menu-utils';
 export { ColorSchemeMenu } from './layout/navbar-menus';
 export { PageHeader, type PageHeaderProps } from './layout/page-header';

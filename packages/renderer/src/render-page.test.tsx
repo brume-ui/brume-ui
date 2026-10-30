@@ -37,3 +37,34 @@ describe('BrumePageView', () => {
     expect(screen.queryByRole('heading', { name: 'Overview' })).toBeNull();
   });
 });
+
+it('dispatches form pages to their standalone view', () => {
+  renderWithBrume(
+    <BrumePageView
+      envelope={{
+        schemaVersion: '0.3.0',
+        page: {
+          type: 'form',
+          title: 'Edit account',
+          name: 'Account',
+          formId: 'accounts',
+          mode: 'edit',
+          presentation: 'page',
+          size: 'md',
+          form: {
+            layout: 'stacked',
+            nodes: [
+              { type: 'field', field: { type: 'text', name: 'name', label: 'Account name' } },
+            ],
+          },
+          values: { name: 'Ada' },
+          submit: { method: 'put', url: '/accounts/1', label: 'Save' },
+          after: { default: 'edit', options: ['edit'] },
+        },
+      }}
+    />,
+  );
+  expect(screen.getByRole('heading', { name: 'Edit account' })).toBeTruthy();
+  expect((screen.getByLabelText('Account name') as HTMLInputElement).value).toBe('Ada');
+  expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+});

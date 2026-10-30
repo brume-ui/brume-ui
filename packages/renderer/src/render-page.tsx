@@ -2,6 +2,7 @@ import { Alert, useBrume } from '@brume-ui/brume-react';
 import { type PageEnvelope, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { DashboardPageView } from './dashboard-page';
 import { ErrorPageView } from './error-page';
+import { FormPageView } from './form/form-page';
 import { ListPageView } from './list-page';
 
 /** For 0.x releases the "major" is 0 and any 0.y is accepted. */
@@ -32,8 +33,7 @@ export function BrumePageView({ envelope }: { envelope: PageEnvelope }) {
     case 'error':
       return <ErrorPageView page={page} />;
     case 'form':
-      // 暫時不渲染：子計畫 2 Task 13 換成 FormPageView。
-      return null;
+      return <FormPageView page={page} />;
     default: {
       const unknown: never = page;
       return unknown;

@@ -5,6 +5,7 @@ export { AFTER_SAVE_KEY, readAfterSave, writeAfterSave } from './form/after-save
 export type { FieldComponent, FieldProps } from './form/contract';
 export { type FieldErrors, scopeErrors, unclaimedErrors } from './form/errors';
 export { FormDialog, type FormDialogProps } from './form/form-dialog';
+export { FormPageView } from './form/form-page';
 export { FormView, type FormViewHandle, isLongField, sectionErrorKeys } from './form/form-view';
 export { getAt, joinPath, setAt } from './form/paths';
 export { resolveField } from './form/registry';
