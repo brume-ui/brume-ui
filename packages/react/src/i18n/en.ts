@@ -1,6 +1,8 @@
 import type { MessageKey } from './index';
 
 export const en: Record<MessageKey, string> = {
+  'form.errorSummary': '{count} fields need correction',
+  'form.sections': 'Page sections',
   'common.close': 'Close',
   'common.cancel': 'Cancel',
   'common.save': 'Save',

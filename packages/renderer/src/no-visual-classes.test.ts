@@ -33,7 +33,7 @@ const LAYOUT: RegExp[] = [
 ];
 
 /** Variant prefixes (`sm:`, `max-sm:`, `@md:`, `empty:`): the utility after them is what counts. */
-const VARIANTS = /^(?:(?:@?[a-z0-9-]+|\[[^\]]+\]|[a-z-]+-\[[^\]]+\]):)+/;
+const VARIANTS = /^(?:(?:@?[a-z0-9-]+|\[[^\]]+\]|@?[a-z-]+-\[[^\]]+\]):)+/;
 
 function isLayout(utility: string): boolean {
   const bare = utility.replace(VARIANTS, '').replace(/^-/, '').replace(/!$/, '');
@@ -82,7 +82,7 @@ describe('no visual classes in the renderer', () => {
   it('accepts layout utilities, with breakpoint and state variants', () => {
     const source = `
       export const a = <div className="br:flex br:flex-wrap br:items-center br:gap-2 br:px-4 br:py-2" />;
-      export const b = <div className="br:grid br:max-md:grid-cols-1 br:md:max-xl:grid-cols-2 br:@container" />;
+      export const b = <div className="br:grid br:max-md:grid-cols-1 br:md:max-xl:grid-cols-2 br:@container br:@min-[480px]:grid-cols-2 br:@min-[640px]:[grid-column:var(--br-form-column-span,span_12)]" />;
       export const c = <div className="br:min-w-0 br:max-w-full br:size-4 br:sticky br:top-0 br:z-10" />;
       export const d = <span className="br:sr-only br:truncate br:break-words br:whitespace-pre-wrap" />;
       export const e = <div className="br:empty:hidden br:max-sm:ms-auto br:-mt-1 br:max-sm:[grid-row:auto]!" />;

@@ -3,6 +3,7 @@ export { DashboardPageView } from './dashboard-page';
 export { ErrorPageView } from './error-page';
 export type { FieldComponent, FieldProps } from './form/contract';
 export { type FieldErrors, scopeErrors, unclaimedErrors } from './form/errors';
+export { FormView, type FormViewHandle, isLongField, sectionErrorKeys } from './form/form-view';
 export { getAt, joinPath, setAt } from './form/paths';
 export { resolveField } from './form/registry';
 export { type FormApi, useFormState } from './form/use-form-state';

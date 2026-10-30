@@ -1,5 +1,5 @@
 import type { ClientRule, FieldDef, FormNode } from '@brume-ui/brume-schema';
-import { joinPath } from './paths';
+import { getAt, joinPath } from './paths';
 
 function isEmpty(value: unknown): boolean {
   return (
@@ -94,5 +94,24 @@ export function collectFields(
       default:
         return collectFields(node.children, base);
     }
+  });
+}
+
+/** Expands the current completed upload values; no fields exist for pending/removed items. */
+export function collectValueFields(nodes: FormNode[], values: Record<string, unknown>) {
+  return collectFields(nodes).flatMap((field) => {
+    if (field.def.type !== 'upload' || field.def.readOnly) return [field];
+    const value = getAt(values, field.path);
+    const def = field.def;
+    const items = def.multiple ? (Array.isArray(value) ? value : []) : value ? [value] : [];
+    return [
+      field,
+      ...items.flatMap((item, index) => {
+        if (!item || typeof item !== 'object' || (!('path' in item) && !('token' in item)))
+          return [];
+        const base = `${field.path}${def.multiple ? `.${index}` : ''}.extra`;
+        return (def.extra ?? []).map((extra) => ({ path: joinPath(base, extra.name), def: extra }));
+      }),
+    ];
   });
 }

@@ -1,5 +1,7 @@
-import { cloneElement, type ReactElement, useId, useRef } from 'react';
+import { cloneElement, createContext, type ReactElement, useContext, useId, useRef } from 'react';
 import { cn } from '../cn';
+
+export const FieldLayoutContext = createContext<'stacked' | 'horizontal'>('stacked');
 
 const CAPTION = 'br:text-sm br:font-semibold br:text-text';
 
@@ -39,6 +41,7 @@ export interface FieldProps {
 }
 
 export function Field({ label, description, error, required, group, children }: FieldProps) {
+  const layout = useContext(FieldLayoutContext);
   const autoId = useId();
   // The hint present on first render is part of the page; one that appears or changes later drops in.
   const initialDescription = useRef(description);
@@ -67,7 +70,14 @@ export function Field({ label, description, error, required, group, children }: 
   );
 
   return (
-    <div className="br:flex br:flex-col br:gap-1.5">
+    <div
+      data-field-layout={layout}
+      className={cn(
+        'br:grid br:grid-cols-1 br:gap-x-4 br:gap-y-1.5',
+        layout === 'horizontal' &&
+          'br:@min-[480px]:grid-cols-[8rem_1fr] br:@min-[480px]:[&>label]:text-right br:@min-[480px]:[&>span]:text-right',
+      )}
+    >
       {group ? (
         <span id={labelId} className={CAPTION}>
           {caption}
@@ -77,25 +87,27 @@ export function Field({ label, description, error, required, group, children }: 
           {caption}
         </label>
       )}
-      {description ? (
-        <p
-          key={description}
-          id={descriptionId}
-          className={cn(
-            'br:text-sm br:text-text-muted',
-            description !== initialDescription.current && DROP_IN,
-          )}
-        >
-          {description}
-        </p>
-      ) : null}
-      {cloneElement(children, injected)}
-      {error ? (
-        // Keyed by the message so each new error drops in again (fade-only under reduced motion).
-        <p key={error} id={errorId} className={cn('br:text-sm br:text-danger', DROP_IN)}>
-          {error}
-        </p>
-      ) : null}
+      <div className="br:grid br:min-w-0 br:gap-1.5">
+        {description ? (
+          <p
+            key={description}
+            id={descriptionId}
+            className={cn(
+              'br:text-sm br:text-text-muted',
+              description !== initialDescription.current && DROP_IN,
+            )}
+          >
+            {description}
+          </p>
+        ) : null}
+        {cloneElement(children, injected)}
+        {error ? (
+          // Keyed by the message so each new error drops in again (fade-only under reduced motion).
+          <p key={error} id={errorId} className={cn('br:text-sm br:text-danger', DROP_IN)}>
+            {error}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

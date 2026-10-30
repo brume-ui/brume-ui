@@ -45,7 +45,12 @@ export { type DataColumn, DataTable, type DataTableProps } from './components/da
 export { DateInput, type DateInputProps } from './components/date-input';
 export { Dialog, type DialogProps } from './components/dialog';
 export { EmptyState, type EmptyStateProps } from './components/empty-state';
-export { Field, type FieldControlProps, type FieldProps } from './components/field';
+export {
+  Field,
+  type FieldControlProps,
+  FieldLayoutContext,
+  type FieldProps,
+} from './components/field';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
 export { NumberInput, type NumberInputProps } from './components/number-input';
@@ -98,6 +103,7 @@ export {
 export { AppShell, type AppShellProps, SIDEBAR_COLLAPSED_STORAGE_KEY } from './layout/app-shell';
 export { type BreadcrumbItem, Breadcrumbs } from './layout/breadcrumbs';
 export { Card, type CardProps } from './layout/card';
+export { FormDivider, FormHeading } from './layout/form-structure';
 export { isPlainClick, resolveIcon } from './layout/menu-utils';
 export { ColorSchemeMenu } from './layout/navbar-menus';
 export { PageHeader, type PageHeaderProps } from './layout/page-header';

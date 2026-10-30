@@ -1,4 +1,6 @@
 export const zhTW = {
+  'form.errorSummary': '有 {count} 個欄位需要修正',
+  'form.sections': '本頁段落',
   'common.close': '關閉',
   'common.cancel': '取消',
   'common.save': '儲存',

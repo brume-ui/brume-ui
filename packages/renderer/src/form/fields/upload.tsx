@@ -157,8 +157,9 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
                       key={extra.name}
                       {...props}
                       def={extra}
-                      id={`${id}-${item.key}-${extra.name}`}
+                      id={`${id}-extra-${encodeURIComponent(prefix)}`}
                       path={`${path}.${prefix}`}
+                      onBlur={() => form.touch(`${path}.${prefix}`)}
                       value={item.value?.extra?.[extra.name]}
                       errors={childErrors}
                       invalid={!!childErrors['']?.length}
@@ -181,7 +182,11 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
                         )
                       }
                     />
-                  ) : null;
+                  ) : (
+                    <Alert key={extra.name} tone="warning">
+                      Unknown field type: {extra.type}
+                    </Alert>
+                  );
                 })
               : null
           }

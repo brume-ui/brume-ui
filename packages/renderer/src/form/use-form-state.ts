@@ -2,7 +2,7 @@ import type { FormDef } from '@brume-ui/brume-schema';
 import { useRef, useState } from 'react';
 import { type FieldErrors, isPathWithin } from './errors';
 import { getAt, setAt } from './paths';
-import { collectFields, validateValue } from './validate';
+import { collectValueFields, validateValue } from './validate';
 
 export interface FormApi {
   /** Changes only on explicit reset, including resets to identical values. */
@@ -48,11 +48,11 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
     resetVersion: 0,
   });
   const current = state.current;
-  const fields = collectFields(form.nodes);
+  const fields = () => collectValueFields(form.nodes, current.values);
   const notify = () => refresh((version) => version + 1);
   const errors = (): FieldErrors => {
     const client = Object.fromEntries(
-      fields.flatMap(({ path, def }) => {
+      fields().flatMap(({ path, def }) => {
         const message = current.touched.has(path)
           ? validateValue(def, getAt(current.values, path))
           : null;
@@ -86,7 +86,7 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
       notify();
     },
     validateAll() {
-      for (const { path } of fields) current.touched.add(path);
+      for (const { path } of fields()) current.touched.add(path);
       const valid = Object.values(errors()).every((messages) => messages.length === 0);
       notify();
       return valid;

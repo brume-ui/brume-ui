@@ -1,6 +1,8 @@
 import type { MessageKey } from './index';
 
 export const zhCN: Record<MessageKey, string> = {
+  'form.errorSummary': '有 {count} 个字段需要修正',
+  'form.sections': '本页段落',
   'common.close': '关闭',
   'common.cancel': '取消',
   'common.save': '保存',
