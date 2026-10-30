@@ -2,6 +2,7 @@
 import type { HttpRequest, HttpResponse } from '@brume-ui/brume-react';
 import { type FormPage, type FormSubmitRequest, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import fixture from '../../../../packages/schema/fixtures/valid/form-full.json';
+import { appendOrder, type OrderDb } from './grid-data';
 
 export const FORM_UPLOAD_URL = '/admin/orders/upload';
 export function buildFormPage(layout: 'stacked' | 'horizontal' = 'stacked', id = 42): FormPage {
@@ -65,16 +66,49 @@ export function buildFormPage(layout: 'stacked' | 'horizontal' = 'stacked', id =
   return page;
 }
 
-export async function respondForm(req: HttpRequest): Promise<HttpResponse> {
+/** A fresh wire snapshot of the same order read by grid reloads. */
+export function buildStoredFormPage(
+  db: OrderDb,
+  layout: 'stacked' | 'horizontal',
+  id: number,
+): FormPage | null {
+  const order = db.orders.find((item) => item.id === id);
+  if (!order) return null;
+  const page = buildFormPage(layout, id);
+  page.values = {
+    ...page.values,
+    ...structuredClone(order.formValues ?? {}),
+    customer: order.customer,
+    note: order.note,
+    is_gift: order.gift,
+    keywords: [...order.tags],
+    total: order.items.reduce((sum, item) => sum + item.qty * item.price, 0).toFixed(2),
+  };
+  return page;
+}
+
+export async function respondForm(req: HttpRequest, db: OrderDb): Promise<HttpResponse> {
   await new Promise((resolve) => setTimeout(resolve, 120));
   if (req.signal?.aborted) return { status: 0, data: { message: '已取消' } };
   const edit = /^\/admin\/orders\/(\d+)\/edit$/.exec(req.url);
   if (req.method === 'get' && (edit || req.url === '/admin/orders/create')) {
-    const page = buildFormPage('stacked', edit ? Number(edit[1]) : 49);
+    const page = edit
+      ? buildStoredFormPage(db, 'stacked', Number(edit[1]))
+      : buildFormPage('stacked', db.nextId);
+    if (!page) return { status: 404, data: { message: '找不到這筆訂單。' } };
+    const basic = page.form.nodes[0];
+    if (basic?.type === 'section')
+      basic.children.unshift({
+        type: 'field',
+        field: { type: 'text', name: 'customer', label: '客戶', required: true },
+      });
     // Grid routes advertise modal forms; the standalone fixture defaults to page.
     page.presentation = 'modal';
     if (!edit) {
       page.mode = 'create';
+      delete page.record;
+      page.values.customer = '';
+      page.values.note = '';
       page.title = '新增訂單';
       page.submit = { method: 'post', url: '/admin/orders', label: '儲存' };
     }
@@ -111,7 +145,15 @@ export async function respondForm(req: HttpRequest): Promise<HttpResponse> {
               : { 'meta.color': ['這個顏色目前無法供應。'] },
         },
       };
-    const id = record ? Number(record[1]) : 49;
+    const existing = record ? db.orders.find((item) => item.id === Number(record[1])) : undefined;
+    if (record && !existing) return { status: 404, data: { message: '找不到這筆訂單。' } };
+    const order = existing ?? appendOrder(db);
+    order.formValues = { ...order.formValues, ...structuredClone(values) };
+    if (typeof values.customer === 'string') order.customer = values.customer;
+    if (typeof values.note === 'string') order.note = values.note;
+    if (typeof values.is_gift === 'boolean') order.gift = values.is_gift;
+    if (Array.isArray(values.keywords)) order.tags = values.keywords.map(String);
+    const id = order.id;
     return {
       status: 200,
       data: {

@@ -21,6 +21,7 @@ import {
 import type { OptionItem } from '@brume-ui/brume-schema';
 import { useMemo, useState } from 'react';
 import { FORM_UPLOAD_URL, respondForm } from './form-data';
+import { createOrderDb } from './grid-data';
 import { Page, Panel, Section } from './page';
 
 const CITIES: OptionItem[] = [
@@ -72,7 +73,10 @@ const STATUS = [
 
 export function InputsPage() {
   const { locale } = useBrume();
-  const adapter = useMemo(() => createMemoryAdapter('/inputs', { respond: respondForm }), []);
+  const adapter = useMemo(() => {
+    const db = createOrderDb();
+    return createMemoryAdapter('/inputs', { respond: (req) => respondForm(req, db) });
+  }, []);
   return (
     <BrumeProvider locale={locale} adapter={adapter}>
       <InputsContent />

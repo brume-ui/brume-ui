@@ -37,6 +37,8 @@ export interface OrderItem {
 }
 
 export interface Order {
+  /** Values for fixture fields that have no list column. */
+  formValues?: Record<string, unknown>;
   id: number;
   no: string;
   customerId: string;
@@ -186,6 +188,25 @@ export function createOrderDb(count = 48): OrderDb {
   const rand = random(20261028);
   const orders = Array.from({ length: count }, (_, i) => makeOrder(i + 1, rand));
   return { orders, nextId: count + 1 };
+}
+
+/** Forms and quick create allocate from the same sequence as grid actions. */
+export function appendOrder(db: OrderDb): Order {
+  const order = makeOrder(db.nextId++, random(20261028));
+  Object.assign(order, {
+    customer: '',
+    customerId: '',
+    status: 'pending',
+    progress: 0,
+    tags: [],
+    gift: false,
+    note: '',
+    tracking: '',
+    risk: 0,
+    items: [],
+  });
+  db.orders.push(order);
+  return order;
 }
 
 // ─── Rows ─────────────────────────────────────────────────────────────────
@@ -727,7 +748,7 @@ function runAction(db: OrderDb, key: string, req: ActionRequest): HttpResponse {
     case 'duplicate': {
       if (!one) return invalid('找不到這筆訂單。');
       const copy: Order = {
-        ...one,
+        ...structuredClone(one),
         id: db.nextId,
         no: `ORD-2610${pad(db.nextId, 3)}`,
         status: 'pending',

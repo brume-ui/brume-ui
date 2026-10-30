@@ -61,7 +61,8 @@ function useOrdersServer(db: OrderDb) {
   const [version, setVersion] = useState(0);
   const adapter = useMemo<BrumeAdapter>(() => {
     const base = createMemoryAdapter(ORDERS_URL, {
-      respond: (req) => (req.url.includes('/_brume/') ? respondOrders(db, req) : respondForm(req)),
+      respond: (req) =>
+        req.url.includes('/_brume/') ? respondOrders(db, req) : respondForm(req, db),
     });
     return {
       ...base,
