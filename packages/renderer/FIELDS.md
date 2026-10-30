@@ -363,10 +363,10 @@ process-wide custom registry. Existing `components` / `get(name)` registrations 
 const registry = createRegistry({
   mode: 'vite',
   fields: {
-    Address: AddressField, // form only, including inside a repeater/picker draft
+    TaiwanAddress: AddressField, // form only, including inside a repeater/picker draft
     Quantity: { component: QuantityField, inlineEditable: true },
   },
-  displays: { Address: AddressDisplay },
+  displays: { TaiwanAddress: AddressDisplay },
   components: { OrderStatus: LegacyOrderStatus },
 });
 
@@ -386,12 +386,12 @@ Custom schema uses the existing ComponentRef envelope, with props left inside th
 
 ```ts
 { type: 'custom', name: 'address', label: 'Delivery address',
-  component: { type: 'component', name: 'Address', props: { country: 'TW' } } }
+  component: { type: 'component', name: 'TaiwanAddress', props: { zipcode: '100' } } }
 ```
 
 `AddressField` receives ordinary `FieldProps<AddressValue, CustomFieldDef>`; custom configuration
-is `def.component.props`. `errors['']` belongs to the whole field; `errors.city` belongs to its
-city input. Compose public `Field`, `TextInput`, and other controls from `@brume-ui/brume-react`,
+is `def.component.props`. `errors['']` belongs to the whole field; `errors.county` belongs to its
+county input. Compose public `Field`, `TextInput`, and other controls from `@brume-ui/brume-react`,
 use the supplied IDs/error descriptions and honor `readOnly`/`disabled`. Emit the complete normal
 JSON value via `onChange`; the renderer preserves current owner identity through a row move.
 Do not cache `path` for asynchronous writes or write through `form.setValue(cachedNumericPath, ...)`.
@@ -402,7 +402,7 @@ calculator can keep local component state without mutating the form.
 
 A custom display receives `{value:unknown, row:GridRow, column:string,
 props:Record<string,unknown>}` from `displays`. Its schema remains
-`{type:'component',name:'Address',props:{...}}`. Grid tries `displays` first, then retains the old
+`{type:'component',name:'TaiwanAddress',props:{...}}`. Grid tries `displays` first, then retains the old
 `components` path with `<Component {...props} context={{row,column}} />`. Other component slots
 (page, modal, content and expand) retain their legacy contract.
 
@@ -418,7 +418,7 @@ exact value through the normal cell update transport:
 
 The endpoint is `PATCH endpoints.cell` with `{id}` encoded. Object/array/string wire values are
 preserved, not coerced to text. A 422 response uses the ordinary absolute column path, for example
-`{"errors":{"address.city":["Choose another city"]}}`; the field sees `errors.city`.
+`{"errors":{"address.county":["Choose another county"]}}`; the field sees `errors.county`.
 The failed draft stays open, editing clears its owned server errors, and a successful retry closes
 and returns focus to the cell button. Pending submission disables fields/Save and ignores duplicate
 save events. Escape/Cancel discards the local draft and returns focus; a pending request still uses
@@ -430,7 +430,7 @@ draft while rolling back optimistic state. Client rules complement authoritative
 PHP `Editor::component`, address-to-model attribute mapping, authoritative cell validation and
 relation authorization are the subsequent backend tasks; this frontend does not implement them.
 
-The actual `/#/form-repeaters` example registers `AddressField` once, renders it inside the real
-Repeater, exposes a city-error button and displays the same JSON value with `AddressDisplay`.
+The actual `/#/form-repeaters` example registers `AddressField` once as `TaiwanAddress`, renders it inside the real
+Repeater, exposes a county-error button and displays the same JSON value with `AddressDisplay`.
 Source: `apps/playground/src/pages/custom-address.tsx` and `form-repeaters.tsx`. It uses only public
-imports. The address value stays an object (`country`, `city`, `postalCode`, `street`).
+imports. The address value stays an object (`zipcode`, `county`, `district`, `address`).

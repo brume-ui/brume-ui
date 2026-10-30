@@ -12,7 +12,10 @@ import { createRegistry, type DisplayProps } from './registry';
 import { RegistryProvider } from './registry-context';
 import { renderWithBrume } from './test-utils';
 
-type AddressProps = FieldProps<{ city?: string; country?: string } | undefined, CustomFieldDef>;
+type AddressProps = FieldProps<
+  { zipcode?: string; county?: string; district?: string; address?: string } | undefined,
+  CustomFieldDef
+>;
 function Address({
   value,
   onChange,
@@ -29,15 +32,22 @@ function Address({
       <TextInput
         id={id}
         aria-label={def.label}
-        value={value?.city ?? ''}
+        value={value?.county ?? ''}
         readOnly={readOnly}
         disabled={disabled}
         onBlur={onBlur}
-        onChange={(event) => onChange({ city: event.target.value, country: 'TW' })}
+        onChange={(event) =>
+          onChange({
+            zipcode: '100',
+            county: event.target.value,
+            district: 'Zhongzheng',
+            address: '1 Example Road',
+          })
+        }
       />
-      <span>{errors.city?.[0] ?? errors['']?.[0]}</span>
+      <span>{errors.county?.[0] ?? errors['']?.[0]}</span>
       <output>
-        {form.definition.nodes.length}:{String(def.component.props?.country)}
+        {form.definition.nodes.length}:{String(def.component.props?.zipcode)}
       </output>
     </div>
   );
@@ -62,7 +72,7 @@ const Text = forwardRef<HTMLInputElement, FieldProps<string | undefined, CustomF
   ),
 );
 const Display = ({ value, row, column, props }: DisplayProps) => (
-  <span>{`${(value as { city: string }).city}:${row.id}:${column}:${props.country}`}</span>
+  <span>{`${(value as { county: string }).county}:${row.id}:${column}:${props.zipcode}`}</span>
 );
 const Legacy = ({
   prefix,
@@ -73,10 +83,10 @@ const Legacy = ({
 }) => <span>{`${prefix}:${context.row.id}:${context.column}`}</span>;
 let oldChange: AddressProps['onChange'];
 function DelayedAddress(props: AddressProps) {
-  if (props.value?.city === 'B') oldChange = props.onChange;
+  if (props.value?.county === 'B') oldChange = props.onChange;
   return <Address {...props} />;
 }
-const component = { type: 'component' as const, name: 'Address', props: { country: 'TW' } };
+const component = { type: 'component' as const, name: 'TaiwanAddress', props: { zipcode: '100' } };
 const form: FormDef = {
   layout: 'stacked',
   nodes: [
@@ -102,8 +112,8 @@ let api: FormApi;
 function Harness({ definition = form }: { definition?: FormDef }) {
   api = useFormState(definition, {
     rows: [
-      { _brume: { key: 'a' }, address: { city: 'A' } },
-      { _brume: { key: 'b' }, address: { city: 'B' } },
+      { _brume: { key: 'a' }, address: { county: 'A' } },
+      { _brume: { key: 'b' }, address: { county: 'B' } },
     ],
   });
   return <Nodes nodes={definition.nodes} api={api} idPrefix="test" layout="stacked" />;
@@ -113,7 +123,7 @@ const page: ListPage = {
   title: 'List',
   gridId: 'list',
   columns: [{ key: 'address', label: 'Address', editor: { type: 'custom', component } }],
-  rows: [{ id: 1, address: { city: 'Taipei', country: 'TW' } }],
+  rows: [{ id: 1, address: { county: 'Taipei', zipcode: '100' } }],
   pagination: { page: 1, perPage: 20, total: 1, lastPage: 1 },
   query: { perPage: 20, filters: {} },
   perPageOptions: [20],
@@ -126,20 +136,28 @@ describe('public extensions', () => {
   it('normalizes explicit metadata and exotic components without inheriting registrations', () => {
     const registry = createRegistry({
       mode: 'vite',
-      fields: { Address, Memo, Ref, Eligible: { component: Address, inlineEditable: true } },
+      fields: {
+        TaiwanAddress: Address,
+        Memo,
+        Ref,
+        Eligible: { component: Address, inlineEditable: true },
+      },
     });
-    expect(registry.getField('Address')).toEqual({ component: Address, inlineEditable: false });
+    expect(registry.getField('TaiwanAddress')).toEqual({
+      component: Address,
+      inlineEditable: false,
+    });
     expect(registry.getField('Memo')?.component).toBe(Memo);
     expect(registry.getField('Ref')?.component).toBe(Ref);
     expect(registry.getField('Eligible')?.inlineEditable).toBe(true);
     const inherited = createRegistry({
       mode: 'vite',
-      fields: Object.create({ Address }),
-      displays: Object.create({ Address: Display }),
+      fields: Object.create({ TaiwanAddress: Address }),
+      displays: Object.create({ TaiwanAddress: Display }),
     });
-    expect(inherited.getField('Address')).toBeUndefined();
-    expect(inherited.getDisplay('Address')).toBeUndefined();
-    expect(createRegistry({ mode: 'vite' }).getDisplay('Address')).toBeUndefined();
+    expect(inherited.getField('TaiwanAddress')).toBeUndefined();
+    expect(inherited.getDisplay('TaiwanAddress')).toBeUndefined();
+    expect(createRegistry({ mode: 'vite' }).getDisplay('TaiwanAddress')).toBeUndefined();
     for (const name of ['toString', 'constructor', '__proto__']) {
       expect(registry.getField(name)).toBeUndefined();
       expect(registry.getDisplay(name)).toBeUndefined();
@@ -147,18 +165,23 @@ describe('public extensions', () => {
   });
   it('renders one registration inside a real repeater with relative errors and current-owner writes', () => {
     renderWithBrume(<Harness />, {
-      registry: createRegistry({ mode: 'vite', fields: { Address: Memo } }),
+      registry: createRegistry({ mode: 'vite', fields: { TaiwanAddress: Memo } }),
     });
-    act(() => api.setServerErrors({ 'rows.1.address.city': ['City is unavailable'] }));
+    act(() => api.setServerErrors({ 'rows.1.address.county': ['County is unavailable'] }));
     const b = screen.getByDisplayValue('B');
-    expect(screen.getByText('City is unavailable')).toBeTruthy();
+    expect(screen.getByText('County is unavailable')).toBeTruthy();
     act(() => {
       api.moveRow('rows', 1, 0);
       fireEvent.change(b, { target: { value: 'Moved' } });
     });
-    expect(api.getValue('rows.0.address')).toEqual({ city: 'Moved', country: 'TW' });
-    expect(api.getValue('rows.1.address')).toEqual({ city: 'A' });
-    expect(screen.getAllByText('1:TW')).toHaveLength(2);
+    expect(api.getValue('rows.0.address')).toEqual({
+      zipcode: '100',
+      county: 'Moved',
+      district: 'Zhongzheng',
+      address: '1 Example Road',
+    });
+    expect(api.getValue('rows.1.address')).toEqual({ county: 'A' });
+    expect(screen.getAllByText('1:100')).toHaveLength(2);
   });
   it('isolates provider registrations and diagnoses missing custom fields', () => {
     renderWithBrume(
@@ -172,7 +195,7 @@ describe('public extensions', () => {
           </section>
         </RegistryProvider>
       </>,
-      { registry: createRegistry({ mode: 'vite', fields: { Address } }) },
+      { registry: createRegistry({ mode: 'vite', fields: { TaiwanAddress: Address } }) },
     );
     expect(
       within(screen.getByRole('region', { name: 'registered' })).getAllByRole('textbox'),
@@ -197,20 +220,20 @@ describe('public extensions', () => {
       registry: createRegistry({
         mode: 'vite',
         displays: {
-          Address: Display,
+          TaiwanAddress: Display,
         },
         components: {
           Legacy,
         },
       }),
     });
-    expect(screen.getByText('Taipei:1:address:TW')).toBeTruthy();
+    expect(screen.getByText('Taipei:1:address:100')).toBeTruthy();
     expect(screen.getByText('old:1:legacy')).toBeTruthy();
   });
   it('requires explicit eligibility and submits the exact custom wire value with relative 422 errors', async () => {
     const registry = createRegistry({
       mode: 'vite',
-      fields: { Address: { component: Address, inlineEditable: true } },
+      fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
     });
     let attempts = 0;
     const result = renderWithBrume(<GridView page={page} />, {
@@ -218,7 +241,7 @@ describe('public extensions', () => {
       respond: (request) => {
         attempts++;
         return attempts === 1
-          ? { status: 422, data: { errors: { 'address.city': ['Choose another city'] } } }
+          ? { status: 422, data: { errors: { 'address.county': ['Choose another county'] } } }
           : {
               status: 200,
               data: { row: { id: 1, address: (request.body as { value: unknown }).value } },
@@ -230,12 +253,20 @@ describe('public extensions', () => {
       target: { value: 'Tainan' },
     });
     fireEvent.click(screen.getByRole('button', { name: '儲存' }));
-    expect(await screen.findByText('Choose another city')).toBeTruthy();
+    expect(await screen.findByText('Choose another county')).toBeTruthy();
     expect(screen.getByDisplayValue('Tainan')).toBeTruthy();
     expect(result.adapter.calls.filter((call) => call.fn === 'request')[0]?.args[0]).toMatchObject({
       method: 'patch',
       url: '/cells/1',
-      body: { column: 'address', value: { city: 'Tainan', country: 'TW' } },
+      body: {
+        column: 'address',
+        value: {
+          zipcode: '100',
+          county: 'Tainan',
+          district: 'Zhongzheng',
+          address: '1 Example Road',
+        },
+      },
     });
     fireEvent.change(screen.getByRole('textbox', { name: 'Address' }), {
       target: { value: 'Kaohsiung' },
@@ -243,20 +274,28 @@ describe('public extensions', () => {
     fireEvent.click(screen.getByRole('button', { name: '儲存' }));
     await screen.findByRole('button', { name: /編輯Address/ });
     expect(result.adapter.calls.filter((call) => call.fn === 'request')[1]?.args[0]).toMatchObject({
-      body: { column: 'address', value: { city: 'Kaohsiung', country: 'TW' } },
+      body: {
+        column: 'address',
+        value: {
+          zipcode: '100',
+          county: 'Kaohsiung',
+          district: 'Zhongzheng',
+          address: '1 Example Road',
+        },
+      },
     });
     expect(document.activeElement).toBe(screen.getByRole('button', { name: /編輯Address/ }));
   });
   it('does not edit plain registrations', () => {
     renderWithBrume(<GridView page={page} />, {
-      registry: createRegistry({ mode: 'vite', fields: { Address } }),
+      registry: createRegistry({ mode: 'vite', fields: { TaiwanAddress: Address } }),
     });
     expect(screen.queryByRole('button', { name: /編輯Address/ })).toBeNull();
   });
   it('cancels a draft with Escape, restores focus and starts the next session from the confirmed value', () => {
     const registry = createRegistry({
       mode: 'vite',
-      fields: { Address: { component: Address, inlineEditable: true } },
+      fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
     });
     const { adapter } = renderWithBrume(<GridView page={page} />, { registry });
     fireEvent.click(screen.getByRole('button', { name: /編輯Address/ }));
@@ -272,7 +311,7 @@ describe('public extensions', () => {
   it('validates declared rules and prevents duplicate saves while the actual form session is submitting', async () => {
     const registry = createRegistry({
       mode: 'vite',
-      fields: { Address: { component: Text, inlineEditable: true } },
+      fields: { TaiwanAddress: { component: Text, inlineEditable: true } },
     });
     const textPage: ListPage = {
       ...page,
@@ -319,17 +358,17 @@ describe('public extensions', () => {
   });
   it('rejects a removed custom owner callback even when the same row key returns in the same event', () => {
     renderWithBrume(<Harness />, {
-      registry: createRegistry({ mode: 'vite', fields: { Address: DelayedAddress } }),
+      registry: createRegistry({ mode: 'vite', fields: { TaiwanAddress: DelayedAddress } }),
     });
     act(() => {
       api.removeRow('rows', 1);
       api.setValue('rows', [
         ...(api.getValue('rows') as unknown[]),
-        { _brume: { key: 'b' }, address: { city: 'Replacement' } },
+        { _brume: { key: 'b' }, address: { county: 'Replacement' } },
       ]);
-      oldChange({ city: 'Late response' });
+      oldChange({ county: 'Late response' });
     });
-    expect(api.getValue('rows.1.address')).toEqual({ city: 'Replacement' });
+    expect(api.getValue('rows.1.address')).toEqual({ county: 'Replacement' });
   });
   it('keeps display-only custom calculations outside persisted state even if they emit onChange', () => {
     const definition: FormDef = {
@@ -348,7 +387,7 @@ describe('public extensions', () => {
       ],
     };
     renderWithBrume(<Harness definition={definition} />, {
-      registry: createRegistry({ mode: 'vite', fields: { Address } }),
+      registry: createRegistry({ mode: 'vite', fields: { TaiwanAddress: Address } }),
     });
     fireEvent.change(screen.getByRole('textbox', { name: 'Address' }), {
       target: { value: 'Calculation' },
@@ -393,7 +432,7 @@ describe('public extensions', () => {
     let attempts = 0;
     const registry = createRegistry({
       mode: 'vite',
-      fields: { Address: { component: Address, inlineEditable: true } },
+      fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
     });
     const result = renderWithBrume(
       <>
@@ -409,16 +448,16 @@ describe('public extensions', () => {
                 status: 422,
                 data: {
                   message: 'Request invalid',
-                  errors: { 'address.city': ['Invalid city'], value: ['Invalid envelope'] },
+                  errors: { 'address.county': ['Invalid county'], value: ['Invalid envelope'] },
                 },
               }
-            : { status: 200, data: { row: { id: 1, address: { city: 'Fixed' } } } };
+            : { status: 200, data: { row: { id: 1, address: { county: 'Fixed' } } } };
         },
       },
     );
     fireEvent.click(screen.getByRole('button', { name: /編輯Address/ }));
     fireEvent.click(screen.getByRole('button', { name: '儲存' }));
-    expect(await screen.findByText('Invalid city')).toBeTruthy();
+    expect(await screen.findByText('Invalid county')).toBeTruthy();
     expect(await screen.findByText('操作沒有完成：Request invalid')).toBeTruthy();
     fireEvent.change(screen.getByRole('textbox', { name: 'Address' }), {
       target: { value: 'Fixed' },
@@ -433,7 +472,7 @@ describe('public extensions', () => {
       let attempts = 0;
       const registry = createRegistry({
         mode: 'vite',
-        fields: { Address: { component: Address, inlineEditable: true } },
+        fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
       });
       const { adapter } = renderWithBrume(
         <>
@@ -452,7 +491,7 @@ describe('public extensions', () => {
                     errors: { [key]: ['Rejected request'] },
                   },
                 }
-              : { status: 200, data: { row: { id: 1, address: { city: 'Draft' } } } };
+              : { status: 200, data: { row: { id: 1, address: { county: 'Draft' } } } };
           },
         },
       );
@@ -472,7 +511,7 @@ describe('public extensions', () => {
     const user = userEvent.setup();
     const registry = createRegistry({
       mode: 'vite',
-      fields: { Address: { component: Address, inlineEditable: true } },
+      fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
     });
     const { adapter } = renderWithBrume(<GridView page={page} />, { registry });
     await user.click(screen.getByRole('button', { name: /編輯Address/ }));

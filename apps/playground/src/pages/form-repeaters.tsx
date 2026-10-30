@@ -25,7 +25,7 @@ const form: FormDef = {
               name: 'address',
               label: 'Delivery address',
               span: 'full',
-              component: { type: 'component', name: 'Address', props: { country: 'TW' } },
+              component: { type: 'component', name: 'TaiwanAddress', props: { zipcode: '100' } },
             },
           },
           {
@@ -61,7 +61,12 @@ const values = {
     {
       _brume: { key: 'a' },
       name: 'First',
-      address: { country: 'TW', city: 'Taipei', postalCode: '100', street: '1 Example Road' },
+      address: {
+        zipcode: '100',
+        county: 'Taipei',
+        district: 'Zhongzheng',
+        address: '1 Example Road',
+      },
       thresholds: [
         { _brume: { key: 'aa', id: '1' }, amount: '100.00' },
         { _brume: { key: 'ab', id: '2' }, amount: '200.00' },
@@ -70,7 +75,12 @@ const values = {
     {
       _brume: { key: 'b' },
       name: 'Second',
-      address: { country: 'TW', city: 'Tainan', postalCode: '700', street: '2 Example Road' },
+      address: {
+        zipcode: '700',
+        county: 'Tainan',
+        district: 'West Central',
+        address: '2 Example Road',
+      },
       thresholds: [{ _brume: { key: 'ba', id: '3' }, amount: '300.00' }],
     },
   ],
@@ -86,7 +96,7 @@ export function FormRepeatersPage() {
           <Button onClick={() => api.validateAll()}>Validate rows</Button>
           <Button
             onClick={() =>
-              api.setServerErrors({ 'groups.0.address.city': ['Check the delivery city.'] })
+              api.setServerErrors({ 'groups.0.address.county': ['Check the delivery county.'] })
             }
           >
             Show address error
@@ -104,7 +114,7 @@ export function FormRepeatersPage() {
                   {
                     key: 'address',
                     label: 'Address',
-                    display: { type: 'component', name: 'Address' },
+                    display: { type: 'component', name: 'TaiwanAddress' },
                   },
                 ],
                 rows: groups.map((group) => ({

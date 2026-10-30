@@ -3,16 +3,16 @@ import { createRegistry, type DisplayProps, type FieldProps } from '@brume-ui/br
 import type { CustomFieldDef } from '@brume-ui/brume-schema';
 
 export interface AddressValue {
-  country: string;
-  city: string;
-  postalCode: string;
-  street: string;
+  zipcode: string;
+  county: string;
+  district: string;
+  address: string;
 }
 const parts = [
-  ['country', 'Country'],
-  ['city', 'City'],
-  ['postalCode', 'Postal code'],
-  ['street', 'Street'],
+  ['zipcode', 'Zip code'],
+  ['county', 'County / city'],
+  ['district', 'District'],
+  ['address', 'Street address'],
 ] as const;
 
 /** One public field works at the root, in an embeds, in a repeater or in a picker draft. */
@@ -28,7 +28,7 @@ export function AddressField({
   readOnly,
   disabled,
 }: FieldProps<AddressValue | undefined, CustomFieldDef>) {
-  const address: AddressValue = { country: '', city: '', postalCode: '', street: '', ...value };
+  const address: AddressValue = { zipcode: '', county: '', district: '', address: '', ...value };
   return (
     <Field label={def.label} description={def.help} error={errors['']?.[0]} group>
       <fieldset
@@ -46,7 +46,7 @@ export function AddressField({
               readOnly={readOnly}
               onBlur={onBlur}
               placeholder={
-                key === 'country' ? String(def.component.props?.country ?? '') : undefined
+                key === 'zipcode' ? String(def.component.props?.zipcode ?? '') : undefined
               }
               onChange={(event) => onChange({ ...address, [key]: event.target.value })}
             />
@@ -72,6 +72,6 @@ export function AddressDisplay({ value }: DisplayProps) {
 // A composite field stays form-only unless its author explicitly opts into inline editing.
 export const addressRegistry = createRegistry({
   mode: 'vite',
-  fields: { Address: AddressField },
-  displays: { Address: AddressDisplay },
+  fields: { TaiwanAddress: AddressField },
+  displays: { TaiwanAddress: AddressDisplay },
 });
