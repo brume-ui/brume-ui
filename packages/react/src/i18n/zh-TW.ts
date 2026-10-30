@@ -1,4 +1,16 @@
 export const zhTW = {
+  'form.after': '儲存後',
+  'form.list': '回到列表',
+  'form.edit': '繼續編輯',
+  'form.create': '繼續新增',
+  'form.view': '查看',
+  'form.saving': '儲存中…',
+  'form.cancel': '取消',
+  'form.prev': '上一筆',
+  'form.next': '下一筆',
+  'form.pendingUploads': '檔案還在上傳，完成後才能儲存。',
+  'form.loading': '載入中',
+
   'form.errorSummary': '有 {count} 個欄位需要修正',
   'form.sections': '本頁段落',
   'common.close': '關閉',

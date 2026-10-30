@@ -17,6 +17,9 @@ export interface DialogProps {
   /** Unsaved changes: every way of closing asks for confirmation first. */
   dirty?: boolean;
   footer?: ReactNode;
+  headerActions?: ReactNode;
+  busy?: boolean;
+  onKeyDown?(event: KeyboardEvent<HTMLDivElement>): void;
   children: ReactNode;
 }
 
@@ -34,6 +37,9 @@ export function Dialog({
   maximizable = false,
   dirty = false,
   footer,
+  headerActions,
+  busy = false,
+  onKeyDown,
   children,
 }: DialogProps) {
   const { t } = useBrume();
@@ -45,6 +51,7 @@ export function Dialog({
   const bodyRef = useRef<HTMLDivElement>(null);
 
   async function handleOpenChange(next: boolean) {
+    if (busy && !next) return;
     if (next || !dirty) {
       if (!next) setMaximized(false);
       onOpenChange(next);
@@ -62,6 +69,9 @@ export function Dialog({
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    onKeyDown?.(e);
+    if (e.defaultPrevented) return;
+    if (busy || e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey)) return;
     const primary = footerRef.current?.querySelector<HTMLButtonElement>(
       '[type="submit"], [data-dialog-primary]',
@@ -81,6 +91,7 @@ export function Dialog({
           ref={contentRef}
           onKeyDown={handleKeyDown}
           aria-modal="true"
+          aria-busy={busy || undefined}
           onCloseAutoFocus={(e) => {
             // The dialog is controlled (no Radix Trigger), so return focus ourselves.
             e.preventDefault();
@@ -118,6 +129,7 @@ export function Dialog({
               ) : null}
             </div>
             <div className="br:flex br:shrink-0 br:items-center br:gap-1">
+              {headerActions}
               {maximizable ? (
                 <IconButton
                   icon={maximized ? Minimize2 : Maximize2}
@@ -126,7 +138,7 @@ export function Dialog({
                 />
               ) : null}
               <RadixDialog.Close asChild>
-                <IconButton icon={X} label={t('common.close')} />
+                <IconButton icon={X} label={t('common.close')} disabled={busy} />
               </RadixDialog.Close>
             </div>
           </div>

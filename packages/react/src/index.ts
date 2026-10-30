@@ -51,6 +51,7 @@ export {
   FieldLayoutContext,
   type FieldProps,
 } from './components/field';
+export { FormControls } from './components/form-controls';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
 export { NumberInput, type NumberInputProps } from './components/number-input';

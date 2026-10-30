@@ -202,5 +202,13 @@
 送出方式與表單相同：`POST submitUrl`，請求是 `FormSubmitRequest`，成功回 `FormSubmitResponse`，422 的鍵規則與值的處理也相同。欄位不可含 `upload`。
 
 - 請求不帶 `after`，只有 `{ values }`。
-- 回應仍然要帶 `id` 和 `urls.edit`（schema 要求）。前端不依 `urls` 導向。
+- 正常儲存回應仍然要帶 `id` 和 `urls.edit`（schema 要求）。前端不依 `urls` 導向。取消分支見下節，不清空欄位或執行成功後的列表重整。
 - 成功後前端清空快速新增的欄位並重新整理列表。`feedback` 照一般規則處理：有 `toast` 就顯示，有 `redirect` 就導向。
+
+### Hook 取消送出
+
+submitted/saving hook 可以中止儲存，回 HTTP 200：
+`{ "cancelled": true, "feedback": { "toast": { "type": "info", "message": "Not saved" } } }`。
+這個分支不需要資料 id 或成功後的 URLs。前端套用 feedback，保留欄位值與未儲存狀態，
+不執行 `onSaved` 或使用者選的儲存後去向。明確提供且安全的 `feedback.redirect` 仍會導向。
+正常儲存回應另有 `FormSubmitSuccess` 型別；成功回呼使用這個型別，而非整個回應聯集。

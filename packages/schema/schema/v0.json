@@ -6639,100 +6639,178 @@
       }
     },
     "FormSubmitResponse": {
-      "type": "object",
-      "required": [
-        "id",
-        "urls"
-      ],
-      "properties": {
-        "id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ]
-        },
-        "feedback": {
+      "anyOf": [
+        {
           "type": "object",
+          "required": [
+            "id",
+            "urls"
+          ],
           "properties": {
-            "toast": {
+            "cancelled": {
+              "const": false,
+              "type": "boolean"
+            },
+            "id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "feedback": {
               "type": "object",
-              "required": [
-                "type",
-                "message"
-              ],
               "properties": {
-                "type": {
-                  "anyOf": [
-                    {
-                      "const": "success",
-                      "type": "string"
+                "toast": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "type": {
+                      "anyOf": [
+                        {
+                          "const": "success",
+                          "type": "string"
+                        },
+                        {
+                          "const": "error",
+                          "type": "string"
+                        },
+                        {
+                          "const": "info",
+                          "type": "string"
+                        },
+                        {
+                          "const": "warning",
+                          "type": "string"
+                        }
+                      ]
                     },
-                    {
-                      "const": "error",
-                      "type": "string"
-                    },
-                    {
-                      "const": "info",
-                      "type": "string"
-                    },
-                    {
-                      "const": "warning",
+                    "message": {
                       "type": "string"
                     }
-                  ]
+                  }
                 },
-                "message": {
+                "refresh": {
+                  "type": "boolean"
+                },
+                "redirect": {
                   "type": "string"
+                },
+                "download": {
+                  "type": "object",
+                  "required": [
+                    "url"
+                  ],
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             },
-            "refresh": {
-              "type": "boolean"
-            },
-            "redirect": {
-              "type": "string"
-            },
-            "download": {
+            "urls": {
               "type": "object",
               "required": [
-                "url"
+                "edit"
               ],
               "properties": {
-                "url": {
+                "list": {
                   "type": "string"
                 },
-                "filename": {
+                "edit": {
+                  "type": "string"
+                },
+                "create": {
+                  "type": "string"
+                },
+                "view": {
                   "type": "string"
                 }
               }
             }
           }
         },
-        "urls": {
+        {
           "type": "object",
           "required": [
-            "edit"
+            "cancelled",
+            "feedback"
           ],
           "properties": {
-            "list": {
-              "type": "string"
+            "cancelled": {
+              "const": true,
+              "type": "boolean"
             },
-            "edit": {
-              "type": "string"
-            },
-            "create": {
-              "type": "string"
-            },
-            "view": {
-              "type": "string"
+            "feedback": {
+              "type": "object",
+              "properties": {
+                "toast": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "type": {
+                      "anyOf": [
+                        {
+                          "const": "success",
+                          "type": "string"
+                        },
+                        {
+                          "const": "error",
+                          "type": "string"
+                        },
+                        {
+                          "const": "info",
+                          "type": "string"
+                        },
+                        {
+                          "const": "warning",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "refresh": {
+                  "type": "boolean"
+                },
+                "redirect": {
+                  "type": "string"
+                },
+                "download": {
+                  "type": "object",
+                  "required": [
+                    "url"
+                  ],
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
             }
           }
         }
-      }
+      ]
     }
   }
 }

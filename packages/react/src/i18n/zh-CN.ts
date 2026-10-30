@@ -1,6 +1,17 @@
 import type { MessageKey } from './index';
 
 export const zhCN: Record<MessageKey, string> = {
+  'form.after': '保存后',
+  'form.list': '返回列表',
+  'form.edit': '继续编辑',
+  'form.create': '继续新增',
+  'form.view': '查看',
+  'form.saving': '保存中…',
+  'form.cancel': '取消',
+  'form.prev': '上一条',
+  'form.next': '下一条',
+  'form.pendingUploads': '文件还在上传，完成后才能保存。',
+  'form.loading': '加载中',
   'form.errorSummary': '有 {count} 个字段需要修正',
   'form.sections': '本页段落',
   'common.close': '关闭',

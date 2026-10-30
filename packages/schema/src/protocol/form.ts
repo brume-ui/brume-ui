@@ -18,7 +18,8 @@ export const FormSubmitRequestSchema = Type.Object({
 export type FormSubmitRequest = Static<typeof FormSubmitRequestSchema>;
 
 /** 200。儲存後去向由前端依 `after` 和 `urls` 決定，`feedback.redirect` 存在時以它為準。 */
-export const FormSubmitResponseSchema = Type.Object({
+export const FormSubmitSuccessSchema = Type.Object({
+  cancelled: Type.Optional(Type.Literal(false)),
   id: IdSchema,
   feedback: Type.Optional(FeedbackSchema),
   urls: Type.Object({
@@ -28,4 +29,9 @@ export const FormSubmitResponseSchema = Type.Object({
     view: Type.Optional(Type.String()),
   }),
 });
+export type FormSubmitSuccess = Static<typeof FormSubmitSuccessSchema>;
+export const FormSubmitResponseSchema = Type.Union([
+  FormSubmitSuccessSchema,
+  Type.Object({ cancelled: Type.Literal(true), feedback: FeedbackSchema }),
+]);
 export type FormSubmitResponse = Static<typeof FormSubmitResponseSchema>;

@@ -62,12 +62,24 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
     return { ...client, ...current.server };
   };
   return {
-    values: current.values,
-    resetVersion: current.resetVersion,
-    dirty: stable(current.values) !== current.baselineKey,
-    submitting: current.submitting,
-    pendingUploads: current.pendingUploads,
-    errors: errors(),
+    get values() {
+      return current.values;
+    },
+    get resetVersion() {
+      return current.resetVersion;
+    },
+    get dirty() {
+      return stable(current.values) !== current.baselineKey;
+    },
+    get submitting() {
+      return current.submitting;
+    },
+    get pendingUploads() {
+      return current.pendingUploads;
+    },
+    get errors() {
+      return errors();
+    },
     getValue: (path) => getAt(current.values, path),
     setValue(path, value) {
       // Run the path guard even on a no-op write.

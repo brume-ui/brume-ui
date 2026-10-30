@@ -76,6 +76,8 @@ export {
   FormSubmitRequestSchema,
   type FormSubmitResponse,
   FormSubmitResponseSchema,
+  type FormSubmitSuccess,
+  FormSubmitSuccessSchema,
 } from './protocol/form';
 export {
   type ActionRequest,
