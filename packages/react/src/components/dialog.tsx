@@ -93,6 +93,15 @@ export function Dialog({
         <RadixDialog.Content
           ref={contentRef}
           onKeyDown={handleKeyDown}
+          onEscapeKeyDown={(event) => {
+            // Radix listens in document capture, before inline controls can handle Escape.
+            // Let the inline region's bubbling handler (or its child popup) own this key.
+            if (
+              event.target instanceof Element &&
+              event.target.closest('[data-brume-inline-escape]')
+            )
+              event.preventDefault();
+          }}
           aria-modal="true"
           aria-busy={busy || undefined}
           onCloseAutoFocus={(e) => {

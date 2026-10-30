@@ -1,6 +1,7 @@
 import type { MessageKey } from './index';
 
 export const zhCN: Record<MessageKey, string> = {
+  'relation.section': '分类',
   'resource.create': '新增{name}',
   'resource.retry': '重试',
   'resource.quickCreate': '快速新增',

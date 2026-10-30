@@ -9,9 +9,17 @@ import { Stacked } from './stacked';
 export function isLongField(def: FieldDef): boolean {
   return (
     def.span === 'full' ||
-    ['textarea', 'tags', 'upload', 'checkbox', 'dateRange', 'datetimeRange', 'embeds'].includes(
-      def.type,
-    )
+    [
+      'textarea',
+      'tags',
+      'upload',
+      'checkbox',
+      'dateRange',
+      'datetimeRange',
+      'embeds',
+      'relation',
+      'repeater',
+    ].includes(def.type)
   );
 }
 export function fieldId(prefix: string, path: string): string {

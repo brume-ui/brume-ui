@@ -12,6 +12,8 @@ import {
 } from '@brume-ui/brume-react';
 import type { FilterDef, FilterValue, OptionItem, OptionsResponse } from '@brume-ui/brume-schema';
 import { useMemo, useState } from 'react';
+import { RemoteRelationPicker } from '../../form/relation-source';
+import { useRemoteOptions } from '../../form/use-remote-options';
 import { useGrid } from '../grid-context';
 
 /** Remote options come 20 at a time. */
@@ -125,6 +127,19 @@ export function FilterInputControl({
           id={id}
           describedBy={describedBy}
         />
+      );
+    case 'selectTable':
+    case 'multipleSelectTable':
+      return (
+        <fieldset
+          id={id}
+          aria-label={labelledBy ? undefined : label}
+          aria-labelledby={labelledBy}
+          aria-describedby={describedBy}
+          className="br:min-w-0"
+        >
+          <TableFilter def={def} value={value} onChange={onChange} />
+        </fieldset>
       );
     case 'radio':
       return (
@@ -255,5 +270,29 @@ function ConditionFilter({ def, value, onChange, id, describedBy }: PartProps) {
         />
       </div>
     </div>
+  );
+}
+
+/** Picker filters use the server-declared filter key and the shared standalone source. */
+function TableFilter({ def, value, onChange }: PartProps) {
+  const { page } = useGrid();
+  const endpoint = page.endpoints?.options;
+  const source = useRemoteOptions({
+    remote: endpoint ? { url: optionsUrl(endpoint, def.key) } : undefined,
+    ownerKey: `${page.gridId}:${def.key}`,
+    resetKey: JSON.stringify(page.query.filters),
+  });
+  const multiple = def.input.type === 'multipleSelectTable';
+  const ids = multiple ? filterList(value) : filterText(value) ? [filterText(value)] : [];
+  return (
+    <RemoteRelationPicker
+      label={def.label}
+      multiple={multiple}
+      source={source}
+      value={ids.map((id) => ({ id }))}
+      onChange={(next) =>
+        onChange(multiple ? (next.length ? next.map((item) => item.id) : undefined) : next[0]?.id)
+      }
+    />
   );
 }

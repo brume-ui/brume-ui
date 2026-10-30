@@ -45,6 +45,8 @@ export function placeFilters(panel: FilterPanel): PlacedFilter[] {
 /** Inputs that are a group of controls: Field names them with aria-labelledby, not a label. */
 const GROUP_INPUTS: ReadonlySet<FilterDef['input']['type']> = new Set([
   'radio',
+  'selectTable',
+  'multipleSelectTable',
   'checkbox',
   'range',
 ]);

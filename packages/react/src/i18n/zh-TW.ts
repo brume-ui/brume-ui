@@ -1,4 +1,5 @@
 export const zhTW = {
+  'relation.section': '分類',
   'resource.create': '新增{name}',
   'resource.retry': '重試',
   'resource.quickCreate': '快速新增',

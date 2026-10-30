@@ -1,6 +1,7 @@
 import type { MessageKey } from './index';
 
 export const en: Record<MessageKey, string> = {
+  'relation.section': 'Section',
   'resource.create': 'Create {name}',
   'resource.retry': 'Retry',
   'resource.quickCreate': 'Quick create',

@@ -40,7 +40,16 @@ export function Popover({
           align={align}
           sideOffset={6}
           collisionPadding={8}
-          onEscapeKeyDown={onEscapeKeyDown}
+          onEscapeKeyDown={(event) => {
+            if (
+              event.target instanceof Element &&
+              event.target.closest('[data-brume-inline-escape]')
+            ) {
+              event.preventDefault();
+              return;
+            }
+            onEscapeKeyDown?.(event);
+          }}
           aria-labelledby={title ? titleId : undefined}
           className={cn(POPOVER_SURFACE, 'br:w-[min(20rem,calc(100vw-2rem))] br:p-4')}
         >

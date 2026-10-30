@@ -5,8 +5,22 @@ import {
   type HttpRequest,
   useBrume,
 } from '@brume-ui/brume-react';
-import { FormView, resolveField, useFormState } from '@brume-ui/brume-renderer';
-import type { FieldDef, FormDef, OptionItem, OptionsResponse } from '@brume-ui/brume-schema';
+import {
+  FormDialog,
+  FormView,
+  GridView,
+  resolveField,
+  useFormState,
+} from '@brume-ui/brume-renderer';
+import type {
+  FieldDef,
+  FormDef,
+  FormPage,
+  ListPage,
+  OptionItem,
+  OptionsResponse,
+  PickerSearchResponse,
+} from '@brume-ui/brume-schema';
 import { useMemo, useRef, useState } from 'react';
 import { Page, Panel } from './page';
 
@@ -15,7 +29,22 @@ const categories = [
   { value: 'B', label: 'Category B' },
   { value: 'C', label: 'Category C (7 unavailable)' },
 ];
+const picker: FieldDef = {
+  type: 'relation',
+  name: 'selection',
+  label: 'Related products',
+  multiple: true,
+  remote: {
+    url: '/demo/options/picker',
+    dependsOn: { category: { scope: 'root', path: 'category' } },
+  },
+  fields: [
+    { type: 'field', field: { type: 'text', name: 'quantity', label: 'Quantity' } },
+    { type: 'field', field: { type: 'text', name: 'note', label: 'Selection note' } },
+  ],
+};
 const rootFields: FieldDef[] = [
+  picker,
   { type: 'select', name: 'category', label: 'Category', options: categories },
   {
     type: 'select',
@@ -77,6 +106,7 @@ const form: FormDef = {
   ],
 };
 const initial = {
+  selection: [{ id: '1', quantity: '2', note: 'Original' }],
   category: 'A',
   parent: '7',
   products: ['7'],
@@ -108,6 +138,38 @@ export function FormRelationsPage() {
           );
           if (state.failure)
             return { status: 503, data: { message: 'Fixture source unavailable' } };
+          if (req.url === '/demo/options/picker') {
+            const ids = req.query?.value;
+            const q = String(req.query?.q ?? '').toLowerCase();
+            const section = String(req.query?.section ?? 'all');
+            const options = Array.from({ length: 6 }, (_, index) => ({
+              value: String(index + 1),
+              label: `Product ${index + 1}`,
+              disabled: index === 5,
+              columns: { sku: `SKU-${index + 1}` },
+            }));
+            const filtered = options.filter((item) =>
+              Array.isArray(ids)
+                ? ids.includes(item.value)
+                : item.label.toLowerCase().includes(q) &&
+                  (section === 'all' || Number(item.value) <= 3),
+            );
+            const page = Number(req.query?.page ?? 1);
+            const response: PickerSearchResponse = {
+              data: Array.isArray(ids) ? filtered : filtered.slice((page - 1) * 2, page * 2),
+              pagination: {
+                page,
+                perPage: 2,
+                hasMore: !Array.isArray(ids) && filtered.length > page * 2,
+              },
+              columns: [{ key: 'sku', label: 'SKU' }],
+              sections: [
+                { key: 'all', label: 'All products' },
+                { key: 'featured', label: 'Featured' },
+              ],
+            };
+            return { status: 200, data: response };
+          }
           const prefix = `${depends.category ?? 'A'}${depends.parent ? ` / ${depends.parent}` : ''}`;
           const options: OptionItem[] = [
             ...(depends.category === 'C'
@@ -155,6 +217,7 @@ export function FormRelationsPage() {
 }
 function Choices() {
   const api = useFormState(form, initial);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const Choice = resolveField('select');
   return (
     <>
@@ -162,6 +225,20 @@ function Choices() {
         <h2>Hierarchy and selected label hydration</h2>
         <FormView form={{ ...form, nodes: form.nodes.slice(0, rootFields.length) }} api={api} />
         <Button onClick={() => api.reset()}>Reset draft</Button>
+      </Panel>
+      <Panel>
+        <h2>Picker surface and committed values</h2>
+        <output data-testid="picker-values">{JSON.stringify(api.values.selection)}</output>
+        <Button onClick={() => setDialogOpen(true)}>Open relation dialog</Button>
+        <FormDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          page={pickerPage}
+          onSaved={() => setDialogOpen(false)}
+        />
+      </Panel>
+      <Panel>
+        <GridView page={pickerGrid} />
       </Panel>
       <Panel>
         <h2>Two fixed sibling choice rows</h2>
@@ -190,3 +267,50 @@ function Choices() {
     </>
   );
 }
+
+const pickerPage: FormPage = {
+  type: 'form',
+  title: 'Relation dialog',
+  name: 'Order',
+  formId: 'picker-orders',
+  mode: 'edit',
+  form: {
+    layout: 'stacked',
+    nodes: [
+      {
+        type: 'field',
+        field: { type: 'select', name: 'category', label: 'Category', options: categories },
+      },
+      { type: 'field', field: picker },
+    ],
+  },
+  values: initial,
+  submit: { method: 'put', url: '/demo/save', label: 'Save order' },
+  after: { options: ['edit'], default: 'edit' },
+  presentation: 'modal',
+  size: 'lg',
+};
+const pickerGrid: ListPage = {
+  type: 'list',
+  title: 'Picker filters',
+  gridId: 'picker-grid',
+  columns: [{ key: 'name', label: 'Name' }],
+  rows: [{ id: 1, name: 'Order 1' }],
+  pagination: { page: 1, perPage: 20, total: 1, lastPage: 1 },
+  query: { perPage: 20, filters: {} },
+  perPageOptions: [20],
+  filters: {
+    columns: 1,
+    items: [
+      {
+        key: 'picker',
+        label: 'Filter products',
+        placement: 'panel',
+        input: { type: 'multipleSelectTable' },
+      },
+    ],
+  },
+  appliedFilters: [],
+  actions: { row: [], batch: [], tools: [] },
+  endpoints: { options: '/demo/options/{source}' },
+};

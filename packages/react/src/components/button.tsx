@@ -1,5 +1,5 @@
 import { Loader2, type LucideIcon } from 'lucide-react';
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { cn } from '../cn';
 import { PRESS } from '../motion/classes';
 import { FOCUS_RING } from './focus';
@@ -8,6 +8,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'dan
 export type ButtonSize = 'sm' | 'md';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  ref?: Ref<HTMLButtonElement>;
   /** `outline` is the tinted pill outline of exposed row actions (row-actions mockup B). */
   variant?: ButtonVariant;
   size?: ButtonSize;

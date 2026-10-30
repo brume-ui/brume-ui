@@ -7,6 +7,8 @@ import { findValueFieldOwner } from './traversal';
 import { collectValueFields, type ValueField } from './validate';
 
 export interface FormApi {
+  /** Full authoritative declarations, including empty row templates. */
+  readonly definition: FormDef;
   /** Stable ownership token across API wrappers for this mounted form state. */
   readonly stateId: symbol;
   /** Changes only on explicit reset, including resets to identical values. */
@@ -159,6 +161,7 @@ export function useFormState(
     notify();
   };
   return {
+    definition: form,
     stateId: current.stateId,
     get values() {
       return current.values;

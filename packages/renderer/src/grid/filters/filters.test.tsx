@@ -496,3 +496,36 @@ describe('scopes', () => {
     expect(lastHref(adapter)).toBe('/admin/orders?scope=month');
   });
 });
+
+it.each(['selectTable', 'multipleSelectTable'] as const)(
+  'uses real options source and serializes %s picker as URL scalar/list',
+  async (type) => {
+    const user = userEvent.setup();
+    const page: ListPage = {
+      ...orders,
+      filters: {
+        columns: 1,
+        items: [{ key: 'products', label: 'Products', placement: 'panel', input: { type } }],
+      },
+    };
+    const { adapter } = renderWithBrume(<GridView page={page} />, {
+      locale: 'en',
+      respond: () => ({ status: 200, data: customers }),
+    });
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    await user.click(screen.getByRole('button', { name: /Products/ }));
+    await user.click(
+      await screen.findByRole(type === 'selectTable' ? 'radio' : 'checkbox', {
+        name: 'Select Ada Lovelace',
+      }),
+    );
+    await user.click(screen.getByRole('button', { name: /^Apply$/ }));
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    expect(parseGridQuery(new URL(lastHref(adapter), 'http://x').search).filters.products).toEqual(
+      type === 'selectTable' ? '7' : ['7'],
+    );
+    expect(
+      requests(adapter).some((request) => request.url === '/admin/orders/_brume/options/products'),
+    ).toBe(true);
+  },
+);

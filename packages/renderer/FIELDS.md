@@ -230,7 +230,7 @@ Exclusions are recomputed at render time so existing loaded pages respond to sib
 
 Focused MemoryAdapter fixture: playground `/#/form-relations`, with Category A/B/C dependency
 controls, A/B reply delays, failure/retry, reset, hierarchical options, remote tag suggestions and
-fixed sibling choices with stable row swap. This fixture does not implement the repeater/picker UI.
+fixed sibling choices with stable row swap. This fixture does not implement the repeater UI.
 
 The same hook also accepts `StandaloneRemoteOptionsConfig` for Grid sources:
 `{remote?:{url:string,dependsOn?:never}, ownerKey:string, resolvedDepends?:Record<string,unknown>,
@@ -241,3 +241,53 @@ and `resetKey` must change on an explicit Grid clear/reset/invalidation even whe
 identical. Endpoint/context/owner changes and unmount invalidate both channels. Standalone callers
 cannot provide unresolved Form `dependsOn` paths. `RemoteOptionsConfig` is the union of this shape
 and `FormRemoteOptionsConfig`; `RemoteOptionsSource` publishes the opaque scope token and methods.
+
+### Relation picker and local selection drafts
+
+`relation` is rendered by the public transport-neutral `RelationPicker` from brume-react. Its
+required props are `value: RelationItem[]`, `onChange(next: RelationItem[]): void`, `multiple`,
+`items: PickerSearchResponse['data']`, `pagination: PickerSearchResponse['pagination']`, `query`,
+`loading`, `label`, `onQueryChange`, `onPageChange`, `onSectionChange` and `onRetry`. Optional
+`columns`, `sections`, `section`, `error`, and `disabled` describe presentation. Pagination uses
+only `page/perPage/hasMore`; previous/next controls never invent totals. Single field wire values
+remain null/object, converted to a zero/one item array only at this boundary. Search option labels
+and display columns never become writable relation properties.
+
+Optional `selectedOptions: readonly OptionItem[]` supplies independently hydrated label metadata;
+it is not appended to the search page. `onOpenChange(open)` observes explicit opening/closing.
+`commitDisabled` disables Apply while draft uploads are pending; Cancel stays available.
+`renderSelection(item,index,onChangeNext,draft,getDraft)` receives the selected item, its current
+index, an explicit item replacement callback, the full render snapshot, and a live read accessor.
+Existing callbacks taking only the first three arguments remain valid. `getDraft()` is stable for
+one selected ownership generation and returns the latest complete draft synchronously, or `[]`
+once that selection is removed, replaced, closed or unmounted. Removing/reselecting the same ID
+creates fresh ownership even in one event. A stale callback cannot edit a replacement selection.
+
+The renderer uses a local FormApi overlay for each selected owner. `FormApi.definition: FormDef`
+is the full authoritative declaration tree, including empty row templates; overlays preserve it.
+All reads use the current complete picker draft over the live parent values and the shared value
+walker. Writes, touched paths, row operations, errors and pending uploads stay local until Apply.
+Selected fields render through the ordinary `Nodes`, with flattened error paths such as
+`products.0.quantity` (not `products.0.extra.quantity`). The canonical selection context remains
+`{path, key: selectedId, id: selectedId}`. A same-ID replacement changes the local FormApi ownership
+and remounts its child controls; ordinary numeric movement preserves ownership. Upload cancellation
+aborts and discards late completion. Nested repeater/custom children will use this same contract;
+Task 5/6 supply those renderers and their deeper acceptance tests.
+
+Opening creates a deep draft copy. Search, page and section changes preserve selection order and
+extras; Cancel discards them and Apply emits once. Endpoint/dependency/form-reset/source-identity
+changes deliberately close and discard the uncommitted draft, preserving committed values and
+starting fresh metadata hydration. Only the existing page/Dialog/Popover surface is used. Escape
+cancels the inline region and restores its trigger; child popups retain their own Escape handling.
+Enter in text inputs cannot submit the containing form. Button refs are supported for restoration.
+
+Grid `selectTable` and `multipleSelectTable` reuse this picker with a real standalone source:
+`endpoints.options` plus encoded filter key, owner identity `gridId:filterKey`, and applied-filter
+reset context. Panel Reset remounts the controls even for identical values. Committed Grid values
+are string/string-array query values, never relation objects; old Combobox filter APIs remain.
+The `/#/form-relations` MemoryAdapter fixture now includes paged/sectioned relation selection,
+a FormDialog and Grid table filter in addition to its existing remote delay/failure controls.
+
+Browser specs in `apps/playground/e2e/relation-picker.spec.ts` cover keyboard, the one-dialog
+policy, 390px geometry, axe and light/dark screenshot cases. They require real-browser CI acceptance;
+unit tests/builds do not substitute for that gate.
