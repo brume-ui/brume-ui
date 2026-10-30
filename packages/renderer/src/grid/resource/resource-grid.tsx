@@ -1,6 +1,6 @@
 import { Alert, Button, Dialog, isSafeHref, useBrume } from '@brume-ui/brume-react';
 import type { AfterSave, FormSubmitSuccess, GridRow, ListPage } from '@brume-ui/brume-schema';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormDialog } from '../../form/form-dialog';
 import { GridView } from '../grid-view';
 import { useGridNavigation } from '../use-grid-navigation';
@@ -12,6 +12,16 @@ export function ResourceGridView({ page }: { page: ListPage }) {
   const { refresh } = useGridNavigation();
   const loader = useFormLoader();
   const [opened, setOpened] = useState<{ url: string; id?: string } | null>(null);
+  // The effective form can change after lifecycle hooks. Only the loader's current
+  // generation reaches this branch; cleared or superseded responses never navigate.
+  useEffect(() => {
+    if (opened && loader.page?.presentation === 'page') {
+      const url = opened.url;
+      setOpened(null);
+      loader.clear();
+      adapter.visit(url);
+    }
+  }, [opened, loader.page, loader.clear, adapter]);
   function open(url: string, id?: string) {
     if (!isSafeHref(url)) return;
     if (page.resource?.presentation === 'page') {
@@ -92,7 +102,7 @@ export function ResourceGridView({ page }: { page: ListPage }) {
         </Dialog>
       ) : (
         <FormDialog
-          open={Boolean(opened)}
+          open={Boolean(opened) && loader.page?.presentation !== 'page'}
           page={loader.page}
           onOpenChange={(value) => {
             if (!value) close();

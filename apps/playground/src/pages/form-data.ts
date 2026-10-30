@@ -71,6 +71,8 @@ export async function respondForm(req: HttpRequest): Promise<HttpResponse> {
   const edit = /^\/admin\/orders\/(\d+)\/edit$/.exec(req.url);
   if (req.method === 'get' && (edit || req.url === '/admin/orders/create')) {
     const page = buildFormPage('stacked', edit ? Number(edit[1]) : 49);
+    // Grid routes advertise modal forms; the standalone fixture defaults to page.
+    page.presentation = 'modal';
     if (!edit) {
       page.mode = 'create';
       page.title = '新增訂單';

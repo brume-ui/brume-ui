@@ -288,3 +288,42 @@ it('refuses a compatible envelope containing a non-form page', async () => {
   await screen.findByRole('alert');
   expect(screen.getByRole('button', { name: '重試' })).toBeTruthy();
 });
+
+it('honors loaded page presentation over the initial modal hint and visits the original URL', async () => {
+  const respond = vi.fn(() => ({
+    status: 200,
+    data: { schemaVersion: '0.3.0', page: { ...form, presentation: 'page' } },
+  }));
+  const { adapter } = renderWithBrume(<ListPageView page={page} />, { respond });
+  fireEvent.click(screen.getByRole('button', { name: 'Ada' }));
+  await waitFor(() =>
+    expect(adapter.calls.find((call) => call.fn === 'visit')?.args[0]).toBe('/admin/orders/7/edit'),
+  );
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+it('does not visit for a stale loaded page after opening another record', async () => {
+  let finish!: (value: import('@brume-ui/brume-react').HttpResponse) => void;
+  const respond = vi.fn((req: HttpRequest) =>
+    req.url.includes('create')
+      ? new Promise<import('@brume-ui/brume-react').HttpResponse>((resolve) => {
+          finish = resolve;
+        })
+      : Promise.resolve({ status: 200, data: { schemaVersion: '0.3.0', page: form } }),
+  );
+  const { adapter } = renderWithBrume(<ListPageView page={page} />, { respond });
+  fireEvent.click(screen.getByRole('button', { name: '新增訂單' }));
+  fireEvent.keyDown(await screen.findByRole('dialog'), { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: 'Ada' }));
+  await screen.findByRole('dialog', { name: '新增訂單' });
+  await import('@testing-library/react').then(({ act }) =>
+    act(async () =>
+      finish({
+        status: 200,
+        data: { schemaVersion: '0.3.0', page: { ...form, presentation: 'page' } },
+      }),
+    ),
+  );
+  expect(adapter.calls.some((call) => call.fn === 'visit')).toBe(false);
+  expect(screen.getByRole('dialog', { name: '新增訂單' })).toBeTruthy();
+});
