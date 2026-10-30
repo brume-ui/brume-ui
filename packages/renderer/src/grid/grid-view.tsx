@@ -32,10 +32,18 @@ export interface GridViewProps {
 }
 
 /** One list page: toolbar, table and pagination, all driven by the URL (see useGridNavigation). */
-export function GridView({ page, onEdit, toolbarStart }: GridViewProps) {
+export function GridView(props: GridViewProps) {
+  // Preserved navigation may reuse this component for an unrelated resource, including
+  // overlapping row IDs. State and in-flight action results belong to one endpoint owner.
+  const owner = JSON.stringify([props.page.gridId, props.page.endpoints?.action ?? null]);
+  return <OwnedGridView key={owner} {...props} />;
+}
+
+function OwnedGridView({ page, onEdit, toolbarStart }: GridViewProps) {
   const [actionForm, setActionForm] = useState<{
     def: ActionDef;
     request: ActionRequest;
+    endpoint: string;
   } | null>(null);
   const actionOwner = useRef<((value: boolean) => void) | null>(null);
   useEffect(
@@ -45,13 +53,17 @@ export function GridView({ page, onEdit, toolbarStart }: GridViewProps) {
     },
     [],
   );
-  const runFormAction = useCallback((def: ActionDef, request: ActionRequest) => {
-    if (actionOwner.current) return Promise.resolve(false);
-    return new Promise<boolean>((resolve) => {
-      actionOwner.current = resolve;
-      setActionForm({ def, request });
-    });
-  }, []);
+  const endpoint = page.endpoints?.action;
+  const runFormAction = useCallback(
+    (def: ActionDef, request: ActionRequest) => {
+      if (!endpoint || actionOwner.current) return Promise.resolve(false);
+      return new Promise<boolean>((resolve) => {
+        actionOwner.current = resolve;
+        setActionForm({ def, request, endpoint });
+      });
+    },
+    [endpoint],
+  );
   function finishActionForm(ran: boolean) {
     actionOwner.current?.(ran);
     actionOwner.current = null;
@@ -191,11 +203,11 @@ export function GridView({ page, onEdit, toolbarStart }: GridViewProps) {
         <GridSelectors />
         <GridTable hidden={hidden} />
         <GridFooter />
-        {actionForm && page.endpoints?.action ? (
+        {actionForm ? (
           <ActionFormDialog
             def={actionForm.def}
             request={actionForm.request}
-            endpoint={page.endpoints.action}
+            endpoint={actionForm.endpoint}
             onDone={finishActionForm}
           />
         ) : null}

@@ -9,7 +9,9 @@ import type { ActionDef, GridRow, ListPage } from '@brume-ui/brume-schema';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { ListPageView } from '../../list-page';
 import { renderWithBrume } from '../../test-utils';
+import { useGrid } from '../grid-context';
 import { GridView } from '../grid-view';
 import { exportHref } from '../toolbar';
 import { applyFeedback } from './feedback';
@@ -549,4 +551,123 @@ it('action input locks repeated Enter and click until the response settles', asy
   expect(requests(adapter)).toHaveLength(1);
   await import('@testing-library/react').then(({ act }) => act(async () => finish(ok())));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+});
+
+const inputAction: ActionDef = {
+  key: 'explain',
+  label: 'Explain',
+  exposed: true,
+  form: { fields: [{ type: 'text', name: 'reason', label: 'Reason text' }] },
+};
+const inputOrders: ListPage = { ...orders, actions: { ...orders.actions, row: [inputAction] } };
+const otherInputList: ListPage = {
+  ...inputOrders,
+  gridId: 'invoices',
+  endpoints: { action: '/admin/invoices/actions/{action}' },
+};
+
+it('cancels an open action input when a preserved plain list changes resource', async () => {
+  const user = userEvent.setup();
+  const { adapter, rerender } = renderWithBrume(<ListPageView page={inputOrders} />, {
+    respond: () => ok(),
+  });
+  const rerenderPage = (page: ListPage) => rerender(<ListPageView page={page} />);
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  await user.type(screen.getByLabelText('Reason text'), 'old resource input');
+  rerenderPage(otherInputList);
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(requests(adapter)).toHaveLength(0);
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  expect((screen.getByLabelText('Reason text') as HTMLInputElement).value).toBe('');
+  await user.type(screen.getByLabelText('Reason text'), 'new resource input');
+  await user.click(screen.getByRole('button', { name: 'Explain' }));
+  await waitFor(() => expect(requests(adapter)).toHaveLength(1));
+  expect(requests(adapter)[0]).toMatchObject({
+    url: '/admin/invoices/actions/explain',
+    body: { target: 'row', ids: [1], input: { reason: 'new resource input' } },
+  });
+});
+
+it('does not retarget retained action input when the same grid changes its endpoint', async () => {
+  const { user, rerenderPage } = setup(inputOrders);
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  rerenderPage({ ...inputOrders, endpoints: otherInputList.endpoints });
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+it('preserves action input and usability across ordinary same-grid envelope updates', async () => {
+  const { user, adapter, rerenderPage } = setup(inputOrders);
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  await user.type(screen.getByLabelText('Reason text'), 'keep input');
+  rerenderPage({
+    ...inputOrders,
+    rows: inputOrders.rows.map((item) => ({ ...item })),
+    query: { ...inputOrders.query, q: 'updated' },
+  });
+  expect((screen.getByLabelText('Reason text') as HTMLInputElement).value).toBe('keep input');
+  await user.click(screen.getByRole('button', { name: 'Explain' }));
+  await waitFor(() => expect(requests(adapter)).toHaveLength(1));
+  expect(requests(adapter)[0]?.url).toBe('/admin/orders/_brume/actions/explain');
+});
+
+it('ignores an obsolete action response after navigation while a new dialog is open', async () => {
+  let finish!: (res: HttpResponse) => void;
+  const { user, adapter, rerenderPage } = setup(inputOrders, {
+    respond: () =>
+      new Promise<HttpResponse>((resolve) => {
+        finish = resolve;
+      }),
+  });
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  await user.type(screen.getByLabelText('Reason text'), 'old input');
+  await user.click(screen.getByRole('button', { name: 'Explain' }));
+  expect(requests(adapter)[0]?.url).toBe('/admin/orders/_brume/actions/explain');
+  rerenderPage(otherInputList);
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  await user.type(screen.getByLabelText('Reason text'), 'new input');
+  await import('@testing-library/react').then(({ act }) =>
+    act(async () =>
+      finish({
+        status: 200,
+        data: {
+          feedback: {
+            toast: { type: 'success', message: 'obsolete' },
+            redirect: '/obsolete',
+            refresh: true,
+          },
+        },
+      }),
+    ),
+  );
+  expect((screen.getByLabelText('Reason text') as HTMLInputElement).value).toBe('new input');
+  expect(adapter.calls.some((call) => call.fn === 'visit' || call.fn === 'reload')).toBe(false);
+  expect(toasts.success).not.toHaveBeenCalled();
+});
+
+function ActionOwnerProbe({ finished }: { finished(value: boolean): void }) {
+  const { runFormAction } = useGrid();
+  return (
+    <button
+      type="button"
+      onClick={() => void runFormAction?.(inputAction, { target: 'row', ids: [1] }).then(finished)}
+    >
+      Open probe
+    </button>
+  );
+}
+
+it('settles the open action promise when its endpoint disappears and permits reopening', async () => {
+  const finished = vi.fn();
+  const view = (page: ListPage) => (
+    <GridView page={page} toolbarStart={<ActionOwnerProbe finished={finished} />} />
+  );
+  const result = renderWithBrume(view(inputOrders));
+  fireEvent.click(screen.getByRole('button', { name: 'Open probe' }));
+  await screen.findByRole('dialog');
+  result.rerender(view({ ...inputOrders, endpoints: undefined }));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  await waitFor(() => expect(finished).toHaveBeenCalledWith(false));
+  result.rerender(view(inputOrders));
+  fireEvent.click(screen.getByRole('button', { name: 'Open probe' }));
+  await screen.findByRole('dialog');
 });
