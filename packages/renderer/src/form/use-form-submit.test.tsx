@@ -26,14 +26,16 @@ const page: FormPage = {
 };
 function Harness({
   onState,
+  formPage = page,
 }: {
+  formPage?: FormPage;
   onState(api: FormApi, submit: ReturnType<typeof useFormSubmit>['submit']): void;
 }) {
-  const api = useFormState(page.form, page.values);
+  const api = useFormState(formPage.form, formPage.values);
   const ref = useRef<FormViewHandle>(null);
-  const { submit } = useFormSubmit(page, api, ref);
+  const { submit } = useFormSubmit(formPage, api, ref);
   onState(api, submit);
-  return <FormView ref={ref} form={page.form} api={api} />;
+  return <FormView ref={ref} form={formPage.form} api={api} />;
 }
 function setup(respond: NonNullable<Parameters<typeof renderWithBrume>[1]>['respond']) {
   let api!: FormApi;
@@ -162,4 +164,55 @@ it('observes submitting synchronously and ignores a second direct submit', async
     await first;
   });
   expect(s.api().submitting).toBe(false);
+});
+it('does not clear submitting state belonging to an explicit reset generation', async () => {
+  let finish!: (response: HttpResponse) => void;
+  const s = setup(
+    () =>
+      new Promise<HttpResponse>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  let request!: Promise<unknown>;
+  act(() => {
+    request = s.submit();
+  });
+  act(() => {
+    s.api().reset({ name: 'replacement' });
+    s.api().setSubmitting(true);
+  });
+  await act(async () => {
+    finish({ status: 200, data: { id: 1, urls: { edit: '/stale' } } });
+    expect(await request).toBeNull();
+  });
+  expect(s.api().values).toEqual({ name: 'replacement' });
+  expect(s.api().submitting).toBe(true);
+});
+it('releases owned state even if a changed semantic page invalidates the response', async () => {
+  let api!: FormApi;
+  let submit!: ReturnType<typeof useFormSubmit>['submit'];
+  const onState = (next: FormApi, send: typeof submit) => {
+    api = next;
+    submit = send;
+  };
+  let finish!: (response: HttpResponse) => void;
+  const { rerender } = renderWithBrume(<Harness onState={onState} />, {
+    respond: () =>
+      new Promise<HttpResponse>((resolve) => {
+        finish = resolve;
+      }),
+  });
+  let request!: Promise<unknown>;
+  act(() => {
+    api.setValue('name', 'mine');
+    request = submit('edit');
+  });
+  rerender(<Harness onState={onState} formPage={{ ...page, record: { id: 2 } }} />);
+  await act(async () => {
+    finish({ status: 200, data: { id: 1, urls: { edit: '/stale' } } });
+    expect(await request).toBeNull();
+  });
+  expect(api.submitting).toBe(false);
+  expect(api.values).toEqual({ name: 'mine' });
+  expect(api.dirty).toBe(true);
 });

@@ -247,3 +247,93 @@ it('deduplicates blocked visits while confirming and ignores confirmation after 
   await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   expect(adapter.calls.filter((call) => call.fn === 'visit')).toHaveLength(0);
 });
+it('preserves pending edits across a same-record refresh and allows retry', async () => {
+  const pending: Array<(value: HttpResponse) => void> = [];
+  const respond = vi.fn(() => new Promise<HttpResponse>((resolve) => pending.push(resolve)));
+  const { adapter, rerender } = renderWithBrume(<FormPageView page={page} />, { respond });
+  fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'mine' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  rerender(<FormPageView page={{ ...page, values: { name: 'server refresh' } }} />);
+  await act(async () => pending[0]?.({ status: 200, data: { cancelled: true } }));
+  expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('mine');
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  expect(respond).toHaveBeenCalledTimes(2);
+  await act(async () => pending[1]?.({ status: 200, data: { id: 1, urls: { edit: '/saved' } } }));
+  expect(adapter.currentUrl()).toBe('/saved');
+});
+it('allows discard after a pending same-record refresh finishes', async () => {
+  let finish!: (value: HttpResponse) => void;
+  const { rerender } = renderWithBrume(
+    <>
+      <ConfirmHost />
+      <FormPageView page={page} />
+    </>,
+    {
+      respond: () =>
+        new Promise<HttpResponse>((resolve) => {
+          finish = resolve;
+        }),
+    },
+  );
+  fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'mine' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  rerender(
+    <>
+      <ConfirmHost />
+      <FormPageView page={{ ...page }} />
+    </>,
+  );
+  await act(async () => finish({ status: 503, data: { message: 'Try again' } }));
+  fireEvent.click(screen.getByRole('button', { name: '捨棄變更' }));
+  await screen.findByRole('alertdialog');
+  fireEvent.click(screen.getByRole('button', { name: '放棄變更' }));
+  await waitFor(() =>
+    expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('old'),
+  );
+});
+it('applies successful same-record refreshed saves', async () => {
+  let finish!: (value: HttpResponse) => void;
+  const { adapter, rerender } = renderWithBrume(<FormPageView page={page} />, {
+    respond: () =>
+      new Promise<HttpResponse>((resolve) => {
+        finish = resolve;
+      }),
+  });
+  fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'mine' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  rerender(<FormPageView page={{ ...page }} />);
+  await act(async () => finish({ status: 200, data: { id: 1, urls: { edit: '/saved' } } }));
+  expect(adapter.currentUrl()).toBe('/saved');
+});
+it('isolates records sharing a generic submit URL while a save is pending', async () => {
+  let finish!: (value: HttpResponse) => void;
+  const first = { ...page, record: { id: 1 }, submit: { ...page.submit, url: '/items/save' } };
+  const { adapter, rerender } = renderWithBrume(<FormPageView page={first} />, {
+    respond: () =>
+      new Promise<HttpResponse>((resolve) => {
+        finish = resolve;
+      }),
+  });
+  fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'first edit' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  rerender(<FormPageView page={{ ...first, record: { id: 2 }, values: { name: 'second' } }} />);
+  expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('second');
+  await act(async () => finish({ status: 200, data: { id: 1, urls: { edit: '/stale' } } }));
+  expect(adapter.calls.filter((call) => call.fn === 'visit')).toHaveLength(0);
+  expect((screen.getByLabelText('Name') as HTMLInputElement).disabled).toBe(false);
+});
+it('a completed old record request cannot unlock a newer record save', async () => {
+  const pending: Array<(value: HttpResponse) => void> = [];
+  const { adapter, rerender } = renderWithBrume(
+    <FormPageView page={{ ...page, record: { id: 1 } }} />,
+    { respond: () => new Promise<HttpResponse>((resolve) => pending.push(resolve)) },
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  rerender(<FormPageView page={{ ...page, record: { id: 2 }, values: { name: 'second' } }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  await act(async () => pending[0]?.({ status: 200, data: { id: 1, urls: { edit: '/stale' } } }));
+  expect((screen.getByLabelText('Name') as HTMLInputElement).disabled).toBe(true);
+  expect(adapter.calls.filter((call) => call.fn === 'visit')).toHaveLength(0);
+  await act(async () => pending[1]?.({ status: 200, data: { id: 2, urls: { edit: '/second' } } }));
+  expect(adapter.currentUrl()).toBe('/second');
+});

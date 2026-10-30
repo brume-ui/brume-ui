@@ -5,6 +5,8 @@ import { getAt, setAt } from './paths';
 import { collectValueFields, validateValue } from './validate';
 
 export interface FormApi {
+  /** Stable ownership token across API wrappers for this mounted form state. */
+  readonly stateId: symbol;
   /** Changes only on explicit reset, including resets to identical values. */
   readonly resetVersion: number;
   values: Record<string, unknown>;
@@ -38,6 +40,7 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
   const [, refresh] = useState(0);
   // Refs make writes immediately observable by validateAll, including within one event.
   const state = useRef({
+    stateId: Symbol('form-state'),
     values: initial,
     baseline: initial,
     baselineKey: stable(initial),
@@ -62,6 +65,7 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
     return { ...client, ...current.server };
   };
   return {
+    stateId: current.stateId,
     get values() {
       return current.values;
     },

@@ -12,13 +12,14 @@ import {
 import type { AfterSave, FormPage } from '@brume-ui/brume-schema';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { readAfterSave, writeAfterSave } from './after-save';
+import { formIdentity } from './form-identity';
 import { FormView, type FormViewHandle, sectionErrorKeys } from './form-view';
 import { useFormState } from './use-form-state';
 import { useFormSubmit } from './use-form-submit';
 
 export function FormPageView({ page }: { page: FormPage }) {
   // New records remount; ordinary envelope refreshes preserve the user's edits.
-  return <LoadedFormPage key={`${page.formId}:${page.mode}:${page.submit.url}`} page={page} />;
+  return <LoadedFormPage key={formIdentity(page)} page={page} />;
 }
 function LoadedFormPage({ page }: { page: FormPage }) {
   const { adapter, t } = useBrume();
@@ -90,9 +91,9 @@ function LoadedFormPage({ page }: { page: FormPage }) {
     };
   }, [adapter]);
   const save = async () => {
-    const owner = latest.current.page;
+    const owner = formIdentity(latest.current.page);
     const result = await submit(after);
-    if (!result || !alive.current || latest.current.page !== owner) return;
+    if (!result || !alive.current || formIdentity(latest.current.page) !== owner) return;
     const url =
       result.feedback?.redirect ??
       (after === 'list' ? (result.urls.list ?? page.listUrl) : result.urls[after]);

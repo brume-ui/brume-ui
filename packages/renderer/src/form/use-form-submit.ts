@@ -9,6 +9,7 @@ import type {
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { triggerDownload } from '../grid/actions/feedback';
+import { formIdentity } from './form-identity';
 import type { FormViewHandle } from './form-view';
 import type { FormApi } from './use-form-state';
 
@@ -50,10 +51,13 @@ export function useFormSubmit(
     locked.current = true;
     const version = api.resetVersion;
     const values = api.values;
-    const relevant = () =>
+    const identity = formIdentity(page);
+    // Cleanup owns the state generation even when a changed page invalidates its response.
+    const ownsState = () =>
       mounted.current &&
-      current.current.page === page &&
-      current.current.api.resetVersion === version;
+      current.current.api.stateId === api.stateId &&
+      api.resetVersion === version;
+    const relevant = () => ownsState() && formIdentity(current.current.page) === identity;
     flushSync(() => {
       setSubmitting(true);
       api.setSubmitting(true);
@@ -96,7 +100,7 @@ export function useFormSubmit(
       return null;
     } finally {
       locked.current = false;
-      if (relevant()) api.setSubmitting(false);
+      if (ownsState()) api.setSubmitting(false);
       if (mounted.current) setSubmitting(false);
     }
   }
