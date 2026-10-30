@@ -2,6 +2,7 @@ import { ConfirmHost, type HttpResponse } from '@brume-ui/brume-react';
 import type { FormPage } from '@brume-ui/brume-schema';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { expect, it, vi } from 'vitest';
 import { renderWithBrume } from '../test-utils';
 import { FormDialog } from './form-dialog';
@@ -187,4 +188,105 @@ it('persists the selected after-save choice and gives that choice to onSaved', a
   result.rerender(<FormDialog page={page} open onOpenChange={() => {}} onSaved={onSaved} />);
   expect(screen.getByRole('combobox', { name: '儲存後' }).textContent).toBe('回到列表');
   localStorage.removeItem('brume.form.items.after');
+});
+
+function NavigationHarness({ loadNext }: { loadNext?(): Promise<FormPage> }) {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState<FormPage | null>(page);
+  return (
+    <>
+      <ConfirmHost />
+      <button
+        type="button"
+        onClick={() => {
+          setCurrent(page);
+          setOpen(true);
+        }}
+      >
+        Open item
+      </button>
+      <FormDialog
+        page={current}
+        open={open}
+        onOpenChange={setOpen}
+        onSaved={() => setOpen(false)}
+        nav={{
+          next: () => {
+            if (loadNext) {
+              setCurrent(null);
+              void loadNext().then(setCurrent);
+              return;
+            }
+            setCurrent({
+              ...page,
+              record: { id: 2 },
+              description: 'Record two',
+              values: { name: 'second' },
+            });
+          },
+        }}
+      />
+    </>
+  );
+}
+
+it('restores the original opener after record replacement and dirty discard', async () => {
+  const user = userEvent.setup();
+
+  renderWithBrume(<NavigationHarness />, {
+    respond: () => ({ status: 200, data: { id: 1, urls: { edit: '/items/1' } } }),
+  });
+  const opener = screen.getByRole('button', { name: 'Open item' });
+  await user.click(opener);
+  await user.type(screen.getByLabelText('Name'), ' first');
+  await user.keyboard('{Meta>}{Enter}{/Meta}');
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  await waitFor(() => expect(document.activeElement).toBe(opener));
+  await user.click(opener);
+  await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+  await waitFor(() =>
+    expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('second'),
+  );
+  await user.type(screen.getByLabelText('Name'), ' changed');
+  await user.keyboard('{Escape}');
+  await user.click(await screen.findByRole('button', { name: '放棄變更' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  await waitFor(() => expect(document.activeElement).toBe(opener));
+});
+
+it('restores the original opener after loading a different record', async () => {
+  const user = userEvent.setup();
+  let finish!: (next: FormPage) => void;
+  renderWithBrume(
+    <NavigationHarness
+      loadNext={() =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+      }
+    />,
+  );
+  const opener = screen.getByRole('button', { name: 'Open item' });
+  await user.click(opener);
+  await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+  await screen.findByRole('dialog', { name: '載入中' });
+  await act(async () => finish({ ...page, record: { id: 2 }, values: { name: 'loaded' } }));
+  await waitFor(() =>
+    expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('loaded'),
+  );
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  await waitFor(() => expect(document.activeElement).toBe(opener));
+});
+
+it('restores the original opener when closed while the next record is loading', async () => {
+  const user = userEvent.setup();
+  renderWithBrume(<NavigationHarness loadNext={() => new Promise(() => {})} />);
+  const opener = screen.getByRole('button', { name: 'Open item' });
+  await user.click(opener);
+  await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+  await screen.findByRole('dialog', { name: '載入中' });
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  await waitFor(() => expect(document.activeElement).toBe(opener));
 });

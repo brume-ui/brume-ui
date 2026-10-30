@@ -1,3 +1,4 @@
+import { contrastRatio, semantic } from '@brume-ui/brume-tokens';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -27,6 +28,37 @@ const input = () => screen.getByRole('textbox') as HTMLInputElement;
 const type = (text: string) => fireEvent.change(input(), { target: { value: text } });
 
 describe('NumberInput', () => {
+  it.each(['light', 'dark'] as const)('keeps a disabled currency prefix readable in %s', (mode) => {
+    // Isolate the opacity utility: jsdom does not render Tailwind's full layered stylesheet.
+    const style = document.createElement('style');
+    style.textContent = '.br\\:opacity-50 { opacity: 0.5; }';
+    document.head.append(style);
+    try {
+      render(<Harness initial="1280.50" prefix="NT$" disabled />);
+      expect(input().disabled).toBe(true);
+      const prefix = screen.getByText('NT$');
+      let opacity = 1;
+      for (let element: HTMLElement | null = prefix; element; element = element.parentElement) {
+        opacity *= Number(getComputedStyle(element).opacity || 1);
+      }
+      const foreground = semantic['text-muted'][mode];
+      const background = semantic.surface[mode];
+      const composited = `#${[1, 3, 5]
+        .map((offset) =>
+          Math.round(
+            Number.parseInt(foreground.slice(offset, offset + 2), 16) * opacity +
+              Number.parseInt(background.slice(offset, offset + 2), 16) * (1 - opacity),
+          )
+            .toString(16)
+            .padStart(2, '0'),
+        )
+        .join('')}`;
+      expect(contrastRatio(composited, background)).toBeGreaterThanOrEqual(4.5);
+    } finally {
+      style.remove();
+    }
+  });
+
   it('NumberInput keeps the wire format', () => {
     const spy = vi.fn();
     render(<Harness decimals={2} grouping spy={spy} />);

@@ -251,7 +251,7 @@ export function NumberInput({
         isInvalid ? 'br:border-danger' : CONTROL_BORDER,
         !isInvalid && !disabled && 'br:hover:border-text-muted',
         'br:has-[input:focus-visible]:outline-solid br:has-[input:focus-visible]:outline-2 br:has-[input:focus-visible]:outline-offset-2 br:has-[input:focus-visible]:outline-focus-ring',
-        disabled && 'br:opacity-50',
+        // Fade the disabled input itself; the prefix is ordinary text and keeps full contrast.
         className,
       )}
     >

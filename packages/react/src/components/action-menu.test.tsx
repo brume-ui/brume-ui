@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Copy, Eye, Pencil, Trash2 } from 'lucide-react';
+import { StrictMode, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionMenu, formatShortcut, type MenuAction, orderMenuItems } from './action-menu';
 
@@ -135,4 +136,59 @@ describe('ActionMenu', () => {
     await user.keyboard('e');
     expect(off).not.toHaveBeenCalled();
   });
+});
+
+it('runs a selected action after restoring the connected menu trigger', async () => {
+  const user = userEvent.setup();
+  let focusedAtSelect: Element | null = null;
+  const selected = vi.fn(() => {
+    focusedAtSelect = document.activeElement;
+  });
+  render(<ActionMenu label="Edit actions" items={actions({ edit: selected })} />);
+  const trigger = screen.getByRole('button', { name: 'Edit actions' });
+  await user.click(trigger);
+  await user.keyboard('e');
+  await waitFor(() => expect(selected).toHaveBeenCalledTimes(1));
+  expect(screen.queryByRole('menu')).toBeNull();
+  expect(focusedAtSelect).toBe(trigger);
+});
+
+function UnmountOnAction({ selected }: { selected(): void }) {
+  const [visible, setVisible] = useState(true);
+  return visible ? (
+    <ActionMenu
+      label="Strict actions"
+      items={actions({
+        edit: () => {
+          selected();
+          setVisible(false);
+        },
+      })}
+    />
+  ) : (
+    <p>Action completed</p>
+  );
+}
+
+it('does not select on Escape or outside dismissal, and consumes selection once before unmount in StrictMode', async () => {
+  const user = userEvent.setup();
+  const selected = vi.fn();
+  render(
+    <StrictMode>
+      <UnmountOnAction selected={selected} />
+    </StrictMode>,
+  );
+  const trigger = screen.getByRole('button', { name: 'Strict actions' });
+  await user.click(trigger);
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+  expect(selected).not.toHaveBeenCalled();
+  await user.click(trigger);
+  fireEvent.pointerDown(document.body, { pointerType: 'mouse', button: 0 });
+  await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+  expect(selected).not.toHaveBeenCalled();
+  await user.click(trigger);
+  await user.keyboard('e');
+  await screen.findByText('Action completed');
+  expect(selected).toHaveBeenCalledTimes(1);
 });

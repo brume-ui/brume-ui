@@ -1,6 +1,13 @@
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { type LucideIcon, MoreHorizontal } from 'lucide-react';
-import type { ComponentType, KeyboardEvent, ReactElement, ReactNode, Ref } from 'react';
+import {
+  type ComponentType,
+  type KeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+  type Ref,
+  useRef,
+} from 'react';
 import { cn } from '../cn';
 import { MENU_CONTENT, MENU_ITEM } from '../layout/navbar-menus';
 import { HighlightIndicator, useHighlightIndicator } from '../motion/highlight';
@@ -85,6 +92,7 @@ type ContentPart = ComponentType<{
   align?: 'start' | 'center' | 'end';
   sideOffset?: number;
   onKeyDown?(event: KeyboardEvent<HTMLDivElement>): void;
+  onCloseAutoFocus?(event: Event): void;
   children?: ReactNode;
 }>;
 
@@ -147,11 +155,13 @@ export function ActionMenuContent({
   parts,
   align,
   sideOffset,
+  onCloseAutoFocus,
 }: {
   items: MenuAction[];
   parts: MenuParts;
   align?: 'start' | 'center' | 'end';
   sideOffset?: number;
+  onCloseAutoFocus?(event: Event): void;
 }) {
   const highlight = useHighlightIndicator();
   const { Content } = parts;
@@ -160,6 +170,7 @@ export function ActionMenuContent({
       ref={highlight.ref}
       align={align}
       sideOffset={sideOffset}
+      onCloseAutoFocus={onCloseAutoFocus}
       onKeyDown={(e) => runShortcut(items, e)}
       className={cn(MENU_CONTENT, parts.origin)}
     >
@@ -178,9 +189,19 @@ const DROPDOWN_PARTS: MenuParts = {
 
 /** Row actions behind a 26px ⋯ button (or a custom trigger); danger items last. */
 export function ActionMenu({ items, label, trigger }: ActionMenuProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const pending = useRef<(() => void) | null>(null);
+  // An action may open a modal. Close the menu and focus its trigger before handing it over,
+  // so that modal captures a connected external opener rather than a disappearing menu item.
+  const deferred = items.map((item) => ({
+    ...item,
+    onSelect: () => {
+      pending.current = item.onSelect;
+    },
+  }));
   return (
     <Dropdown.Root>
-      <Dropdown.Trigger asChild aria-label={label}>
+      <Dropdown.Trigger ref={triggerRef} asChild aria-label={label}>
         {trigger ?? (
           <IconButton
             icon={MoreHorizontal}
@@ -190,7 +211,20 @@ export function ActionMenu({ items, label, trigger }: ActionMenuProps) {
         )}
       </Dropdown.Trigger>
       <Dropdown.Portal>
-        <ActionMenuContent items={items} parts={DROPDOWN_PARTS} align="end" sideOffset={4} />
+        <ActionMenuContent
+          items={deferred}
+          parts={DROPDOWN_PARTS}
+          align="end"
+          sideOffset={4}
+          onCloseAutoFocus={(event) => {
+            const action = pending.current;
+            pending.current = null;
+            if (!action) return;
+            event.preventDefault();
+            triggerRef.current?.focus();
+            action();
+          }}
+        />
       </Dropdown.Portal>
     </Dropdown.Root>
   );

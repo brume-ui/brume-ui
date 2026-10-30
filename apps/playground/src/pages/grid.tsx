@@ -6,12 +6,7 @@ import {
   toast,
   useBrume,
 } from '@brume-ui/brume-react';
-import {
-  BrumePageView,
-  createRegistry,
-  GridView,
-  RegistryProvider,
-} from '@brume-ui/brume-renderer';
+import { BrumePageView, createRegistry, RegistryProvider } from '@brume-ui/brume-renderer';
 import { type GridRow, type MenuItem, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useSettings } from '../settings';
@@ -109,7 +104,7 @@ function OrdersGrid({ name, db }: { name: string; db: OrderDb }) {
           logoutUrl="/admin/logout"
         >
           <RegistryProvider registry={registry}>
-            <GridView page={page} />
+            <BrumePageView envelope={{ schemaVersion: SCHEMA_VERSION, page }} />
           </RegistryProvider>
         </AppShell>
       </BrumeProvider>

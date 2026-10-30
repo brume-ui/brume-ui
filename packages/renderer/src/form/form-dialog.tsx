@@ -10,7 +10,7 @@ import {
 } from '@brume-ui/brume-react';
 import type { AfterSave, FormPage, FormSubmitSuccess } from '@brume-ui/brume-schema';
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import { type KeyboardEvent, useRef, useState } from 'react';
+import { type KeyboardEvent, type RefObject, useLayoutEffect, useRef, useState } from 'react';
 import { readAfterSave, writeAfterSave } from './after-save';
 import { FormView, type FormViewHandle } from './form-view';
 import { useFormState } from './use-form-state';
@@ -25,6 +25,16 @@ export interface FormDialogProps {
 }
 export function FormDialog(props: FormDialogProps) {
   const { t } = useBrume();
+  // The form state remounts for every response, but the opening interaction owns focus until close.
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const wasOpen = useRef(false);
+  useLayoutEffect(() => {
+    if (props.open && !wasOpen.current) {
+      restoreFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
+    wasOpen.current = props.open;
+  }, [props.open]);
   const identity = useRef({ page: props.page, version: 0 });
   if (identity.current.page !== props.page) {
     identity.current = { page: props.page, version: identity.current.version + 1 };
@@ -32,12 +42,24 @@ export function FormDialog(props: FormDialogProps) {
   if (!props.open) return null;
   if (!props.page)
     return (
-      <Dialog open={props.open} onOpenChange={props.onOpenChange} title={t('form.loading')}>
+      <Dialog
+        open={props.open}
+        onOpenChange={props.onOpenChange}
+        title={t('form.loading')}
+        restoreFocusRef={restoreFocusRef}
+      >
         <Skeleton />
       </Dialog>
     );
   // Each loaded page has independent values, requests, and after-save preference.
-  return <LoadedFormDialog key={identity.current.version} {...props} page={props.page} />;
+  return (
+    <LoadedFormDialog
+      key={identity.current.version}
+      {...props}
+      page={props.page}
+      restoreFocusRef={restoreFocusRef}
+    />
+  );
 }
 function LoadedFormDialog({
   page,
@@ -45,7 +67,8 @@ function LoadedFormDialog({
   onOpenChange,
   onSaved,
   nav,
-}: FormDialogProps & { page: FormPage }) {
+  restoreFocusRef,
+}: FormDialogProps & { page: FormPage; restoreFocusRef: RefObject<HTMLElement | null> }) {
   const { t } = useBrume();
   const confirm = useConfirm();
   const api = useFormState(page.form, page.values);
@@ -106,6 +129,7 @@ function LoadedFormDialog({
   return (
     <Dialog
       open={open}
+      restoreFocusRef={restoreFocusRef}
       onOpenChange={onOpenChange}
       title={page.title}
       description={page.description}

@@ -1,6 +1,6 @@
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { Maximize2, Minimize2, X } from 'lucide-react';
-import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, type RefObject, useRef, useState } from 'react';
 import { cn } from '../cn';
 import { MODAL_MOTION, OVERLAY_MOTION } from '../motion/classes';
 import { useBrume } from '../provider';
@@ -18,6 +18,8 @@ export interface DialogProps {
   dirty?: boolean;
   footer?: ReactNode;
   headerActions?: ReactNode;
+  /** Preserve an external opener when a loading or record change replaces this Dialog instance. */
+  restoreFocusRef?: RefObject<HTMLElement | null>;
   busy?: boolean;
   onKeyDown?(event: KeyboardEvent<HTMLDivElement>): void;
   children: ReactNode;
@@ -38,6 +40,7 @@ export function Dialog({
   dirty = false,
   footer,
   headerActions,
+  restoreFocusRef,
   busy = false,
   onKeyDown,
   children,
@@ -95,7 +98,7 @@ export function Dialog({
           onCloseAutoFocus={(e) => {
             // The dialog is controlled (no Radix Trigger), so return focus ourselves.
             e.preventDefault();
-            returnFocusRef.current?.focus();
+            (restoreFocusRef?.current ?? returnFocusRef.current)?.focus();
           }}
           onOpenAutoFocus={(e) => {
             returnFocusRef.current =
