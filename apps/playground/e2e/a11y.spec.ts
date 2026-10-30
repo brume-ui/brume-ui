@@ -38,6 +38,25 @@ for (const viewport of VIEWPORTS) {
         });
       }
 
+      test(`form dialog with errors ${scheme}`, async ({ page }) => {
+        await openPage(page, 'form-dialog', scheme);
+        await page.getByRole('button', { name: '編輯訂單', exact: true }).click();
+        const dialog = page.getByRole('dialog', { name: '編輯訂單', exact: true });
+        await dialog.getByRole('textbox', { name: '顏色', exact: true }).fill('error');
+        await dialog.getByRole('button', { name: '儲存', exact: true }).click();
+        await expect(dialog.getByRole('alert')).toBeVisible();
+        await animationsIdle(page);
+        await expectNoViolations(page);
+      });
+
+      test(`form page dirty save bar ${scheme}`, async ({ page }) => {
+        await openPage(page, 'form-page', scheme);
+        await page.getByRole('textbox', { name: '標題', exact: true }).fill('夏季訂單');
+        await expect(page.getByText('● 有未儲存的變更', { exact: true })).toBeVisible();
+        await animationsIdle(page);
+        await expectNoViolations(page);
+      });
+
       test(`shell with dialog open ${scheme} has no axe violations`, async ({ page }) => {
         await openPage(page, 'shell', scheme);
         await page.getByRole('button', { name: '新增使用者' }).click();

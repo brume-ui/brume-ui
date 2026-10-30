@@ -215,27 +215,35 @@ function LoadedFormPage({ page }: { page: FormPage }) {
         </div>
       </div>
       <ActionBar sticky="bottom" label={api.dirty ? `● ${t('form.dirty')}` : undefined}>
-        <div className="br:ml-auto br:flex br:items-center br:gap-2">
-          <label htmlFor={`${prefix}-after`}>{t('form.after')}</label>
-          <Select
-            id={`${prefix}-after`}
-            aria-label={t('form.after')}
-            disabled={submitting}
-            value={after}
-            options={page.after.options.map((value) => ({ value, label: t(`form.${value}`) }))}
-            onValueChange={(value) => {
-              setAfter(value as AfterSave);
-              writeAfterSave(page.formId, value as AfterSave);
-            }}
-          />
+        <div className="br:ml-auto br:flex br:flex-wrap br:items-center br:justify-end br:gap-2">
+          <label className="br:shrink-0" htmlFor={`${prefix}-after`}>
+            {t('form.after')}
+          </label>
+          <div className="br:w-40 br:shrink-0">
+            <Select
+              id={`${prefix}-after`}
+              aria-label={t('form.after')}
+              disabled={submitting}
+              value={after}
+              options={page.after.options.map((value) => ({ value, label: t(`form.${value}`) }))}
+              onValueChange={(value) => {
+                setAfter(value as AfterSave);
+                writeAfterSave(page.formId, value as AfterSave);
+              }}
+            />
+          </div>
           {api.dirty ? (
-            <Button variant="secondary" disabled={submitting} onClick={() => void discard()}>
-              {t('form.discard')}
-            </Button>
+            <div className="br:shrink-0">
+              <Button variant="secondary" disabled={submitting} onClick={() => void discard()}>
+                {t('form.discard')}
+              </Button>
+            </div>
           ) : null}
-          <Button loading={submitting} onClick={() => void save()}>
-            {submitting ? t('form.saving') : page.submit.label}
-          </Button>
+          <div className="br:shrink-0">
+            <Button loading={submitting} onClick={() => void save()}>
+              {submitting ? t('form.saving') : page.submit.label}
+            </Button>
+          </div>
         </div>
       </ActionBar>
     </div>

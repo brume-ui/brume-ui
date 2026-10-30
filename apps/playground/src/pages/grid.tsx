@@ -15,6 +15,7 @@ import {
 import { type GridRow, type MenuItem, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useSettings } from '../settings';
+import { respondForm } from './form-data';
 import {
   buildOrdersPage,
   createOrderDb,
@@ -64,7 +65,9 @@ function useOrdersServer(db: OrderDb) {
   const [url, setUrl] = useState(ORDERS_URL);
   const [version, setVersion] = useState(0);
   const adapter = useMemo<BrumeAdapter>(() => {
-    const base = createMemoryAdapter(ORDERS_URL, { respond: (req) => respondOrders(db, req) });
+    const base = createMemoryAdapter(ORDERS_URL, {
+      respond: (req) => (req.url.includes('/_brume/') ? respondOrders(db, req) : respondForm(req)),
+    });
     return {
       ...base,
       visit(next, options) {
@@ -106,10 +109,7 @@ function OrdersGrid({ name, db }: { name: string; db: OrderDb }) {
           logoutUrl="/admin/logout"
         >
           <RegistryProvider registry={registry}>
-            <GridView
-              page={page}
-              onEdit={(row) => toast.info(`開啟 ${String(row.no)} 的編輯表單`)}
-            />
+            <GridView page={page} />
           </RegistryProvider>
         </AppShell>
       </BrumeProvider>

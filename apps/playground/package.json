@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test": "vitest run src"
   },
   "dependencies": {
     "@fontsource/noto-sans-tc": "^5.3.1",

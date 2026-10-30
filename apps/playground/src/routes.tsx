@@ -11,6 +11,12 @@ import {
 } from './pages/controls';
 import { DataTablePage, EmptyStatePage, PaginationPage, SkeletonPage } from './pages/data';
 import { FontsPage } from './pages/fonts';
+import {
+  FormDialogPage,
+  FormHorizontalPage,
+  FormStackedPage,
+  FormStandalonePage,
+} from './pages/form';
 import { ErrorPagePage, GridEmptyPage, GridPage } from './pages/grid';
 import { InputsPage } from './pages/inputs';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
@@ -43,6 +49,10 @@ export const ROUTES: Route[] = [
   { name: 'pagination', title: 'Pagination', Component: PaginationPage },
   { name: 'empty-state', title: 'EmptyState', Component: EmptyStatePage },
   { name: 'skeleton', title: 'Skeleton', Component: SkeletonPage },
+  { name: 'form', title: '表單 · 標籤在上', Component: FormStackedPage },
+  { name: 'form-horizontal', title: '表單 · 標籤在左', Component: FormHorizontalPage },
+  { name: 'form-page', title: '表單 · 獨立頁面', Component: FormStandalonePage },
+  { name: 'form-dialog', title: '表單 · 彈窗', Component: FormDialogPage },
   { name: 'grid', title: 'Grid（訂單）', Component: GridPage },
   { name: 'grid-empty', title: 'Grid（空）', Component: GridEmptyPage },
   { name: 'error-page', title: '錯誤頁', Component: ErrorPagePage },

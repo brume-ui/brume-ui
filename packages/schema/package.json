@@ -30,7 +30,7 @@
     "build": "tsup src/index.ts --format esm --dts --clean && pnpm emit-schema",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "emit-schema": "tsx scripts/emit-json-schema.ts"
+    "emit-schema": "node --import tsx scripts/emit-json-schema.ts"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.52"

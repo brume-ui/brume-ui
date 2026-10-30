@@ -674,6 +674,17 @@ export function buildOrdersPage(url: string, db: OrderDb): ListPage {
     actions: { row: ROW_ACTIONS, batch: BATCH_ACTIONS, tools: TOOL_ACTIONS },
     export: { url: `${ORDERS_URL}/export` },
     endpoints: ENDPOINTS,
+    resource: {
+      name: '訂單',
+      createUrl: `${ORDERS_URL}/create`,
+      editUrl: `${ORDERS_URL}/{id}/edit`,
+      presentation: 'modal',
+    },
+    quickCreate: {
+      label: '快速新增',
+      fields: [{ type: 'text', name: 'customer', label: '客戶', required: true }],
+      submitUrl: ORDERS_URL,
+    },
   };
 }
 

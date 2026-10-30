@@ -132,18 +132,22 @@ function LoadedFormDialog({
       }
       footer={
         <>
-          <div className="br:mr-auto br:flex br:items-center br:gap-2">
-            <label htmlFor={`after-${page.formId}`}>{t('form.after')}</label>
-            <Select
-              id={`after-${page.formId}`}
-              disabled={submitting}
-              value={after}
-              options={page.after.options.map((value) => ({ value, label: t(`form.${value}`) }))}
-              onValueChange={(value) => {
-                setAfter(value as AfterSave);
-                writeAfterSave(page.formId, value as AfterSave);
-              }}
-            />
+          <div className="br:mr-auto br:flex br:flex-wrap br:items-center br:gap-2">
+            <label className="br:shrink-0" htmlFor={`after-${page.formId}`}>
+              {t('form.after')}
+            </label>
+            <div className="br:w-40 br:shrink-0">
+              <Select
+                id={`after-${page.formId}`}
+                disabled={submitting}
+                value={after}
+                options={page.after.options.map((value) => ({ value, label: t(`form.${value}`) }))}
+                onValueChange={(value) => {
+                  setAfter(value as AfterSave);
+                  writeAfterSave(page.formId, value as AfterSave);
+                }}
+              />
+            </div>
           </div>
           <Button variant="secondary" disabled={submitting} onClick={() => void close()}>
             {t('form.cancel')}

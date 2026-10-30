@@ -1,7 +1,9 @@
 import {
+  BrumeProvider,
   CheckboxGroup,
   Combobox,
   type ComboboxLoader,
+  createMemoryAdapter,
   DateInput,
   Field,
   NumberInput,
@@ -12,9 +14,13 @@ import {
   SearchInput,
   Tabs,
   TagsInput,
+  type UploadItem,
+  UploadList,
+  useBrume,
 } from '@brume-ui/brume-react';
 import type { OptionItem } from '@brume-ui/brume-schema';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { FORM_UPLOAD_URL, respondForm } from './form-data';
 import { Page, Panel, Section } from './page';
 
 const CITIES: OptionItem[] = [
@@ -65,6 +71,17 @@ const STATUS = [
 ];
 
 export function InputsPage() {
+  const { locale } = useBrume();
+  const adapter = useMemo(() => createMemoryAdapter('/inputs', { respond: respondForm }), []);
+  return (
+    <BrumeProvider locale={locale} adapter={adapter}>
+      <InputsContent />
+    </BrumeProvider>
+  );
+}
+function InputsContent() {
+  const { adapter } = useBrume();
+  const [files, setFiles] = useState<UploadItem[]>([]);
   const [search, setSearch] = useState('');
   const [city, setCity] = useState<string | string[]>('txg');
   const [cities, setCities] = useState<string | string[]>(['tpe', 'khh']);
@@ -201,6 +218,30 @@ export function InputsPage() {
               <p className="pg-label">「{TABS.find((t) => t.key === key)?.label}」的欄位</p>
             )}
           </Tabs>
+        </Panel>
+      </Section>
+      <Section title="uploads">
+        <Panel>
+          <UploadList
+            label="附件"
+            kind="file"
+            multiple
+            sortable
+            accept={['text/plain', 'application/pdf']}
+            maxSize={10485760}
+            items={files}
+            onItemsChange={setFiles}
+            upload={async (file, signal) => {
+              const body = new FormData();
+              body.set('file', file);
+              const response = await adapter.request<
+                import('@brume-ui/brume-schema').UploadTempResponse
+              >({ method: 'post', url: FORM_UPLOAD_URL, body, signal });
+              return response.status === 200
+                ? { ok: true, value: response.data }
+                : { ok: false, message: '上傳失敗，請再試一次。' };
+            }}
+          />
         </Panel>
       </Section>
       <Section title="qr code">
