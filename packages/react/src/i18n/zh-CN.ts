@@ -1,6 +1,10 @@
 import type { MessageKey } from './index';
 
 export const zhCN: Record<MessageKey, string> = {
+  'resource.create': '新增{name}',
+  'resource.retry': '重试',
+  'resource.quickCreate': '快速新增',
+  'resource.add': '新增',
   'form.sections': '本页段落',
   'form.sectionError': '（有错误）',
   'form.dirty': '有未保存的更改',

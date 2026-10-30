@@ -32,7 +32,7 @@ export function FormDialog(props: FormDialogProps) {
   if (!props.open) return null;
   if (!props.page)
     return (
-      <Dialog open={props.open} onOpenChange={props.onOpenChange} title={t('form.loading')} busy>
+      <Dialog open={props.open} onOpenChange={props.onOpenChange} title={t('form.loading')}>
         <Skeleton />
       </Dialog>
     );

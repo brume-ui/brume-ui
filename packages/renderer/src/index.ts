@@ -19,6 +19,9 @@ export {
 } from './grid/column-visibility';
 export { GridContext, type GridContextValue, useGrid } from './grid/grid-context';
 export { GridView, type GridViewProps } from './grid/grid-view';
+export { QuickCreate } from './grid/resource/quick-create';
+export { ResourceGridView } from './grid/resource/resource-grid';
+export { useFormLoader } from './grid/resource/use-form-loader';
 export { useGridNavigation } from './grid/use-grid-navigation';
 export { hrefForPage, ListPageView } from './list-page';
 export { MissingComponent } from './missing-component';

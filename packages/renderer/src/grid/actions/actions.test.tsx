@@ -485,3 +485,68 @@ describe('applyFeedback', () => {
     expect(d.refresh).toHaveBeenCalledOnce();
   });
 });
+
+it('action input dialog submits input, retains 422 errors, skips confirmation', async () => {
+  const reason: ActionDef = {
+    key: 'reason',
+    label: 'Explain',
+    exposed: true,
+    confirm: { title: 'Must not open', confirmLabel: 'Confirm' },
+    form: { title: 'Reason', fields: [{ type: 'text', name: 'reason', label: 'Reason text' }] },
+  };
+  let count = 0;
+  const { user, adapter } = setup(
+    { ...orders, actions: { ...orders.actions, row: [reason] } },
+    {
+      respond: () =>
+        ++count === 1
+          ? { status: 422, data: { errors: { reason: ['Required by server'] } } }
+          : ok(),
+    },
+  );
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  await screen.findByRole('dialog', { name: 'Reason' });
+  await user.type(screen.getByLabelText('Reason text'), 'because');
+  fireEvent.keyDown(screen.getByLabelText('Reason text'), { key: 'Enter', isComposing: true });
+  fireEvent.keyDown(screen.getByLabelText('Reason text'), { key: 'Enter', keyCode: 229 });
+  expect(requests(adapter)).toHaveLength(0);
+  await user.click(screen.getByRole('button', { name: 'Explain' }));
+  await screen.findAllByText('Required by server');
+  expect(screen.getByRole('dialog', { name: 'Reason' })).toBeTruthy();
+  expect(requests(adapter)[0]?.body).toMatchObject({
+    target: 'row',
+    ids: [1],
+    input: { reason: 'because' },
+  });
+  await user.type(screen.getByLabelText('Reason text'), ' updated');
+  await user.click(screen.getByRole('button', { name: 'Explain' }));
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Reason' })).toBeNull());
+});
+
+it('action input locks repeated Enter and click until the response settles', async () => {
+  let finish!: (res: HttpResponse) => void;
+  const def: ActionDef = {
+    key: 'explain',
+    label: 'Explain',
+    exposed: true,
+    form: { fields: [{ type: 'text', name: 'reason', label: 'Reason text' }] },
+  };
+  const { user, adapter } = setup(
+    { ...orders, actions: { ...orders.actions, row: [def] } },
+    {
+      respond: () =>
+        new Promise<HttpResponse>((resolve) => {
+          finish = resolve;
+        }),
+    },
+  );
+  await user.click(within(row('ORD-1')).getByRole('button', { name: 'Explain' }));
+  const input = screen.getByLabelText('Reason text');
+  fireEvent.change(input, { target: { value: 'because' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  fireEvent.click(screen.getByRole('button', { name: 'Explain' }));
+  expect(requests(adapter)).toHaveLength(1);
+  await import('@testing-library/react').then(({ act }) => act(async () => finish(ok())));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+});

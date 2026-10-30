@@ -1,6 +1,10 @@
 import type { MessageKey } from './index';
 
 export const en: Record<MessageKey, string> = {
+  'resource.create': 'Create {name}',
+  'resource.retry': 'Retry',
+  'resource.quickCreate': 'Quick create',
+  'resource.add': 'Create',
   'form.sections': 'Page sections',
   'form.sectionError': ' (has errors)',
   'form.dirty': 'Unsaved changes',

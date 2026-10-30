@@ -27,6 +27,7 @@ export interface RunActionDeps {
   refresh(): void;
   /** `page.endpoints.action`, with its `{action}` placeholder. */
   endpoint: string;
+  runFormAction?(def: ActionDef, request: ActionRequest): Promise<boolean>;
   /**
    * Called once the request is about to go out (after any confirmation). Returning false stops
    * it (the same run is already in flight).
@@ -49,6 +50,10 @@ export async function runAction(
   req: ActionRequest,
   deps: RunActionDeps,
 ): Promise<boolean> {
+  if (def.form) {
+    if (!deps.runFormAction || deps.onRequest?.() === false) return false;
+    return deps.runFormAction(def, req);
+  }
   if (def.confirm) {
     const count = req.ids.length;
     const ok = await deps.confirm({
@@ -102,7 +107,7 @@ export function useActionRunner(): {
   const { adapter, t } = useBrume();
   const confirm = useConfirm();
   const { refresh } = useGridNavigation();
-  const { page, runningActions, startAction, endAction } = useGrid();
+  const { page, runningActions, startAction, endAction, runFormAction } = useGrid();
   const endpoint = page.endpoints?.action;
 
   const run = useCallback(
@@ -118,13 +123,13 @@ export function useActionRunner(): {
         return await runAction(
           def,
           { target, ids },
-          { adapter, t, confirm, refresh, endpoint, onRequest },
+          { adapter, t, confirm, refresh, endpoint, onRequest, runFormAction },
         );
       } finally {
         if (started) endAction(key);
       }
     },
-    [adapter, t, confirm, refresh, endpoint, startAction, endAction],
+    [adapter, t, confirm, refresh, endpoint, startAction, endAction, runFormAction],
   );
   const isRunning = useCallback(
     (def: ActionDef, target: ActionRequest['target'], ids: ActionRequest['ids']) =>

@@ -31,6 +31,7 @@ export function applyFeedback(
 ): void {
   if (fb.toast) toast[fb.toast.type](fb.toast.message);
   if (fb.download) triggerDownload(fb.download.url, fb.download.filename);
-  if (fb.redirect) deps.adapter.visit(fb.redirect);
-  else if (fb.refresh) deps.refresh();
+  if (fb.redirect) {
+    if (isSafeHref(fb.redirect)) deps.adapter.visit(fb.redirect);
+  } else if (fb.refresh) deps.refresh();
 }

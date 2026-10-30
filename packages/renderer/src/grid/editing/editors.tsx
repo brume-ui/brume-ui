@@ -1,10 +1,23 @@
-import { CheckboxGroup, RadioGroup, Textarea, TextInput } from '@brume-ui/brume-react';
+import {
+  CheckboxGroup,
+  DateInput,
+  NumberInput,
+  RadioGroup,
+  Textarea,
+  TextInput,
+} from '@brume-ui/brume-react';
 import type { InlineEditor, Option } from '@brume-ui/brume-schema';
-import { type KeyboardEvent, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { formatCell } from '../displays/format';
 
-export type TextEditorDef = Extract<InlineEditor, { type: 'text' | 'textarea' | 'number' }>;
-export type ChoiceEditorDef = Extract<InlineEditor, { type: 'select' | 'radio' | 'checkbox' }>;
+export type TextEditorDef = Extract<
+  InlineEditor,
+  { type: 'text' | 'textarea' | 'number' | 'date' | 'currency' }
+>;
+export type ChoiceEditorDef = Extract<
+  InlineEditor,
+  { type: 'select' | 'radio' | 'checkbox' | 'tags' }
+>;
 
 /** How a text editor closed: Enter / ⌘+Enter, Esc, or focus leaving it. */
 export type CloseReason = 'enter' | 'escape' | 'blur';
@@ -16,6 +29,12 @@ function toDraft(value: unknown): string {
 
 /** The value a text editor saves: numbers as numbers ('' is null), text as typed. */
 function fromDraft(editor: TextEditorDef, draft: string): unknown {
+  if (editor.type === 'currency') {
+    if (!draft) return null;
+    const [whole, fraction = ''] = draft.split('.');
+    const decimals = editor.decimals ?? 2;
+    return decimals === 0 ? whole : `${whole}.${fraction.padEnd(decimals, '0')}`;
+  }
   if (editor.type !== 'number') return draft;
   const trimmed = draft.trim();
   return trimmed === '' ? null : Number(trimmed);
@@ -47,14 +66,23 @@ export function TextEditor({
   const [start] = useState(() => toDraft(initial));
   const [draft, setDraft] = useState(start);
   const closed = useRef(false);
+  const latest = useRef(draft);
+  latest.current = draft;
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (editor.type === 'date') root.current?.querySelector('input')?.focus();
+  }, [editor.type]);
 
   const close = (save: boolean, reason: CloseReason) => {
     if (closed.current) return;
     closed.current = true;
-    onClose(save && draft !== start ? fromDraft(editor, draft) : undefined, reason);
+    onClose(
+      save && latest.current !== start ? fromDraft(editor, latest.current) : undefined,
+      reason,
+    );
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
@@ -77,6 +105,38 @@ export function TextEditor({
     onKeyDown,
     onBlur: () => close(true, 'blur'),
   };
+  if (editor.type === 'date') {
+    return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: native date input retains keyboard semantics; Enter/Escape close the editor.
+      <div ref={root} onKeyDown={onKeyDown}>
+        <DateInput
+          label={label}
+          value={draft}
+          withTime={editor.withTime}
+          invalid={invalid}
+          aria-describedby={describedBy}
+          onChange={(value) => {
+            latest.current = value;
+            setDraft(value);
+          }}
+          onBlur={() => close(true, 'blur')}
+        />
+      </div>
+    );
+  }
+  if (editor.type === 'currency') {
+    return (
+      <NumberInput
+        {...common}
+        decimals={editor.decimals ?? 2}
+        prefix={editor.symbol}
+        onChange={(value) => {
+          latest.current = value;
+          setDraft(value);
+        }}
+      />
+    );
+  }
   if (editor.type === 'textarea') {
     return <Textarea {...common} onChange={(e) => setDraft(e.target.value)} />;
   }

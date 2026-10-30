@@ -269,10 +269,11 @@ describe('text editors', () => {
   });
 });
 
-describe('editors without an inline control yet', () => {
-  it('date, currency and tags cells show their display, read-only', () => {
+describe('additional editors without a save endpoint', () => {
+  it('date, currency and tags stay read-only without an endpoint', () => {
     const page: ListPage = {
       ...orders,
+      endpoints: undefined,
       columns: [
         { key: 'no', label: '編號' },
         { key: 'customer', label: '客戶', editor: { type: 'date' } },
@@ -776,4 +777,50 @@ describe('without endpoints.cell', () => {
     expect(row1().getByRole('switch', { name: '上架' }).hasAttribute('disabled')).toBe(true);
     expect(row1().getByRole('switch', { name: '熱門' }).hasAttribute('disabled')).toBe(true);
   });
+});
+
+it('currency saves a padded string and date saves the native date wire value', async () => {
+  const page: ListPage = {
+    ...orders,
+    columns: [
+      { key: 'price', label: 'Amount', editor: { type: 'currency', symbol: 'NT$', decimals: 2 } },
+      { key: 'date', label: 'Date', editor: { type: 'date' } },
+    ],
+    rows: [{ id: 1, price: '1200.00', date: '2026-10-01' }],
+  };
+  const { user, adapter } = setup(saved(), page);
+  await user.click(screen.getByRole('button', { name: /Amount/ }));
+  const amount = screen.getByRole('textbox', { name: 'Amount NT$' });
+  await user.clear(amount);
+  await user.type(amount, '1280');
+  await user.keyboard('{Enter}');
+  await waitFor(() =>
+    expect(requests(adapter)[0]?.body).toMatchObject({ column: 'price', value: '1280.00' }),
+  );
+  await user.click(screen.getByRole('button', { name: /Date/ }));
+  const date = screen.getByLabelText('Date');
+  fireEvent.change(date, { target: { value: '2026-10-31' } });
+  fireEvent.keyDown(date, { key: 'Enter' });
+  await waitFor(() =>
+    expect(requests(adapter)[1]?.body).toMatchObject({ column: 'date', value: '2026-10-31' }),
+  );
+});
+it('tags adds with Enter, ignores IME and saves array when popover closes', async () => {
+  const page: ListPage = {
+    ...orders,
+    columns: [{ key: 'tags', label: 'Tags', editor: { type: 'tags' } }],
+    rows: [{ id: 1, tags: ['gift'] }],
+  };
+  const { user, adapter } = setup(saved(), page);
+  await user.click(screen.getByRole('button', { name: /Tags/ }));
+  const input = screen.getByRole('textbox', { name: 'Tags' });
+  await user.type(input, 'rush');
+  fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+  expect(requests(adapter)).toHaveLength(0);
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(requests(adapter)).toHaveLength(0);
+  await user.click(document.body);
+  await waitFor(() =>
+    expect(requests(adapter)[0]?.body).toMatchObject({ column: 'tags', value: ['gift', 'rush'] }),
+  );
 });

@@ -1,4 +1,11 @@
-import { CellEditButton, CellError, Popover, Switch, useBrume } from '@brume-ui/brume-react';
+import {
+  CellEditButton,
+  CellError,
+  Popover,
+  Switch,
+  TagsInput,
+  useBrume,
+} from '@brume-ui/brume-react';
 import type { GridRow, InlineEditor, ListColumn } from '@brume-ui/brume-schema';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import {
@@ -36,16 +43,14 @@ export function EditableCell(props: CellProps) {
     case 'select':
     case 'radio':
     case 'checkbox':
+    case 'tags':
       return <ChoiceCell {...props} editor={editor} />;
     case 'text':
     case 'textarea':
     case 'number':
-      return <TextCell {...props} editor={editor} />;
     case 'date':
     case 'currency':
-    case 'tags':
-      // No inline editor for these yet (schema 0.3); the cell stays read-only.
-      return props.display;
+      return <TextCell {...props} editor={editor} />;
     default: {
       const unhandled: never = editor;
       return unhandled;
@@ -159,7 +164,7 @@ function TextCell(props: CellProps<TextEditorDef>) {
 type ChoiceDraft = string | string[];
 
 function toChoiceDraft(editor: ChoiceEditorDef, value: unknown): ChoiceDraft {
-  if (editor.type === 'checkbox') return toValueList(value);
+  if (editor.type === 'checkbox' || editor.type === 'tags') return toValueList(value);
   return value === null || value === undefined ? '' : String(value);
 }
 
@@ -231,12 +236,25 @@ function ChoiceCell(props: CellProps<ChoiceEditorDef>) {
           }}
           onKeyDown={(event) => {
             byPointer.current = false;
-            if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+            if (
+              event.key !== 'Enter' ||
+              (editor.type === 'tags' && event.defaultPrevented) ||
+              event.nativeEvent.isComposing ||
+              event.keyCode === 229
+            )
+              return;
             event.preventDefault();
             onOpenChange(false);
           }}
         >
-          {editor.type === 'checkbox' ? (
+          {editor.type === 'tags' ? (
+            <TagsInput
+              label={column.label}
+              value={Array.isArray(draft) ? draft : []}
+              options={editor.options}
+              onChange={setDraft}
+            />
+          ) : editor.type === 'checkbox' ? (
             <MultiChoiceEditor
               options={editor.options}
               label={column.label}

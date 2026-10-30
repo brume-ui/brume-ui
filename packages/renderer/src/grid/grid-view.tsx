@@ -6,8 +6,9 @@ import {
   Select,
   useBrume,
 } from '@brume-ui/brume-react';
-import type { GridRow, ListPage } from '@brume-ui/brume-schema';
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import type { ActionDef, ActionRequest, GridRow, ListPage } from '@brume-ui/brume-schema';
+import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { ActionFormDialog } from './actions/action-form-dialog';
 import { BatchBar } from './actions/batch-bar';
 import { hasRowActions, PrimaryCell, RowActions, RowMenu, rowLabel } from './actions/row-actions';
 import { readHiddenColumns, writeHiddenColumns } from './column-visibility';
@@ -25,12 +26,37 @@ import { GRID_VISIT, hrefForPage, useGridNavigation } from './use-grid-navigatio
 
 export interface GridViewProps {
   page: ListPage;
+  toolbarStart?: ReactNode;
   /** Opens a row for editing (sub-plan 2 swaps in a form dialog). */
   onEdit?(row: GridRow): void;
 }
 
 /** One list page: toolbar, table and pagination, all driven by the URL (see useGridNavigation). */
-export function GridView({ page, onEdit }: GridViewProps) {
+export function GridView({ page, onEdit, toolbarStart }: GridViewProps) {
+  const [actionForm, setActionForm] = useState<{
+    def: ActionDef;
+    request: ActionRequest;
+  } | null>(null);
+  const actionOwner = useRef<((value: boolean) => void) | null>(null);
+  useEffect(
+    () => () => {
+      actionOwner.current?.(false);
+      actionOwner.current = null;
+    },
+    [],
+  );
+  const runFormAction = useCallback((def: ActionDef, request: ActionRequest) => {
+    if (actionOwner.current) return Promise.resolve(false);
+    return new Promise<boolean>((resolve) => {
+      actionOwner.current = resolve;
+      setActionForm({ def, request });
+    });
+  }, []);
+  function finishActionForm(ran: boolean) {
+    actionOwner.current?.(ran);
+    actionOwner.current = null;
+    setActionForm(null);
+  }
   const [hidden, setHidden] = useState(() => readHiddenColumns(page));
   const [hiddenFor, setHiddenFor] = useState(page.gridId);
   if (hiddenFor !== page.gridId) {
@@ -96,6 +122,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
   const grid = useMemo<GridContextValue>(
     () => ({
       page,
+      runFormAction,
       rows,
       rowById,
       beginRowSave,
@@ -113,6 +140,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
     }),
     [
       page,
+      runFormAction,
       rows,
       rowById,
       beginRowSave,
@@ -138,6 +166,7 @@ export function GridView({ page, onEdit }: GridViewProps) {
         <PageHeader title={page.title} description={page.description} />
         <BatchBar />
         <GridToolbar
+          beforeSearch={toolbarStart}
           hidden={hidden}
           onHiddenChange={changeHidden}
           start={
@@ -162,6 +191,14 @@ export function GridView({ page, onEdit }: GridViewProps) {
         <GridSelectors />
         <GridTable hidden={hidden} />
         <GridFooter />
+        {actionForm && page.endpoints?.action ? (
+          <ActionFormDialog
+            def={actionForm.def}
+            request={actionForm.request}
+            endpoint={page.endpoints.action}
+            onDone={finishActionForm}
+          />
+        ) : null}
       </div>
     </GridContext.Provider>
   );

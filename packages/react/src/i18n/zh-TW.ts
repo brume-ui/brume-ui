@@ -1,4 +1,8 @@
 export const zhTW = {
+  'resource.create': '新增{name}',
+  'resource.retry': '重試',
+  'resource.quickCreate': '快速新增',
+  'resource.add': '新增',
   'form.sections': '本頁段落',
   'form.sectionError': '（有錯誤）',
   'form.dirty': '有未儲存的變更',

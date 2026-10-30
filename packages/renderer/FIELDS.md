@@ -69,6 +69,11 @@ contract. Keep unclaimed root errors in the form summary with
 
 ## State lifecycle
 
+`form.stateId` is a readonly symbol identifying one mounted state owner. API
+wrappers may change on render while this token remains stable. Async integrations
+compare `stateId` and `resetVersion` before applying results or clearing pending
+state; a new owner or explicit reset invalidates an older operation.
+
 `dirty` uses deep JSON comparison with object keys sorted (array order matters),
 so reverting values restores a clean state. `validateAll()` marks every schema
 field touched and checks all editable fields, including inactive tab sections;

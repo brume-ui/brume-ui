@@ -20,6 +20,7 @@ export interface GridToolbarProps {
   onHiddenChange(next: Set<string>): void;
   /** After quick search: the filter button and applied-filter chips (Task 9). */
   start?: ReactNode;
+  beforeSearch?: ReactNode;
   /** Before the column toggle: tool actions and export (Task 11). */
   end?: ReactNode;
 }
@@ -28,7 +29,13 @@ export interface GridToolbarProps {
  * Left: quick search → `start`. Right: `end` → column toggle → refresh. Wraps onto two lines on
  * narrow screens.
  */
-export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarProps) {
+export function GridToolbar({
+  hidden,
+  onHiddenChange,
+  start,
+  end,
+  beforeSearch,
+}: GridToolbarProps) {
   const { page } = useGrid();
   const { t } = useBrume();
   const { navigate, refresh } = useGridNavigation();
@@ -37,6 +44,7 @@ export function GridToolbar({ hidden, onHiddenChange, start, end }: GridToolbarP
       {/* On phones both halves dissolve into the toolbar's one wrapping row, so the icons wrap
           with the buttons instead of onto a line of their own. */}
       <div className="br:min-w-0 br:flex-1 br:flex-wrap br:items-center br:gap-2 br:sm:flex br:max-sm:contents">
+        {beforeSearch}
         {page.quickSearch ? (
           <div className="br:max-sm:w-full br:sm:w-72">
             <SearchInput

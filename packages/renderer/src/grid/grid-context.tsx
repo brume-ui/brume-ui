@@ -1,9 +1,10 @@
-import type { GridRow, ListPage } from '@brume-ui/brume-schema';
+import type { ActionDef, ActionRequest, GridRow, ListPage } from '@brume-ui/brume-schema';
 import { createContext, useContext } from 'react';
 import type { RowSaveResult, RowSaveTicket } from './editing/row-saves';
 
 export interface GridContextValue {
   page: ListPage;
+  runFormAction?(def: ActionDef, request: ActionRequest): Promise<boolean>;
   /**
    * `page.rows` with the rows that saved cells returned in their place. Those replacements last
    * until `page.rows` changes (a refresh or another view).
