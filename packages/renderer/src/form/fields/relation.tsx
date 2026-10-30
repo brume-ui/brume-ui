@@ -1,8 +1,9 @@
 import { Field, useBrume } from '@brume-ui/brume-react';
 import type { RelationFieldDef, RelationItem } from '@brume-ui/brume-schema';
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useLayoutEffect, useRef, useState } from 'react';
 import type { FieldProps } from '../contract';
 import { excludedChoiceValues } from '../exclusions';
+import { FieldIdPrefixContext, FieldRevealContext } from '../field-navigation';
 import { Nodes } from '../layout/nodes';
 import { RemoteRelationPicker } from '../relation-source';
 import { useRelationDraft } from '../use-relation-draft';
@@ -10,6 +11,16 @@ import { useRemoteOptions } from '../use-remote-options';
 
 export function RelationField(props: FieldProps<unknown, RelationFieldDef>) {
   const { t } = useBrume();
+  const root = useRef<HTMLFieldSetElement>(null);
+  const navigation = useContext(FieldRevealContext);
+  useLayoutEffect(
+    () =>
+      navigation?.register(props.path, () => {
+        const trigger = root.current?.querySelector<HTMLButtonElement>('button[aria-expanded]');
+        if (trigger?.getAttribute('aria-expanded') === 'false') trigger.click();
+      }),
+    [navigation, props.path],
+  );
   const [pending, setPending] = useState(new Map<symbol, number>());
   const onPending = useCallback(
     (id: symbol, count: number) =>
@@ -43,7 +54,7 @@ export function RelationField(props: FieldProps<unknown, RelationFieldDef>) {
       error={props.errors['']?.[0]}
       required={props.def.required}
     >
-      <fieldset className="br:min-w-0">
+      <fieldset ref={root} id={props.id} className="br:min-w-0">
         <RemoteRelationPicker
           label={props.def.label}
           value={value}
@@ -82,6 +93,7 @@ function SelectionFields(
     onPending(id: symbol, count: number): void;
   },
 ) {
+  const idPrefix = useContext(FieldIdPrefixContext) ?? props.id;
   const prefix = props.def.multiple ? `${props.path}.${props.index}` : props.path;
   const api = useRelationDraft({
     parent: props.form,
@@ -97,7 +109,7 @@ function SelectionFields(
     <Nodes
       nodes={props.def.fields ?? []}
       api={api}
-      idPrefix={props.id}
+      idPrefix={idPrefix}
       prefix={prefix}
       layout="stacked"
       uploadUrl={props.uploadUrl}

@@ -27,7 +27,7 @@ function Harness({
   onApi(api);
   return <FormView ref={formRef} form={form} api={api} uploadUrl="/upload" />;
 }
-function setup(form: FormDef, initial = {}) {
+function setup(form: FormDef, initial = {}, options: Parameters<typeof renderWithBrume>[1] = {}) {
   let api: FormApi;
   const ref = createRef<FormViewHandle>();
   const result = renderWithBrume(
@@ -39,6 +39,7 @@ function setup(form: FormDef, initial = {}) {
         api = next;
       }}
     />,
+    options,
   );
   return { ...result, ref, api: () => api };
 }
@@ -419,3 +420,62 @@ it('shows unknown inactive-container errors as unclaimed summary entries', () =>
   act(() => expect(result.ref.current?.focusFirstError()).toBe(true));
   expect(document.activeElement).toBe(screen.getByRole('alert'));
 });
+
+it.each(['summary', 'imperative'] as const)(
+  'focuses relation errors and reveals closed selected extras through %s navigation',
+  (navigation) => {
+    const form: FormDef = {
+      layout: 'stacked',
+      nodes: [
+        {
+          type: 'field',
+          field: {
+            type: 'relation',
+            name: 'products',
+            label: 'Products',
+            multiple: true,
+            remote: { url: '/products' },
+            fields: [
+              { type: 'field', field: { type: 'text', name: 'quantity', label: 'Quantity' } },
+            ],
+          },
+        },
+      ],
+    };
+    const result = setup(
+      form,
+      { products: [{ id: 'a', quantity: '2' }] },
+      {
+        respond: () => ({
+          status: 200,
+          data: { data: [], pagination: { page: 1, perPage: 20, hasMore: false } },
+        }),
+      },
+    );
+    act(() => result.api().setServerErrors({ products: ['Choose products'] }));
+    const relationLink = screen.getByRole('link', { name: 'Products: Choose products' });
+    const trigger = screen.getByRole('button', { name: /Products/ });
+    if (navigation === 'summary') fireEvent.click(relationLink);
+    else
+      act(() => {
+        expect(result.ref.current?.focusFirstError()).toBe(true);
+      });
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    act(() => result.api().setServerErrors({ 'products.0.quantity': ['Bad quantity'] }));
+    const extraLink = screen.getByRole('link', { name: 'Quantity: Bad quantity' });
+    expect(screen.queryByLabelText('Quantity')).toBeNull();
+    if (navigation === 'summary') fireEvent.click(extraLink);
+    else
+      act(() => {
+        expect(result.ref.current?.focusFirstError()).toBe(true);
+      });
+    const quantity = screen.getByLabelText('Quantity');
+    expect(document.activeElement).toBe(quantity);
+    expect(extraLink.getAttribute('href')).toBe(`#${quantity.id}`);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    trigger.focus();
+    fireEvent.click(extraLink);
+    expect(document.activeElement).toBe(quantity);
+  },
+);

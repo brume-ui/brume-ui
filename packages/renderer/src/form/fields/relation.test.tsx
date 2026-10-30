@@ -400,3 +400,116 @@ it('rejects a noncooperative dependent extra response after a sibling edit and s
     registerBuiltInField('text', TextField);
   }
 });
+
+it.each(['earlier', 'owner', 'reselect'] as const)(
+  'keeps upload ownership when removing the %s selection',
+  async (removed) => {
+    let api!: FormApi;
+    let complete!: (response: HttpResponse) => void;
+    let upload!: HttpRequest;
+    const uploadForm: FormDef = {
+      layout: 'stacked',
+      nodes: [
+        {
+          type: 'field',
+          field: {
+            type: 'relation',
+            name: 'products',
+            label: 'Products',
+            multiple: true,
+            remote: { url: '/products' },
+            fields: [
+              {
+                type: 'field',
+                field: {
+                  type: 'upload',
+                  name: 'file',
+                  label: 'File',
+                  kind: 'file',
+                  multiple: false,
+                  accept: [],
+                  maxSize: 1000,
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
+    // biome-ignore lint/correctness/noComponentHookFactories: one stable test harness.
+    function Harness() {
+      api = useFormState(uploadForm, { products: [{ id: 'a' }, { id: 'b' }] });
+      return (
+        <Nodes
+          nodes={uploadForm.nodes}
+          api={api}
+          idPrefix="moving-uploads"
+          layout="stacked"
+          uploadUrl="/upload"
+        />
+      );
+    }
+    const { container } = renderWithBrume(<Harness />, {
+      locale: 'en',
+      respond: (request) => {
+        if (request.url === '/upload') {
+          upload = request;
+          return new Promise((resolve) => {
+            complete = resolve;
+          });
+        }
+        return {
+          status: 200,
+          data: {
+            data: [
+              { value: 'a', label: 'Apple' },
+              { value: 'b', label: 'Banana' },
+            ],
+            pagination: { page: 1, perPage: 20, hasMore: false },
+          },
+        };
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Products/ }));
+    await screen.findByRole('button', { name: 'Remove “Banana”' });
+    const originalB = container.querySelectorAll<HTMLInputElement>('input[type=file]')[1];
+    if (!originalB) throw new Error('B upload input missing');
+    fireEvent.change(originalB, { target: { files: [new File(['x'], 'b.txt')] } });
+    expect(screen.getByRole('button', { name: 'Apply' })).toHaveProperty('disabled', true);
+    act(() => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: removed === 'earlier' ? 'Remove “Apple”' : 'Remove “Banana”',
+        }),
+      );
+      if (removed === 'reselect')
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Select Banana' }));
+    });
+    expect(upload.signal?.aborted).toBe(removed !== 'earlier');
+    if (removed === 'earlier') {
+      expect(container.querySelector('input[type=file]')).toBe(originalB);
+      expect(screen.getByRole('button', { name: 'Apply' })).toHaveProperty('disabled', true);
+    }
+    await act(async () =>
+      complete({
+        status: 200,
+        data: {
+          token: 'b-upload',
+          name: 'b.txt',
+          size: 1,
+          mime: 'text/plain',
+          expiresAt: 'tomorrow',
+        },
+      }),
+    );
+    expect(api.getValue('products')).toEqual([{ id: 'a' }, { id: 'b' }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(api.getValue('products')).toEqual(
+      removed === 'earlier'
+        ? [{ id: 'b', file: { token: 'b-upload' } }]
+        : removed === 'reselect'
+          ? [{ id: 'a' }, { id: 'b' }]
+          : [{ id: 'a' }],
+    );
+  },
+);

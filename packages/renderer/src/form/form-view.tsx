@@ -1,9 +1,10 @@
 import { FieldLayoutContext } from '@brume-ui/brume-react';
 import type { FormDef } from '@brume-ui/brume-schema';
-import { forwardRef, useId, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useId, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { ErrorSummary } from './error-summary';
 import { type FieldErrors, isPathWithin } from './errors';
+import { FieldRevealContext } from './field-navigation';
 import { fieldId, Nodes } from './layout/nodes';
 import { FormTabs } from './layout/tabs';
 import { findValueFieldOwner } from './traversal';
@@ -42,6 +43,18 @@ export const FormView = forwardRef<
   const instance = useId();
   const prefix = `${idPrefix ?? 'form'}-${instance}`;
   const root = useRef<HTMLDivElement>(null);
+  const revealers = useRef(new Map<string, () => void>());
+  const navigation = useMemo(
+    () => ({
+      register(path: string, reveal: () => void) {
+        revealers.current.set(path, reveal);
+        return () => {
+          if (revealers.current.get(path) === reveal) revealers.current.delete(path);
+        };
+      },
+    }),
+    [],
+  );
   const sections = form.nodes.filter((node) => node.type === 'section');
   const firstSection = form.nodes.findIndex((node) => node.type === 'section');
   const [active, setActive] = useState(sections[0]?.key ?? '');
@@ -80,6 +93,17 @@ export const FormView = forwardRef<
         ),
       );
       if (section && section.key !== active) flushSync(() => setActive(section.key));
+    }
+    // Open outer composites first; their layout effects register any nested revealers.
+    for (const field of fields) {
+      if (
+        error.field &&
+        field.path !== error.field.path &&
+        isPathWithin(error.field.path, field.path)
+      ) {
+        const reveal = revealers.current.get(field.path);
+        if (reveal) flushSync(reveal);
+      }
     }
     const element = error.target ? document.getElementById(error.target) : null;
     const focusable = element?.matches(
@@ -130,30 +154,32 @@ export const FormView = forwardRef<
     />
   );
   return (
-    <FieldLayoutContext.Provider value={form.layout}>
-      <div ref={root} className="br:@container br:grid br:gap-6">
-        <ErrorSummary id={`${prefix}-summary`} errors={entries} onFocus={focus} />
-        {tabs && sections.length ? (
-          <>
-            {render(form.nodes.slice(0, firstSection))}
-            <FormTabs
-              sections={sections}
-              errors={sectionErrorKeys(form, api.errors)}
-              value={
-                sections.some((section) => section.key === active)
-                  ? active
-                  : (sections[0]?.key ?? '')
-              }
-              onChange={setActive}
-            >
-              {(section) => render([section])}
-            </FormTabs>
-            {render(form.nodes.slice(firstSection + 1).filter((node) => node.type !== 'section'))}
-          </>
-        ) : (
-          render(form.nodes)
-        )}
-      </div>
-    </FieldLayoutContext.Provider>
+    <FieldRevealContext.Provider value={navigation}>
+      <FieldLayoutContext.Provider value={form.layout}>
+        <div ref={root} className="br:@container br:grid br:gap-6">
+          <ErrorSummary id={`${prefix}-summary`} errors={entries} onFocus={focus} />
+          {tabs && sections.length ? (
+            <>
+              {render(form.nodes.slice(0, firstSection))}
+              <FormTabs
+                sections={sections}
+                errors={sectionErrorKeys(form, api.errors)}
+                value={
+                  sections.some((section) => section.key === active)
+                    ? active
+                    : (sections[0]?.key ?? '')
+                }
+                onChange={setActive}
+              >
+                {(section) => render([section])}
+              </FormTabs>
+              {render(form.nodes.slice(firstSection + 1).filter((node) => node.type !== 'section'))}
+            </>
+          ) : (
+            render(form.nodes)
+          )}
+        </div>
+      </FieldLayoutContext.Provider>
+    </FieldRevealContext.Provider>
   );
 });

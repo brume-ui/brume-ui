@@ -15,6 +15,7 @@ import {
 import { useRef, useState } from 'react';
 import type { FieldProps } from '../contract';
 import { scopeErrors } from '../errors';
+import { fieldOwnershipKey } from '../field-ownership';
 import { resolveField } from '../registry';
 import { ReadOnlyField } from './misc';
 
@@ -24,16 +25,20 @@ export function UploadField(props: FieldProps) {
   const accepted = useRef(props.value);
   const emitted = useRef(props.value);
   const generation = useRef(0);
-  const context = useRef(props.path);
+  const owner = fieldOwnershipKey(props.form, props.path, props.rowContext);
+  const context = useRef(owner);
+  const stateId = useRef(props.form.stateId);
   const resetVersion = useRef(props.form.resetVersion);
   // No-op form writes may retain the accepted prop instead of the proposed emission.
   if (
     (props.value !== accepted.current && props.value !== emitted.current) ||
-    context.current !== props.path ||
+    context.current !== owner ||
+    stateId.current !== props.form.stateId ||
     resetVersion.current !== props.form.resetVersion
   ) {
     emitted.current = props.value;
-    context.current = props.path;
+    context.current = owner;
+    stateId.current = props.form.stateId;
     resetVersion.current = props.form.resetVersion;
     generation.current++;
   }
@@ -67,6 +72,8 @@ export function UploadField(props: FieldProps) {
 function UploadControl(props: FieldProps<unknown, UploadDef>) {
   const { def, value, errors, path, id, uploadUrl, form } = props;
   const { adapter, t } = useBrume();
+  const currentChange = useRef(props.onChange);
+  currentChange.current = props.onChange;
   const [items, setItems] = useState<UploadItem[]>(() => {
     const values: UploadValue[] = Array.isArray(value)
       ? value
@@ -86,7 +93,7 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
     const values = next.flatMap((item) =>
       item.status === 'done' && item.value ? [item.value] : [],
     );
-    props.onChange(def.multiple ? values : (values[0] ?? null));
+    currentChange.current(def.multiple ? values : (values[0] ?? null));
   };
   // Protocol indices refer to persisted values, never transient/error display rows.
   const valueIndex = (index: number) =>

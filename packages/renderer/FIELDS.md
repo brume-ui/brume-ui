@@ -291,3 +291,24 @@ a FormDialog and Grid table filter in addition to its existing remote delay/fail
 Browser specs in `apps/playground/e2e/relation-picker.spec.ts` cover keyboard, the one-dialog
 policy, 390px geometry, axe and light/dark screenshot cases. They require real-browser CI acceptance;
 unit tests/builds do not substitute for that gate.
+
+Relation error navigation preserves the root field-ID namespace. Internally, `Nodes` provides
+`FieldIdPrefixContext` and composite selection Nodes reuse it. `RelationField` keeps its supplied
+stable ID on its fieldset. `FieldRevealContext` lets a mounted composite register
+`register(path, reveal): cleanup`; FormView reveals ancestor composites in walker order before
+looking up and focusing the error target. Relation-level errors focus the existing trigger;
+selected extra errors can reveal a closed picker without a new public picker API.
+
+`fieldOwnershipKey(form, path, rowContext?)` is the shared internal mounted-control identity:
+canonical declaration template plus the complete explicit RowContext chain when both exist,
+otherwise the numeric/current path. `Nodes` uses this key for field wrappers and combines it with
+`resetVersion` for controls. `UploadField` uses the same identity instead of treating every numeric
+path move as a replacement; value replacement, form stateId change and resetVersion still replace
+its upload controller. Upload completion calls the current field callback, so a surviving selected
+ID receives its token at the new numeric position. Removed/same-ID-replaced owners still unmount
+and abort; late replies cannot write the replacement selection. Task 5 should reuse these helpers
+while mounting repeater rows by stable keys and preserving the existing selection-generation reset.
+
+This change does not alter upload transport: multipart still carries `file` and the request-start
+`field` path only. Adding rowContext JSON to upload requests remains a later protocol task; options
+requests continue carrying their existing separate rowContext chain.
