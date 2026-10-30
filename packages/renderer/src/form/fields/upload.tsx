@@ -17,6 +17,7 @@ import type { FieldProps } from '../contract';
 import { scopeErrors } from '../errors';
 import { fieldOwnershipKey } from '../field-ownership';
 import { resolveField } from '../registry';
+import { verifiedRowContext } from '../row-identity';
 import { ReadOnlyField } from './misc';
 
 type UploadDef = Extract<FieldProps['def'], { type: 'upload' }>;
@@ -129,6 +130,9 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
               const body = new FormData();
               body.append(UPLOAD_PARAMS.file, file);
               body.append(UPLOAD_PARAMS.field, path);
+              const context = verifiedRowContext(form, path, props.rowContext);
+              if (!context) throw new Error('Invalid upload row context');
+              if (context.length) body.append(UPLOAD_PARAMS.rowContext, JSON.stringify(context));
               const res = await adapter.request<UploadTempResponse>({
                 method: 'post',
                 url: uploadUrl ?? '',

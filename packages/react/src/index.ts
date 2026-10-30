@@ -69,6 +69,7 @@ export { QrCode, type QrCodeProps } from './components/qr-code';
 export { RadioGroup, type RadioGroupProps } from './components/radio-group';
 export { RangeInput, type RangeInputProps, type RangeValue } from './components/range-input';
 export { RelationPicker, type RelationPickerProps } from './components/relation-picker';
+export { Repeater, type RepeaterProps } from './components/repeater';
 export { RollingNumber, type RollingNumberProps } from './components/rolling-number';
 export { RowContextMenu, type RowContextMenuProps } from './components/row-context-menu';
 export { SearchInput, type SearchInputProps } from './components/search-input';

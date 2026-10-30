@@ -1,4 +1,10 @@
 export const zhTW = {
+  'repeater.add': '新增 {label}',
+  'repeater.remove': '移除 {name}',
+  'repeater.up': '上移 {name}',
+  'repeater.down': '下移 {name}',
+  'repeater.sort': '排序 {name}',
+
   'relation.section': '分類',
   'resource.create': '新增{name}',
   'resource.retry': '重試',

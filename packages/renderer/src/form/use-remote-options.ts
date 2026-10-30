@@ -8,6 +8,7 @@ import {
 } from '@brume-ui/brume-schema';
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { canonicalizeFieldValue, resolveConditionPath } from './conditions';
+import { rowLifetime } from './row-lifetime';
 import type { ValueField } from './traversal';
 import type { FormApi } from './use-form-state';
 
@@ -86,6 +87,7 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
   const depends = form ? resolveDependencies(remote, form, field) : (config.resolvedDepends ?? {});
   const dependsKey = stableJson(depends);
   const contextKey = stableJson(rowContext ?? field?.rowContext ?? []);
+  const lifetime = form ? rowLifetime(form, rowContext ?? field?.rowContext) : 0;
   const endpoint = remote?.url;
   const owner = form ? (field?.templatePath ?? config.path) : config.ownerKey;
   const stateId = form?.stateId ?? localOwner.current;
@@ -102,10 +104,11 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
       stateId,
       resetKey,
       owner,
+      lifetime,
       alive: true,
       channels: new Map<RemoteOptionsChannel, AbortController>(),
     }),
-    [endpoint, dependsKey, contextKey, enabled, adapter, stateId, resetKey, owner],
+    [endpoint, dependsKey, contextKey, enabled, adapter, stateId, resetKey, owner, lifetime],
   );
   const latest = useRef(scope);
   latest.current = scope;
@@ -147,6 +150,7 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
         return (
           !!currentField &&
           currentField.templatePath === scope.owner &&
+          rowLifetime(form, currentField.rowContext) === scope.lifetime &&
           stableJson(resolveDependencies(remote, form, currentField)) === scope.dependsKey
         );
       };

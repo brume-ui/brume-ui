@@ -60,6 +60,16 @@ export function Nodes(props: NodesProps) {
               path,
               activity?.rowContext ?? props.rowContext,
             );
+            const reset = api.resetVersion;
+            const state = api.stateId;
+            // Async callbacks may run after a synchronous move but before React renders it.
+            // Resolve the current numeric path from the captured lifetime, not a stale index.
+            const livePath = () => {
+              if (api.resetVersion !== reset || api.stateId !== state) return undefined;
+              return api.fields.find(
+                (field) => fieldOwnershipKey(api, field.path, field.rowContext) === ownership,
+              )?.path;
+            };
             const control = Component ? (
               <Component
                 key={`${ownership}-${api.resetVersion}`}
@@ -68,8 +78,14 @@ export function Nodes(props: NodesProps) {
                 path={path}
                 id={fieldId(idPrefix, path)}
                 value={api.getValue(path)}
-                onChange={(value) => api.setValue(path, value)}
-                onBlur={() => api.touch(path)}
+                onChange={(value) => {
+                  const current = livePath();
+                  if (current !== undefined) api.setValue(current, value);
+                }}
+                onBlur={() => {
+                  const current = livePath();
+                  if (current !== undefined) api.touch(current);
+                }}
                 errors={errors}
                 invalid={Object.values(errors).some((v) => v.length > 0)}
                 readOnly={activity?.readOnly ?? Boolean(def.readOnly)}

@@ -271,8 +271,8 @@ Selected fields render through the ordinary `Nodes`, with flattened error paths 
 `products.0.quantity` (not `products.0.extra.quantity`). The canonical selection context remains
 `{path, key: selectedId, id: selectedId}`. A same-ID replacement changes the local FormApi ownership
 and remounts its child controls; ordinary numeric movement preserves ownership. Upload cancellation
-aborts and discards late completion. Nested repeater/custom children will use this same contract;
-Task 5/6 supply those renderers and their deeper acceptance tests.
+aborts and discards late completion. Nested repeaters use this same contract; custom fields still display an explicit diagnostic until
+the custom-field registry is implemented.
 
 Opening creates a deep draft copy. Search, page and section changes preserve selection order and
 extras; Cancel discards them and Apply emits once. Endpoint/dependency/form-reset/source-identity
@@ -300,15 +300,55 @@ looking up and focusing the error target. Relation-level errors focus the existi
 selected extra errors can reveal a closed picker without a new public picker API.
 
 `fieldOwnershipKey(form, path, rowContext?)` is the shared internal mounted-control identity:
-canonical declaration template plus the complete explicit RowContext chain when both exist,
-otherwise the numeric/current path. `Nodes` uses this key for field wrappers and combines it with
-`resetVersion` for controls. `UploadField` uses the same identity instead of treating every numeric
-path move as a replacement; value replacement, form stateId change and resetVersion still replace
-its upload controller. Upload completion calls the current field callback, so a surviving selected
-ID receives its token at the new numeric position. Removed/same-ID-replaced owners still unmount
-and abort; late replies cannot write the replacement selection. Task 5 should reuse these helpers
-while mounting repeater rows by stable keys and preserving the existing selection-generation reset.
+canonical declaration template, complete explicit RowContext chain and private row lifetime when
+available, otherwise the numeric/current path. `Nodes` uses this key for field wrappers and combines
+it with `resetVersion` for controls. Mutation callbacks resolve the owner's current numeric path
+at invocation, including a move and async completion in the same event before React commits.
+UploadField retains external-value/stateId/resetVersion fences and the live callback from Task 4.
 
-This change does not alter upload transport: multipart still carries `file` and the request-start
-`field` path only. Adding rowContext JSON to upload requests remains a later protocol task; options
-requests continue carrying their existing separate rowContext chain.
+## Recursive repeaters
+
+`Repeater` / `RepeaterProps` are exported from `@brume-ui/brume-react`. The controlled primitive
+accepts `label`, `rows: readonly RowIdentity[]`, `onAdd()`, `onRemove(index)`, `onMove(from,to)`,
+`renderRow(row,index)`, and optional `min`, `max`, `disabled`, `sortable`. It owns presentation,
+focus and drag/keyboard behavior; callers own values and persistence. `sortable` defaults to true
+for the primitive. The renderer enables it **only when schema `sortable === true`**: omitted or
+false suppresses movement controls and dragging. Backend declarations must explicitly enable it
+where ordering is supported (JSON array order, or a relation with a declared order column).
+
+Arrow keys on a drag handle or a focused row, labelled up/down buttons, and pointer drag share
+one move operation. Removing a row focuses the next survivor, then previous, then Add if empty.
+All operation labels have zh-TW, zh-CN and en translations. Disabled/read-only/activity state
+propagates to nested controls. The renderer recursively uses the same Nodes algorithm for JSON,
+relation-backed rows and picker selected extras, with no fixed maximum nesting depth.
+
+New rows contain only `{_brume:{key:crypto.randomUUID()}}` initially, never an invented database id.
+Existing supplied identities are retained. Duplicate, missing or malformed identities render an
+explicit diagnostic and fail editable client validation; they are never silently repaired. JSON
+row identities omit id; relation row ids remain related-child hints, never authorization.
+Minimum/maximum counts and distinct declared child values use the shared walker. Distinct money
+values compare using the declared decimal scale (`500`, `500.0`, `500.00` match at scale 2); text
+identifiers stay typed (`01` and `1` differ). Every active duplicate receives its own numeric error.
+
+Private RowLifetimes live inside each root/draft state, with weak API-wrapper registrations.
+Synchronous mutation boundaries reconcile current canonical context chains. Movement retains the
+lifetime; removal drops it; reappearance gets a fresh lifetime even within one React event. Reset
+invalidates all lifetimes. No retired payloads or public generation keys are retained. Remote
+options also compare this lifetime when accepting replies, preserving existing StrictMode/source
+and picker selection-reader fences. A private draft location resolver follows the captured parent
+field ownership/state/reset and live selected-id index before any read or write, so an outer
+repeater move before React commits also preserves an open picker and its pending uploads. Removed
+or reset parent lifetimes cannot be adopted by an old draft. Numeric touched/error paths still
+move via FormApi row APIs.
+
+Upload multipart now includes `file`, request-start numeric `field`, and `rowContext` JSON for
+nested owners. The complete chain is checked against current declarations/metadata before sending;
+root uploads omit the chain. Canonical paths contain `*` at declared row-array positions, with
+actual `_brume.key/id` or selected-source key/id. Private lifetimes never enter transport. A moved
+upload keeps its DOM/input/controller and writes through the current owner; removed/reset owners
+abort, discard noncooperative replies and settle pending counts once. Server Tasks 8/10 must still
+validate the chain and resolve authoritative parent associations before accepting or persisting it.
+
+The `/#/form-repeaters` fixture and `e2e/repeater.spec.ts` cover keyboard focus/order, nested pointer
+drag isolation, 390px layout and axe. The browser tests require the Task 11 real CI runtime gate;
+local jsdom/build/typecheck results are not browser acceptance.

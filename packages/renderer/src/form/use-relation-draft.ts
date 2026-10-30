@@ -1,7 +1,9 @@
 import type { RelationItem } from '@brume-ui/brume-schema';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { type FieldErrors, isPathWithin } from './errors';
+import { fieldOwnershipKey } from './field-ownership';
 import { getAt, setAt } from './paths';
+import { bindRowLifetimes, createRowLifetimes, syncRowLifetimes } from './row-lifetime';
 import { collectValueFields } from './traversal';
 import type { FormApi } from './use-form-state';
 
@@ -18,12 +20,19 @@ interface Config {
 /** A mounted selection owns all writes, errors, touch state and uploads; root reads stay live. */
 export function useRelationDraft(config: Config): FormApi {
   const [, refresh] = useState(0);
-  const latest = useRef(config);
-  latest.current = config;
+  const ownership = {
+    ...config,
+    parentOwner: fieldOwnershipKey(config.parent, config.path),
+    parentState: config.parent.stateId,
+    parentReset: config.parent.resetVersion,
+  };
+  const latest = useRef(ownership);
+  latest.current = ownership;
   const createLocal = (epoch: number) => ({
     reader: config.getDraft,
     baseline: config.item,
     id: Symbol('relation-draft'),
+    rowLifetimes: createRowLifetimes(),
     alive: true,
     value: config.item,
     accepted: config.item,
@@ -41,7 +50,20 @@ export function useRelationDraft(config: Config): FormApi {
   if (store.current.reader !== config.getDraft)
     store.current = createLocal(store.current.reset + 1);
   const local = store.current;
-  const active = () => local.alive && local.reader().some((item) => item.id === local.value.id);
+  // Parent repeaters and selected siblings can move synchronously before this component renders.
+  // Follow the captured declaration/lifetime and current selected membership, never an old index.
+  const location = () => {
+    const c = latest.current;
+    if (c.parent.stateId !== c.parentState || c.parent.resetVersion !== c.parentReset)
+      return undefined;
+    const parent = c.parent.fields.find(
+      (field) => fieldOwnershipKey(c.parent, field.path, field.rowContext) === c.parentOwner,
+    );
+    const index = local.reader().findIndex((item) => item.id === local.value.id);
+    if (!parent || index < 0) return undefined;
+    return { path: parent.path, prefix: c.multiple ? `${parent.path}.${index}` : parent.path };
+  };
+  const active = () => local.alive && location() !== undefined;
   if (local.accepted !== config.item) {
     local.accepted = config.item;
     local.value = config.item;
@@ -54,18 +76,25 @@ export function useRelationDraft(config: Config): FormApi {
     };
   }, [local]);
   const relative = (path: string) => {
-    const prefix = latest.current.prefix;
-    if (!isPathWithin(path, prefix)) throw new Error('Draft write outside selected item');
+    const prefix = location()?.prefix;
+    if (prefix === undefined || !isPathWithin(path, prefix))
+      throw new Error('Draft write outside selected item');
     return path.slice(prefix.length).replace(/^\./, '');
   };
   const values = () => {
     const c = latest.current;
     const draft = local.reader();
-    return setAt(c.parent.values, c.path, c.multiple ? draft : (draft[0] ?? null));
+    const current = location();
+    return current
+      ? setAt(c.parent.values, current.path, c.multiple ? draft : (draft[0] ?? null))
+      : c.parent.values;
   };
-  const fields = () => collectValueFields(latest.current.parent.definition.nodes, values());
+  const fields = () =>
+    location() ? collectValueFields(latest.current.parent.definition.nodes, values()) : [];
+  syncRowLifetimes(local.rowLifetimes, fields());
   const errors = (): FieldErrors => {
-    const prefix = latest.current.prefix;
+    const prefix = location()?.prefix;
+    if (prefix === undefined) return {};
     const result: Record<string, readonly string[]> = {};
     for (const field of fields())
       if (isPathWithin(field.path, prefix)) {
@@ -95,6 +124,7 @@ export function useRelationDraft(config: Config): FormApi {
       ),
     );
     latest.current.onChange(value);
+    syncRowLifetimes(local.rowLifetimes, fields());
     notify();
   };
   const editRows = (path: string, from: number, to?: number) => {
@@ -142,7 +172,7 @@ export function useRelationDraft(config: Config): FormApi {
     );
     local.server = server;
   };
-  return {
+  const api: FormApi = {
     get definition() {
       return latest.current.parent.definition;
     },
@@ -181,7 +211,7 @@ export function useRelationDraft(config: Config): FormApi {
     validateAll() {
       if (!active()) return false;
       for (const field of fields())
-        if (isPathWithin(field.path, latest.current.prefix))
+        if (isPathWithin(field.path, location()?.prefix ?? ''))
           local.touched.add(relative(field.path));
       notify();
       return Object.keys(errors()).length === 0;
@@ -196,9 +226,11 @@ export function useRelationDraft(config: Config): FormApi {
     reset(next) {
       if (!active()) return;
       local.reset++;
+      syncRowLifetimes(local.rowLifetimes, fields(), true);
       local.touched.clear();
       local.server = {};
-      write(latest.current.prefix, next ? getAt(next, latest.current.prefix) : local.baseline);
+      const prefix = location()?.prefix;
+      if (prefix !== undefined) write(prefix, next ? getAt(next, prefix) : local.baseline);
     },
     trackUpload() {
       if (!active()) return () => {};
@@ -224,4 +256,5 @@ export function useRelationDraft(config: Config): FormApi {
     moveRow: (path, from, to) => editRows(path, from, to),
     removeRow: (path, index) => editRows(path, index),
   };
+  return bindRowLifetimes(api, local.rowLifetimes);
 }

@@ -4,6 +4,7 @@ import { ChoiceField } from './fields/choice';
 import { DateField } from './fields/date';
 import { HiddenField, ReadOnlyField, SwitchField } from './fields/misc';
 import { RelationField } from './fields/relation';
+import { RepeaterField } from './fields/repeater';
 import { TextField } from './fields/text';
 import { UploadField } from './fields/upload';
 
@@ -44,3 +45,5 @@ for (const type of ['select', 'multipleSelect', 'radio', 'checkbox', 'tags'] as 
 registerBuiltInField('upload', UploadField);
 
 registerBuiltInField('relation', RelationField);
+
+registerBuiltInField('repeater', RepeaterField);

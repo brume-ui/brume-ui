@@ -9,6 +9,7 @@ import type {
 import { canonicalizeFieldValue, conditionPaths, evaluateCondition } from './conditions';
 import { isPathWithin } from './errors';
 import { assertSafePath, getAt, joinPath } from './paths';
+import { repeaterIdentities } from './row-identity';
 import { collectFields, validateValue } from './validate';
 
 type RowContainer = { path: string; row: string; kind: 'repeater' | 'relation' };
@@ -210,8 +211,16 @@ export function collectValueFields(
         def.type === 'display' ||
         def.type === 'hidden' ||
         (def.type === 'custom' && def.displayOnly);
+      const count = Array.isArray(value) ? value.length : 0;
+      const countInvalid =
+        def.type === 'repeater' &&
+        ((def.min !== undefined && count < def.min) || (def.max !== undefined && count > def.max));
       const validationError =
         validateValue(def, value) ??
+        (!noneditable && countInvalid ? invalidMessage(def) : null) ??
+        (!noneditable && def.type === 'repeater' && !repeaterIdentities(value, def.mode)
+          ? invalidMessage(def)
+          : null) ??
         (!noneditable && !canonical.valid ? invalidMessage(def) : null);
       const field: ValueField = {
         path,
@@ -268,6 +277,30 @@ export function collectValueFields(
       !field.readOnly &&
       field.def.type !== 'display' &&
       !(field.def.type === 'custom' && field.def.displayOnly);
+  }
+  // Distinct compares each declared child with its field-specific canonical value.
+  // Empty/invalid/inactive values are handled by their own validation and never coerce IDs.
+  for (const { field: container } of pending) {
+    if (container.def.type !== 'repeater' || !container.active) continue;
+    const rows = getAt(values, container.path);
+    if (!Array.isArray(rows)) continue;
+    for (const child of container.def.distinct ?? []) {
+      assertSafePath(child);
+      const groups = new Map<string, ValueField[]>();
+      rows.forEach((_row, index) => {
+        const field = byPath.get(`${container.path}.${index}.${child}`);
+        if (!field?.active) return;
+        const canonical = canonicalizeFieldValue(field.def, getAt(values, field.path));
+        if (!canonical.valid || canonical.value == null || canonical.value === '') return;
+        const key = JSON.stringify(canonical.value);
+        const group = groups.get(key) ?? [];
+        group.push(field);
+        groups.set(key, group);
+      });
+      for (const group of groups.values())
+        if (group.length > 1)
+          for (const field of group) field.validationError ??= invalidMessage(field.def);
+    }
   }
   // A controller's raw failure always makes direct dependents conservative; hidden invalid fields
   // keep their draft and do not independently block until they become editable again.

@@ -1,6 +1,12 @@
 import type { MessageKey } from './index';
 
 export const zhCN: Record<MessageKey, string> = {
+  'repeater.add': '新增 {label}',
+  'repeater.remove': '移除 {name}',
+  'repeater.up': '上移 {name}',
+  'repeater.down': '下移 {name}',
+  'repeater.sort': '排序 {name}',
+
   'relation.section': '分类',
   'resource.create': '新增{name}',
   'resource.retry': '重试',

@@ -374,3 +374,35 @@ it('aborts both request channels on true unmount and rejects late replies and ne
     await rejected;
   });
 });
+
+it('rejects a same-event removed and re-added row lifetime before React renders', async () => {
+  let source!: ReturnType<typeof useRemoteOptions>;
+  let form!: FormApi;
+  let finish!: (value: HttpResponse) => void;
+  renderWithBrume(
+    <Harness
+      capture={(next, api) => {
+        source = next;
+        form = api;
+      }}
+    />,
+    {
+      respond: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    },
+  );
+  const old = source;
+  const pending = source.request({ q: 'old' });
+  const rejected = expect(pending).rejects.toThrow('Obsolete');
+  await act(async () => {
+    const rows = form.getValue('rows');
+    form.removeRow('rows', 0);
+    form.setValue('rows', rows);
+    finish(response);
+    await rejected;
+    await expect(old.request({ q: 'obsolete' })).rejects.toThrow('Obsolete');
+  });
+  expect(source.scopeKey).not.toBe(old.scopeKey);
+});

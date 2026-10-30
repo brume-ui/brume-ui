@@ -1,6 +1,12 @@
 import type { MessageKey } from './index';
 
 export const en: Record<MessageKey, string> = {
+  'repeater.add': 'Add {label}',
+  'repeater.remove': 'Remove {name}',
+  'repeater.up': 'Move up {name}',
+  'repeater.down': 'Move down {name}',
+  'repeater.sort': 'Reorder {name}',
+
   'relation.section': 'Section',
   'resource.create': 'Create {name}',
   'resource.retry': 'Retry',

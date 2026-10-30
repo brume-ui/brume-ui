@@ -3,6 +3,7 @@ import type { FormDef } from '@brume-ui/brume-schema';
 import { useRef, useState } from 'react';
 import { type FieldErrors, isPathWithin } from './errors';
 import { assertSafePath, getAt, setAt } from './paths';
+import { bindRowLifetimes, createRowLifetimes, syncRowLifetimes } from './row-lifetime';
 import { findValueFieldOwner } from './traversal';
 import { collectValueFields, type ValueField } from './validate';
 
@@ -58,6 +59,7 @@ export function useFormState(
   // Refs make writes immediately observable by validateAll, including within one event.
   const state = useRef({
     stateId: Symbol('form-state'),
+    rowLifetimes: createRowLifetimes(),
     values: initial,
     baseline: initial,
     baselineKey: stable(initial),
@@ -97,7 +99,7 @@ export function useFormState(
     return current.fieldCache.fields;
   };
   // Fail configuration even when no consumer reads errors or values yet.
-  fields();
+  syncRowLifetimes(current.rowLifetimes, fields());
   const notify = () => refresh((version) => version + 1);
   const errors = (): FieldErrors => {
     const walked = fields();
@@ -158,9 +160,10 @@ export function useFormState(
         return next === null ? [] : [[next, value]];
       }),
     );
+    syncRowLifetimes(current.rowLifetimes, fields());
     notify();
   };
-  return {
+  const api: FormApi = {
     definition: form,
     stateId: current.stateId,
     get values() {
@@ -207,6 +210,7 @@ export function useFormState(
         }),
       );
       current.values = next;
+      syncRowLifetimes(current.rowLifetimes, fields());
       notify();
     },
     touch(path) {
@@ -233,6 +237,7 @@ export function useFormState(
       current.touched = new Set();
       current.server = {};
       current.submitting = false;
+      syncRowLifetimes(current.rowLifetimes, fields(), true);
       notify();
     },
     trackUpload() {
@@ -251,4 +256,5 @@ export function useFormState(
       notify();
     },
   };
+  return bindRowLifetimes(api, current.rowLifetimes);
 }
