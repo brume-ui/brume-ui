@@ -4,6 +4,7 @@ import type {
   Condition,
   CustomFieldDef,
   RelationFieldDef,
+  RelationItem,
   RelationValue,
   RelationValueSchema,
   RemoteChoiceFieldDef,
@@ -152,3 +153,65 @@ void invalidCustom;
 // Inferred public schema values also accept declared, flattened selection extras.
 const inferredSelection: Static<typeof RelationValueSchema> = { id: 'product-1', quantity: 2 };
 void inferredSelection;
+
+// Consumer-shape probe for the future picker, not a production React props implementation.
+// Entries and draft callbacks use RelationItem; RelationValue belongs to the field boundary.
+type PickerSelectionContract = {
+  value: RelationItem[];
+  onChange(next: RelationItem[]): void;
+  renderSelection(
+    item: RelationItem,
+    index: number,
+    onChange: (next: RelationItem) => void,
+  ): string;
+};
+const pickerSelection: PickerSelectionContract = {
+  value: [{ id: 'product-1', quantity: 2 }],
+  onChange(items) {
+    const ids: string[] = items.map((item) => item.id);
+    void ids;
+  },
+  renderSelection(item, index, onChange) {
+    const id: string = item.id;
+    const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+    onChange({ ...item, quantity: quantity + 1 });
+    return `${index}:${id}:${quantity}`;
+  },
+};
+// @ts-expect-error picker entries cannot be null whole-field values
+const nullPickerItems: PickerSelectionContract['value'] = [null];
+// @ts-expect-error picker entries cannot themselves be arrays of selections
+const nestedPickerItems: PickerSelectionContract['value'] = [[{ id: 'product-1' }]];
+const wholeFieldWires: RelationValue[] = [
+  null,
+  { id: 'product-1', quantity: 2 },
+  [{ id: 'product-1' }],
+];
+void pickerSelection;
+void nullPickerItems;
+void nestedPickerItems;
+void wholeFieldWires;
+
+// The obsolete whole-wire entry contract cannot expose an entry identity safely.
+const legacyPickerIdentity = (item: RelationValue): string => {
+  // @ts-expect-error a complete field may be null or an array, so it is not one selected item
+  return item.id;
+};
+type DraftSelectionChange = Parameters<PickerSelectionContract['renderSelection']>[2];
+// @ts-expect-error renderSelection's draft callback accepts one item, not a null field value
+const nullDraftItem: Parameters<DraftSelectionChange>[0] = null;
+// @ts-expect-error renderSelection's draft callback accepts one item, not a nested selection list
+const nestedDraftItem: Parameters<DraftSelectionChange>[0] = [{ id: 'product-1' }];
+void legacyPickerIdentity;
+void nullDraftItem;
+void nestedDraftItem;
+
+// Renderer boundary adapters normalize complete wire values to picker entries and back.
+const wireToPickerItems = (value: RelationValue): PickerSelectionContract['value'] =>
+  value === null ? [] : Array.isArray(value) ? value : [value];
+const pickerItemsToSingleWire = (items: PickerSelectionContract['value']): RelationItem | null =>
+  items[0] ?? null;
+const pickerItemsToMultipleWire = (items: PickerSelectionContract['value']): RelationValue => items;
+void wireToPickerItems;
+void pickerItemsToSingleWire;
+void pickerItemsToMultipleWire;

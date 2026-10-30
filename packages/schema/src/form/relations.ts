@@ -28,10 +28,12 @@ export const RelationItemSchema = Type.Intersect([
   Type.Object({ id: Type.String({ minLength: 1 }) }),
   Type.Record(Type.String(), Type.Unknown()),
 ]);
+/** One picker entry: string id plus flattened declared extras. Picker arrays/callbacks use this type. */
 export type RelationItem = Static<typeof RelationItemSchema>;
 export const RelationValueSchema = Type.Union([
   Type.Null(),
   RelationItemSchema,
   Type.Array(RelationItemSchema),
 ]);
+/** Complete field wire: null/single item for single selection, or an ordered item array for multiple. */
 export type RelationValue = Static<typeof RelationValueSchema>;

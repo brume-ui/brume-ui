@@ -229,6 +229,16 @@ submitted/saving hook 可以中止儲存，回 HTTP 200：
 `nodes` 與 `fields` 均引用同一個 `#/$defs/FormNode`；任意宣告深度都使用同一種結構。
 relation 的 fields 放在選取物件的同一層，沒有額外 `extra` envelope。
 單選值是 `null` 或 `{id:string,...declaredSelectionFields}`；多選值是有順序的此類物件陣列（`RelationValue`）。
+`RelationItem` 表示一個 `{id:string,...declaredSelectionFields}`；`RelationValue` 表示整個欄位的 wire value，為 `null | RelationItem | RelationItem[]`。
+未來 picker 的 selection-facing props 使用 `value:RelationItem[]`、`onChange(next:RelationItem[]):void`，
+以及 `renderSelection?(item:RelationItem,index:number,onChange:(next:RelationItem)=>void):ReactNode`。
+picker entry 與 renderSelection 的 draft callback 都接一個 RelationItem，因此可直接取用 `item.id`，
+並在型別檢查後使用 flattened extras；不能把 null 或選取陣列當成一個 entry。
+`RelationValue[]` 是整個欄位值的陣列，會容許 null／巢狀陣列，不適合作為 picker entries。
+單選 picker 內部也用長度 0／1 的陣列；renderer 在邊界把 null／單一物件轉成該陣列，commit 時轉回 `items[0] ?? null`。
+多選維持有順序的 RelationItem[]。renderSelection 的第三個參數只修改 picker draft；取消捨棄 draft，commit 才呼叫外部 onChange，不能提前改 FormApi。
+這是後續 Task4 props 的契約澄清；本次不實作 picker runtime。
+
 `id` 是選取來源的身分，不是中介 child 的身分，標籤由搜尋／hydration 回覆提供。
 關聯／資料表／association 名稱保留在伺服器宣告，不放進 schema。
 伺服器透過權威 parent relation 及 selectable query 驗證既有 ID，重複／外來 ID 必須在修改之前拒絕。
