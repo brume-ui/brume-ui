@@ -3,6 +3,7 @@ import { type LucideIcon, MoreHorizontal } from 'lucide-react';
 import {
   type ComponentType,
   type KeyboardEvent,
+  type PointerEventHandler,
   type ReactElement,
   type ReactNode,
   type Ref,
@@ -93,6 +94,8 @@ type ContentPart = ComponentType<{
   sideOffset?: number;
   onKeyDown?(event: KeyboardEvent<HTMLDivElement>): void;
   onCloseAutoFocus?(event: Event): void;
+  onPointerDownCapture?: PointerEventHandler<HTMLDivElement>;
+  onPointerUpCapture?: PointerEventHandler<HTMLDivElement>;
   children?: ReactNode;
 }>;
 
@@ -156,12 +159,16 @@ export function ActionMenuContent({
   align,
   sideOffset,
   onCloseAutoFocus,
+  onPointerDownCapture,
+  onPointerUpCapture,
 }: {
   items: MenuAction[];
   parts: MenuParts;
   align?: 'start' | 'center' | 'end';
   sideOffset?: number;
   onCloseAutoFocus?(event: Event): void;
+  onPointerDownCapture?: PointerEventHandler<HTMLDivElement>;
+  onPointerUpCapture?: PointerEventHandler<HTMLDivElement>;
 }) {
   const highlight = useHighlightIndicator();
   const { Content } = parts;
@@ -171,6 +178,8 @@ export function ActionMenuContent({
       align={align}
       sideOffset={sideOffset}
       onCloseAutoFocus={onCloseAutoFocus}
+      onPointerDownCapture={onPointerDownCapture}
+      onPointerUpCapture={onPointerUpCapture}
       onKeyDown={(e) => runShortcut(items, e)}
       className={cn(MENU_CONTENT, parts.origin)}
     >
@@ -191,6 +200,7 @@ const DROPDOWN_PARTS: MenuParts = {
 export function ActionMenu({ items, label, trigger }: ActionMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const pending = useRef<(() => void) | null>(null);
+  const openingPointer = useRef<{ id: number; x: number; y: number } | null>(null);
   // An action may open a modal. Close the menu and focus its trigger before handing it over,
   // so that modal captures a connected external opener rather than a disappearing menu item.
   const deferred = items.map((item) => ({
@@ -200,8 +210,25 @@ export function ActionMenu({ items, label, trigger }: ActionMenuProps) {
     },
   }));
   return (
-    <Dropdown.Root>
-      <Dropdown.Trigger ref={triggerRef} asChild aria-label={label}>
+    <Dropdown.Root
+      onOpenChange={(open) => {
+        if (!open) openingPointer.current = null;
+      }}
+    >
+      <Dropdown.Trigger
+        ref={triggerRef}
+        asChild
+        aria-label={label}
+        onPointerDownCapture={(event) => {
+          openingPointer.current =
+            event.button === 0 && !event.ctrlKey && event.currentTarget.dataset.state === 'closed'
+              ? { id: event.pointerId, x: event.clientX, y: event.clientY }
+              : null;
+        }}
+        onPointerUp={() => {
+          openingPointer.current = null;
+        }}
+      >
         {trigger ?? (
           <IconButton
             icon={MoreHorizontal}
@@ -216,6 +243,22 @@ export function ActionMenu({ items, label, trigger }: ActionMenuProps) {
           parts={DROPDOWN_PARTS}
           align="end"
           sideOffset={4}
+          onPointerDownCapture={() => {
+            openingPointer.current = null;
+          }}
+          onPointerUpCapture={(event) => {
+            const origin = openingPointer.current;
+            openingPointer.current = null;
+            // Blur validation can move the popup under the stationary opening pointer.
+            // Do not let Radix turn that release into an item click. A moved drag or a
+            // fresh press on an item still selects normally.
+            if (
+              origin?.id === event.pointerId &&
+              origin.x === event.clientX &&
+              origin.y === event.clientY
+            )
+              event.preventDefault();
+          }}
           onCloseAutoFocus={(event) => {
             const action = pending.current;
             pending.current = null;

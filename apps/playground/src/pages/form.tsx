@@ -49,7 +49,14 @@ function FormDemo({ kind }: { kind: 'form' | 'form-horizontal' | 'form-page' | '
   }, [db]);
   return (
     <BrumeProvider locale={locale} adapter={adapter}>
-      <FormContent key={version} kind={kind} db={db} record={record} setRecord={setRecord} />
+      <FormContent
+        key={kind === 'form-dialog' ? kind : version}
+        kind={kind}
+        db={db}
+        record={record}
+        setRecord={setRecord}
+        version={version}
+      />
     </BrumeProvider>
   );
 }
@@ -58,14 +65,18 @@ function FormContent({
   db,
   record,
   setRecord,
+  version,
 }: {
   kind: 'form' | 'form-horizontal' | 'form-page' | 'form-dialog';
   db: OrderDb;
   record: number;
   setRecord: (update: number | ((id: number) => number)) => void;
+  version: number;
 }) {
   const { adapter } = useBrume();
   const [open, setOpen] = useState(false);
+  // The modal's opener must survive visits; refresh its stored values without remounting it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: version changes when the mutable demo store is saved.
   const page = useMemo(() => {
     const loaded = buildStoredFormPage(
       db,
@@ -74,7 +85,7 @@ function FormContent({
     );
     if (!loaded) throw new Error('Missing demo order');
     return loaded;
-  }, [db, kind, record]);
+  }, [db, kind, record, version]);
   const api = useFormState(page.form, page.values);
   const view = useRef<FormViewHandle>(null);
   const { submit, submitting } = useFormSubmit(page, api, view);

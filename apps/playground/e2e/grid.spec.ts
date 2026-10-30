@@ -55,7 +55,7 @@ test('E in the open menu opens the row for editing', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: '編輯訂單', exact: true });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('#A1048');
-  await expect(dialog.getByRole('textbox', { name: '標題', exact: true })).toBeFocused();
+  await expect(dialog.getByRole('textbox', { name: '客戶', exact: true })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(more).toBeFocused();

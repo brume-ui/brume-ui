@@ -66,14 +66,70 @@ describe('formatShortcut', () => {
   });
 });
 
+function ValidatingForm({ selected }: { selected(): void }) {
+  const [error, setError] = useState(false);
+  return (
+    <>
+      <input aria-label="Quick customer" onBlur={() => setError(true)} />
+      {error ? <p role="alert">Customer required</p> : null}
+      <ActionMenu
+        label="Order actions"
+        items={[{ key: 'cancel', label: 'Cancel order', onSelect: selected }]}
+      />
+    </>
+  );
+}
+
 describe('ActionMenu', () => {
-  it('opens with Enter, moves with ArrowDown and selects with Enter', async () => {
+  it('does not select an item moved under the opening pointer by blur validation', async () => {
+    const user = userEvent.setup();
+    const selected = vi.fn();
+    render(<ValidatingForm selected={selected} />);
+    screen.getByRole('textbox', { name: 'Quick customer' }).focus();
+    const trigger = screen.getByRole('button', { name: 'Order actions' });
+    await user.pointer({
+      target: trigger,
+      keys: '[MouseLeft>]',
+      coords: { clientX: 120, clientY: 80 },
+    });
+    expect(screen.getByRole('alert', { hidden: true }).textContent).toBe('Customer required');
+    const item = screen.getByRole('menuitem', { name: 'Cancel order' });
+    // The browser trace retargets the release after blur inserts an error above the row.
+    await user.pointer({
+      target: item,
+      keys: '[/MouseLeft]',
+      coords: { clientX: 120, clientY: 80 },
+    });
+    expect(selected).not.toHaveBeenCalled();
+    expect(screen.getByRole('menu')).toBeTruthy();
+    await user.click(item);
+    await waitFor(() => expect(selected).toHaveBeenCalledTimes(1));
+  });
+
+  it('still selects a menu item after a deliberate drag from the opening trigger', async () => {
+    const user = userEvent.setup();
+    const selected = vi.fn();
+    render(<ActionMenu label="Drag actions" items={actions({ copy: selected })} />);
+    await user.pointer({
+      target: screen.getByRole('button', { name: 'Drag actions' }),
+      keys: '[MouseLeft>]',
+      coords: { clientX: 120, clientY: 80 },
+    });
+    await user.pointer({
+      target: screen.getByRole('menuitem', { name: '複製一份' }),
+      keys: '[/MouseLeft]',
+      coords: { clientX: 140, clientY: 140 },
+    });
+    await waitFor(() => expect(selected).toHaveBeenCalledTimes(1));
+  });
+
+  it.each(['{Enter}', ' '])('opens and selects with %s, moving with ArrowDown', async (key) => {
     const copy = vi.fn();
     const user = userEvent.setup();
     render(<ActionMenu label="王小明 的更多操作" items={actions({ copy })} />);
     const trigger = screen.getByRole('button', { name: '王小明 的更多操作' });
     trigger.focus();
-    await user.keyboard('{Enter}');
+    await user.keyboard(key);
     const menu = await screen.findByRole('menu');
     // Danger last, after a separator; shortcuts shown as <kbd>.
     expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
@@ -93,7 +149,7 @@ describe('ActionMenu', () => {
     // Enter activates the highlighted item inside the menu, so it is not announced as a shortcut.
     expect(keys(/查看詳情/)).toBeNull();
     await user.keyboard('{ArrowDown}');
-    await user.keyboard('{Enter}');
+    await user.keyboard(key);
     expect(copy).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('menu')).toBeNull();
   });

@@ -55,6 +55,7 @@ test('dialog keyboard save, discard confirmation, navigation and focus restorati
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
   await trigger.click();
+  await expect(dialog.getByRole('textbox', { name: '標題', exact: true })).toHaveValue('夏季訂單');
   await page.keyboard.press('Alt+ArrowDown');
   await expect(dialog).toContainText('#A1043');
   await dialog.getByRole('textbox', { name: '標題', exact: true }).fill('秋季訂單');
