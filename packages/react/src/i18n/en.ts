@@ -87,9 +87,9 @@ export const en: Record<MessageKey, string> = {
   'dialog.maximize': 'Maximize',
   'dialog.restore': 'Restore size',
   'renderer.missing.precompiled':
-    'Custom component "{name}" was not found. The precompiled build cannot load custom components. Run `php artisan brume:install --frontend` to compile the frontend in your own project.',
+    'Custom component "{name}" was not found. This precompiled build has no registration for it. Run `php artisan brume:install --frontend` to compile the frontend in your own project.',
   'renderer.missing.vite':
-    'Custom component "{name}" was not found. Register it in `resources/js/brume/components.ts`.',
+    'Custom component "{name}" was not found. Register it with `createRegistry` (`fields`, `displays` or `components`) in `resources/js/brume/components.ts`.',
   'renderer.list.emptyTitle': 'No data yet',
   'renderer.list.emptyDescription': 'Records you add will show up here.',
   'grid.search': 'Search',

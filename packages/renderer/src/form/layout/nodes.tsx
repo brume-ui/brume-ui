@@ -1,6 +1,8 @@
 import { Alert, Card, FormDivider, FormHeading } from '@brume-ui/brume-react';
 import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
 import type { CSSProperties, ReactNode } from 'react';
+import { MissingComponent } from '../../missing-component';
+import { useRegistry } from '../../registry-context';
 import { scopeErrors } from '../errors';
 import { FieldIdPrefixContext } from '../field-navigation';
 import { fieldOwnershipKey } from '../field-ownership';
@@ -40,6 +42,7 @@ export interface NodesProps {
 }
 export function Nodes(props: NodesProps) {
   const { nodes, api, idPrefix, layout, prefix = '', uploadUrl, row } = props;
+  const registry = useRegistry();
   const Grid = row ? 'div' : layout === 'horizontal' ? Horizontal : Stacked;
   const children = (items: FormNode[], childPrefix = prefix) => (
     <Nodes {...props} nodes={items} prefix={childPrefix} row={false} />
@@ -53,7 +56,10 @@ export function Nodes(props: NodesProps) {
             const path = prefix ? `${prefix}.${def.name}` : def.name;
             const activity = api.getField(path);
             if (activity?.visible === false) return null;
-            const Component = resolveField(def.type);
+            const Component =
+              def.type === 'custom'
+                ? registry.getField(def.component.name)?.component
+                : resolveField(def.type);
             const errors = scopeErrors(api.errors, path);
             const ownership = fieldOwnershipKey(
               api,
@@ -80,7 +86,16 @@ export function Nodes(props: NodesProps) {
                 value={api.getValue(path)}
                 onChange={(value) => {
                   const current = livePath();
-                  if (current !== undefined) api.setValue(current, value);
+                  if (
+                    current !== undefined &&
+                    activity?.readOnly !== true &&
+                    !def.readOnly &&
+                    !(def.type === 'custom' && def.displayOnly) &&
+                    activity?.enabled !== false &&
+                    !def.disabled &&
+                    !api.submitting
+                  )
+                    api.setValue(current, value);
                 }}
                 onBlur={() => {
                   const current = livePath();
@@ -88,11 +103,15 @@ export function Nodes(props: NodesProps) {
                 }}
                 errors={errors}
                 invalid={Object.values(errors).some((v) => v.length > 0)}
-                readOnly={activity?.readOnly ?? Boolean(def.readOnly)}
+                readOnly={Boolean(
+                  activity?.readOnly || def.readOnly || (def.type === 'custom' && def.displayOnly),
+                )}
                 disabled={Boolean(activity?.enabled === false || def.disabled || api.submitting)}
                 uploadUrl={uploadUrl}
                 rowContext={activity?.rowContext ?? props.rowContext}
               />
+            ) : def.type === 'custom' ? (
+              <MissingComponent name={def.component.name} />
             ) : (
               <Alert tone="warning">Unknown field type: {def.type}</Alert>
             );

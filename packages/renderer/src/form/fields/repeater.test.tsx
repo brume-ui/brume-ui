@@ -173,7 +173,7 @@ describe('recursive repeaters', () => {
           });
         },
       });
-      expect(screen.getByText('Unknown field type: custom')).toBeTruthy();
+      expect(screen.getByText(/test-custom/)).toBeTruthy();
       const input = container.querySelector('input[type=file]') as HTMLInputElement;
       fireEvent.change(input, { target: { files: [new File(['a'], 'f.txt')] } });
       expect(api.pendingUploads).toBe(1);

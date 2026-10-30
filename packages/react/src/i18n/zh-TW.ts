@@ -86,9 +86,9 @@ export const zhTW = {
   'dialog.maximize': '放大',
   'dialog.restore': '還原大小',
   'renderer.missing.precompiled':
-    '找不到自訂元件「{name}」。預編譯模式不能載入自訂元件，請執行 `php artisan brume:install --frontend` 改用專案自行編譯。',
+    '找不到自訂元件「{name}」。這個預編譯版本未註冊它，請執行 `php artisan brume:install --frontend` 改用專案自行編譯。',
   'renderer.missing.vite':
-    '找不到自訂元件「{name}」。請在 `resources/js/brume/components.ts` 註冊它。',
+    '找不到自訂元件「{name}」。請在 `resources/js/brume/components.ts` 使用 `createRegistry` 的 `fields`、`displays` 或 `components` 註冊它。',
   'renderer.list.emptyTitle': '目前沒有資料',
   'renderer.list.emptyDescription': '新增第一筆後會顯示在這裡。',
   'grid.search': '搜尋',

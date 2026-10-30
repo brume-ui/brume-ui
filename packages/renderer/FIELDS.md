@@ -52,11 +52,11 @@ properties only. Empty paths address the root. Prototype-related path segments
 
 ## Nested components
 
-A future Repeater is itself a `FieldComponent`. For each row and child definition,
-resolve the child with `resolveField(childDef.type)`. Derive the child path with
-`joinPath(joinPath(path, String(index)), childDef.name)` (equivalent to
-`${path}.${index}.${name}`). Get its value with `form.getValue(childPath)`, write
-with `form.setValue(childPath, next)` and blur with `form.touch(childPath)`.
+The renderer Repeater recursively uses the same Nodes pipeline as root fields, including
+provider-local custom registrations, stable ownership callbacks and the complete RowContext chain.
+Use the supplied `onChange` / `onBlur` callbacks for mounted controls; numeric paths can change
+while an async operation is pending. Do not create a parallel child-field registry or cache numeric
+paths for later writes.
 
 A Repeater's `errors` are already relative to the Repeater. Pass
 `scopeErrors(errors, joinPath(String(index), childDef.name))` to its child; or use
@@ -271,8 +271,7 @@ Selected fields render through the ordinary `Nodes`, with flattened error paths 
 `products.0.quantity` (not `products.0.extra.quantity`). The canonical selection context remains
 `{path, key: selectedId, id: selectedId}`. A same-ID replacement changes the local FormApi ownership
 and remounts its child controls; ordinary numeric movement preserves ownership. Upload cancellation
-aborts and discards late completion. Nested repeaters use this same contract; custom fields still display an explicit diagnostic until
-the custom-field registry is implemented.
+aborts and discards late completion. Nested repeaters and registered custom fields use this same contract.
 
 Opening creates a deep draft copy. Search, page and section changes preserve selection order and
 extras; Cancel discards them and Apply emits once. Endpoint/dependency/form-reset/source-identity
@@ -352,3 +351,86 @@ validate the chain and resolve authoritative parent associations before acceptin
 The `/#/form-repeaters` fixture and `e2e/repeater.spec.ts` cover keyboard focus/order, nested pointer
 drag isolation, 390px layout and axe. The browser tests require the Task 11 real CI runtime gate;
 local jsdom/build/typecheck results are not browser acceptance.
+
+## Public custom fields, displays and inline editors
+
+Import `createRegistry`, `RegistryProvider`, `FieldProps`, `FieldComponent` and `DisplayProps`
+from `@brume-ui/brume-renderer`. A provider supplies its own registrations; there is no mutable
+process-wide custom registry. Existing `components` / `get(name)` registrations and
+`ComponentSlot` keep their spread-props plus `context` contract.
+
+```tsx
+const registry = createRegistry({
+  mode: 'vite',
+  fields: {
+    Address: AddressField, // form only, including inside a repeater/picker draft
+    Quantity: { component: QuantityField, inlineEditable: true },
+  },
+  displays: { Address: AddressDisplay },
+  components: { OrderStatus: LegacyOrderStatus },
+});
+
+<RegistryProvider registry={registry}>
+  <FormView form={form} api={api} />
+</RegistryProvider>;
+```
+
+Plain functions, classes, `memo` and `forwardRef` components are accepted. `getField(name)`
+normalizes a plain registration to `{component, inlineEditable:false}`; only an explicit
+`inlineEditable:true` opts into Grid editing. `getDisplay(name)` returns a display component.
+Inherited names are never looked up. A missing name renders a localized diagnostic; a precompiled
+frontend cannot acquire project-specific code from server JSON. Install the project frontend with
+`php artisan brume:install --frontend` and provide the registry above.
+
+Custom schema uses the existing ComponentRef envelope, with props left inside the definition:
+
+```ts
+{ type: 'custom', name: 'address', label: 'Delivery address',
+  component: { type: 'component', name: 'Address', props: { country: 'TW' } } }
+```
+
+`AddressField` receives ordinary `FieldProps<AddressValue, CustomFieldDef>`; custom configuration
+is `def.component.props`. `errors['']` belongs to the whole field; `errors.city` belongs to its
+city input. Compose public `Field`, `TextInput`, and other controls from `@brume-ui/brume-react`,
+use the supplied IDs/error descriptions and honor `readOnly`/`disabled`. Emit the complete normal
+JSON value via `onChange`; the renderer preserves current owner identity through a row move.
+Do not cache `path` for asynchronous writes or write through `form.setValue(cachedNumericPath, ...)`.
+Use the supplied ownership-fenced `onChange` callback. `rowContext` contains the ordered canonical
+parent identity chain; it is consistency metadata, not authorization. Removed/reset ownership
+cannot adopt an old callback. `displayOnly:true` is read-only and never enters submission; a
+calculator can keep local component state without mutating the form.
+
+A custom display receives `{value:unknown, row:GridRow, column:string,
+props:Record<string,unknown>}` from `displays`. Its schema remains
+`{type:'component',name:'Address',props:{...}}`. Grid tries `displays` first, then retains the old
+`components` path with `<Component {...props} context={{row,column}} />`. Other component slots
+(page, modal, content and expand) retain their legacy contract.
+
+A custom inline editor uses `{type:'custom',component:{type:'component',name:'Quantity'},rules:[...]}`.
+Its field registration must explicitly set `inlineEditable:true`; nested/upload/picker/composite
+fields gain no implicit eligibility. Every opening owns a real single-field `FormDef`/`FormApi`
+with the row values as context and the editor's client rules. Save/Enter validates, then sends the
+exact value through the normal cell update transport:
+
+```json
+{ "column": "quantity", "value": "25" }
+```
+
+The endpoint is `PATCH endpoints.cell` with `{id}` encoded. Object/array/string wire values are
+preserved, not coerced to text. A 422 response uses the ordinary absolute column path, for example
+`{"errors":{"address.city":["Choose another city"]}}`; the field sees `errors.city`.
+The failed draft stays open, editing clears its owned server errors, and a successful retry closes
+and returns focus to the cell button. Pending submission disables fields/Save and ignores duplicate
+save events. Escape/Cancel discards the local draft and returns focus; a pending request still uses
+the existing cell update response ordering. Only the current column and its descendants enter the session error map. Errors for request keys
+`value`/`column` or unrelated keys keep the existing `failureMessage` toast (response `message`, or
+the localized generic failure if absent), including when mixed with field errors. They never become
+invisible form errors that block a retry. Every 422 remains an unsuccessful commit and retains the
+draft while rolling back optimistic state. Client rules complement authoritative backend checks.
+PHP `Editor::component`, address-to-model attribute mapping, authoritative cell validation and
+relation authorization are the subsequent backend tasks; this frontend does not implement them.
+
+The actual `/#/form-repeaters` example registers `AddressField` once, renders it inside the real
+Repeater, exposes a city-error button and displays the same JSON value with `AddressDisplay`.
+Source: `apps/playground/src/pages/custom-address.tsx` and `form-repeaters.tsx`. It uses only public
+imports. The address value stays an object (`country`, `city`, `postalCode`, `street`).

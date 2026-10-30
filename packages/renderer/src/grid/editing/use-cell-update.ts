@@ -1,6 +1,7 @@
 import { failureMessage, type HttpResponse, toast, useBrume } from '@brume-ui/brume-react';
 import type { CellUpdateResponse, ErrorResponse, GridRow } from '@brume-ui/brume-schema';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type FieldErrors, isPathWithin } from '../../form/errors';
 import { applyFeedback } from '../actions/feedback';
 import { useGrid } from '../grid-context';
 import { useGridNavigation } from '../use-grid-navigation';
@@ -28,13 +29,15 @@ export interface CellUpdate {
   held: boolean;
   /** The validation error (422) of the last save, until a later save succeeds. */
   error: string | null;
+  /** Absolute errors owned by this column (including its custom subpaths). */
+  errors: FieldErrors;
   /**
    * Saves `next` (PATCH `endpoints.cell`) and shows `shown` (default `next`) until it settles.
    * Every call gets a higher number: a response older than one already applied is ignored, a
    * failure only reverts when it is the newest call, and a revert goes back to the last value the
    * server confirmed (the row).
    */
-  commit(next: unknown, shown?: unknown): Promise<void>;
+  commit(next: unknown, shown?: unknown): Promise<boolean>;
   /** False without `endpoints.cell`: the cell cannot be saved. */
   canSave: boolean;
 }
@@ -60,7 +63,9 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
     heldOn?: GridRow[];
   } | null>(null);
   // `at`: the confirmed value the error was about; new rows with another value make it stale.
-  const [error, setError] = useState<{ message: string; at: unknown } | null>(null);
+  const [error, setError] = useState<{ message: string; fields: FieldErrors; at: unknown } | null>(
+    null,
+  );
   const confirmedRef = useRef(confirmed);
   useLayoutEffect(() => {
     confirmedRef.current = confirmed;
@@ -70,7 +75,7 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
 
   const commit = useCallback(
     async (next: unknown, shown: unknown = next) => {
-      if (!endpoint) return;
+      if (!endpoint) return false;
       /** Applies one response; true when it already refreshes the page (or leaves it). */
       function settle(
         seq: number,
@@ -104,12 +109,28 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
         // A failed call that a newer one replaced has nothing on screen to revert.
         if (!newest) return false;
         setOptimistic(null);
-        const fieldError = res.status === 422 ? res.data?.errors?.[column]?.[0] : undefined;
+        const fieldErrors =
+          res.status === 422
+            ? Object.fromEntries(
+                Object.entries(res.data?.errors ?? {}).filter(([path]) =>
+                  isPathWithin(path, column),
+                ),
+              )
+            : {};
+        const fieldError = Object.values(fieldErrors).flat()[0];
         if (fieldError) {
-          setError({ message: fieldError, at: confirmedRef.current });
-        } else {
-          toast.error(failureMessage(res, t));
+          setError({
+            message: fieldError,
+            fields: fieldErrors,
+            at: confirmedRef.current,
+          });
         }
+        // Request-envelope or unrelated validation errors have no control in this session.
+        // Keep the existing response-message toast, including alongside owned field errors.
+        const unrelated =
+          res.status === 422 &&
+          Object.keys(res.data?.errors ?? {}).some((path) => !isPathWithin(path, column));
+        if (!fieldError || unrelated) toast.error(failureMessage(res, t));
         return false;
       }
 
@@ -130,6 +151,7 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
           res = { status: 0, data: { message: error instanceof Error ? error.message : '' } };
         }
         refreshed = settle(seq, res, ticket, shown);
+        return res.status >= 200 && res.status < 300;
       } finally {
         // Saves of this row overlapped: only the server knows the order it ran them in, so once
         // the last one settles its rows decide (unless this response already refreshes or leaves).
@@ -141,13 +163,14 @@ export function useCellUpdate(rowId: GridRow['id'], column: string): CellUpdate 
 
   const showing = optimistic && (!optimistic.heldOn || optimistic.heldOn === page.rows);
   // By content: rows bring new arrays and objects even when the value is the same.
-  const visibleError = error && sameValue(error.at, confirmed) ? error.message : null;
+  const visibleError = error && sameValue(error.at, confirmed) ? error : null;
   return useMemo(
     () => ({
       value: showing ? optimistic.value : confirmed,
       pending: Boolean(showing && !optimistic.heldOn),
       held: Boolean(showing && optimistic.heldOn),
-      error: visibleError,
+      error: visibleError?.message ?? null,
+      errors: visibleError?.fields ?? {},
       commit,
       canSave: Boolean(endpoint),
     }),

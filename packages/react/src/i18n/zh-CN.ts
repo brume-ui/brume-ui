@@ -87,9 +87,9 @@ export const zhCN: Record<MessageKey, string> = {
   'dialog.maximize': '放大',
   'dialog.restore': '还原大小',
   'renderer.missing.precompiled':
-    '找不到自定义组件“{name}”。预编译模式不能加载自定义组件，请执行 `php artisan brume:install --frontend` 改用项目自行编译。',
+    '找不到自定义组件“{name}”。这个预编译版本未注册它，请执行 `php artisan brume:install --frontend` 改用项目自行编译。',
   'renderer.missing.vite':
-    '找不到自定义组件“{name}”。请在 `resources/js/brume/components.ts` 注册它。',
+    '找不到自定义组件“{name}”。请在 `resources/js/brume/components.ts` 使用 `createRegistry` 的 `fields`、`displays` 或 `components` 注册它。',
   'renderer.list.emptyTitle': '目前没有数据',
   'renderer.list.emptyDescription': '新增第一条后会显示在这里。',
   'grid.search': '搜索',

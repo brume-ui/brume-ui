@@ -1,4 +1,5 @@
 import {
+  Button,
   CellEditButton,
   CellError,
   Popover,
@@ -6,8 +7,13 @@ import {
   TagsInput,
   useBrume,
 } from '@brume-ui/brume-react';
-import type { GridRow, InlineEditor, ListColumn } from '@brume-ui/brume-schema';
+import type { FormDef, GridRow, InlineEditor, ListColumn } from '@brume-ui/brume-schema';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { Nodes } from '../../form/layout/nodes';
+import { setAt } from '../../form/paths';
+import { useFormState } from '../../form/use-form-state';
+import { MissingComponent } from '../../missing-component';
+import { useRegistry } from '../../registry-context';
 import {
   type ChoiceEditorDef,
   type CloseReason,
@@ -36,9 +42,8 @@ interface CellProps<E extends InlineEditor = InlineEditor> {
 export function EditableCell(props: CellProps) {
   const { editor } = props;
   switch (editor.type) {
-    // Custom editor registration is implemented in the following runtime task.
     case 'custom':
-      return props.display;
+      return <CustomCell {...props} editor={editor} />;
     case 'switch':
       return <SwitchCell {...props} editor={editor} />;
     case 'switchGroup':
@@ -340,5 +345,139 @@ function SwitchGroupCell({
         ))}
       </span>
     </CellFrame>
+  );
+}
+
+function CustomCell(props: CellProps<Extract<InlineEditor, { type: 'custom' }>>) {
+  const { column, row, editor, display } = props;
+  const registry = useRegistry();
+  const registration = registry.getField(editor.component.name);
+  const cell = useCellUpdate(row.id, column.key);
+  const { content, variant, ariaLabel } = useCellLabel(props, cell);
+  const errorId = useId();
+  const [editing, setEditing] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  const refocus = useRef(false);
+  useEffect(() => {
+    if (editing || !refocus.current) return;
+    refocus.current = false;
+    button.current?.focus();
+  }, [editing]);
+  if (!registration) return <MissingComponent name={editor.component.name} />;
+  if (!registration.inlineEditable || !cell.canSave) return display;
+  const close = () => {
+    refocus.current = true;
+    setEditing(false);
+  };
+  // The open draft owns a real FormApi and declaration tree. Remounting starts a new session.
+  return (
+    <CellFrame column={column} cell={editing ? { ...cell, error: null } : cell} errorId={errorId}>
+      {editing ? (
+        <CustomEditorSession {...props} cell={cell} onClose={close} />
+      ) : (
+        <CellEditButton
+          ref={button}
+          aria-label={ariaLabel}
+          aria-describedby={cell.error ? errorId : undefined}
+          variant={variant}
+          pending={cell.pending}
+          disabled={cell.pending}
+          onClick={() => setEditing(true)}
+        >
+          {content}
+        </CellEditButton>
+      )}
+    </CellFrame>
+  );
+}
+
+function CustomEditorSession({
+  column,
+  row,
+  editor,
+  cell,
+  onClose,
+}: CellProps<Extract<InlineEditor, { type: 'custom' }>> & {
+  cell: CellUpdate;
+  onClose(): void;
+}) {
+  const { t } = useBrume();
+  const id = useId();
+  const definition: FormDef = {
+    layout: 'stacked',
+    nodes: [
+      {
+        type: 'field',
+        field: {
+          type: 'custom',
+          name: column.key,
+          label: column.label,
+          component: editor.component,
+          rules: editor.rules,
+        },
+      },
+    ],
+  };
+  const form = useFormState(definition, setAt({ ...row }, column.key, cell.value), t);
+  const session = useRef(form);
+  session.current = form;
+  const root = useRef<HTMLDivElement>(null);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    root.current
+      ?.querySelector<HTMLElement>('input,select,textarea,button,[tabindex="0"]')
+      ?.focus();
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  const save = async () => {
+    if (form.submitting || form.pendingUploads || !form.validateAll()) return;
+    form.setSubmitting(true);
+    const saved = await cell.commit(form.getValue(column.key));
+    if (!alive.current) return;
+    form.setSubmitting(false);
+    if (saved) onClose();
+  };
+  useEffect(() => {
+    if (!cell.error) return;
+    session.current.setServerErrors(
+      Object.fromEntries(Object.entries(cell.errors).map(([path, errors]) => [path, [...errors]])),
+    );
+  }, [cell.errors, cell.error]);
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: descendant inputs keep semantics; session handles save/cancel keys
+    <div
+      ref={root}
+      className="br:w-full br:min-w-40 br:whitespace-normal br:grid br:gap-2"
+      onKeyDown={(event) => {
+        if (event.defaultPrevented || event.nativeEvent.isComposing || event.keyCode === 229)
+          return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        }
+        if (
+          event.key === 'Enter' &&
+          event.target instanceof HTMLInputElement &&
+          !['button', 'submit', 'reset', 'checkbox', 'radio', 'file'].includes(event.target.type)
+        ) {
+          event.preventDefault();
+          void save();
+        }
+      }}
+    >
+      <Nodes nodes={definition.nodes} api={form} idPrefix={id} layout="stacked" />
+      <div className="br:flex br:gap-2">
+        <Button disabled={form.submitting || form.pendingUploads > 0} onClick={() => void save()}>
+          {t('common.save')}
+        </Button>
+        <Button variant="secondary" onClick={onClose}>
+          {t('common.cancel')}
+        </Button>
+      </div>
+    </div>
   );
 }
