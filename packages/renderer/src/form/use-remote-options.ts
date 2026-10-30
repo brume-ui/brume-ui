@@ -6,7 +6,7 @@ import {
   type RemoteOptions,
   type RowContext,
 } from '@brume-ui/brume-schema';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { canonicalizeFieldValue, resolveConditionPath } from './conditions';
 import type { ValueField } from './traversal';
 import type { FormApi } from './use-form-state';
@@ -109,7 +109,9 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
   );
   const latest = useRef(scope);
   latest.current = scope;
-  useEffect(() => {
+  // Layout setup precedes child hydration passive effects, including StrictMode replay.
+  // True unmount still marks this scope dead and aborts both channels immediately.
+  useLayoutEffect(() => {
     scope.alive = true;
     return () => {
       scope.alive = false;

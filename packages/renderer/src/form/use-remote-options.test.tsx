@@ -337,3 +337,40 @@ it.each(['remove', 'move'] as const)(
     });
   },
 );
+
+it('aborts both request channels on true unmount and rejects late replies and new stale-owner requests', async () => {
+  let source!: ReturnType<typeof useRemoteOptions>;
+  const requests: HttpRequest[] = [];
+  const finish: Array<(value: HttpResponse) => void> = [];
+  const { unmount } = renderWithBrume(
+    <GridSource
+      version={0}
+      capture={(next) => {
+        source = next;
+      }}
+    />,
+    {
+      respond: (request) => {
+        requests.push(request);
+        return new Promise((resolve) => {
+          finish.push(resolve);
+        });
+      },
+    },
+  );
+  const search = source.request({ q: '', page: 1 });
+  const labels = source.request({ values: ['7'] });
+  const rejected = Promise.all([
+    expect(search).rejects.toThrow('Obsolete'),
+    expect(labels).rejects.toThrow('Obsolete'),
+  ]);
+  unmount();
+  expect(requests).toHaveLength(2);
+  expect(requests.every((request) => request.signal?.aborted)).toBe(true);
+  await expect(source.request({ values: ['7'] })).rejects.toThrow('Obsolete');
+  expect(requests).toHaveLength(2);
+  await act(async () => {
+    for (const resolve of finish) resolve(response);
+    await rejected;
+  });
+});

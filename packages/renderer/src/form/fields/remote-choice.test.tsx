@@ -1,6 +1,12 @@
-import type { HttpRequest, HttpResponse } from '@brume-ui/brume-react';
+import {
+  BrumeProvider,
+  createMemoryAdapter,
+  type HttpRequest,
+  type HttpResponse,
+} from '@brume-ui/brume-react';
 import type { FieldDef, FormDef } from '@brume-ui/brume-schema';
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithBrume } from '../../test-utils';
 import { useFormState } from '../use-form-state';
@@ -289,3 +295,34 @@ it('aborts search on clear before a noncooperative response returns', async () =
     vi.useRealTimers();
   }
 });
+
+// Wrap the provider too: root StrictMode replays the parent request owner and child hydration effects.
+it.each([
+  { type: 'select', readOnly: false },
+  { type: 'multipleSelect', readOnly: false },
+  { type: 'tags', readOnly: false },
+  { type: 'select', readOnly: true },
+  { type: 'multipleSelect', readOnly: true },
+  { type: 'tags', readOnly: true },
+] as const)(
+  '$type readOnly=$readOnly hydrates on normal mount and root StrictMode replay',
+  async ({ type, readOnly }) => {
+    for (const strict of [false, true]) {
+      const def = { ...field, type } as FieldDef;
+      const adapter = createMemoryAdapter('/', { respond: () => reply('Hydrated seven') });
+      const content = (
+        <BrumeProvider adapter={adapter}>
+          <Harness def={def} readOnly={readOnly} />
+        </BrumeProvider>
+      );
+      const { unmount } = render(strict ? <StrictMode>{content}</StrictMode> : content);
+      await act(async () => {});
+      if (readOnly) expect(screen.getByText('Hydrated seven').tagName).toBe('P');
+      else if (type === 'select')
+        expect((screen.getByRole('combobox') as HTMLInputElement).value).toBe('Hydrated seven');
+      else expect(screen.getByText('Hydrated seven')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
+      unmount();
+    }
+  },
+);
