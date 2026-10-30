@@ -75,6 +75,12 @@ export { Textarea, type TextareaProps } from './components/textarea';
 export { Thumbnail, type ThumbnailProps } from './components/thumbnail';
 export { Toaster, type ToastOptions, toast } from './components/toast';
 export {
+  formatBytes,
+  type UploadItem,
+  UploadList,
+  type UploadListProps,
+} from './components/upload-list';
+export {
   errorMessage,
   failureMessage,
   fetchJson,
