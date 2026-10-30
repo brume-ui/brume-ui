@@ -5,6 +5,8 @@ import { ariaOn, type FieldControlProps } from './field';
 
 export interface CheckboxGroupProps extends FieldControlProps {
   options: Option[];
+  onBlur?(): void;
+  disabled?: boolean;
   value: string[];
   /** The new selection, in option order. */
   onChange(value: string[]): void;
@@ -22,6 +24,8 @@ export interface CheckboxGroupProps extends FieldControlProps {
  */
 export function CheckboxGroup({
   options,
+  onBlur,
+  disabled,
   value,
   onChange,
   label,
@@ -38,6 +42,7 @@ export function CheckboxGroup({
     // biome-ignore lint/a11y/useSemanticElements: a fieldset would need a visible legend; the group is named by aria-label.
     <div
       id={id}
+      onBlur={onBlur}
       role="group"
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
@@ -51,7 +56,7 @@ export function CheckboxGroup({
         <Checkbox
           key={o.value}
           label={o.label}
-          disabled={o.disabled}
+          disabled={disabled || o.disabled}
           invalid={isInvalid}
           checked={selected.has(o.value)}
           onCheckedChange={(checked) => {

@@ -13,6 +13,8 @@ export interface DateInputProps {
   min?: string;
   max?: string;
   disabled?: boolean;
+  onBlur?(): void;
+  'aria-required'?: boolean;
   invalid?: boolean;
   'aria-describedby'?: string;
 }

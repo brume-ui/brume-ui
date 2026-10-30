@@ -11,6 +11,7 @@ import { POPOVER_SURFACE } from './popover';
 
 export interface TagsInputProps extends FieldControlProps {
   value: string[];
+  onBlur?(): void;
   onChange(value: string[]): void;
   /** Suggestions shown in a listbox while typing; any other text can still be added. */
   options?: Option[];
@@ -41,6 +42,7 @@ export function TagsInput({
   value,
   onChange,
   options,
+  onBlur,
   max,
   maxLength,
   placeholder,
@@ -273,6 +275,7 @@ export function TagsInput({
             onClick={() => setOpen(true)}
             onKeyDown={onKeyDown}
             onBlur={() => {
+              onBlur?.();
               setOpen(false);
               setActive(-1);
             }}

@@ -25,6 +25,10 @@ export type ComboboxLoader = (args: {
 
 export interface ComboboxProps {
   multiple?: boolean;
+  /** Whether a single selection can be cleared. Defaults to true. */
+  clearable?: boolean;
+  onBlur?(): void;
+  'aria-required'?: boolean;
   /** A value, or the values when `multiple`. */
   value: string | string[];
   onChange(value: string | string[]): void;
@@ -58,6 +62,9 @@ const matches = (o: OptionItem, q: string) => o.label.toLowerCase().includes(q.t
  */
 export function Combobox({
   multiple = false,
+  clearable = true,
+  onBlur,
+  'aria-required': ariaRequired,
   value,
   onChange,
   options,
@@ -360,6 +367,7 @@ export function Combobox({
             aria-autocomplete="list"
             aria-invalid={isInvalid || undefined}
             aria-describedby={describedBy}
+            aria-required={ariaRequired || undefined}
             autoComplete="off"
             disabled={disabled}
             placeholder={multiple && values.length > 0 ? undefined : placeholder}
@@ -380,12 +388,13 @@ export function Combobox({
             onFocus={(e) => !multiple && e.currentTarget.select()}
             onKeyDown={onKeyDown}
             onBlur={() => {
+              onBlur?.();
               if (open) close();
               else setEditing(false);
             }}
             className="br:h-8 br:min-w-[6ch] br:flex-1 br:bg-transparent br:px-1.5 br:text-sm br:text-text br:outline-none br:placeholder:text-text-muted br:disabled:cursor-not-allowed"
           />
-          {!multiple && values.length > 0 && !disabled ? (
+          {clearable && !multiple && values.length > 0 && !disabled ? (
             <IconButton
               icon={X}
               label={t('combobox.clear')}
@@ -447,6 +456,7 @@ export function Combobox({
                   key={o.value}
                   id={optionId(i)}
                   role="option"
+                  style={o.depth ? { paddingInlineStart: `calc(2rem + ${o.depth}rem)` } : undefined}
                   aria-selected={selected}
                   aria-disabled={o.disabled || undefined}
                   data-highlighted={i === active ? '' : undefined}

@@ -1,6 +1,7 @@
 import type { FieldDef } from '@brume-ui/brume-schema';
 import type { FieldComponent } from './contract';
-
+import { ChoiceField } from './fields/choice';
+import { DateField } from './fields/date';
 import { HiddenField, ReadOnlyField, SwitchField } from './fields/misc';
 import { TextField } from './fields/text';
 
@@ -32,3 +33,8 @@ for (const type of [
 registerBuiltInField('hidden', HiddenField);
 registerBuiltInField('display', ReadOnlyField);
 registerBuiltInField('switch', SwitchField);
+
+for (const type of ['date', 'datetime', 'dateRange', 'datetimeRange'] as const)
+  registerBuiltInField(type, DateField);
+for (const type of ['select', 'multipleSelect', 'radio', 'checkbox', 'tags'] as const)
+  registerBuiltInField(type, ChoiceField);

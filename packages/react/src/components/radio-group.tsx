@@ -7,6 +7,7 @@ import { FOCUS_RING } from './focus';
 
 export interface RadioGroupProps extends FieldControlProps {
   options: Option[];
+  onBlur?(): void;
   value: string;
   onChange(value: string): void;
   /** Accessible name of the group. */
@@ -20,6 +21,7 @@ export interface RadioGroupProps extends FieldControlProps {
 /** Single choice from a few options. Arrow keys move and select (Radix roving focus). */
 export function RadioGroup({
   options,
+  onBlur,
   value,
   onChange,
   label,
@@ -38,6 +40,7 @@ export function RadioGroup({
   return (
     <RadixRadioGroup.Root
       id={id}
+      onBlur={onBlur}
       value={value}
       onValueChange={onChange}
       aria-label={labelledBy ? undefined : label}

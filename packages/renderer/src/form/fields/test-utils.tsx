@@ -24,11 +24,6 @@ function Harness({
   return Component ? (
     <Component
       def={def}
-      value={value}
-      onChange={(next) => {
-        onChange(next);
-        setValue(next);
-      }}
       onBlur={onBlur}
       errors={{}}
       path="value"
@@ -38,6 +33,11 @@ function Harness({
       disabled={false}
       form={form}
       {...extra}
+      value={value}
+      onChange={(next) => {
+        onChange(next);
+        setValue(next);
+      }}
     />
   ) : (
     <span>Unregistered</span>

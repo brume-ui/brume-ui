@@ -1,18 +1,24 @@
 import * as RadixSelect from '@radix-ui/react-select';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, X } from 'lucide-react';
 import { cn } from '../cn';
 import { POPOVER_MOTION } from '../motion/classes';
 import { HighlightIndicator, useHighlightIndicator } from '../motion/highlight';
+import { useBrume } from '../provider';
 import { CONTROL_BASE, CONTROL_BORDER, FOCUS_RING } from './focus';
+import { IconButton } from './icon-button';
 
 export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
+  depth?: number;
 }
 
 export interface SelectProps {
   options: SelectOption[];
+  clearable?: boolean;
+  onClear?(): void;
+  onBlur?(): void;
   value?: string;
   onValueChange(value: string): void;
   placeholder?: string;
@@ -38,13 +44,17 @@ export function Select({
   name,
   disabled,
   className,
+  clearable,
+  onClear,
+  onBlur,
   ...aria
 }: SelectProps) {
   const isInvalid = invalid || aria['aria-invalid'] === true || aria['aria-invalid'] === 'true';
-  return (
+  const control = (
     <RadixSelect.Root value={value} onValueChange={onValueChange} name={name} disabled={disabled}>
       <RadixSelect.Trigger
         id={id}
+        onBlur={onBlur}
         {...aria}
         aria-invalid={isInvalid || undefined}
         className={cn(
@@ -68,6 +78,14 @@ export function Select({
       </RadixSelect.Portal>
     </RadixSelect.Root>
   );
+  return clearable ? (
+    <div className="br:flex br:items-center br:gap-2">
+      {control}
+      {value && !disabled ? <SelectClear onClear={onClear ?? (() => onValueChange(''))} /> : null}
+    </div>
+  ) : (
+    control
+  );
 }
 
 function SelectContent({ options }: { options: SelectOption[] }) {
@@ -88,6 +106,7 @@ function SelectContent({ options }: { options: SelectOption[] }) {
             key={o.value}
             value={o.value}
             disabled={o.disabled}
+            style={o.depth ? { paddingInlineStart: `calc(2rem + ${o.depth}rem)` } : undefined}
             className="br:relative br:flex br:h-9 br:cursor-default br:items-center br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none br:data-[disabled]:opacity-50 br:data-[highlighted]:outline-2 br:data-[highlighted]:-outline-offset-2 br:data-[highlighted]:outline-focus-ring"
           >
             <RadixSelect.ItemIndicator className="br:absolute br:left-2">
@@ -99,4 +118,9 @@ function SelectContent({ options }: { options: SelectOption[] }) {
       </RadixSelect.Viewport>
     </RadixSelect.Content>
   );
+}
+
+function SelectClear({ onClear }: { onClear?: () => void }) {
+  const { t } = useBrume();
+  return <IconButton icon={X} label={t('combobox.clear')} onClick={onClear} />;
 }
