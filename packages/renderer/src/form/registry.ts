@@ -4,6 +4,7 @@ import { ChoiceField } from './fields/choice';
 import { DateField } from './fields/date';
 import { HiddenField, ReadOnlyField, SwitchField } from './fields/misc';
 import { TextField } from './fields/text';
+import { UploadField } from './fields/upload';
 
 const builtIns = new Map<string, FieldComponent>();
 
@@ -38,3 +39,5 @@ for (const type of ['date', 'datetime', 'dateRange', 'datetimeRange'] as const)
   registerBuiltInField(type, DateField);
 for (const type of ['select', 'multipleSelect', 'radio', 'checkbox', 'tags'] as const)
   registerBuiltInField(type, ChoiceField);
+
+registerBuiltInField('upload', UploadField);
