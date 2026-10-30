@@ -27,6 +27,8 @@ export const OPTIONS_PARAMS = {
   value: 'value[]',
   /** 挑選器的分區鍵（`PickerSearchResponse.sections[].key`）；省略時為第一個分區。 */
   section: 'section',
+  /** JSON object of declaration-known dependency names and resolved values. */
+  depends: 'depends',
 } as const;
 
 /** GET endpoints.options?q=&page=&per_page=&value[]= */

@@ -3,6 +3,6 @@ import { SCHEMA_VERSION } from './index';
 
 describe('schema', () => {
   it('exposes the schema version', () => {
-    expect(SCHEMA_VERSION).toBe('0.3.0');
+    expect(SCHEMA_VERSION).toBe('0.4.0');
   });
 });

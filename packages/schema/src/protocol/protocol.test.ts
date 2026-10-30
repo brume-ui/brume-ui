@@ -26,7 +26,22 @@ const PROTOCOL_DEFS = [
 const FORM_DEFS = ['FormNode', 'FieldDef', 'PlainFieldDef'];
 /** 表單送出的請求／回應，有 fixtures/protocol/<def>。 */
 const FORM_PROTOCOL_DEFS = ['FormSubmitRequest', 'FormSubmitResponse'];
-const ORDER = [...PAGE_DEFS, ...PROTOCOL_DEFS, ...FORM_DEFS, ...FORM_PROTOCOL_DEFS];
+const ORDER = [
+  ...PAGE_DEFS,
+  ...PROTOCOL_DEFS,
+  ...FORM_DEFS,
+  ...FORM_PROTOCOL_DEFS,
+  'Condition',
+  'ConditionPath',
+  'ExclusionPath',
+  'RemoteOptions',
+  'RowIdentity',
+  'RowContext',
+  'RelationValue',
+  'FilterInput',
+  'InlineEditor',
+  'Display',
+];
 
 const defs = readdirSync(pkg('fixtures/protocol')).sort();
 const files = (def: string, kind: string) =>
@@ -64,6 +79,6 @@ describe('protocol $defs', () => {
 describe('form protocol constants', () => {
   it('names the form header and the upload parameters', () => {
     expect(FORM_HEADER).toBe('X-Brume-Form');
-    expect(UPLOAD_PARAMS).toEqual({ file: 'file', field: 'field' });
+    expect(UPLOAD_PARAMS).toEqual({ file: 'file', field: 'field', rowContext: 'rowContext' });
   });
 });

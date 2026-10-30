@@ -1,5 +1,16 @@
 import type { Static } from '@sinclair/typebox';
 import { describe, expect, it } from 'vitest';
+import type {
+  Condition,
+  CustomFieldDef,
+  RelationFieldDef,
+  RelationValue,
+  RelationValueSchema,
+  RemoteChoiceFieldDef,
+  RepeaterFieldDef,
+  RowContext,
+  RowIdentity,
+} from '../index';
 import type { FieldDef, FieldDefRaw, PlainFieldDef, PlainFieldDefRaw } from './field';
 import type { FormNode, FormNodeRaw } from './layout';
 
@@ -50,3 +61,94 @@ describe('form types agree with their schemas', () => {
     ]).toHaveLength(10);
   });
 });
+
+// Public aliases must admit arbitrary recursive depth, without widening static action inputs.
+const custom: CustomFieldDef = {
+  type: 'custom',
+  name: 'total',
+  label: 'Total',
+  component: { type: 'component', name: 'Calculator' },
+};
+const condition: Condition = {
+  op: 'all',
+  conditions: [{ op: 'not', condition: { op: 'empty', field: { scope: 'row', path: 'code' } } }],
+};
+const remoteChoice: RemoteChoiceFieldDef = {
+  type: 'select',
+  name: 'product',
+  label: 'Product',
+  remote: { url: '/options' },
+  showWhen: condition,
+};
+const relation: RelationFieldDef = {
+  type: 'relation',
+  name: 'products',
+  label: 'Products',
+  multiple: true,
+  remote: { url: '/options' },
+  fields: [{ type: 'field', field: custom }],
+};
+const recursive = (nodes: FormNode[]): RepeaterFieldDef => ({
+  type: 'repeater',
+  name: 'rows',
+  label: 'Rows',
+  mode: 'json',
+  nodes,
+});
+const deep: FormNode = {
+  type: 'field',
+  field: recursive([
+    {
+      type: 'field',
+      field: recursive([
+        {
+          type: 'field',
+          field: recursive([
+            { type: 'field', field: recursive([{ type: 'field', field: relation }]) },
+          ]),
+        },
+      ]),
+    },
+  ]),
+};
+fieldToSchema(custom);
+fieldToSchema(remoteChoice);
+nodeToSchema(deep);
+const row: RowIdentity = { key: 'uuid', id: '7' };
+const context: RowContext = [
+  { ...row, path: 'groups' },
+  { key: 'new', path: 'groups.*.items' },
+];
+const selected: RelationValue = [{ id: 'product-1', quantity: 2 }];
+void context;
+void selected;
+// @ts-expect-error recursive fields are not flat action fields
+plainToSchema(recursive([]));
+// @ts-expect-error registered custom fields are form-only
+plainToSchema(custom);
+// @ts-expect-error remote endpoints are not flat action inputs
+plainToSchema(remoteChoice);
+const staticWithRemote = {
+  type: 'select' as const,
+  name: 'x',
+  label: 'X',
+  options: [],
+  remote: { url: '/options' },
+};
+// @ts-expect-error a static choice with a remote endpoint cannot enter action/quick-create inputs
+plainToSchema(staticWithRemote);
+// @ts-expect-error wire relation ids are strings
+const invalidRow: RowIdentity = { key: 'x', id: 7 };
+const invalidCustom: CustomFieldDef = {
+  type: 'custom',
+  name: 'x',
+  label: 'X',
+  // @ts-expect-error custom fields require the ComponentRef envelope
+  component: 'Calculator',
+};
+void invalidRow;
+void invalidCustom;
+
+// Inferred public schema values also accept declared, flattened selection extras.
+const inferredSelection: Static<typeof RelationValueSchema> = { id: 'product-1', quantity: 2 };
+void inferredSelection;

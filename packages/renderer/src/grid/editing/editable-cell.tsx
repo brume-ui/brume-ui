@@ -36,6 +36,9 @@ interface CellProps<E extends InlineEditor = InlineEditor> {
 export function EditableCell(props: CellProps) {
   const { editor } = props;
   switch (editor.type) {
+    // Custom editor registration is implemented in the following runtime task.
+    case 'custom':
+      return props.display;
     case 'switch':
       return <SwitchCell {...props} editor={editor} />;
     case 'switchGroup':

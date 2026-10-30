@@ -7,6 +7,8 @@ export const UPLOAD_PARAMS = {
   file: 'file',
   /** 欄位的完整值路徑，例如 `images` 或 `gallery.cover` */
   field: 'field',
+  /** JSON-encoded RowContext: canonical repeater paths and stable identities. */
+  rowContext: 'rowContext',
 } as const;
 
 /** POST multipart（`UPLOAD_PARAMS`）到 `page.uploadUrl` 或 `endpoints.upload` 暫存上傳。 */

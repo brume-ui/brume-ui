@@ -15,6 +15,10 @@ type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 true satisfies Same<Static<typeof FilterValueSchema>, FilterValue>;
 
 export const FilterInputSchema = Type.Union([
+  Type.Object(
+    { type: Type.Union([Type.Literal('selectTable'), Type.Literal('multipleSelectTable')]) },
+    { additionalProperties: false },
+  ),
   Type.Object({
     type: Type.Literal('text'),
     inputMode: Type.Optional(Type.Union([Type.Literal('text'), Type.Literal('numeric')])),

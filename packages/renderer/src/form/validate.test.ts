@@ -2,7 +2,7 @@ import type { ClientRule, FieldDef, FormNode } from '@brume-ui/brume-schema';
 import { expect, it } from 'vitest';
 import { collectFields, validateValue } from './validate';
 
-const field = (rules: ClientRule[]): FieldDef => ({
+const field = (rules: ClientRule[]): Extract<FieldDef, { type: 'text' }> => ({
   type: 'text',
   name: 'name',
   label: 'Name',

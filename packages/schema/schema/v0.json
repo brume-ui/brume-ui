@@ -409,6 +409,166 @@
                       "editor": {
                         "anyOf": [
                           {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "type",
+                              "component"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": "custom",
+                                "type": "string"
+                              },
+                              "component": {
+                                "type": "object",
+                                "required": [
+                                  "type",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "const": "component",
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "props": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                      "^(.*)$": {}
+                                    }
+                                  }
+                                }
+                              },
+                              "rules": {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "required": [
+                                        "rule",
+                                        "message"
+                                      ],
+                                      "properties": {
+                                        "rule": {
+                                          "anyOf": [
+                                            {
+                                              "const": "required",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "email",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "url",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "integer",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "numeric",
+                                              "type": "string"
+                                            }
+                                          ]
+                                        },
+                                        "message": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "type": "object",
+                                      "required": [
+                                        "rule",
+                                        "value",
+                                        "message"
+                                      ],
+                                      "properties": {
+                                        "rule": {
+                                          "anyOf": [
+                                            {
+                                              "const": "minLength",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "maxLength",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "maxFiles",
+                                              "type": "string"
+                                            }
+                                          ]
+                                        },
+                                        "value": {
+                                          "minimum": 0,
+                                          "type": "integer"
+                                        },
+                                        "message": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "type": "object",
+                                      "required": [
+                                        "rule",
+                                        "value",
+                                        "message"
+                                      ],
+                                      "properties": {
+                                        "rule": {
+                                          "anyOf": [
+                                            {
+                                              "const": "min",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "max",
+                                              "type": "string"
+                                            }
+                                          ]
+                                        },
+                                        "value": {
+                                          "type": "number"
+                                        },
+                                        "message": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "type": "object",
+                                      "required": [
+                                        "rule",
+                                        "pattern",
+                                        "message"
+                                      ],
+                                      "properties": {
+                                        "rule": {
+                                          "const": "pattern",
+                                          "type": "string"
+                                        },
+                                        "pattern": {
+                                          "type": "string"
+                                        },
+                                        "message": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          {
                             "type": "object",
                             "required": [
                               "type"
@@ -965,6 +1125,27 @@
                               "input": {
                                 "anyOf": [
                                   {
+                                    "additionalProperties": false,
+                                    "type": "object",
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "properties": {
+                                      "type": {
+                                        "anyOf": [
+                                          {
+                                            "const": "selectTable",
+                                            "type": "string"
+                                          },
+                                          {
+                                            "const": "multipleSelectTable",
+                                            "type": "string"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
                                     "type": "object",
                                     "required": [
                                       "type"
@@ -1241,6 +1422,27 @@
                       },
                       "input": {
                         "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "type"
+                            ],
+                            "properties": {
+                              "type": {
+                                "anyOf": [
+                                  {
+                                    "const": "selectTable",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "const": "multipleSelectTable",
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            }
+                          },
                           {
                             "type": "object",
                             "required": [
@@ -3339,17 +3541,15 @@
             "type",
             "name",
             "label",
-            "kind",
-            "multiple",
-            "accept",
-            "maxSize"
+            "remote"
           ],
           "properties": {
             "type": {
-              "const": "upload",
+              "const": "select",
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -3510,6 +3710,1238 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "dependsOn": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "scope",
+                        "path"
+                      ],
+                      "properties": {
+                        "scope": {
+                          "anyOf": [
+                            {
+                              "const": "root",
+                              "type": "string"
+                            },
+                            {
+                              "const": "row",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "path": {
+                          "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "options": {
+              "not": {}
+            },
+            "searchable": {
+              "type": "boolean"
+            },
+            "clearable": {
+              "type": "boolean"
+            },
+            "excludeSelectedIn": {
+              "type": "array",
+              "items": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "scope",
+                  "path"
+                ],
+                "properties": {
+                  "scope": {
+                    "anyOf": [
+                      {
+                        "const": "root",
+                        "type": "string"
+                      },
+                      {
+                        "const": "row",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "path": {
+                    "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?:(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)|\\*))*$",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "name",
+            "label",
+            "remote"
+          ],
+          "properties": {
+            "type": {
+              "const": "multipleSelect",
+              "type": "string"
+            },
+            "name": {
+              "pattern": "^(?!_brume$).*$",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "help": {
+              "type": "string"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "readOnly": {
+              "type": "boolean"
+            },
+            "disabled": {
+              "type": "boolean"
+            },
+            "span": {
+              "anyOf": [
+                {
+                  "const": "auto",
+                  "type": "string"
+                },
+                {
+                  "const": "full",
+                  "type": "string"
+                }
+              ]
+            },
+            "width": {
+              "minimum": 1,
+              "maximum": 12,
+              "type": "integer"
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "required",
+                            "type": "string"
+                          },
+                          {
+                            "const": "email",
+                            "type": "string"
+                          },
+                          {
+                            "const": "url",
+                            "type": "string"
+                          },
+                          {
+                            "const": "integer",
+                            "type": "string"
+                          },
+                          {
+                            "const": "numeric",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "minLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "min",
+                            "type": "string"
+                          },
+                          {
+                            "const": "max",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "pattern",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "const": "pattern",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "dependsOn": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "scope",
+                        "path"
+                      ],
+                      "properties": {
+                        "scope": {
+                          "anyOf": [
+                            {
+                              "const": "root",
+                              "type": "string"
+                            },
+                            {
+                              "const": "row",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "path": {
+                          "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "options": {
+              "not": {}
+            },
+            "max": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "excludeSelectedIn": {
+              "type": "array",
+              "items": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "scope",
+                  "path"
+                ],
+                "properties": {
+                  "scope": {
+                    "anyOf": [
+                      {
+                        "const": "root",
+                        "type": "string"
+                      },
+                      {
+                        "const": "row",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "path": {
+                    "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?:(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)|\\*))*$",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "name",
+            "label",
+            "multiple",
+            "remote"
+          ],
+          "properties": {
+            "type": {
+              "const": "relation",
+              "type": "string"
+            },
+            "name": {
+              "pattern": "^(?!_brume$).*$",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "help": {
+              "type": "string"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "readOnly": {
+              "type": "boolean"
+            },
+            "disabled": {
+              "type": "boolean"
+            },
+            "span": {
+              "anyOf": [
+                {
+                  "const": "auto",
+                  "type": "string"
+                },
+                {
+                  "const": "full",
+                  "type": "string"
+                }
+              ]
+            },
+            "width": {
+              "minimum": 1,
+              "maximum": 12,
+              "type": "integer"
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "required",
+                            "type": "string"
+                          },
+                          {
+                            "const": "email",
+                            "type": "string"
+                          },
+                          {
+                            "const": "url",
+                            "type": "string"
+                          },
+                          {
+                            "const": "integer",
+                            "type": "string"
+                          },
+                          {
+                            "const": "numeric",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "minLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "min",
+                            "type": "string"
+                          },
+                          {
+                            "const": "max",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "pattern",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "const": "pattern",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "multiple": {
+              "type": "boolean"
+            },
+            "remote": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "dependsOn": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "scope",
+                        "path"
+                      ],
+                      "properties": {
+                        "scope": {
+                          "anyOf": [
+                            {
+                              "const": "root",
+                              "type": "string"
+                            },
+                            {
+                              "const": "row",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "path": {
+                          "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FormNode"
+              }
+            },
+            "excludeSelectedIn": {
+              "type": "array",
+              "items": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "scope",
+                  "path"
+                ],
+                "properties": {
+                  "scope": {
+                    "anyOf": [
+                      {
+                        "const": "root",
+                        "type": "string"
+                      },
+                      {
+                        "const": "row",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "path": {
+                    "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?:(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)|\\*))*$",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "name",
+            "label",
+            "mode",
+            "nodes"
+          ],
+          "properties": {
+            "type": {
+              "const": "repeater",
+              "type": "string"
+            },
+            "name": {
+              "pattern": "^(?!_brume$).*$",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "help": {
+              "type": "string"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "readOnly": {
+              "type": "boolean"
+            },
+            "disabled": {
+              "type": "boolean"
+            },
+            "span": {
+              "anyOf": [
+                {
+                  "const": "auto",
+                  "type": "string"
+                },
+                {
+                  "const": "full",
+                  "type": "string"
+                }
+              ]
+            },
+            "width": {
+              "minimum": 1,
+              "maximum": 12,
+              "type": "integer"
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "required",
+                            "type": "string"
+                          },
+                          {
+                            "const": "email",
+                            "type": "string"
+                          },
+                          {
+                            "const": "url",
+                            "type": "string"
+                          },
+                          {
+                            "const": "integer",
+                            "type": "string"
+                          },
+                          {
+                            "const": "numeric",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "minLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "min",
+                            "type": "string"
+                          },
+                          {
+                            "const": "max",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "pattern",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "const": "pattern",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "mode": {
+              "anyOf": [
+                {
+                  "const": "json",
+                  "type": "string"
+                },
+                {
+                  "const": "relation",
+                  "type": "string"
+                }
+              ]
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FormNode"
+              }
+            },
+            "min": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "distinct": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sortable": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "name",
+            "label",
+            "component"
+          ],
+          "properties": {
+            "type": {
+              "const": "custom",
+              "type": "string"
+            },
+            "name": {
+              "pattern": "^(?!_brume$).*$",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "help": {
+              "type": "string"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "readOnly": {
+              "type": "boolean"
+            },
+            "disabled": {
+              "type": "boolean"
+            },
+            "span": {
+              "anyOf": [
+                {
+                  "const": "auto",
+                  "type": "string"
+                },
+                {
+                  "const": "full",
+                  "type": "string"
+                }
+              ]
+            },
+            "width": {
+              "minimum": 1,
+              "maximum": 12,
+              "type": "integer"
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "required",
+                            "type": "string"
+                          },
+                          {
+                            "const": "email",
+                            "type": "string"
+                          },
+                          {
+                            "const": "url",
+                            "type": "string"
+                          },
+                          {
+                            "const": "integer",
+                            "type": "string"
+                          },
+                          {
+                            "const": "numeric",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "minLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "min",
+                            "type": "string"
+                          },
+                          {
+                            "const": "max",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "pattern",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "const": "pattern",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "component": {
+              "type": "object",
+              "required": [
+                "type",
+                "name"
+              ],
+              "properties": {
+                "type": {
+                  "const": "component",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "props": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {}
+                  }
+                }
+              }
+            },
+            "displayOnly": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "name",
+            "label",
+            "kind",
+            "multiple",
+            "accept",
+            "maxSize"
+          ],
+          "properties": {
+            "type": {
+              "const": "upload",
+              "type": "string"
+            },
+            "name": {
+              "pattern": "^(?!_brume$).*$",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "help": {
+              "type": "string"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "readOnly": {
+              "type": "boolean"
+            },
+            "disabled": {
+              "type": "boolean"
+            },
+            "span": {
+              "anyOf": [
+                {
+                  "const": "auto",
+                  "type": "string"
+                },
+                {
+                  "const": "full",
+                  "type": "string"
+                }
+              ]
+            },
+            "width": {
+              "minimum": 1,
+              "maximum": 12,
+              "type": "integer"
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "required",
+                            "type": "string"
+                          },
+                          {
+                            "const": "email",
+                            "type": "string"
+                          },
+                          {
+                            "const": "url",
+                            "type": "string"
+                          },
+                          {
+                            "const": "integer",
+                            "type": "string"
+                          },
+                          {
+                            "const": "numeric",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "minLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "min",
+                            "type": "string"
+                          },
+                          {
+                            "const": "max",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "pattern",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "const": "pattern",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
             },
             "kind": {
               "anyOf": [
@@ -3556,6 +4988,7 @@
     "PlainFieldDef": {
       "anyOf": [
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -3568,6 +5001,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -3729,13 +5163,26 @@
                 ]
               }
             },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
             "maxLength": {
               "minimum": 0,
               "type": "integer"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -3748,6 +5195,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -3909,6 +5357,12 @@
                 ]
               }
             },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
             "rows": {
               "minimum": 1,
               "type": "integer"
@@ -3916,10 +5370,17 @@
             "maxLength": {
               "minimum": 0,
               "type": "integer"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -3932,6 +5393,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -4092,10 +5554,23 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -4108,6 +5583,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -4268,10 +5744,23 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -4284,6 +5773,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -4444,10 +5934,23 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -4460,6 +5963,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -4620,10 +6124,23 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -4636,6 +6153,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -4796,10 +6314,23 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -4812,6 +6343,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -4972,10 +6504,23 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -4988,6 +6533,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -5149,6 +6695,12 @@
                 ]
               }
             },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
             "min": {
               "type": "number"
             },
@@ -5158,10 +6710,17 @@
             "step": {
               "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -5183,6 +6742,7 @@
               ]
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -5344,6 +6904,12 @@
                 ]
               }
             },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
             "decimals": {
               "minimum": 0,
               "type": "integer"
@@ -5356,10 +6922,17 @@
             },
             "max": {
               "type": "number"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -5388,6 +6961,7 @@
               ]
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -5548,10 +7122,23 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -5565,6 +7152,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -5725,6 +7313,12 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
             },
             "options": {
               "type": "array",
@@ -5772,10 +7366,17 @@
             },
             "clearable": {
               "type": "boolean"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -5789,6 +7390,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -5949,6 +7551,12 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
             },
             "options": {
               "type": "array",
@@ -5994,10 +7602,17 @@
             "max": {
               "minimum": 1,
               "type": "integer"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -6019,6 +7634,7 @@
               ]
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -6179,6 +7795,12 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
             },
             "options": {
               "type": "array",
@@ -6212,10 +7834,17 @@
                   "type": "string"
                 }
               ]
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -6228,6 +7857,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -6389,15 +8019,28 @@
                 ]
               }
             },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
+            },
             "onLabel": {
               "type": "string"
             },
             "offLabel": {
               "type": "string"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         },
         {
+          "additionalProperties": false,
           "type": "object",
           "required": [
             "type",
@@ -6410,6 +8053,7 @@
               "type": "string"
             },
             "name": {
+              "pattern": "^(?!_brume$).*$",
               "type": "string"
             },
             "label": {
@@ -6570,6 +8214,12 @@
                   }
                 ]
               }
+            },
+            "showWhen": {
+              "$ref": "#/$defs/Condition"
+            },
+            "enableWhen": {
+              "$ref": "#/$defs/Condition"
             },
             "options": {
               "type": "array",
@@ -6599,6 +8249,12 @@
             "maxLength": {
               "minimum": 0,
               "type": "integer"
+            },
+            "remote": {
+              "not": {}
+            },
+            "excludeSelectedIn": {
+              "not": {}
             }
           }
         }
@@ -6804,6 +8460,1364 @@
                     "filename": {
                       "type": "string"
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Condition": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "op",
+            "field",
+            "value"
+          ],
+          "properties": {
+            "op": {
+              "anyOf": [
+                {
+                  "const": "eq",
+                  "type": "string"
+                },
+                {
+                  "const": "ne",
+                  "type": "string"
+                }
+              ]
+            },
+            "field": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "scope",
+                "path"
+              ],
+              "properties": {
+                "scope": {
+                  "anyOf": [
+                    {
+                      "const": "root",
+                      "type": "string"
+                    },
+                    {
+                      "const": "row",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "path": {
+                  "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+                  "type": "string"
+                }
+              }
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "op",
+            "field",
+            "values"
+          ],
+          "properties": {
+            "op": {
+              "const": "in",
+              "type": "string"
+            },
+            "field": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "scope",
+                "path"
+              ],
+              "properties": {
+                "scope": {
+                  "anyOf": [
+                    {
+                      "const": "root",
+                      "type": "string"
+                    },
+                    {
+                      "const": "row",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "path": {
+                  "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+                  "type": "string"
+                }
+              }
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "op",
+            "field"
+          ],
+          "properties": {
+            "op": {
+              "const": "empty",
+              "type": "string"
+            },
+            "field": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "scope",
+                "path"
+              ],
+              "properties": {
+                "scope": {
+                  "anyOf": [
+                    {
+                      "const": "root",
+                      "type": "string"
+                    },
+                    {
+                      "const": "row",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "path": {
+                  "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "op",
+            "conditions"
+          ],
+          "properties": {
+            "op": {
+              "anyOf": [
+                {
+                  "const": "all",
+                  "type": "string"
+                },
+                {
+                  "const": "any",
+                  "type": "string"
+                }
+              ]
+            },
+            "conditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Condition"
+              }
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "op",
+            "condition"
+          ],
+          "properties": {
+            "op": {
+              "const": "not",
+              "type": "string"
+            },
+            "condition": {
+              "$ref": "#/$defs/Condition"
+            }
+          }
+        }
+      ]
+    },
+    "ConditionPath": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "scope",
+        "path"
+      ],
+      "properties": {
+        "scope": {
+          "anyOf": [
+            {
+              "const": "root",
+              "type": "string"
+            },
+            {
+              "const": "row",
+              "type": "string"
+            }
+          ]
+        },
+        "path": {
+          "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+          "type": "string"
+        }
+      }
+    },
+    "ExclusionPath": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "scope",
+        "path"
+      ],
+      "properties": {
+        "scope": {
+          "anyOf": [
+            {
+              "const": "root",
+              "type": "string"
+            },
+            {
+              "const": "row",
+              "type": "string"
+            }
+          ]
+        },
+        "path": {
+          "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?:(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)|\\*))*$",
+          "type": "string"
+        }
+      }
+    },
+    "RemoteOptions": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "dependsOn": {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "scope",
+                "path"
+              ],
+              "properties": {
+                "scope": {
+                  "anyOf": [
+                    {
+                      "const": "root",
+                      "type": "string"
+                    },
+                    {
+                      "const": "row",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "path": {
+                  "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "RowIdentity": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "RowContext": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "path",
+          "key"
+        ],
+        "properties": {
+          "path": {
+            "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?:(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)|\\*))*$",
+            "type": "string"
+          },
+          "key": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          }
+        }
+      }
+    },
+    "RelationValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "allOf": [
+            {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {}
+              }
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "patternProperties": {
+                  "^(.*)$": {}
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "FilterInput": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "anyOf": [
+                {
+                  "const": "selectTable",
+                  "type": "string"
+                },
+                {
+                  "const": "multipleSelectTable",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "text",
+              "type": "string"
+            },
+            "inputMode": {
+              "anyOf": [
+                {
+                  "const": "text",
+                  "type": "string"
+                },
+                {
+                  "const": "numeric",
+                  "type": "string"
+                }
+              ]
+            },
+            "placeholder": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "anyOf": [
+                {
+                  "const": "select",
+                  "type": "string"
+                },
+                {
+                  "const": "multipleSelect",
+                  "type": "string"
+                }
+              ]
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "remote": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "options"
+          ],
+          "properties": {
+            "type": {
+              "anyOf": [
+                {
+                  "const": "radio",
+                  "type": "string"
+                },
+                {
+                  "const": "checkbox",
+                  "type": "string"
+                }
+              ]
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "withTime"
+          ],
+          "properties": {
+            "type": {
+              "const": "date",
+              "type": "string"
+            },
+            "withTime": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "of"
+          ],
+          "properties": {
+            "type": {
+              "const": "range",
+              "type": "string"
+            },
+            "of": {
+              "anyOf": [
+                {
+                  "const": "text",
+                  "type": "string"
+                },
+                {
+                  "const": "number",
+                  "type": "string"
+                },
+                {
+                  "const": "date",
+                  "type": "string"
+                },
+                {
+                  "const": "datetime",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "of",
+            "operators"
+          ],
+          "properties": {
+            "type": {
+              "const": "group",
+              "type": "string"
+            },
+            "of": {
+              "anyOf": [
+                {
+                  "const": "text",
+                  "type": "string"
+                },
+                {
+                  "const": "number",
+                  "type": "string"
+                }
+              ]
+            },
+            "operators": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "InlineEditor": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "type",
+            "component"
+          ],
+          "properties": {
+            "type": {
+              "const": "custom",
+              "type": "string"
+            },
+            "component": {
+              "type": "object",
+              "required": [
+                "type",
+                "name"
+              ],
+              "properties": {
+                "type": {
+                  "const": "component",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "props": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {}
+                  }
+                }
+              }
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "required",
+                            "type": "string"
+                          },
+                          {
+                            "const": "email",
+                            "type": "string"
+                          },
+                          {
+                            "const": "url",
+                            "type": "string"
+                          },
+                          {
+                            "const": "integer",
+                            "type": "string"
+                          },
+                          {
+                            "const": "numeric",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "minLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxLength",
+                            "type": "string"
+                          },
+                          {
+                            "const": "maxFiles",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "value",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "anyOf": [
+                          {
+                            "const": "min",
+                            "type": "string"
+                          },
+                          {
+                            "const": "max",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "rule",
+                      "pattern",
+                      "message"
+                    ],
+                    "properties": {
+                      "rule": {
+                        "const": "pattern",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "text",
+              "type": "string"
+            },
+            "maxLength": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "textarea",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "number",
+              "type": "string"
+            },
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "step": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "options"
+          ],
+          "properties": {
+            "type": {
+              "anyOf": [
+                {
+                  "const": "select",
+                  "type": "string"
+                },
+                {
+                  "const": "radio",
+                  "type": "string"
+                },
+                {
+                  "const": "checkbox",
+                  "type": "string"
+                }
+              ]
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "switch",
+              "type": "string"
+            },
+            "onLabel": {
+              "type": "string"
+            },
+            "offLabel": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "keys"
+          ],
+          "properties": {
+            "type": {
+              "const": "switchGroup",
+              "type": "string"
+            },
+            "keys": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "date",
+              "type": "string"
+            },
+            "withTime": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "symbol",
+            "decimals"
+          ],
+          "properties": {
+            "type": {
+              "const": "currency",
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "decimals": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "tags",
+              "type": "string"
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Display": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "text",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "name"
+          ],
+          "properties": {
+            "type": {
+              "const": "component",
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "props": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {}
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "label",
+              "type": "string"
+            },
+            "options": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {
+                  "type": "object",
+                  "required": [
+                    "label",
+                    "tone"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "tone": {
+                      "anyOf": [
+                        {
+                          "const": "neutral",
+                          "type": "string"
+                        },
+                        {
+                          "const": "accent",
+                          "type": "string"
+                        },
+                        {
+                          "const": "success",
+                          "type": "string"
+                        },
+                        {
+                          "const": "warning",
+                          "type": "string"
+                        },
+                        {
+                          "const": "danger",
+                          "type": "string"
+                        },
+                        {
+                          "const": "info",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "tone": {
+              "anyOf": [
+                {
+                  "const": "neutral",
+                  "type": "string"
+                },
+                {
+                  "const": "accent",
+                  "type": "string"
+                },
+                {
+                  "const": "success",
+                  "type": "string"
+                },
+                {
+                  "const": "warning",
+                  "type": "string"
+                },
+                {
+                  "const": "danger",
+                  "type": "string"
+                },
+                {
+                  "const": "info",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "badge",
+              "type": "string"
+            },
+            "tone": {
+              "anyOf": [
+                {
+                  "const": "neutral",
+                  "type": "string"
+                },
+                {
+                  "const": "accent",
+                  "type": "string"
+                },
+                {
+                  "const": "success",
+                  "type": "string"
+                },
+                {
+                  "const": "warning",
+                  "type": "string"
+                },
+                {
+                  "const": "danger",
+                  "type": "string"
+                },
+                {
+                  "const": "info",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "link",
+              "type": "string"
+            },
+            "external": {
+              "type": "boolean"
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "const": "text",
+                  "type": "string"
+                },
+                {
+                  "const": "button",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "image",
+              "type": "string"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "length"
+          ],
+          "properties": {
+            "type": {
+              "const": "limit",
+              "type": "string"
+            },
+            "length": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "max"
+          ],
+          "properties": {
+            "type": {
+              "const": "progress",
+              "type": "string"
+            },
+            "max": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "qrcode",
+              "type": "string"
+            },
+            "size": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "copyable",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "downloadable",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "expand",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "modal",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "columns"
+          ],
+          "properties": {
+            "type": {
+              "const": "table",
+              "type": "string"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
                   }
                 }
               }

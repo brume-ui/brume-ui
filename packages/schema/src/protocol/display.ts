@@ -1,5 +1,6 @@
 import { type Static, Type } from '@sinclair/typebox';
 import { ComponentRefSchema } from '../component-ref';
+import { ClientRuleSchema } from '../form/rules';
 
 export const ToneSchema = Type.Union([
   Type.Literal('neutral'),
@@ -77,6 +78,14 @@ export type Display = Static<typeof DisplaySchema>;
 
 /** 行內編輯器。 */
 export const InlineEditorSchema = Type.Union([
+  Type.Object(
+    {
+      type: Type.Literal('custom'),
+      component: ComponentRefSchema,
+      rules: Type.Optional(Type.Array(ClientRuleSchema)),
+    },
+    { additionalProperties: false },
+  ),
   Type.Object({ type: Type.Literal('text'), maxLength: Type.Optional(Type.Number()) }),
   Type.Object({ type: Type.Literal('textarea') }),
   Type.Object({

@@ -1,6 +1,15 @@
+import {
+  ConditionPathSchema,
+  ConditionSchema,
+  ExclusionPathSchema,
+  RemoteOptionsSchema,
+} from './form/conditions';
 import { FieldDefSchema, PlainFieldDefSchema } from './form/field';
 import { FormNodeSchema } from './form/layout';
+import { RelationValueSchema, RowContextSchema, RowIdentitySchema } from './form/relations';
 import { PageEnvelopeSchema } from './page';
+import { DisplaySchema, InlineEditorSchema } from './protocol/display';
+import { FilterInputSchema } from './protocol/filter';
 import { FormSubmitRequestSchema, FormSubmitResponseSchema } from './protocol/form';
 import {
   ActionRequestSchema,
@@ -14,7 +23,7 @@ import { UploadTempResponseSchema, UploadValueSchema } from './protocol/upload';
 import { MenuItemSchema, SharedPropsSchema } from './shared';
 
 /** 以 `$id` 表示的具名型別（MenuItem、FormNode 為遞迴）；輸出時一律 hoist 到 `$defs`。 */
-const RECURSIVE_IDS = new Set(['MenuItem', 'FormNode', 'FieldDef', 'PlainFieldDef']);
+const RECURSIVE_IDS = new Set(['MenuItem', 'FormNode', 'FieldDef', 'PlainFieldDef', 'Condition']);
 
 /**
  * TypeBox 的遞迴型別用 `$id` 加相對 `$ref` 表示；輸出時把它們（含巢狀出現的整份定義）
@@ -62,6 +71,16 @@ export function emitJsonSchema(): string {
       PlainFieldDef: recursiveDef(PlainFieldDefSchema),
       FormSubmitRequest: plain(FormSubmitRequestSchema),
       FormSubmitResponse: plain(FormSubmitResponseSchema),
+      Condition: recursiveDef(ConditionSchema),
+      ConditionPath: plain(ConditionPathSchema),
+      ExclusionPath: plain(ExclusionPathSchema),
+      RemoteOptions: plain(RemoteOptionsSchema),
+      RowIdentity: plain(RowIdentitySchema),
+      RowContext: plain(RowContextSchema),
+      RelationValue: plain(RelationValueSchema),
+      FilterInput: plain(FilterInputSchema),
+      InlineEditor: plain(InlineEditorSchema),
+      Display: plain(DisplaySchema),
     },
   };
   return `${JSON.stringify(doc, null, 2)}\n`;

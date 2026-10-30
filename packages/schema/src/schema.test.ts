@@ -78,19 +78,25 @@ type GridFull = {
   };
 };
 
-describe('schema 0.3', () => {
-  it('is version 0.3.0', () => {
-    expect(SCHEMA_VERSION).toBe('0.3.0');
+describe('schema 0.4', () => {
+  it('is version 0.4.0', () => {
+    expect(SCHEMA_VERSION).toBe('0.4.0');
   });
 
-  it('form-full.json covers every field type, node type and client rule, and an upload with extra inside embeds', () => {
+  it('legacy form-full.json keeps covering static and upload field types, node type and client rule, and an upload with extra inside embeds', () => {
     const full = fixture('fixtures/valid', 'form-full.json') as {
       page: { form: { nodes: AnyNode[] } };
     };
     const { nodes, fields, uploadsInEmbedsWithExtra } = walk(full.page.form.nodes);
     const sorted = (xs: Iterable<string>) => [...new Set(xs)].sort();
     expect(sorted(nodes.map((n) => n.type))).toEqual(sorted(variantTypes(FormNodeSchema)));
-    expect(sorted(fields.map((f) => f.type))).toEqual(sorted(variantTypes(FieldDefSchema)));
+    expect(sorted(fields.map((f) => f.type))).toEqual(
+      sorted(
+        variantTypes(FieldDefSchema).filter(
+          (type) => !['relation', 'repeater', 'custom'].includes(type),
+        ),
+      ),
+    );
     expect(sorted(fields.flatMap((f) => (f.rules ?? []).map((r) => r.rule)))).toEqual(
       sorted(variantTypes(ClientRuleSchema, 'rule')),
     );
@@ -135,7 +141,7 @@ describe('schema 0.3', () => {
     }
   });
 
-  it('grid-full.json covers every display, editor, filter input, newline and _meta', () => {
+  it('legacy grid-full.json keeps covering displays, built-in editors, basic filters, newline and _meta', () => {
     const full = load('fixtures/valid').find(([n]) => n === 'grid-full.json')?.[1] as GridFull;
     const { columns, rows, filters, columnFilters } = full.page;
     const displays = new Set(columns.flatMap((c) => (c.display ? [c.display.type] : [])));
@@ -144,8 +150,16 @@ describe('schema 0.3', () => {
       [...filters.items, ...columnFilters].flatMap((f) => (f.input ? [f.input.type] : [])),
     );
     expect([...displays].sort()).toEqual(variantTypes(DisplaySchema).sort());
-    expect([...editors].sort()).toEqual(variantTypes(InlineEditorSchema).sort());
-    expect([...inputs].sort()).toEqual(variantTypes(FilterInputSchema).sort());
+    expect([...editors].sort()).toEqual(
+      variantTypes(InlineEditorSchema)
+        .filter((type) => type !== 'custom')
+        .sort(),
+    );
+    expect([...inputs].sort()).toEqual(
+      variantTypes(FilterInputSchema)
+        .filter((type) => !['selectTable', 'multipleSelectTable'].includes(type))
+        .sort(),
+    );
     expect(filters.items.some((i) => i.type === 'newline')).toBe(true);
     expect(rows.some((r) => r._meta !== undefined)).toBe(true);
     expect(full.page.resource?.presentation).toBe('modal');

@@ -7,13 +7,29 @@ export {
 } from './dashboard';
 export { type ErrorPage, ErrorPageSchema } from './error-page';
 export {
+  type Condition,
+  type ConditionPath,
+  ConditionPathSchema,
+  ConditionSchema,
+  type ExclusionPath,
+  ExclusionPathSchema,
+  type JsonPrimitive,
+  JsonPrimitiveSchema,
+  type RemoteOptions,
+  RemoteOptionsSchema,
+} from './form/conditions';
+export {
   type ClientRule,
   ClientRuleSchema,
+  type CustomFieldDef,
   type FieldBase,
   type FieldDef,
   FieldDefSchema,
   type PlainFieldDef,
   PlainFieldDefSchema,
+  type RelationFieldDef,
+  type RemoteChoiceFieldDef,
+  type RepeaterFieldDef,
 } from './form/field';
 export { type AfterSave, AfterSaveSchema, type FormPage, FormPageSchema } from './form/form-page';
 export {
@@ -23,6 +39,16 @@ export {
   type FormNode,
   FormNodeSchema,
 } from './form/layout';
+export {
+  type RelationItem,
+  RelationItemSchema,
+  type RelationValue,
+  RelationValueSchema,
+  type RowContext,
+  RowContextSchema,
+  type RowIdentity,
+  RowIdentitySchema,
+} from './form/relations';
 export { emitJsonSchema } from './json-schema';
 export {
   type GridRow,
