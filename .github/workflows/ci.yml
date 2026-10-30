@@ -20,8 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      # write is only used by the update-snapshots dispatch to push the new baselines
+      # write is only used by explicit snapshot mode to push the new baselines
       contents: write
+    env:
+      # Opt in via workflow_dispatch, or put [update-snapshots] in a trusted push's head commit.
+      # PR commit messages never enable updates. Inspect bot PNG changes, then require normal CI.
+      UPDATE_SNAPSHOTS: ${{ (github.event_name == 'workflow_dispatch' && inputs['update-snapshots'] == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[update-snapshots]')) }}
     steps:
       - uses: actions/checkout@v5
 
@@ -48,15 +52,15 @@ jobs:
         run: pnpm --filter ./apps/playground exec playwright install --with-deps chromium
 
       - name: E2E
-        if: ${{ !inputs.update-snapshots }}
+        if: ${{ env.UPDATE_SNAPSHOTS != 'true' }}
         run: pnpm test:e2e
 
       - name: E2E (update Linux snapshots)
-        if: ${{ inputs.update-snapshots }}
+        if: ${{ env.UPDATE_SNAPSHOTS == 'true' }}
         run: pnpm --filter ./apps/playground exec playwright test --update-snapshots
 
       - name: Commit Linux snapshots
-        if: ${{ inputs.update-snapshots }}
+        if: ${{ env.UPDATE_SNAPSHOTS == 'true' }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -64,6 +68,7 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No snapshot changes.'
           else
+            # Deliberately omit the opt-in marker so later pushes use normal assertion mode.
             git commit -m 'test(playground): update Linux screenshot baselines'
             git push
           fi
