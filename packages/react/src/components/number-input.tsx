@@ -39,6 +39,8 @@ export interface NumberInputProps
   decimals?: number;
   /** Visual prefix such as 'NT$'. Hidden from screen readers; it is added to the field's name instead. */
   prefix?: string;
+  /** Include the visual prefix in the accessible name (default true). */
+  announcePrefix?: boolean;
   /**
    * A minus sign is accepted only when `min` < 0 (or the value is already negative). Nothing is
    * clamped: range checks are the validator's job (`ClientRule` min / max), so there is no `max`.
@@ -113,6 +115,7 @@ export function NumberInput({
   onChange,
   decimals,
   prefix,
+  announcePrefix = true,
   min,
   grouping,
   invalid,
@@ -194,12 +197,13 @@ export function NumberInput({
   };
 
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
-  const name = prefix
-    ? {
-        'aria-label': ariaLabel ? `${ariaLabel} ${prefix}` : undefined,
-        'aria-labelledby': labelledBy && !ariaLabel ? `${labelledBy} ${prefixId}` : undefined,
-      }
-    : { 'aria-label': ariaLabel, 'aria-labelledby': labelledBy };
+  const name =
+    prefix && announcePrefix
+      ? {
+          'aria-label': ariaLabel ? `${ariaLabel} ${prefix}` : undefined,
+          'aria-labelledby': labelledBy && !ariaLabel ? `${labelledBy} ${prefixId}` : undefined,
+        }
+      : { 'aria-label': ariaLabel, 'aria-labelledby': labelledBy };
 
   const input = (
     <TextInput
@@ -259,7 +263,7 @@ export function NumberInput({
         {prefix}
       </span>
       {/* Under a <label for>, a second label adds the prefix after the caption in the name. */}
-      {!ariaLabel && !labelledBy ? (
+      {announcePrefix && !ariaLabel && !labelledBy ? (
         <label htmlFor={inputId} className="br:sr-only">
           {prefix}
         </label>

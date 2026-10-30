@@ -1,4 +1,5 @@
 import * as RadixSwitch from '@radix-ui/react-switch';
+import type { FocusEventHandler } from 'react';
 import { cn } from '../cn';
 import { ariaOn, type FieldControlProps } from './field';
 import { FOCUS_RING } from './focus';
@@ -11,6 +12,7 @@ export interface SwitchProps extends FieldControlProps {
   /** A save is in flight: announced with aria-busy and dimmed. Toggles still go through (latest wins). */
   pending?: boolean;
   disabled?: boolean;
+  onBlur?: FocusEventHandler<HTMLButtonElement>;
 }
 
 /** 30×17 switch; on is the accent colour. */
@@ -20,6 +22,7 @@ export function Switch({
   label,
   pending,
   disabled,
+  onBlur,
   id,
   'aria-labelledby': labelledBy,
   'aria-describedby': describedBy,
@@ -33,6 +36,7 @@ export function Switch({
       checked={checked}
       onCheckedChange={onCheckedChange}
       disabled={disabled}
+      onBlur={onBlur}
       id={id}
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
