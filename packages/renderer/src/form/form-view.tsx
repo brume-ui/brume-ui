@@ -6,6 +6,7 @@ import { ErrorSummary } from './error-summary';
 import { type FieldErrors, isPathWithin } from './errors';
 import { fieldId, Nodes } from './layout/nodes';
 import { FormTabs } from './layout/tabs';
+import { findValueFieldOwner } from './traversal';
 import type { FormApi } from './use-form-state';
 import { collectFields } from './validate';
 
@@ -49,9 +50,7 @@ export const FormView = forwardRef<
   const entries = Object.entries(api.errors)
     .filter(([, messages]) => messages.length > 0)
     .map(([path, messages]) => {
-      const field = fields
-        .filter((item) => isPathWithin(path, item.path))
-        .sort((a, b) => b.path.length - a.path.length)[0];
+      const field = findValueFieldOwner(fields, api.values, path);
       const owner = collectFields(form.nodes).find(
         (item) =>
           item.def.type === 'upload' &&

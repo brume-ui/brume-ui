@@ -443,3 +443,126 @@ it('rejects overprecision money before rounding can hide a dependent requirement
   act(() => result.current.setValue('amount', '500.00'));
   expect(result.current.errors).toEqual({});
 });
+
+it.each([
+  ['hidden', { showWhen: rootOn }],
+  ['disabled', { disabled: true }],
+  ['readonly', { readOnly: true }],
+] as const)(
+  'keeps unknown row errors blocking under a %s container while suppressing known inactive errors',
+  (_state, flags) => {
+    const definition: FormDef = {
+      layout: 'stacked',
+      nodes: [
+        node({ type: 'switch', name: 'on', label: 'On' }),
+        node({
+          type: 'repeater',
+          name: 'rows',
+          label: 'Rows',
+          mode: 'json',
+          ...flags,
+          nodes: [node({ type: 'text', name: 'name', label: 'Name' })],
+        }),
+      ],
+    };
+    const { result } = renderHook(() =>
+      useFormState(definition, { on: false, rows: [{ _brume: { key: 'a' }, name: 'A' }] }),
+    );
+    act(() =>
+      result.current.setServerErrors({
+        rows: ['Known container'],
+        'rows.0': ['Known row'],
+        'rows.0.name': ['Known inactive'],
+        'rows.0.unknown': ['Undeclared field'],
+        'rows.99.name': ['Unknown row'],
+      }),
+    );
+    expect(result.current.errors).toEqual({
+      'rows.0.unknown': ['Undeclared field'],
+      'rows.99.name': ['Unknown row'],
+    });
+    act(() => expect(result.current.validateAll()).toBe(false));
+  },
+);
+
+it.each([
+  [
+    'relation',
+    {
+      type: 'relation',
+      multiple: true,
+      remote: { url: '/options' },
+      fields: [node({ type: 'text', name: 'name', label: 'Name' })],
+    },
+    [{ id: '7', name: 'A' }],
+    'name',
+    'id',
+  ],
+  [
+    'upload',
+    {
+      type: 'upload',
+      multiple: true,
+      kind: 'file',
+      accept: [],
+      maxSize: 10,
+      extra: [{ type: 'text', name: 'name', label: 'Name' }],
+    },
+    [{ path: 'a', extra: { name: 'A' } }],
+    'extra.name',
+    'path',
+  ],
+] as const)(
+  'does not claim absent %s item errors through a disabled parent',
+  (_kind, props, value, known, metadata) => {
+    const field = {
+      ...props,
+      name: 'items',
+      label: 'Items',
+      disabled: true,
+    } as unknown as FieldDef;
+    const { result } = renderHook(() =>
+      useFormState({ layout: 'stacked', nodes: [node(field)] }, { items: value }),
+    );
+    act(() =>
+      result.current.setServerErrors({
+        [`items.0.${known}`]: ['Known inactive'],
+        [`items.0.${metadata}`]: ['Known identity'],
+        'items.0': ['Known item'],
+        [`items.99.${known}`]: ['Absent item'],
+        'items.0.unknown': ['Unknown field'],
+      }),
+    );
+    expect(result.current.errors).toEqual({
+      [`items.99.${known}`]: ['Absent item'],
+      'items.0.unknown': ['Unknown field'],
+    });
+    act(() => expect(result.current.validateAll()).toBe(false));
+  },
+);
+
+it('keeps custom composite relative errors owned by the custom field boundary', () => {
+  const definition: FormDef = {
+    layout: 'stacked',
+    nodes: [
+      node({ type: 'switch', name: 'on', label: 'On' }),
+      node({
+        type: 'custom',
+        name: 'calculator',
+        label: 'Calculator',
+        component: { type: 'component', name: 'Calculator' },
+        showWhen: rootOn,
+      }),
+    ],
+  };
+  const { result } = renderHook(() => useFormState(definition, { on: false, calculator: {} }));
+  act(() =>
+    result.current.setServerErrors({ 'calculator.lines.99.amount': ['Custom relative error'] }),
+  );
+  expect(result.current.errors).toEqual({});
+  act(() => result.current.setValue('on', true));
+  expect(result.current.errors).toEqual({
+    'calculator.lines.99.amount': ['Custom relative error'],
+  });
+  act(() => expect(result.current.validateAll()).toBe(false));
+});

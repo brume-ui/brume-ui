@@ -387,3 +387,35 @@ it('applies shared activity to upload extras and retains unrelated extra errors 
   expect((screen.getByLabelText('Note') as HTMLInputElement).value).toBe('kept');
   expect(result.api().errors).toEqual({ 'files.0.extra.note': ['Retained'] });
 });
+
+it('shows unknown inactive-container errors as unclaimed summary entries', () => {
+  const result = setup(
+    {
+      layout: 'stacked',
+      nodes: [
+        { type: 'field', field: { type: 'switch', name: 'on', label: 'On' } },
+        {
+          type: 'field',
+          field: {
+            type: 'repeater',
+            name: 'rows',
+            label: 'Rows',
+            mode: 'json',
+            showWhen: { op: 'eq', field: { scope: 'root', path: 'on' }, value: true },
+            nodes: [field('name')],
+          },
+        },
+      ],
+    },
+    { on: false, rows: [{ _brume: { key: 'a' }, name: 'A' }] },
+  );
+  act(() =>
+    result
+      .api()
+      .setServerErrors({ 'rows.0.name': ['Known inactive'], 'rows.99.name': ['Unknown row'] }),
+  );
+  expect(screen.getByRole('alert').textContent).toContain('Unknown row');
+  expect(screen.queryByRole('link', { name: /Unknown row/ })).toBeNull();
+  act(() => expect(result.ref.current?.focusFirstError()).toBe(true));
+  expect(document.activeElement).toBe(screen.getByRole('alert'));
+});

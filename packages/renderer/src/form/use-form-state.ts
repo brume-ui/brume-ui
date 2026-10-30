@@ -3,6 +3,7 @@ import type { FormDef } from '@brume-ui/brume-schema';
 import { useRef, useState } from 'react';
 import { type FieldErrors, isPathWithin } from './errors';
 import { assertSafePath, getAt, setAt } from './paths';
+import { findValueFieldOwner } from './traversal';
 import { collectValueFields, type ValueField } from './validate';
 
 export interface FormApi {
@@ -107,9 +108,7 @@ export function useFormState(
     );
     const server = Object.fromEntries(
       Object.entries(current.server).filter(([path]) => {
-        const owner = walked
-          .filter((field) => isPathWithin(path, field.path))
-          .sort((a, b) => b.path.length - a.path.length)[0];
+        const owner = findValueFieldOwner(walked, current.values, path);
         return !owner || owner.active;
       }),
     );
@@ -199,9 +198,7 @@ export function useFormState(
         Object.entries(current.server).filter(([key]) => {
           if (isPathWithin(path, key)) return false;
           if (!isPathWithin(key, path)) return true;
-          const owner = owners
-            .filter((field) => isPathWithin(key, field.path))
-            .sort((a, b) => b.path.length - a.path.length)[0];
+          const owner = findValueFieldOwner(owners, previous, key);
           const compare = owner?.path ?? key;
           return stable(getAt(previous, compare)) === stable(getAt(next, compare));
         }),

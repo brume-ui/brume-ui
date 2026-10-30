@@ -188,6 +188,10 @@ and unknown errors intact. Removal drops only the removed row's errors. Neither 
 state operations, not mounted row UI or pending-upload lifecycle completion.
 
 Server errors are retained internally and filtered by the longest current declared field owner.
+Row/item containers only own their current rows, declared descendants/groups and protocol identity
+properties. Missing rows and undeclared descendants remain unclaimed, even inside inactive parents.
+Other controls, including custom composite fields, retain ownership of their relative subpaths;
+their internal data is not treated as a declared repeater tree.
 Known inactive/noneditable errors do not block submission; unclaimed errors do. Reactivation
 restores retained errors unless their owning value changed. Editing one extra through a parent
 object write preserves unchanged sibling errors. Draft values are never stripped by activity.

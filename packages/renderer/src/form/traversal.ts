@@ -7,6 +7,7 @@ import type {
   RowContext,
 } from '@brume-ui/brume-schema';
 import { canonicalizeFieldValue, conditionPaths, evaluateCondition } from './conditions';
+import { isPathWithin } from './errors';
 import { assertSafePath, getAt, joinPath } from './paths';
 import { collectFields, validateValue } from './validate';
 
@@ -271,4 +272,40 @@ export function collectValueFields(
   // A controller's raw failure always makes direct dependents conservative; hidden invalid fields
   // keep their draft and do not independently block until they become editable again.
   return pending.map(({ field }) => field);
+}
+
+/** Error ownership stops at undeclared/missing row boundaries instead of claiming every prefix.
+ * Other controls, including opaque custom composites, retain their own relative error paths.
+ */
+export function findValueFieldOwner(
+  fields: readonly ValueField[],
+  values: Record<string, unknown>,
+  path: string,
+): ValueField | undefined {
+  const owner = fields
+    .filter((field) => isPathWithin(path, field.path))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+  if (!owner || owner.path === path) return owner;
+  const { def } = owner;
+  if (def.type !== 'repeater' && def.type !== 'relation' && def.type !== 'upload') return owner;
+  // A declared embeds/extra group is also known when it has current expanded descendants.
+  if (fields.some((field) => isPathWithin(field.path, path))) return owner;
+  const parts = path.slice(owner.path.length + 1).split('.');
+  let item = getAt(values, owner.path);
+  if (def.type === 'repeater' || def.multiple) {
+    const index = parts.shift();
+    if (!index || !/^(0|[1-9]\d*)$/.test(index) || !Array.isArray(item)) return undefined;
+    item = getAt(item, index);
+  }
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return undefined;
+  const suffix = parts.join('.');
+  // Whole existing rows/items and their declared wire identity are owned by the container.
+  // Arbitrary extra keys, including keys present only in untrusted values, are not declarations.
+  const metadata =
+    def.type === 'repeater'
+      ? ['_brume', '_brume.key', '_brume.id']
+      : def.type === 'relation'
+        ? ['id']
+        : ['path', 'token', 'url', 'name', 'size'];
+  return suffix === '' || metadata.includes(suffix) ? owner : undefined;
 }
