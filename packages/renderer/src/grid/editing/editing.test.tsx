@@ -824,3 +824,69 @@ it('tags adds with Enter, ignores IME and saves array when popover closes', asyn
     expect(requests(adapter)[0]?.body).toMatchObject({ column: 'tags', value: ['gift', 'rush'] }),
   );
 });
+
+it('names localized multi-label tags by their displayed labels instead of raw codes', () => {
+  setup(saved(), {
+    ...orders,
+    columns: [
+      {
+        key: 'tags',
+        label: '標籤',
+        editor: {
+          type: 'tags',
+          options: [
+            { value: 'gift', label: '送禮建議' },
+            { value: 'eco', label: '綠色建議' },
+          ],
+        },
+        display: {
+          type: 'label',
+          options: {
+            gift: { label: '禮品', tone: 'neutral' },
+            eco: { label: '環保', tone: 'neutral' },
+          },
+        },
+      },
+    ],
+    rows: [{ id: 1, tags: ['gift', 'eco'] }],
+  });
+  const button = screen.getByRole('button', { name: /^編輯標籤：/ });
+  expect(button.textContent).toBe('禮品環保');
+  expect(button.getAttribute('aria-label')).toBe('編輯標籤：禮品、環保');
+});
+
+it('names single-choice cells by the visible display label when editor options differ', () => {
+  setup(saved(), {
+    ...orders,
+    columns: [
+      {
+        key: 'status',
+        label: '狀態',
+        editor: { type: 'select', options: [{ value: 'paid', label: '已付款' }] },
+        display: { type: 'label', options: { paid: { label: '已確認付款', tone: 'success' } } },
+      },
+    ],
+    rows: [{ id: 1, status: 'paid' }],
+  });
+  const button = screen.getByRole('button', { name: /^編輯狀態：/ });
+  expect(button.textContent).toBe('已確認付款');
+  expect(button.getAttribute('aria-label')).toBe('編輯狀態：已確認付款');
+});
+
+it('names currency cells by their displayed formatting rather than raw edit values', () => {
+  setup(saved(), {
+    ...orders,
+    columns: [
+      {
+        key: 'price',
+        label: '售價',
+        editor: { type: 'currency', symbol: 'NT$', decimals: 2 },
+        display: { type: 'text' },
+      },
+    ],
+    rows: [{ id: 1, price: '1,280.50', _meta: { raw: { price: '1280.50' } } }],
+  });
+  const button = screen.getByRole('button', { name: /^編輯售價：/ });
+  expect(button.textContent).toBe('1,280.50');
+  expect(button.getAttribute('aria-label')).toBe('編輯售價：1,280.50');
+});

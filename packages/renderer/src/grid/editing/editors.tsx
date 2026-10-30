@@ -6,7 +6,7 @@ import {
   Textarea,
   TextInput,
 } from '@brume-ui/brume-react';
-import type { InlineEditor, Option } from '@brume-ui/brume-schema';
+import type { Display, InlineEditor, Option } from '@brume-ui/brume-schema';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { formatCell } from '../displays/format';
 
@@ -215,7 +215,21 @@ export function MultiChoiceEditor({
 }
 
 /** The text a value shows as in an editable cell: option labels for choices, else plain text. */
-export function cellText(editor: InlineEditor, value: unknown, separator: string): string {
+export function cellText(
+  editor: InlineEditor,
+  value: unknown,
+  separator: string,
+  display?: Display,
+): string {
+  // Confirmed static displays own their visible labels. Editor suggestions may use
+  // different wording, and raw arrays/codes are not the text inside label badges.
+  if (display?.type === 'label') {
+    return (Array.isArray(value) ? value : [value])
+      .filter((item) => item !== null && item !== undefined && item !== '')
+      .map((item) => display.options?.[formatCell(item)]?.label ?? formatCell(item))
+      .join(separator);
+  }
+  if (display) return formatCell(value);
   if (editor.type !== 'select' && editor.type !== 'radio' && editor.type !== 'checkbox') {
     return formatCell(value);
   }

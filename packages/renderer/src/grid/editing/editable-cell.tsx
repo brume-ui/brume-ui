@@ -90,11 +90,16 @@ function useCellLabel({ column, row, editor, display }: CellProps, cell: CellUpd
   const { t } = useBrume();
   const separator = t('grid.listSeparator');
   const unconfirmed = cell.pending || cell.held;
-  const text = cellText(editor, unconfirmed ? cell.value : row[column.key], separator);
   // A display renders the confirmed value; a pending one, no display, or a display with controls of
   // its own (which cannot sit inside the edit button) shows as text.
   const staticDisplay = column.display && STATIC_DISPLAYS.has(column.display.type);
   const showDisplay = !unconfirmed && staticDisplay;
+  const text = cellText(
+    editor,
+    unconfirmed ? cell.value : row[column.key],
+    separator,
+    showDisplay ? column.display : undefined,
+  );
   const content = showDisplay ? display : text;
   // A label or badge is a pill: the pill is the affordance, not a dashed underline.
   const pill =
