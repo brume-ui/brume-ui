@@ -381,8 +381,11 @@ function CustomCell(props: CellProps<Extract<InlineEditor, { type: 'custom' }>>)
           aria-describedby={cell.error ? errorId : undefined}
           variant={variant}
           pending={cell.pending}
-          disabled={cell.pending}
-          onClick={() => setEditing(true)}
+          // Stay focusable when cancelling an in-flight save; pending activation is ignored.
+          aria-disabled={cell.pending || undefined}
+          onClick={() => {
+            if (!cell.pending) setEditing(true);
+          }}
         >
           {content}
         </CellEditButton>

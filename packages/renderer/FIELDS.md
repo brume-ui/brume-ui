@@ -422,7 +422,8 @@ preserved, not coerced to text. A 422 response uses the ordinary absolute column
 The failed draft stays open, editing clears its owned server errors, and a successful retry closes
 and returns focus to the cell button. Pending submission disables fields/Save and ignores duplicate
 save events. Escape/Cancel discards the local draft and returns focus; a pending request still uses
-the existing cell update response ordering. Only the current column and its descendants enter the session error map. Errors for request keys
+the existing cell update response ordering. After cancelling a pending save, the cell trigger stays
+focusable with `aria-disabled` and ignores activation until the request settles. Only the current column and its descendants enter the session error map. Errors for request keys
 `value`/`column` or unrelated keys keep the existing `failureMessage` toast (response `message`, or
 the localized generic failure if absent), including when mixed with field errors. They never become
 invisible form errors that block a retry. Every 422 remains an unsuccessful commit and retains the
