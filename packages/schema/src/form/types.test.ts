@@ -215,3 +215,34 @@ const pickerItemsToMultipleWire = (items: PickerSelectionContract['value']): Rel
 void wireToPickerItems;
 void pickerItemsToSingleWire;
 void pickerItemsToMultipleWire;
+
+const remoteTags: FieldDef = {
+  type: 'tags',
+  name: 'tags',
+  label: 'Tags',
+  remote: { url: '/options' },
+  max: 3,
+  maxLength: 20,
+};
+const exclusiveStaticChoice: FieldDef = {
+  type: 'select',
+  name: 'product',
+  label: 'Product',
+  options: [],
+  excludeSelectedIn: [{ scope: 'root', path: 'other' }],
+};
+// @ts-expect-error remote tags cannot be action/quick-create/upload-extra fields
+const flatRemoteTags: PlainFieldDef = remoteTags;
+// @ts-expect-error exclusion-enabled form choices cannot widen flat inputs
+const flatExclusiveChoice: PlainFieldDef = exclusiveStaticChoice;
+const hybridTags: FieldDef = {
+  type: 'tags',
+  name: 'tags',
+  label: 'Tags',
+  remote: { url: '/options' },
+  // @ts-expect-error remote tags cannot also carry local options
+  options: [],
+};
+void flatRemoteTags;
+void flatExclusiveChoice;
+void hybridTags;

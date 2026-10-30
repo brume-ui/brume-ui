@@ -17,6 +17,7 @@ import {
   FormStackedPage,
   FormStandalonePage,
 } from './pages/form';
+import { FormRelationsPage } from './pages/form-relations';
 import { ErrorPagePage, GridEmptyPage, GridPage } from './pages/grid';
 import { InputsPage } from './pages/inputs';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
@@ -52,6 +53,7 @@ export const ROUTES: Route[] = [
   { name: 'form', title: '表單 · 標籤在上', Component: FormStackedPage },
   { name: 'form-horizontal', title: '表單 · 標籤在左', Component: FormHorizontalPage },
   { name: 'form-page', title: '表單 · 獨立頁面', Component: FormStandalonePage },
+  { name: 'form-relations', title: '表單 · 遠端選項與互斥', Component: FormRelationsPage },
   { name: 'form-dialog', title: '表單 · 彈窗', Component: FormDialogPage },
   { name: 'grid', title: 'Grid（訂單）', Component: GridPage },
   { name: 'grid-empty', title: 'Grid（空）', Component: GridEmptyPage },

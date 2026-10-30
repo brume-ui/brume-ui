@@ -22,6 +22,7 @@ export {
   type ClientRule,
   ClientRuleSchema,
   type CustomFieldDef,
+  type ExclusiveChoiceFieldDef,
   type FieldBase,
   type FieldDef,
   FieldDefSchema,

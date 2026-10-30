@@ -35,6 +35,7 @@ export const en: Record<MessageKey, string> = {
   'combobox.loadMore': 'Load more',
   'combobox.empty': 'No matching options',
   'combobox.loadFailed': 'Couldn’t load the options. Try again.',
+  'combobox.unavailable': 'Unavailable: {value}',
   'combobox.retry': 'Retry',
   'combobox.clear': 'Clear',
   'combobox.remove': 'Remove “{label}”',

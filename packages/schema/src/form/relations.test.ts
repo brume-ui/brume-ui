@@ -220,3 +220,29 @@ describe('recursive form wire contracts', () => {
     expect(check('FilterInput', { type: 'selectTable', remote: { url: '/other' } })).toBe(false);
   });
 });
+
+describe('form-only remote and exclusive choices', () => {
+  it.each(['select', 'multipleSelect', 'tags'])(
+    'accepts remote %s without widening plain inputs',
+    (type) => {
+      const field = { type, name: 'choice', label: 'Choice', remote: { url: '/options' } };
+      expect(check('FieldDef', field)).toBe(true);
+      expect(check('PlainFieldDef', field)).toBe(false);
+      expect(check('FieldDef', { ...field, options: [] })).toBe(false);
+    },
+  );
+  it.each(['select', 'multipleSelect', 'radio', 'checkbox', 'tags'])(
+    'accepts static exclusive %s without widening plain inputs',
+    (type) => {
+      const field = {
+        type,
+        name: 'choice',
+        label: 'Choice',
+        options: [],
+        excludeSelectedIn: [{ scope: 'root', path: 'other' }],
+      };
+      expect(check('FieldDef', field)).toBe(true);
+      expect(check('PlainFieldDef', field)).toBe(false);
+    },
+  );
+});

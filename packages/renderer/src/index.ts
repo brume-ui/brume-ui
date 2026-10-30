@@ -10,6 +10,7 @@ export {
 } from './form/conditions';
 export type { FieldComponent, FieldProps } from './form/contract';
 export { type FieldErrors, scopeErrors, unclaimedErrors } from './form/errors';
+export { excludedChoiceValues } from './form/exclusions';
 export { FormDialog, type FormDialogProps } from './form/form-dialog';
 export { FormPageView } from './form/form-page';
 export { FormView, type FormViewHandle, isLongField, sectionErrorKeys } from './form/form-view';
@@ -23,6 +24,15 @@ export {
 export { useFieldConditions } from './form/use-field-conditions';
 export { type FormApi, useFormState } from './form/use-form-state';
 export { useFormSubmit } from './form/use-form-submit';
+export {
+  type FormRemoteOptionsConfig,
+  type OptionsQuery,
+  type RemoteOptionsChannel,
+  type RemoteOptionsConfig,
+  type RemoteOptionsSource,
+  type StandaloneRemoteOptionsConfig,
+  useRemoteOptions,
+} from './form/use-remote-options';
 export { collectFields, validateValue } from './form/validate';
 export {
   COLUMN_VISIBILITY_KEY,

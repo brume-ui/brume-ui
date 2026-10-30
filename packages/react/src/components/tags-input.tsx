@@ -1,10 +1,11 @@
-import type { Option } from '@brume-ui/brume-schema';
+import type { Option, OptionItem } from '@brume-ui/brume-schema';
 import * as RadixPopover from '@radix-ui/react-popover';
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { cn } from '../cn';
 import { HighlightIndicator, useHighlightIndicator } from '../motion/highlight';
 import { useBrume } from '../provider';
 import { Chip } from './chip';
+import type { ComboboxLoader } from './combobox';
 import { ariaOn, type FieldControlProps } from './field';
 import { CONTROL_BORDER, CONTROL_SKIN, HIGHLIGHT_RING } from './focus';
 import { POPOVER_SURFACE } from './popover';
@@ -15,6 +16,13 @@ export interface TagsInputProps extends FieldControlProps {
   onChange(value: string[]): void;
   /** Suggestions shown in a listbox while typing; any other text can still be added. */
   options?: Option[];
+  load?: ComboboxLoader;
+  resolveLabels?(values: string[]): Promise<OptionItem[]>;
+  scopeKey?: unknown;
+  cancelLabels?(): void;
+  cancelLoad?(): void;
+  /** Sibling exclusions apply to typing, paste and suggestion selection. */
+  blockedValues?: string[];
   /** At this many tags the text input is disabled (chips stay removable). */
   max?: number;
   /**
@@ -42,6 +50,12 @@ export function TagsInput({
   value,
   onChange,
   options,
+  load,
+  resolveLabels,
+  scopeKey,
+  cancelLabels,
+  cancelLoad,
+  blockedValues,
   onBlur,
   max,
   maxLength,
@@ -66,6 +80,7 @@ export function TagsInput({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const composing = useRef(false);
+  const [composingState, setComposing] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   /**
    * Where focus goes after the next change of tags: an add that fills the last slot disables the
@@ -75,15 +90,138 @@ export function TagsInput({
   const refocus = useRef<'input' | 'lastChip' | null>(null);
 
   const atMax = max !== undefined && value.length >= max;
-  const labelOf = (v: string) => options?.find((o) => o.value === v)?.label ?? v;
+  const [known, setKnown] = useState<{ scope: unknown; items: OptionItem[] }>({
+    scope: scopeKey,
+    items: [],
+  });
+  const [labelState, setLabelState] = useState<{
+    scope: unknown;
+    missing: string[];
+    failed: boolean;
+    loading: boolean;
+  }>({ scope: scopeKey, missing: [], failed: false, loading: false });
+  const unavailable = labelState.scope === scopeKey ? labelState.missing : [];
+  const labelFailure = labelState.scope === scopeKey && labelState.failed;
+  const labelLoading = labelState.scope === scopeKey && labelState.loading;
+  const [labelRetry, setLabelRetry] = useState(0);
+  const [remoteState, setRemote] = useState<{
+    scope: unknown;
+    items: OptionItem[];
+    page: number;
+    hasMore: boolean;
+  }>({ scope: scopeKey, items: [], page: 0, hasMore: false });
+  const remote =
+    remoteState.scope === scopeKey ? remoteState : { items: [], page: 0, hasMore: false };
+  const [loading, setLoading] = useState(false);
+  const [failure, setFailure] = useState(false);
+  const generation = useRef(0);
+  const scopeRef = useRef(scopeKey);
+  scopeRef.current = scopeKey;
+  const cancelLoadRef = useRef(cancelLoad);
+  cancelLoadRef.current = cancelLoad;
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  const remoteMode = !!load;
+  const labelOf = (v: string) =>
+    unavailable.includes(v)
+      ? t('combobox.unavailable', { value: v })
+      : ((known.scope === scopeKey ? known.items.find((o) => o.value === v)?.label : undefined) ??
+        options?.find((o) => o.value === v)?.label ??
+        v);
+  const valuesKey = JSON.stringify(value);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: explicit scope and selection own hydration, not callback identity.
+  useEffect(() => {
+    setLabelState({
+      scope: scopeKey,
+      missing: [],
+      failed: false,
+      loading: !!resolveLabels && value.length > 0,
+    });
+    if (!resolveLabels || value.length === 0) {
+      cancelLabels?.();
+      return;
+    }
+    let current = true;
+    const scope = scopeKey;
+    resolveLabels(value).then(
+      (items) => {
+        if (!current || scopeRef.current !== scope) return;
+        setKnown({ scope, items });
+        setLabelState({
+          scope,
+          missing: value.filter((v) => !items.some((o) => o.value === v)),
+          failed: false,
+          loading: false,
+        });
+      },
+      () => {
+        if (current && scopeRef.current === scope)
+          setLabelState({ scope, missing: [], failed: true, loading: false });
+      },
+    );
+    return () => {
+      current = false;
+      cancelLabels?.();
+    };
+  }, [valuesKey, scopeKey, labelRetry]);
+  const fetchPage = useCallback(async (q: string, page: number) => {
+    const loader = loadRef.current;
+    if (!loader) return;
+    const token = ++generation.current;
+    const scope = scopeRef.current;
+    setLoading(true);
+    setFailure(false);
+    try {
+      const result = await loader({ q, page });
+      if (token !== generation.current) return;
+      setRemote((prev) => ({
+        scope,
+        items: page === 1 ? result.options : [...prev.items, ...result.options],
+        page,
+        hasMore: result.hasMore,
+      }));
+    } catch {
+      if (token === generation.current) setFailure(true);
+    } finally {
+      if (token === generation.current) setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    generation.current++;
+    setRemote({ scope: scopeKey, items: [], page: 0, hasMore: false });
+    setFailure(false);
+    setLoading(remoteMode && open && !composingState);
+    if (!remoteMode || !open || composingState) return;
+    const timer = setTimeout(() => {
+      void fetchPage(query, 1);
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      generation.current++;
+      cancelLoadRef.current?.();
+    };
+  }, [remoteMode, open, query, scopeKey, composingState, fetchPage]);
+  const isBlocked = (v: string) => !!blockedValues?.includes(v) && !value.includes(v);
+  const sourceOptions = remoteMode ? remote.items : options;
   const q = query.trim().toLowerCase();
   const fits = (v: string) => maxLength === undefined || v.length <= maxLength;
   const cut = (text: string) => (maxLength === undefined ? text : text.slice(0, maxLength));
-  const visible = (options ?? []).filter(
+  const visible = (sourceOptions ?? []).filter(
     (o) =>
-      !o.disabled && fits(o.value) && !value.includes(o.value) && o.label.toLowerCase().includes(q),
+      !o.disabled &&
+      !isBlocked(o.value) &&
+      fits(o.value) &&
+      !value.includes(o.value) &&
+      (remoteMode || o.label.toLowerCase().includes(q)),
   );
-  const listOpen = open && !atMax && visible.length > 0;
+  const listOpen = open && !atMax && (remoteMode || visible.length > 0);
+  const status = loading
+    ? t('common.loading')
+    : failure
+      ? t('combobox.loadFailed')
+      : visible.length === 0
+        ? t('combobox.empty')
+        : '';
 
   const focusInput = () => document.getElementById(inputId)?.focus();
 
@@ -101,14 +239,14 @@ export function TagsInput({
   /** A typed tag: trimmed; the exact label of an option stands for that option's value. */
   const toValue = (text: string) => {
     const trimmed = text.trim();
-    return options?.find((o) => o.label === trimmed && !o.disabled)?.value ?? cut(trimmed);
+    return sourceOptions?.find((o) => o.label === trimmed && !o.disabled)?.value ?? cut(trimmed);
   };
 
   /** Adds each non-empty value not already there, up to `max`. */
   const add = (values: string[]) => {
     const next = [...value];
     for (const v of values) {
-      if (v === '' || !fits(v) || next.includes(v)) continue;
+      if (v === '' || !fits(v) || isBlocked(v) || next.includes(v)) continue;
       if (max === undefined || next.length < max) next.push(v);
     }
     if (next.length === value.length) return;
@@ -158,7 +296,10 @@ export function TagsInput({
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     // keyCode 229: Safari sends the IME's committing Enter after compositionend.
-    if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
+    if (composing.current || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) {
+      if (e.key === 'Enter') e.preventDefault();
+      return;
+    }
     switch (e.key) {
       case 'Enter':
       case ',':
@@ -169,7 +310,7 @@ export function TagsInput({
         break;
       case 'ArrowDown':
       case 'ArrowUp':
-        if (!options) return;
+        if (!options && !remoteMode) return;
         e.preventDefault();
         move(e.key === 'ArrowDown' ? 1 : -1);
         break;
@@ -191,15 +332,16 @@ export function TagsInput({
     }
   };
 
-  const comboboxProps = options
-    ? {
-        role: 'combobox',
-        'aria-expanded': listOpen,
-        'aria-controls': listboxId,
-        'aria-activedescendant': listOpen && active >= 0 ? optionId(active) : undefined,
-        'aria-autocomplete': 'list' as const,
-      }
-    : {};
+  const comboboxProps =
+    options || remoteMode
+      ? {
+          role: 'combobox',
+          'aria-expanded': listOpen,
+          'aria-controls': listboxId,
+          'aria-activedescendant': listOpen && active >= 0 ? optionId(active) : undefined,
+          'aria-autocomplete': 'list' as const,
+        }
+      : {};
 
   return (
     <RadixPopover.Root
@@ -267,9 +409,11 @@ export function TagsInput({
             }}
             onCompositionStart={() => {
               composing.current = true;
+              setComposing(true);
             }}
             onCompositionEnd={(e) => {
               composing.current = false;
+              setComposing(false);
               take(e.currentTarget.value);
             }}
             onClick={() => setOpen(true)}
@@ -283,7 +427,28 @@ export function TagsInput({
           />
         </div>
       </RadixPopover.Anchor>
-      {options ? (
+      {remoteMode ? (
+        <div role="status" className="br:sr-only">
+          {listOpen ? status : ''}
+        </div>
+      ) : null}
+      {labelLoading ? (
+        <div role="status" className="br:sr-only">
+          {t('common.loading')}
+        </div>
+      ) : null}
+      {unavailable.length > 0 ? (
+        <div role="status">{unavailable.map(labelOf).join(', ')}</div>
+      ) : null}
+      {labelFailure ? (
+        <div role="status">
+          {t('combobox.loadFailed')}{' '}
+          <button type="button" onClick={() => setLabelRetry((v) => v + 1)}>
+            {t('combobox.retry')}
+          </button>
+        </div>
+      ) : null}
+      {options || remoteMode ? (
         <RadixPopover.Portal>
           {/* biome-ignore lint/a11y/useValidAriaRole: clears Radix's role="dialog"; the listbox inside carries the semantics and focus stays in the input. */}
           <RadixPopover.Content
@@ -333,6 +498,27 @@ export function TagsInput({
                 </div>
               ))}
             </div>
+            {remoteMode ? <div aria-hidden="true">{status}</div> : null}
+            {remoteMode && failure && !loading ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void fetchPage(query, remote.page + 1);
+                }}
+              >
+                {t('combobox.retry')}
+              </button>
+            ) : null}
+            {remoteMode && remote.hasMore && !loading && !failure ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void fetchPage(query, remote.page + 1);
+                }}
+              >
+                {t('combobox.loadMore')}
+              </button>
+            ) : null}
           </RadixPopover.Content>
         </RadixPopover.Portal>
       ) : null}

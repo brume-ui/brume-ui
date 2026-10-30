@@ -199,3 +199,45 @@ object write preserves unchanged sibling errors. Draft values are never stripped
 Shared cross-language cases live in `packages/schema/fixtures/conditions/evaluation.json`.
 They cover strict operands, exact empty semantics, row origins, booleans, numeric/money values,
 and conservative invalid-controller behavior. Backend parity tests vendor the bytes independently.
+
+### Remote choices and shared picker request seam
+
+`useRemoteOptions({remote?, form, path, rowContext?, active?})` returns `scopeKey`, `enabled`,
+`request<T extends OptionsResponse = OptionsResponse>(query, channel?)`, `load({q,page})`,
+`resolveLabels(ids)`, and `cancel('search'|'labels')`. `OptionsQuery` has optional `q`, `page`,
+`perPage`, `section`, and `values`. Generic `request<PickerSearchResponse>` preserves columns and
+sections; it does not project responses to Combobox items. `values` defaults to the independent
+labels channel; other queries default to search. A newer request cancels only its own channel.
+All traffic uses `BrumeAdapter.request`, abort signals, and generation fences for noncooperative
+adapters. Rejected/obsolete requests never clear draft values.
+
+`scopeKey` is an opaque identity token for endpoint, canonical dependencies, canonical declaration,
+row-context chain, adapter, mounted form `stateId`, and `resetVersion`. Numeric movement alone does
+not change it when stable identity and dependencies remain unchanged. `path` must track that same
+row at its current location; `rowContext` must agree with its current descriptor. Removed ownership
+or `active:false` invalidates requests. Future mounted repeater/picker wrappers must use stable
+`_brume.key` / selected source `id` keys, unmount removed rows, and carry the outer-to-inner context.
+Removing/reselecting the same ID creates a fresh mounted owner or an intervening scope/selection
+generation; old replies cannot revive it.
+
+Combobox and TagsInput accept `scopeKey` to invalidate selected-label and search-page caches while
+retaining the typed query/open state. `cancelLabels` cancels hydration on selection clear/remove,
+reset, and unmount. Search and selected hydration have independent lifecycles. Loading, empty,
+failed/retry and unavailable states use all three locales. Composition Enter prevents native form
+submission; Tags otherwise retains its free-text, comma, paste, max/maxLength and chip behavior.
+`excludedChoiceValues(fields, values, path)` exports the shared exclusion evaluator for picker reuse.
+Exclusions are recomputed at render time so existing loaded pages respond to sibling changes.
+
+Focused MemoryAdapter fixture: playground `/#/form-relations`, with Category A/B/C dependency
+controls, A/B reply delays, failure/retry, reset, hierarchical options, remote tag suggestions and
+fixed sibling choices with stable row swap. This fixture does not implement the repeater/picker UI.
+
+The same hook also accepts `StandaloneRemoteOptionsConfig` for Grid sources:
+`{remote?:{url:string,dependsOn?:never}, ownerKey:string, resolvedDepends?:Record<string,unknown>,
+resetKey?:unknown, rowContext?:RowContext, active?:boolean}`. This branch has no FormApi or path;
+it owns a stable token for its mounted lifetime. `ownerKey` is the server declaration/source key,
+`resolvedDepends` is explicit canonical server-declared source context (not arbitrary URL state),
+and `resetKey` must change on an explicit Grid clear/reset/invalidation even when values are
+identical. Endpoint/context/owner changes and unmount invalidate both channels. Standalone callers
+cannot provide unresolved Form `dependsOn` paths. `RemoteOptionsConfig` is the union of this shape
+and `FormRemoteOptionsConfig`; `RemoteOptionsSource` publishes the opaque scope token and methods.

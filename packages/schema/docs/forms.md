@@ -333,3 +333,19 @@ selected-item extras 的 row context 以 declaration 內 selected id 推導 stab
 
 數字 `field` 與 stable context 的合法性、mode-specific identity、重複身分、source scope、dependency cycles 與 graph persistence
 需要 runtime／server 檢查；JSON Schema 只描述 wire 結構，不能提供這些授權保證。
+
+Form-only remote choices include `tags` with `max` and `maxLength`. Remote Tags supply suggestions;
+they retain normal free-text entry. Missing source labels never delete draft values. Applications
+must validate configured tag rules and exclusions on persistence; remote suggestions alone do not
+make Tags source-only. Select/multipleSelect and relation IDs must remain in the declared source
+scope; omitted hydration IDs are visibly unavailable and must not receive a global label fallback.
+
+Static Form `select`, `multipleSelect`, `radio`, `checkbox`, and `tags` may declare `excludeSelectedIn`
+without a remote endpoint. Remote `select`, `multipleSelect`, `tags`, and `relation` share the same
+exclusion declaration. Root/row safe paths are allowed; only exclusions permit `*` to expand current
+declared rows. Exclusions flatten scalar/array values to string identities after the same field
+canonicalization used by conditions; declared relation values contribute selected `id` values.
+The current resolved field is skipped, current selections remain removable, and other sibling
+choices are disabled/filtered. Tags reject excluded exact values through typing, paste, and suggestions.
+Symmetric exclusions are allowed and do not create activity cycles. Flat Action, quick-create and
+upload-extra `PlainFieldDef` inputs still reject both `remote` and `excludeSelectedIn`.

@@ -297,3 +297,36 @@ describe('Combobox', () => {
     expect(live.textContent).toBe('沒有符合的選項');
   });
 });
+
+it('prevents composition Enter submission and resumes an interrupted same-query request', async () => {
+  vi.useFakeTimers();
+  try {
+    const first = deferred<{ options: OptionItem[]; hasMore: boolean }>();
+    let calls = 0;
+    const load: ComboboxLoader = () =>
+      ++calls === 1 ? first.promise : Promise.resolve({ options: opts('Fresh'), hasMore: false });
+    render(
+      <form>
+        <Harness label="Choice" initial="" load={load} />
+      </form>,
+    );
+    const input = screen.getByRole('combobox');
+    fireEvent.click(input);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    fireEvent.compositionStart(input);
+    expect(fireEvent.keyDown(input, { key: 'Enter', isComposing: true })).toBe(false);
+    fireEvent.compositionEnd(input);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    expect(screen.getByRole('option', { name: 'Fresh' })).toBeTruthy();
+    await act(async () => {
+      first.resolve({ options: opts('Obsolete'), hasMore: false });
+    });
+    expect(screen.queryByRole('option', { name: 'Obsolete' })).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});

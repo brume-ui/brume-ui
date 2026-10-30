@@ -38,6 +38,13 @@ export interface ComboboxProps {
   load?: ComboboxLoader;
   /** Labels of selected values that are not among the loaded options (remote mode). */
   resolveLabels?(values: string[]): Promise<OptionItem[]>;
+  /** Changes when endpoint/dependencies/row ownership/reset change; keeps query and open state. */
+  scopeKey?: unknown;
+  /** Cancels the separate hydration request on clear/remove/unmount. */
+  cancelLabels?(): void;
+  cancelLoad?(): void;
+  /** Applied at render time so changed sibling selections affect already-loaded pages. */
+  optionDisabled?(value: string): boolean;
   placeholder?: string;
   /** Accessible name of the field and its list. */
   label: string;
@@ -70,6 +77,10 @@ export function Combobox({
   options,
   load,
   resolveLabels,
+  scopeKey,
+  cancelLabels,
+  cancelLoad,
+  optionDisabled,
   placeholder,
   label,
   invalid,
@@ -95,24 +106,53 @@ export function Combobox({
   const [composing, setComposing] = useState(false);
 
   // Labels of every option seen (local, loaded, resolved), so selections keep their label.
-  const [known, setKnown] = useState<ReadonlyMap<string, OptionItem>>(() => new Map());
-  const remember = useCallback((items: OptionItem[]) => {
-    if (items.length === 0) return;
-    setKnown((prev) => {
-      const next = new Map(prev);
-      for (const o of items) next.set(o.value, o);
-      return next;
-    });
-  }, []);
+  const [knownState, setKnown] = useState<{
+    scope: unknown;
+    items: ReadonlyMap<string, OptionItem>;
+  }>(() => ({ scope: scopeKey, items: new Map() }));
+  const known = knownState.scope === scopeKey ? knownState.items : new Map<string, OptionItem>();
+  const currentScope = useRef(scopeKey);
+  currentScope.current = scopeKey;
+  const [labelState, setLabelState] = useState<{
+    scope: unknown;
+    missing: string[];
+    failed: boolean;
+    loading: boolean;
+  }>({ scope: scopeKey, missing: [], failed: false, loading: false });
+  const unavailable = labelState.scope === scopeKey ? labelState.missing : [];
+  const labelFailure = labelState.scope === scopeKey && labelState.failed;
+  const labelLoading = labelState.scope === scopeKey && labelState.loading;
+  const [labelRetry, setLabelRetry] = useState(0);
+  const remember = useCallback(
+    (items: OptionItem[]) => {
+      if (items.length === 0) return;
+      setKnown((prev) => {
+        const next = new Map(prev.scope === scopeKey ? prev.items : []);
+        for (const o of items) next.set(o.value, o);
+        return { scope: scopeKey, items: next };
+      });
+    },
+    [scopeKey],
+  );
   const labelOf = (v: string) =>
-    known.get(v)?.label ?? options?.find((o) => o.value === v)?.label ?? v;
+    unavailable.includes(v)
+      ? t('combobox.unavailable', { value: v })
+      : (known.get(v)?.label ?? options?.find((o) => o.value === v)?.label ?? v);
 
   // Remote state. `latest` numbers requests; only the newest one may write results.
-  const [remote, setRemote] = useState<{ items: OptionItem[]; page: number; hasMore: boolean }>({
+  const [remoteState, setRemote] = useState<{
+    scope: unknown;
+    items: OptionItem[];
+    page: number;
+    hasMore: boolean;
+  }>({
+    scope: scopeKey,
     items: [],
     page: 0,
     hasMore: false,
   });
+  const remote =
+    remoteState.scope === scopeKey ? remoteState : { items: [], page: 0, hasMore: false };
   const [loading, setLoading] = useState(false);
   /** The request that failed, so 「重試」 (or ↓) asks for the same page again. */
   const [failure, setFailure] = useState<{ q: string; page: number } | null>(null);
@@ -120,6 +160,8 @@ export function Combobox({
   /** Set synchronously when a request starts: several scroll events in one frame start one load. */
   const inFlight = useRef(false);
   const loadedFor = useRef<string | null>(null);
+  const cancelLoadRef = useRef(cancelLoad);
+  cancelLoadRef.current = cancelLoad;
   const loadRef = useRef(load);
   loadRef.current = load;
 
@@ -133,15 +175,16 @@ export function Combobox({
       setFailure(null);
       try {
         const res = await loader({ q, page });
-        if (request !== latest.current) return;
+        if (request !== latest.current || currentScope.current !== scopeKey) return;
         remember(res.options);
         setRemote((prev) => ({
+          scope: scopeKey,
           items: page === 1 ? res.options : [...prev.items, ...res.options],
           page,
           hasMore: res.hasMore,
         }));
       } catch {
-        if (request !== latest.current) return;
+        if (request !== latest.current || currentScope.current !== scopeKey) return;
         setFailure({ q, page });
       } finally {
         if (request === latest.current) {
@@ -150,10 +193,22 @@ export function Combobox({
         }
       }
     },
-    [remember],
+    [remember, scopeKey],
   );
 
   const remoteMode = load !== undefined;
+  useEffect(() => {
+    latest.current++;
+    inFlight.current = false;
+    loadedFor.current = null;
+    setLoading(false);
+    setFailure(null);
+    setRemote({ scope: scopeKey, items: [], page: 0, hasMore: false });
+    setActive(-1);
+    return () => {
+      latest.current++;
+    };
+  }, [scopeKey]);
   useEffect(() => {
     if (!remoteMode || !open || composing || loadedFor.current === query) return;
     const timer = setTimeout(() => {
@@ -161,7 +216,14 @@ export function Combobox({
       setActive(-1);
       void fetchPage(query, 1);
     }, REMOTE_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      latest.current++;
+      inFlight.current = false;
+      loadedFor.current = null;
+      setLoading(false);
+      cancelLoadRef.current?.();
+    };
   }, [remoteMode, open, composing, query, fetchPage]);
 
   const loadMore = () => {
@@ -178,30 +240,55 @@ export function Combobox({
   const resetRemote = () => {
     if (!remoteMode) return;
     latest.current++;
+    cancelLoad?.();
     inFlight.current = false;
     loadedFor.current = null;
     setLoading(false);
     setFailure(null);
-    setRemote({ items: [], page: 0, hasMore: false });
+    setRemote({ scope: scopeKey, items: [], page: 0, hasMore: false });
   };
 
-  // Ask once for labels of selected values nobody has described yet.
-  const asked = useRef(new Set<string>());
-  const valuesKey = values.join('\u0000');
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed by the selected values.
+  const valuesKey = JSON.stringify(values);
+  // Hydration has its own lifecycle: removing and reselecting the same ID starts fresh.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selection and explicit scope own the lifecycle; callback identity does not.
   useEffect(() => {
-    if (!resolveLabels) return;
-    const missing = values.filter(
-      (v) => !known.has(v) && !options?.some((o) => o.value === v) && !asked.current.has(v),
-    );
-    if (missing.length === 0) return;
-    for (const v of missing) asked.current.add(v);
-    resolveLabels(missing).then(remember, () => {
-      for (const v of missing) asked.current.delete(v);
+    setLabelState({
+      scope: scopeKey,
+      missing: [],
+      failed: false,
+      loading: !!resolveLabels && values.length > 0,
     });
-  }, [valuesKey]);
+    if (!resolveLabels || values.length === 0) {
+      cancelLabels?.();
+      return;
+    }
+    let current = true;
+    const scope = scopeKey;
+    resolveLabels(values).then(
+      (items) => {
+        if (!current || currentScope.current !== scope) return;
+        remember(items);
+        setLabelState({
+          scope,
+          missing: values.filter((v) => !items.some((o) => o.value === v)),
+          failed: false,
+          loading: false,
+        });
+      },
+      () => {
+        if (current && currentScope.current === scope)
+          setLabelState({ scope, missing: [], failed: true, loading: false });
+      },
+    );
+    return () => {
+      current = false;
+      cancelLabels?.();
+    };
+  }, [valuesKey, scopeKey, labelRetry]);
 
-  const visible = remoteMode ? remote.items : (options ?? []).filter((o) => matches(o, query));
+  const visible = (
+    remoteMode ? remote.items : (options ?? []).filter((o) => matches(o, query))
+  ).map((o) => ({ ...o, disabled: o.disabled || optionDisabled?.(o.value) }));
 
   const close = () => {
     setOpen(false);
@@ -260,7 +347,10 @@ export function Combobox({
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     // keyCode 229: Safari sends the IME's committing Enter after compositionend.
-    if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
+    if (composing || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) {
+      if (e.key === 'Enter') e.preventDefault();
+      return;
+    }
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -416,6 +506,22 @@ export function Combobox({
       <div role="status" className="br:sr-only">
         {open ? status : ''}
       </div>
+      {labelLoading ? (
+        <div role="status" className="br:sr-only">
+          {t('common.loading')}
+        </div>
+      ) : null}
+      {unavailable.length > 0 ? (
+        <div role="status">{unavailable.map(labelOf).join(', ')}</div>
+      ) : null}
+      {labelFailure ? (
+        <div role="status">
+          {t('combobox.loadFailed')}{' '}
+          <button type="button" onClick={() => setLabelRetry((v) => v + 1)}>
+            {t('combobox.retry')}
+          </button>
+        </div>
+      ) : null}
       <RadixPopover.Portal>
         {/* biome-ignore lint/a11y/useValidAriaRole: clears Radix's role="dialog"; the listbox inside carries the semantics and focus stays in the input. */}
         <RadixPopover.Content

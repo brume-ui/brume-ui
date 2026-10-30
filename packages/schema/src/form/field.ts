@@ -83,7 +83,16 @@ export type RemoteChoiceFieldDef = FieldBase & {
 } & (
     | { type: 'select'; searchable?: boolean; clearable?: boolean }
     | { type: 'multipleSelect'; max?: number }
+    | { type: 'tags'; max?: number; maxLength?: number }
   );
+
+/** Form-only static choices may exclude siblings; flat inputs stay closed. */
+type ExclusiveChoice<T> = T extends unknown
+  ? Omit<T, 'excludeSelectedIn'> & { excludeSelectedIn?: ExclusionPath[] }
+  : never;
+export type ExclusiveChoiceFieldDef = ExclusiveChoice<
+  Extract<PlainFieldDef, { type: 'select' | 'multipleSelect' | 'tags' | 'radio' | 'checkbox' }>
+>;
 
 export type RelationFieldDef = FieldBase & {
   type: 'relation';
@@ -107,8 +116,9 @@ export type CustomFieldDef = FieldBase & {
   displayOnly?: boolean;
 };
 export type FieldDef =
-  | PlainFieldDef
+  | Exclude<PlainFieldDef, { type: 'select' | 'multipleSelect' | 'tags' | 'radio' | 'checkbox' }>
   | RemoteChoiceFieldDef
+  | ExclusiveChoiceFieldDef
   | RelationFieldDef
   | RepeaterFieldDef
   | CustomFieldDef
@@ -220,6 +230,14 @@ export const PlainFieldDefSchema = PlainFieldDefRaw as unknown as TSchema & {
 /** Type-only import avoids a runtime field/layout cycle; the sole wire target is FormNodeRaw. */
 const formNodeRef = Type.Ref('FormNode') as TRef & { static: FormNode };
 
+const exclusiveVariant = <P extends TProperties>(schema: { properties: P }) => {
+  const { excludeSelectedIn: _excluded, ...properties } = schema.properties;
+  return Type.Object(
+    { ...properties, excludeSelectedIn: Type.Optional(Type.Array(ExclusionPathSchema)) },
+    { additionalProperties: false },
+  );
+};
+
 export const FieldDefRaw = Type.Union(
   [
     PlainFieldDefRaw,
@@ -236,6 +254,17 @@ export const FieldDefRaw = Type.Union(
       max: Type.Optional(Type.Integer({ minimum: 1 })),
       excludeSelectedIn: Type.Optional(Type.Array(ExclusionPathSchema)),
     }),
+    variant(literals('tags'), {
+      remote: RemoteOptionsSchema,
+      options: Type.Optional(Type.Never()),
+      max: Type.Optional(Type.Integer({ minimum: 1 })),
+      maxLength: count(),
+      excludeSelectedIn: Type.Optional(Type.Array(ExclusionPathSchema)),
+    }),
+    exclusiveVariant(plainFields[11]),
+    exclusiveVariant(plainFields[12]),
+    exclusiveVariant(plainFields[13]),
+    exclusiveVariant(plainFields[15]),
     variant(literals('relation'), {
       multiple: Type.Boolean(),
       remote: RemoteOptionsSchema,

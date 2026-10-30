@@ -48,3 +48,12 @@
 ## 挑選器
 
 `PickerSearchResponse` 的 `columns` 與 `sections` 供挑選器顯示欄位與分區。挑選器搜尋打的是同一個 `endpoints.options`（`{source}` 為挑選器的來源鍵），多帶 `section=<key>` 選分區，`key` 取自 `sections[].key`；省略時為第一個分區。參數名稱定義在 `OPTIONS_PARAMS`。挑選器 UI 在子計畫 3 實作。
+
+Form options and picker requests also accept `rowContext` (`OPTIONS_PARAMS.rowContext`): a JSON
+outer-to-inner `RowContext` chain, separate from `depends`. Omission and `[]` both mean root.
+Each entry carries a canonical declaration path and stable key, plus the related child ID for
+relation repeater rows, no ID for JSON rows, or selected source ID for picker selections. Picker
+keys are exactly that selected source string ID. An intermediary child ID must be resolved through
+the authoritative parent association, never substituted for a selected source ID. The server must
+validate this chain before reevaluating readonly dependencies and applying the declared query scope.
+Array hydration uses adapter query `{value: ids}` so transport emits `value[]=...` once.

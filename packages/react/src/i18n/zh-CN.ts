@@ -35,6 +35,7 @@ export const zhCN: Record<MessageKey, string> = {
   'combobox.loadMore': '加载更多',
   'combobox.empty': '没有符合的选项',
   'combobox.loadFailed': '选项加载失败，请再试一次。',
+  'combobox.unavailable': '无法使用：{value}',
   'combobox.retry': '重试',
   'combobox.clear': '清除',
   'combobox.remove': '移除“{label}”',

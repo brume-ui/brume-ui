@@ -29,6 +29,8 @@ export const OPTIONS_PARAMS = {
   section: 'section',
   /** JSON object of declaration-known dependency names and resolved values. */
   depends: 'depends',
+  /** JSON-encoded canonical row identity chain; omitted and [] both mean root. */
+  rowContext: 'rowContext',
 } as const;
 
 /** GET endpoints.options?q=&page=&per_page=&value[]= */

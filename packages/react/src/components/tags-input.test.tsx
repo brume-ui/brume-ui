@@ -186,3 +186,23 @@ describe('TagsInput', () => {
     ]);
   });
 });
+
+it('prevents composing Enter from reaching native form submission and rejects excluded pasted/typed values', () => {
+  const onChange = vi.fn();
+  render(
+    <BrumeProvider adapter={createMemoryAdapter()}>
+      <form>
+        <TagsInput label="Tags" value={[]} onChange={onChange} blockedValues={['taken']} />
+      </form>
+    </BrumeProvider>,
+  );
+  const input = screen.getByRole('textbox', { name: 'Tags' });
+  fireEvent.compositionStart(input);
+  expect(fireEvent.keyDown(input, { key: 'Enter', isComposing: true })).toBe(false);
+  fireEvent.compositionEnd(input, { data: '完成' });
+  fireEvent.change(input, { target: { value: 'taken' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(onChange).not.toHaveBeenCalled();
+  fireEvent.change(input, { target: { value: 'taken,free,' } });
+  expect(onChange).toHaveBeenLastCalledWith(['free']);
+});
