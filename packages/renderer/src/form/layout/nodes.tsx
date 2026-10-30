@@ -1,5 +1,5 @@
 import { Alert, Card, FormDivider, FormHeading } from '@brume-ui/brume-react';
-import type { FieldDef, FormNode } from '@brume-ui/brume-schema';
+import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
 import type { CSSProperties, ReactNode } from 'react';
 import { scopeErrors } from '../errors';
 import { resolveField } from '../registry';
@@ -26,6 +26,7 @@ export interface NodesProps {
   uploadUrl?: string;
   row?: boolean;
   sectionIdPrefix?: string;
+  rowContext?: RowContext;
 }
 export function Nodes(props: NodesProps) {
   const { nodes, api, idPrefix, layout, prefix = '', uploadUrl, row } = props;
@@ -39,6 +40,8 @@ export function Nodes(props: NodesProps) {
         if (node.type === 'field') {
           const def = node.field;
           const path = prefix ? `${prefix}.${def.name}` : def.name;
+          const activity = api.getField(path);
+          if (activity?.visible === false) return null;
           const Component = resolveField(def.type);
           const errors = scopeErrors(api.errors, path);
           const control = Component ? (
@@ -53,9 +56,10 @@ export function Nodes(props: NodesProps) {
               onBlur={() => api.touch(path)}
               errors={errors}
               invalid={Object.values(errors).some((v) => v.length > 0)}
-              readOnly={Boolean(def.readOnly)}
-              disabled={Boolean(def.disabled || api.submitting)}
+              readOnly={activity?.readOnly ?? Boolean(def.readOnly)}
+              disabled={Boolean(activity?.enabled === false || def.disabled || api.submitting)}
               uploadUrl={uploadUrl}
+              rowContext={activity?.rowContext ?? props.rowContext}
             />
           ) : (
             <Alert tone="warning">Unknown field type: {def.type}</Alert>

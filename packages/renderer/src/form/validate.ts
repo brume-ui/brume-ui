@@ -1,5 +1,5 @@
 import type { ClientRule, FieldDef, FormNode } from '@brume-ui/brume-schema';
-import { getAt, joinPath } from './paths';
+import { assertSafePath, joinPath } from './paths';
 
 function isEmpty(value: unknown): boolean {
   return (
@@ -68,7 +68,14 @@ function passes(rule: ClientRule, value: unknown): boolean {
 }
 
 export function validateValue(def: FieldDef, value: unknown): string | null {
-  if (def.readOnly || def.type === 'display' || def.type === 'hidden') return null;
+  if (
+    def.readOnly ||
+    def.disabled ||
+    def.type === 'display' ||
+    def.type === 'hidden' ||
+    (def.type === 'custom' && def.displayOnly)
+  )
+    return null;
   for (const rule of def.rules ?? []) {
     if (rule.rule !== 'required' && isEmpty(value)) continue;
     if (!passes(rule, value)) return rule.message;
@@ -84,12 +91,14 @@ export function collectFields(
   return nodes.flatMap((node) => {
     switch (node.type) {
       case 'field':
+        assertSafePath(node.field.name);
         return [{ path: joinPath(base, node.field.name), def: node.field }];
       case 'divider':
         return [];
       case 'columns':
         return node.columns.flatMap((column) => collectFields(column.children, base));
       case 'embeds':
+        assertSafePath(node.name);
         return collectFields(node.children, joinPath(base, node.name));
       default:
         return collectFields(node.children, base);
@@ -97,21 +106,4 @@ export function collectFields(
   });
 }
 
-/** Expands the current completed upload values; no fields exist for pending/removed items. */
-export function collectValueFields(nodes: FormNode[], values: Record<string, unknown>) {
-  return collectFields(nodes).flatMap((field) => {
-    if (field.def.type !== 'upload' || field.def.readOnly) return [field];
-    const value = getAt(values, field.path);
-    const def = field.def;
-    const items = def.multiple ? (Array.isArray(value) ? value : []) : value ? [value] : [];
-    return [
-      field,
-      ...items.flatMap((item, index) => {
-        if (!item || typeof item !== 'object' || (!('path' in item) && !('token' in item)))
-          return [];
-        const base = `${field.path}${def.multiple ? `.${index}` : ''}.extra`;
-        return (def.extra ?? []).map((extra) => ({ path: joinPath(base, extra.name), def: extra }));
-      }),
-    ];
-  });
-}
+export { collectValueFields, type ValueField } from './traversal';

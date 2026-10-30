@@ -1,4 +1,4 @@
-import type { FieldDef } from '@brume-ui/brume-schema';
+import type { FieldDef, RowContext } from '@brume-ui/brume-schema';
 import type { ComponentType } from 'react';
 import type { FieldErrors } from './errors';
 import type { FormApi } from './use-form-state';
@@ -17,6 +17,7 @@ export interface FieldProps<V = unknown, D extends FieldDef = FieldDef> {
   disabled: boolean;
   form: FormApi;
   uploadUrl?: string;
+  rowContext?: RowContext;
 }
 
 // The registry deliberately erases individual field value/definition types.

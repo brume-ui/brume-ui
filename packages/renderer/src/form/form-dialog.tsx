@@ -71,7 +71,7 @@ function LoadedFormDialog({
 }: FormDialogProps & { page: FormPage; restoreFocusRef: RefObject<HTMLElement | null> }) {
   const { t } = useBrume();
   const confirm = useConfirm();
-  const api = useFormState(page.form, page.values);
+  const api = useFormState(page.form, page.values, t);
   const view = useRef<FormViewHandle>(null);
   const { submit, submitting } = useFormSubmit(page, api, view);
   const [after, setAfter] = useState(() => readAfterSave(page));

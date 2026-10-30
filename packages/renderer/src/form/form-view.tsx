@@ -7,7 +7,7 @@ import { type FieldErrors, isPathWithin } from './errors';
 import { fieldId, Nodes } from './layout/nodes';
 import { FormTabs } from './layout/tabs';
 import type { FormApi } from './use-form-state';
-import { collectFields, collectValueFields } from './validate';
+import { collectFields } from './validate';
 
 export { isLongField } from './layout/nodes';
 export interface FormViewHandle {
@@ -45,7 +45,7 @@ export const FormView = forwardRef<
   const firstSection = form.nodes.findIndex((node) => node.type === 'section');
   const [active, setActive] = useState(sections[0]?.key ?? '');
   const tabs = (sectionsAs ?? form.sections) === 'tabs';
-  const fields = collectValueFields(form.nodes, api.values);
+  const fields = api.fields;
   const entries = Object.entries(api.errors)
     .filter(([, messages]) => messages.length > 0)
     .map(([path, messages]) => {

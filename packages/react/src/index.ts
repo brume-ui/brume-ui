@@ -87,6 +87,7 @@ export {
   UploadList,
   type UploadListProps,
 } from './components/upload-list';
+export { canonicalDecimal } from './decimal';
 export {
   errorMessage,
   failureMessage,

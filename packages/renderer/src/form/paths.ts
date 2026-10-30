@@ -49,3 +49,18 @@ export function setAt<T>(values: T, path: string, value: unknown): T {
 export function joinPath(base: string, name: string): string {
   return base && name ? `${base}.${name}` : base || name;
 }
+
+/** Strict scalar paths for declarations, dependencies and row operations. */
+export function assertSafePath(path: string, wildcard = false): void {
+  const keys = path.split('.');
+  if (
+    !path ||
+    keys.some(
+      (key, index) =>
+        forbidden.has(key) ||
+        (!(wildcard && index > 0 && key === '*') &&
+          !/^(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)$/.test(key)),
+    )
+  )
+    throw new Error(`Invalid value path: ${path}`);
+}

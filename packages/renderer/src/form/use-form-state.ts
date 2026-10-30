@@ -1,8 +1,9 @@
+import { createTranslator } from '@brume-ui/brume-react';
 import type { FormDef } from '@brume-ui/brume-schema';
 import { useRef, useState } from 'react';
 import { type FieldErrors, isPathWithin } from './errors';
-import { getAt, setAt } from './paths';
-import { collectValueFields, validateValue } from './validate';
+import { assertSafePath, getAt, setAt } from './paths';
+import { collectValueFields, type ValueField } from './validate';
 
 export interface FormApi {
   /** Stable ownership token across API wrappers for this mounted form state. */
@@ -15,6 +16,12 @@ export interface FormApi {
   pendingUploads: number;
   errors: FieldErrors;
   getValue(path: string): unknown;
+  /** Snapshot metadata from the shared walker; identity may change after any value write. */
+  getField(path: string): ValueField | undefined;
+  /** Declaration identity plus explicit row origin; used by useFieldConditions. */
+  readonly fields: readonly ValueField[];
+  moveRow(path: string, from: number, to: number): void;
+  removeRow(path: string, index: number): void;
   setValue(path: string, value: unknown): void;
   touch(path: string): void;
   validateAll(): boolean;
@@ -36,7 +43,14 @@ function stable(value: unknown): string | undefined {
   });
 }
 
-export function useFormState(form: FormDef, initial: Record<string, unknown>): FormApi {
+type Translate = ReturnType<typeof createTranslator>;
+const defaultTranslate = createTranslator('zh-TW');
+
+export function useFormState(
+  form: FormDef,
+  initial: Record<string, unknown>,
+  t: Translate = defaultTranslate,
+): FormApi {
   const [, refresh] = useState(0);
   // Refs make writes immediately observable by validateAll, including within one event.
   const state = useRef({
@@ -49,20 +63,101 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
     submitting: false,
     pendingUploads: 0,
     resetVersion: 0,
+    fieldCache: undefined as
+      | undefined
+      | {
+          values: Record<string, unknown>;
+          nodes: FormDef['nodes'];
+          t: Translate;
+          fields: ValueField[];
+        },
   });
   const current = state.current;
-  const fields = () => collectValueFields(form.nodes, current.values);
+  const fields = () => {
+    if (
+      !current.fieldCache ||
+      current.fieldCache.values !== current.values ||
+      current.fieldCache.nodes !== form.nodes ||
+      current.fieldCache.t !== t
+    ) {
+      current.fieldCache = {
+        values: current.values,
+        nodes: form.nodes,
+        t,
+        fields: collectValueFields(
+          form.nodes,
+          current.values,
+          (def) => `${def.label}${t('common.hasError')}`,
+        ),
+      };
+    }
+    return current.fieldCache.fields;
+  };
+  // Fail configuration even when no consumer reads errors or values yet.
+  fields();
   const notify = () => refresh((version) => version + 1);
   const errors = (): FieldErrors => {
+    const walked = fields();
     const client = Object.fromEntries(
-      fields().flatMap(({ path, def }) => {
-        const message = current.touched.has(path)
-          ? validateValue(def, getAt(current.values, path))
-          : null;
-        return message === null ? [] : [[path, [message]]];
+      walked.flatMap(({ path, active, validationError }) =>
+        active && current.touched.has(path) && validationError !== null
+          ? [[path, [validationError]]]
+          : [],
+      ),
+    );
+    const server = Object.fromEntries(
+      Object.entries(current.server).filter(([path]) => {
+        const owner = walked
+          .filter((field) => isPathWithin(path, field.path))
+          .sort((a, b) => b.path.length - a.path.length)[0];
+        return !owner || owner.active;
       }),
     );
-    return { ...client, ...current.server };
+    return { ...client, ...server };
+  };
+  const editRows = (path: string, from: number, to?: number) => {
+    assertSafePath(path);
+    const def = fields().find((field) => field.path === path)?.def;
+    const rows = getAt(current.values, path);
+    if (
+      !(def?.type === 'repeater' || (def?.type === 'relation' && def.multiple)) ||
+      !Array.isArray(rows)
+    )
+      throw new Error('Row operation requires a declared row array');
+    const valid = (index: number) => Number.isInteger(index) && index >= 0 && index < rows.length;
+    if (!valid(from) || (to !== undefined && !valid(to))) throw new Error('Invalid row index');
+    if (from === to) return;
+    const order = rows.map((_, index) => index);
+    order.splice(from, 1);
+    if (to !== undefined) order.splice(to, 0, from);
+    const positions = new Map(order.map((old, index) => [old, index]));
+    const remap = (key: string): string | null => {
+      if (!key.startsWith(`${path}.`)) return key;
+      const [index, ...tail] = key.slice(path.length + 1).split('.');
+      if (!index || !/^(0|[1-9]\d*)$/.test(index) || Number(index) >= rows.length) return key;
+      const next = positions.get(Number(index));
+      return next === undefined
+        ? null
+        : `${path}.${next}${tail.length ? `.${tail.join('.')}` : ''}`;
+    };
+    current.values = setAt(
+      current.values,
+      path,
+      order.map((index) => rows[index]),
+    );
+    current.touched = new Set(
+      [...current.touched].flatMap((key) => {
+        const next = remap(key);
+        return next === null ? [] : [next];
+      }),
+    );
+    current.server = Object.fromEntries(
+      Object.entries(current.server).flatMap(([key, value]) => {
+        const next = remap(key);
+        return next === null ? [] : [[next, value]];
+      }),
+    );
+    notify();
   };
   return {
     stateId: current.stateId,
@@ -85,16 +180,33 @@ export function useFormState(form: FormDef, initial: Record<string, unknown>): F
       return errors();
     },
     getValue: (path) => getAt(current.values, path),
+    get fields() {
+      return fields();
+    },
+    getField: (path) => fields().find((field) => field.path === path),
+    moveRow(path, from, to) {
+      if (!Number.isInteger(to)) throw new Error('Invalid row index');
+      editRows(path, from, to);
+    },
+    removeRow: (path, index) => editRows(path, index),
     setValue(path, value) {
       // Run the path guard even on a no-op write.
       const next = setAt(current.values, path, value);
       if (stable(getAt(current.values, path)) === stable(value)) return;
-      current.values = next;
+      const previous = current.values;
+      const owners = fields();
       current.server = Object.fromEntries(
-        Object.entries(current.server).filter(
-          ([key]) => !isPathWithin(key, path) && !isPathWithin(path, key),
-        ),
+        Object.entries(current.server).filter(([key]) => {
+          if (isPathWithin(path, key)) return false;
+          if (!isPathWithin(key, path)) return true;
+          const owner = owners
+            .filter((field) => isPathWithin(key, field.path))
+            .sort((a, b) => b.path.length - a.path.length)[0];
+          const compare = owner?.path ?? key;
+          return stable(getAt(previous, compare)) === stable(getAt(next, compare));
+        }),
       );
+      current.values = next;
       notify();
     },
     touch(path) {

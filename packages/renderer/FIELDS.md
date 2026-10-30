@@ -97,11 +97,101 @@ not increment it. A proposed field value may be a semantic no-op: `setValue`
 then retains the accepted value reference. Controls must distinguish the last
 accepted prop from a proposed emission when synchronizing local state.
 
-## Future custom fields (subplan 3)
+## Custom fields (subplan 3)
 
-The reserved future schema shape is `{ type: 'custom', component: ComponentRef }`.
-This is not part of the current `FieldDef` union. `ComponentRef` supplies the
-registered component reference; do not introduce a `type: 'component'` field.
-The `resolveField(type: string)` signature stays unchanged: a future additional
-lookup source resolves custom registrations at the custom-field boundary.
-Custom fields will use the same `FieldProps` contract as all built-ins.
+`FieldDef` already declares `{ type: 'custom', component: ComponentRef, displayOnly?: boolean }`.
+`ComponentRef` supplies the registered component reference; do not introduce a
+`type: 'component'` field. Registry lookup and interactive runtime support remain Task 6 work.
+The `resolveField(type: string)` signature stays unchanged: an additional lookup source will
+resolve custom registrations at the custom-field boundary. Custom fields use the same
+`FieldProps` contract as built-ins; the shared activity walker already skips display-only
+custom fields during validation.
+
+## Conditional activity and row state
+
+`useFormState(form, initial, t?)` validates condition/dependency declarations without relying on
+mounted controls. Pass the provider's translator as the optional third argument; the default is
+zh-TW. Declared rule messages take priority. Malformed primitive/selection/row values without a
+rule message use the existing localized `common.hasError` vocabulary with the field label.
+
+`collectValueFields(nodes, values, invalidMessage?)` is the shared current-value walker.
+`FormApi.fields` and `FormApi.getField(path)` expose its descriptors:
+
+```ts
+interface ValueField {
+  path: string;
+  def: FieldDef;
+  templatePath: string;
+  rowPath?: string;
+  rowContext: RowContext;
+  visible: boolean;
+  enabled: boolean;
+  readOnly: boolean;
+  active: boolean;
+  validationError: string | null;
+}
+```
+
+`path` and `rowPath` use current numeric indexes; `templatePath` uses `*` only at declared array
+boundaries. `rowPath` is the nearest repeater row or selected relation item, including a single
+selected item. Upload extras inherit their enclosing row origin. Row context entries use the
+canonical container path. Repeater entries preserve `_brume.key` and optional `_brume.id`;
+selected items use exactly `{path, key: item.id, id: item.id}`. This selected ID is the source
+model identity, never an intermediary child ID. Missing row metadata is not replaced by an
+index or random key. Row creation/readback normalization belongs to the repeater/server layers.
+
+Descriptors are snapshots, cached until values, declarations, or translator change. Consumers
+must not mutate them or use descriptor object identity as a persistent owner. Use the stable
+`stateId`, `resetVersion`, canonical path and full row context for asynchronous ownership.
+`FieldProps.rowContext` and `Nodes.rowContext` are optional; existing upload-extra rendering
+preserves the enclosing context. Stable mounted row wrappers and async request generations are
+provided by the later repeater/picker implementations.
+
+`useFieldConditions(def, form, rowPath?)` reads `{visible, enabled}` from these same descriptors.
+Pass the declaration object from the form and the explicit nearest row path for row fields.
+It throws if that declaration/row is not currently present. It includes ancestor activity;
+`enabled` excludes temporary submit locking and does not replace `readOnly`.
+
+`evaluateCondition(condition, values, rowPath?, options?)` is pure. The first three arguments
+use strict typed JSON equality. Optional `getField(path)` supplies declaration metadata for
+numeric controls; optional `isInvalid(path)` supplies precomputed validation failures. Only
+number fields convert numeric strings to numbers. Currency/decimal strings use the public
+`canonicalDecimal(value, decimals)` from brume-react: exact digit arithmetic, half-away-from-zero
+rounding, negative-zero folding and padding; invalid input returns null, empty input returns ''.
+Raw decimal/currency values must first fit the field's declared scale; extra fraction digits are
+invalid even when rounding would produce an otherwise matching value. The standalone utility
+still rounds for display/paste/calculator use. Money comparison operands retain their JSON types.
+Text/product codes are never coerced.
+
+The walker validates every controlling value before resolving activity. If any dependency of
+a condition has a validation failure or malformed typed value, the **entire condition** evaluates
+true, including `not`/`all`/`any`; invalid input cannot hide a dependent requirement. Ancestor
+inactivity still applies. Invalid inactive drafts stay retained and become blocking again when
+editable. `empty` means only null, missing, exact empty string, or empty list; whitespace, false,
+and zero are present. `all([])` is true and `any([])` is false.
+
+`validateConditionDeclarations(nodes)` throws on unsafe/unknown condition, remote-dependency,
+or exclusion paths and activity cycles, even for empty repeater templates. Scalar paths reject
+wildcards. Numeric indexes can match declared row templates. Exclusion dependencies are checked
+for known declarations but are not activity-cycle edges. Reserved selected-item `id` and `_brume`
+identity metadata are not implicit dependency fields: `row('id')` fails with an unknown declaration
+path unless it is a separately declared field (reserved IDs should not be redeclared). Use
+`rowContext` for identity. Layout tabs/sections never affect
+validation. Literal `hidden` preserves its existing validation semantics and is distinct from
+`showWhen=false`. Disabled, readonly, display and display-only custom fields are noneditable.
+
+`moveRow(path, from, to)` and `removeRow(path, index)` accept declared repeater arrays and multiple
+relation selections. They reject unsafe paths and invalid indexes before mutation, preserve row
+objects/metadata, remap all descendant touched/server-error paths, and leave unrelated branches
+and unknown errors intact. Removal drops only the removed row's errors. Neither operation changes
+`stateId` or `resetVersion`; dirty state still compares against the original baseline. These are
+state operations, not mounted row UI or pending-upload lifecycle completion.
+
+Server errors are retained internally and filtered by the longest current declared field owner.
+Known inactive/noneditable errors do not block submission; unclaimed errors do. Reactivation
+restores retained errors unless their owning value changed. Editing one extra through a parent
+object write preserves unchanged sibling errors. Draft values are never stripped by activity.
+
+Shared cross-language cases live in `packages/schema/fixtures/conditions/evaluation.json`.
+They cover strict operands, exact empty semantics, row origins, booleans, numeric/money values,
+and conservative invalid-controller behavior. Backend parity tests vendor the bytes independently.

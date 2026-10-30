@@ -312,3 +312,78 @@ it('reveals the focused field together with its help and error, not just the con
     reveal.mockRestore();
   }
 });
+
+it('omits conditional wrappers, retains disabled drafts and keeps literal hidden inputs', () => {
+  const condition = {
+    op: 'eq' as const,
+    field: { scope: 'root' as const, path: 'on' },
+    value: true,
+  };
+  const result = setup(
+    {
+      layout: 'stacked',
+      nodes: [
+        { type: 'field', field: { type: 'switch', name: 'on', label: 'On' } },
+        {
+          type: 'field',
+          field: { type: 'text', name: 'note', label: 'Note', showWhen: condition },
+        },
+        {
+          type: 'field',
+          field: { type: 'text', name: 'draft', label: 'Draft', enableWhen: condition },
+        },
+        { type: 'field', field: { type: 'hidden', name: 'secret', label: 'Secret' } },
+      ],
+    },
+    { on: false, note: 'kept', draft: 'draft', secret: 'wire' },
+  );
+  expect(screen.queryByLabelText('Note')).toBeNull();
+  expect(result.container.querySelector('[data-field-path="note"]')).toBeNull();
+  expect((screen.getByLabelText('Draft') as HTMLInputElement).disabled).toBe(true);
+  expect(result.api().getValue('secret')).toBe('wire');
+  expect(result.api().getField('secret')?.active).toBe(true);
+  act(() => result.api().setValue('on', true));
+  expect((screen.getByLabelText('Note') as HTMLInputElement).value).toBe('kept');
+  expect((screen.getByLabelText('Draft') as HTMLInputElement).disabled).toBe(false);
+});
+
+it('applies shared activity to upload extras and retains unrelated extra errors on edits', () => {
+  const result = setup(
+    {
+      layout: 'stacked',
+      nodes: [
+        { type: 'field', field: { type: 'switch', name: 'on', label: 'On' } },
+        {
+          type: 'field',
+          field: {
+            type: 'upload',
+            name: 'files',
+            label: 'Files',
+            kind: 'file',
+            multiple: true,
+            accept: [],
+            maxSize: 100,
+            extra: [
+              {
+                type: 'text',
+                name: 'note',
+                label: 'Note',
+                showWhen: { op: 'eq', field: { scope: 'root', path: 'on' }, value: true },
+                rules: [{ rule: 'required', message: 'Required' }],
+              },
+              { type: 'text', name: 'caption', label: 'Caption' },
+            ],
+          },
+        },
+      ],
+    },
+    { on: false, files: [{ path: 'a', url: '/a', extra: { note: 'kept', caption: 'before' } }] },
+  );
+  act(() => result.api().setServerErrors({ 'files.0.extra.note': ['Retained'] }));
+  expect(screen.queryByLabelText('Note')).toBeNull();
+  expect(result.api().errors).toEqual({});
+  fireEvent.change(screen.getByLabelText('Caption'), { target: { value: 'after' } });
+  act(() => result.api().setValue('on', true));
+  expect((screen.getByLabelText('Note') as HTMLInputElement).value).toBe('kept');
+  expect(result.api().errors).toEqual({ 'files.0.extra.note': ['Retained'] });
+});

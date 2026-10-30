@@ -39,7 +39,7 @@ export function ActionFormDialog({
     layout: 'stacked',
     nodes: input.fields.map((field) => ({ type: 'field', field })),
   };
-  const api = useFormState(form, {});
+  const api = useFormState(form, {}, t);
   const view = useRef<FormViewHandle>(null);
   const alive = useRef(true);
   useEffect(() => {

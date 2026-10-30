@@ -2,6 +2,12 @@ export { ComponentSlot } from './component-slot';
 export { DashboardPageView } from './dashboard-page';
 export { ErrorPageView } from './error-page';
 export { AFTER_SAVE_KEY, readAfterSave, writeAfterSave } from './form/after-save';
+export {
+  type ConditionEvaluationOptions,
+  canonicalizeFieldValue,
+  evaluateCondition,
+  resolveConditionPath,
+} from './form/conditions';
 export type { FieldComponent, FieldProps } from './form/contract';
 export { type FieldErrors, scopeErrors, unclaimedErrors } from './form/errors';
 export { FormDialog, type FormDialogProps } from './form/form-dialog';
@@ -9,6 +15,12 @@ export { FormPageView } from './form/form-page';
 export { FormView, type FormViewHandle, isLongField, sectionErrorKeys } from './form/form-view';
 export { getAt, joinPath, setAt } from './form/paths';
 export { resolveField } from './form/registry';
+export {
+  collectValueFields,
+  type ValueField,
+  validateConditionDeclarations,
+} from './form/traversal';
+export { useFieldConditions } from './form/use-field-conditions';
 export { type FormApi, useFormState } from './form/use-form-state';
 export { useFormSubmit } from './form/use-form-submit';
 export { collectFields, validateValue } from './form/validate';

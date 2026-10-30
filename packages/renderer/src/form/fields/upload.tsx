@@ -151,6 +151,8 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
                   const prefix = def.multiple
                     ? `${valueIndex(index)}.extra.${extra.name}`
                     : `extra.${extra.name}`;
+                  const activity = form.getField(`${path}.${prefix}`);
+                  if (activity?.visible === false) return null;
                   const childErrors = scopeErrors(errors, prefix);
                   return Component ? (
                     <Component
@@ -164,8 +166,9 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
                       errors={childErrors}
                       invalid={!!childErrors['']?.length}
                       describedBy={undefined}
-                      readOnly={!!extra.readOnly}
-                      disabled={props.disabled || !!extra.disabled}
+                      rowContext={activity?.rowContext ?? props.rowContext}
+                      readOnly={activity?.readOnly ?? !!extra.readOnly}
+                      disabled={props.disabled || activity?.enabled === false || !!extra.disabled}
                       onChange={(next: unknown) =>
                         change(
                           items.map((current) =>

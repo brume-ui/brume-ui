@@ -26,7 +26,7 @@ export function QuickCreate({
     layout: 'stacked',
     nodes: def.fields.map((field) => ({ type: 'field', field })),
   };
-  const api = useFormState(form, {});
+  const api = useFormState(form, {}, t);
   const root = useRef<HTMLDivElement>(null);
   const view = useRef<FormViewHandle>(null);
   const alive = useRef(true);
