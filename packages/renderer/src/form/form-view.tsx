@@ -95,8 +95,14 @@ export const FormView = forwardRef<
       !focusable.closest('[hidden]') &&
       !focusable.matches(':disabled')
     ) {
-      focusable.focus();
-      if (document.activeElement === focusable) return true;
+      focusable.focus({ preventScroll: true });
+      if (document.activeElement === focusable) {
+        // Native focus reveals only the control. Include its label, help and validation message
+        // in the same reveal request, so a dialog's scrolling body keeps the explanation visible.
+        const field = focusable.closest('[data-field-layout]') ?? focusable;
+        field.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+        return true;
+      }
     }
     const summary = root.current?.querySelector<HTMLElement>('[role="alert"]');
     summary?.focus();

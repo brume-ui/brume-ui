@@ -173,12 +173,14 @@ function LoadedFormDialog({
               />
             </div>
           </div>
-          <Button variant="secondary" disabled={submitting} onClick={() => void close()}>
-            {t('form.cancel')}
-          </Button>
-          <Button data-dialog-primary loading={submitting} onClick={() => void save()}>
-            {submitting ? t('form.saving') : page.submit.label}
-          </Button>
+          <div className="br:flex br:shrink-0 br:items-center br:gap-3">
+            <Button variant="secondary" disabled={submitting} onClick={() => void close()}>
+              {t('form.cancel')}
+            </Button>
+            <Button data-dialog-primary loading={submitting} onClick={() => void save()}>
+              {submitting ? t('form.saving') : page.submit.label}
+            </Button>
+          </div>
         </>
       }
     >

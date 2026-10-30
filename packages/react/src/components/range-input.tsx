@@ -31,7 +31,8 @@ const INPUT_TYPE = {
 
 /**
  * Two fields, start – end, for range filters. The group carries the description and error
- * (`aria-describedby`); the invalid and required states go on both fields, which support them.
+ * (`aria-describedby`); native date/time bounds stack until the container can fit their editing segments.
+ * The invalid and required states go on both fields, which support them.
  */
 export function RangeInput({
   of,
@@ -53,6 +54,7 @@ export function RangeInput({
   const { t } = useBrume();
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
   const type = INPUT_TYPE[of];
+  const temporal = of === 'date' || of === 'datetime';
   const field = (bound: 'start' | 'end') => (
     <div className="br:flex br:min-w-0 br:flex-1 br:flex-col br:gap-1.5">
       <input
@@ -99,13 +101,30 @@ export function RangeInput({
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
-      className="br:flex br:items-center br:gap-2"
+      className={cn('br:min-w-0', temporal && 'br:@container')}
     >
-      {field('start')}
-      <span aria-hidden="true" className="br:shrink-0 br:text-text-muted">
-        –
-      </span>
-      {field('end')}
+      <div
+        className={cn(
+          'br:items-center br:gap-2',
+          temporal ? 'br:grid br:grid-cols-1' : 'br:flex',
+          of === 'date' && 'br:@min-[400px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]',
+          of === 'datetime' && 'br:@min-[560px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]',
+        )}
+      >
+        {field('start')}
+        <span
+          aria-hidden="true"
+          className={cn(
+            'br:shrink-0 br:text-text-muted',
+            temporal && 'br:hidden',
+            of === 'date' && 'br:@min-[400px]:block',
+            of === 'datetime' && 'br:@min-[560px]:block',
+          )}
+        >
+          –
+        </span>
+        {field('end')}
+      </div>
     </div>
   );
 }

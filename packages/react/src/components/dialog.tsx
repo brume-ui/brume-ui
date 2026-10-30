@@ -145,13 +145,18 @@ export function Dialog({
               </RadixDialog.Close>
             </div>
           </div>
-          <div ref={bodyRef} className="br:min-h-0 br:flex-1 br:overflow-y-auto br:px-6 br:py-4">
+          <div
+            ref={bodyRef}
+            data-dialog-body=""
+            className="br:min-h-0 br:flex-1 br:overflow-y-auto br:px-6 br:py-4"
+          >
             {children}
           </div>
           {footer ? (
             <div
               ref={footerRef}
-              className="br:flex br:shrink-0 br:justify-end br:gap-3 br:border-t br:border-border br:px-6 br:py-4"
+              data-dialog-footer=""
+              className="br:flex br:flex-wrap br:shrink-0 br:items-center br:justify-end br:gap-3 br:border-t br:border-border br:px-6 br:py-4 br:[&>button]:shrink-0"
             >
               {footer}
             </div>

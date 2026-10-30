@@ -2,7 +2,7 @@ import type { FieldDef, FormDef } from '@brume-ui/brume-schema';
 import { act, fireEvent, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { createRef, type Ref } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import fixture from '../../../schema/fixtures/valid/form-full.json';
 import { renderWithBrume } from '../test-utils';
 import { FormView, type FormViewHandle, sectionErrorKeys } from './form-view';
@@ -278,4 +278,37 @@ describe('FormView', () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
+});
+
+it('reveals the focused field together with its help and error, not just the control', () => {
+  const result = setup({
+    layout: 'stacked',
+    nodes: [
+      {
+        type: 'field',
+        field: { type: 'text', name: 'color', label: 'Color', help: 'Choose an available color' },
+      },
+    ],
+  });
+  act(() => result.api().setServerErrors({ color: ['Unavailable color'] }));
+  const requested: Element[] = [];
+  const reveal = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function (
+    this: Element,
+  ) {
+    requested.push(this);
+  });
+  try {
+    act(() => result.ref.current?.focusFirstError());
+    expect(document.activeElement).toBe(screen.getByLabelText('Color'));
+    expect(
+      requested.some(
+        (region) =>
+          region.contains(screen.getByLabelText('Color')) &&
+          region.contains(screen.getByText('Choose an available color')) &&
+          region.contains(screen.getAllByText('Unavailable color').at(-1) ?? null),
+      ),
+    ).toBe(true);
+  } finally {
+    reveal.mockRestore();
+  }
 });
