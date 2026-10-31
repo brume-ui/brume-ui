@@ -51,6 +51,34 @@ export const DEMO_FEATURES: DemoFeature[] = [
       'brume-ui:apps/playground/src/pages/form-conditions.tsx',
     ],
   })),
+  ...(['three-branches', 'upgrade'] as const).map((scenario) => ({
+    id: `gift.database-${scenario}`,
+    category: 'form' as const,
+    title: scenario === 'upgrade' ? '既有贈品資料安全升級' : '資料庫三種贈品設定',
+    summary: '開啟 Laravel workbench 的關聯組合；需啟動獨立後端並先完成 README 的新增欄位升級。',
+    href: 'http://127.0.0.1:8100/admin/compositions',
+    steps:
+      scenario === 'upgrade'
+        ? [
+            '依 Laravel README 的安全升級步驟備份既有資料庫與附件，只執行指定新增欄位 migration。',
+            '開啟既有關聯組合，確認門檻為商品、原贈品與數量仍在，再切換優惠券或點數儲存。',
+            '重新開啟相同組合，核對設定與既有商品；rollback 會刪除六個新增設定欄位，僅在隔離副本驗證。',
+          ]
+        : [
+            '先依 Laravel README 完成安全升級，再開啟任一關聯組合；每個門檻可獨立選擇贈品類型。',
+            '輸入優惠券代碼、兩位小數金額與到期時間，或正整數點數；切換分支核對儲存前草稿。',
+            '排序兩個門檻，選擇儲存後繼續編輯並儲存，再重新開啟確認各列仍保有原值。',
+            '新增門檻後先明確點選類型；成功儲存只更新目前分支，隱藏未存草稿會回到既存值。',
+          ],
+    expected:
+      '成功儲存並重新開啟後，原商品、各門檻設定與排序保留；隱藏既存值不被覆寫。優惠券與點數僅為設定，沒有發放。',
+    persistence: 'database' as const,
+    sources: [
+      'brume-laravel:workbench/app/Http/Controllers/CompositionController.php',
+      'brume-laravel:tests/Feature/Form/CompositionUpgradeTest.php',
+      'brume-laravel:README.md',
+    ],
+  })),
   ...GRID_EXAMPLES.map((example) => ({
     id: example.id,
     category: 'grid' as const,

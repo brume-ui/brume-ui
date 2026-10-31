@@ -21,7 +21,11 @@ describe('implemented demo catalog', () => {
     expect(new Set(names).size).toBe(names.length);
     for (const feature of DEMO_FEATURES) {
       expect(feature.id).toMatch(/^[a-z][A-Za-z0-9.-]+$/);
-      expect(names).toContain(feature.href.replace(/^#\//, '').split('?')[0]);
+      if (feature.persistence === 'database') {
+        expect(feature.href).toBe('http://127.0.0.1:8100/admin/compositions');
+      } else {
+        expect(names).toContain(feature.href.replace(/^#\//, '').split('?')[0]);
+      }
       expect(feature.title.length).toBeGreaterThan(1);
       expect(feature.summary.length).toBeGreaterThan(8);
       expect(feature.steps.length).toBeGreaterThan(0);
@@ -80,6 +84,16 @@ describe('implemented demo catalog', () => {
       expect(row).not.toContain('GAP-T4');
     }
   });
+  it('links persistent gift scenarios to the real workbench and labels their upgrade prerequisites', () => {
+    for (const id of ['gift.database-three-branches', 'gift.database-upgrade']) {
+      const feature = getDemoFeature(id);
+      expect(feature?.href).toBe('http://127.0.0.1:8100/admin/compositions');
+      expect(feature?.persistence).toBe('database');
+      expect(feature?.steps.join(' ')).toContain('升級');
+      expect(feature?.expected).toContain('重新開啟');
+    }
+  });
+
   it('searches title, instructions and feature IDs within the selected category', () => {
     expect(filterDemoFeatures('遠端', 'form').map((feature) => feature.id)).toContain(
       'form.remote-options',

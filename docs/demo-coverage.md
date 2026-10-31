@@ -1,14 +1,14 @@
 # 功能示範 coverage（Task 1 來源盤點）
 
-2026-11-01；UI base `28a053a1af6733965993c737421a690953336292`、PHP base `0d29d3c081e0fdc37469809363e369cf75323d31`。僅變更隔離 UI worktree；沒有存取試用8100／4180、沒有執行 PHP/DB 或本機瀏覽器。
+2026-11-01；UI base `28a053a1af6733965993c737421a690953336292`、PHP base `0d29d3c081e0fdc37469809363e369cf75323d31`。Task 1 僅變更隔離 UI worktree；後續 Task 5 另在成對隔離 PHP worktree 執行持久化及 fixture 測試，沒有存取試用8100／4180 或本機瀏覽器。
 
 這份 manifest 的分母是目前公開的使用者功能與可觀察契約，不是每個內部 helper method。25 種 FieldDef、7 種 FormNode、7 種 Condition、11 種 ClientRule、14 種 Display、12 種 InlineEditor、10 種 FilterInput，以及 PHP 22 個具名 filter/operator/hidden 宣告逐項列出。date editor 的 withTime、range/group 各子型、四個 after-save 去向、所有 React 視覺 exports、關聯／上傳／hook 另行展開，避免把 shared union 當作全部行為。
 
-`READY` 表示現有可用情境；Task 2 已將 Form 欄位、版型與補足行為改指向可操作聚焦入口。target 為 catalog id（到目錄查對）或現有 hash；每項操作／結果寫在行為欄。`GAP-Tn` 是缺少可操作證據、初始可見聚焦入口或契約說明，交給 Task n；沒有 catalog 連結、沒有標記 ready。來源中已有測試只作 source evidence，本回合沒有重跑 PHP，也不把記憶體結果當作 SQL／真實持久化。既有情境與細項是不同層級，總列數不能當作互斥功能的完成百分比。
+`READY` 表示現有可用情境；Task 2 已將 Form 欄位、版型與補足行為改指向可操作聚焦入口。target 為 catalog id（到目錄查對）或現有 hash；每項操作／結果寫在行為欄。`GAP-Tn` 是缺少可操作證據、初始可見聚焦入口或契約說明，交給 Task n；沒有 catalog 連結、沒有標記 ready。來源中已有測試只作 source evidence，Task 1 當時沒有重跑 PHP；Task 5 已在隔離 worktree 驗證 HTTP 持久化及舊 SQLite fixture 升級／down／重套。真實 MySQL 及瀏覽器仍由遠端 CI 驗收，不把記憶體結果當作 SQL／真實持久化。既有情境與細項是不同層級，總列數不能當作互斥功能的完成百分比。
 
-來源格式 `brume-ui:path#symbol`／`brume-laravel:path#symbol` 明確標示 repository；PHP 來源指向 read-only sibling 的相對路徑，不要求 UI-only CI 有 sibling。根層 catalog 保留所有舊 route，新增 `#/demos` 為相同目錄別名；未知路由回目錄。只有 memory/visual entry 目前列入 catalog；database/contract 保留介面但尚不冒充已有說明頁。
+來源格式 `brume-ui:path#symbol`／`brume-laravel:path#symbol` 明確標示 repository；PHP 來源指向成對 sibling 的相對路徑，不要求 UI-only CI 有 sibling。根層 catalog 保留所有舊 route，新增 `#/demos` 為相同目錄別名；未知路由回目錄。catalog 包含 memory/visual/contract 情境；Task 5 的兩個 database 入口連到獨立 Laravel workbench http://127.0.0.1:8100/admin/compositions，需後端啟動及先套用 README 的窄範圍升級。
 
-盤點列數：335；GAP-T2 0，GAP-T3 0，GAP-T4 0，GAP-T5 2，GAP-T6 47，READY 286。catalog 情境：199。
+盤點列數：335；GAP-T2 0，GAP-T3 0，GAP-T4 0，GAP-T5 0，GAP-T6 47，READY 288。catalog 情境：201。
 
 ## 既有可用情境
 
@@ -394,8 +394,8 @@
 | `style.tokens`                 | tokens.css 語意色、空間、圓角、陰影、字體與焦點樣式公開 export；需可比較各 family 的例子。                                              | GAP-T6 | `Task 6`               | `brume-ui:packages/tokens/package.json`                                                                                           |
 | `gift.root-three-branches`     | 根層 radio 切換商品／券／點數；清空 active 必填阻擋、載入無效類型後拒絕；切回保留草稿，成功後 GET 完整記憶體基準，隱藏未存草稿還原為既存值。                                     | READY | `#/form-conditions / memory`               | `brume-ui:apps/playground/src/pages/gift-demo.ts; brume-ui:apps/playground/src/pages/form-conditions.tsx` |
 | `gift.row-three-branches`      | 兩個 threshold 獨立切換三分支；調整商品數量與券／點數後排序、刪除及新增，核對 owner 未交叉；成功回載完整基準，重設回已存值，沒有 group showWhen。                                                          | READY | `#/form-composition / memory`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
-| `gift.database-three-branches` | 相同欄位由普通 Resource 持久化，inactive stored scalar／relation 保留；券與點數只是設定。                                               | GAP-T5 | `Task 5`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
-| `gift.database-upgrade`        | 新增欄位 default product，舊 gifts/counters/uploads/id 保留，安全 upgrade/down 與重開證據。                                             | GAP-T5 | `Task 5`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
+| `gift.database-three-branches` | 開啟既有組合，各門檻選商品／優惠券／點數並填 active 必填、排序後儲存及重開；inactive 既存 scalar／relation 保留；新增門檻先明確點選類型，券與點數只是設定。 | READY | `http://127.0.0.1:8100/admin/compositions / database` | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-laravel:tests/Feature/Form/CompositionTest.php` |
+| `gift.database-upgrade` | 依 Laravel README 備份並只套新增 migration，再開既有組合確認 default product 與原 gifts；隔離 fixture 已證明 IDs／counters／附件保留，down 只刪六個新設定並可重套；實際 MySQL／瀏覽器待遠端驗收。 | READY | `http://127.0.0.1:8100/admin/compositions / database` | `brume-laravel:tests/Feature/Form/CompositionUpgradeTest.php; brume-laravel:README.md` |
 
 ## 明確排除（未實作／未核准，不從目前功能分母刪除已實作項）
 
