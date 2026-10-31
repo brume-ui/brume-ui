@@ -63,11 +63,35 @@ export const stableJson = (value: unknown): string =>
       : item,
   );
 
+/** One synchronous scope check shares its reads; a later check always gets a fresh view. */
+function optionRead(form: FormApi) {
+  let fields: readonly ValueField[] | undefined;
+  let effective: readonly ValueField[] | undefined;
+  let effectiveByPath: Map<string, ValueField> | undefined;
+  const currentFields = () => (fields ??= form.fields);
+  const effectiveFields = () => (effective ??= form.effectiveFields);
+  const effectiveField = (path: string) => {
+    effectiveByPath ??= new Map(effectiveFields().map((field) => [field.path, field]));
+    return effectiveByPath.get(path);
+  };
+  return {
+    form,
+    fields: currentFields,
+    field: (path: string) => currentFields().find((field) => field.path === path),
+    effectiveFields,
+    effectiveField,
+    // The effective walker already projected these values, including authoritative containers.
+    value: (path: string) => effectiveField(path)?.effectiveValue,
+  };
+}
+type OptionRead = ReturnType<typeof optionRead>;
+
 function resolveDependencies(
   remote: RemoteOptions | undefined,
-  form: FormApi,
+  read: OptionRead,
   field: ValueField | undefined,
 ) {
+  const form = read.form;
   const values: Record<string, unknown> = {};
   const contexts: Record<string, RowContext> = {};
   const ownership: Record<string, unknown> = {};
@@ -79,25 +103,27 @@ function resolveDependencies(
       continue;
     }
     const target = resolveConditionPath(dependency, field.rowPath);
-    const draftField = form.getField(target);
-    const declared = form.getEffectiveField(target) ?? draftField;
+    const draftField = read.field(target);
+    const declared = read.effectiveField(target) ?? draftField;
     if (
       draftField?.effectiveKnown === false &&
       stableJson(draftField.rowContext) === stableJson(declared?.rowContext)
     )
       ready = false;
-    const canonical = canonicalizeFieldValue(declared?.def, form.getEffectiveValue(target));
+    const canonical = canonicalizeFieldValue(declared?.def, read.value(target));
     values[name] = canonical.valid ? (canonical.value ?? null) : null;
     if (declared?.rowContext.length) contexts[name] = declared.rowContext;
     ownership[name] = fieldOwnershipKey(form, target, declared?.rowContext);
     if (declared) chains.push(declared.rowContext);
     if (declared?.def.type === 'repeater' || declared?.def.type === 'relation') {
-      const descendants = form.effectiveFields.filter(
-        (candidate) => candidate.path === target || candidate.path.startsWith(`${target}.`),
-      );
+      const descendants = read
+        .effectiveFields()
+        .filter(
+          (candidate) => candidate.path === target || candidate.path.startsWith(`${target}.`),
+        );
       const descendantChains = descendants.flatMap((candidate) => [
         candidate.rowContext,
-        ...collectionRowContexts(candidate, form.getEffectiveValue(candidate.path)),
+        ...collectionRowContexts(candidate, read.value(candidate.path)),
       ]);
       chains.push(...descendantChains);
       ownership[name] = [
@@ -115,6 +141,14 @@ export function resolveAncestorSources(
   field: ValueField | undefined,
   chains: RowContext[],
 ) {
+  return collectAncestorSources(optionRead(form), field, chains);
+}
+function collectAncestorSources(
+  read: OptionRead,
+  field: ValueField | undefined,
+  chains: RowContext[],
+) {
+  const form = read.form;
   const sources = new Map<string, OptionAncestorSourceContext>();
   const ownership: Record<string, unknown> = {};
   const visiting = new Set<string>();
@@ -122,11 +156,10 @@ export function resolveAncestorSources(
   const collect = (chain: RowContext) => {
     for (const [index, row] of chain.entries()) {
       const prefix = chain.slice(0, index);
-      const container = [...form.fields, ...form.effectiveFields].find(
-        (candidate) =>
-          candidate.templatePath === row.path &&
-          stableJson(candidate.rowContext) === stableJson(prefix),
-      );
+      const matches = (candidate: ValueField) =>
+        candidate.templatePath === row.path &&
+        stableJson(candidate.rowContext) === stableJson(prefix);
+      const container = read.fields().find(matches) ?? read.effectiveFields().find(matches);
       if (!container) {
         valid = false;
         continue;
@@ -143,7 +176,7 @@ export function resolveAncestorSources(
         continue;
       }
       visiting.add(key);
-      const dependencies = resolveDependencies(container.def.remote, form, container);
+      const dependencies = resolveDependencies(container.def.remote, read, container);
       if (!dependencies.ready) valid = false;
       collect(prefix);
       for (const target of dependencies.chains) collect(target);
@@ -173,12 +206,13 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
   const { remote, rowContext, active = true } = config;
   const { adapter } = useBrume();
   const form = config.form;
-  const field = form?.getField(config.path);
+  const read = form ? optionRead(form) : undefined;
+  const field = read && config.path !== undefined ? read.field(config.path) : undefined;
   const localOwner = useRef(Symbol('remote-source'));
-  const dependencies = form
-    ? resolveDependencies(remote, form, field)
+  const dependencies = read
+    ? resolveDependencies(remote, read, field)
     : {
-        values: config.resolvedDepends ?? {},
+        values: 'resolvedDepends' in config ? (config.resolvedDepends ?? {}) : {},
         contexts: {},
         ownership: {},
         chains: [],
@@ -187,8 +221,8 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
   const dependsKey = stableJson(dependencies.values);
   const dependencyContextsKey = stableJson(dependencies.contexts);
   const dependencyOwnershipKey = stableJson(dependencies.ownership);
-  const ancestors = form
-    ? resolveAncestorSources(form, field, dependencies.chains)
+  const ancestors = read
+    ? collectAncestorSources(read, field, dependencies.chains)
     : { values: [], ownership: {}, valid: true };
   const ancestorSourcesKey = stableJson(ancestors.values);
   const ancestorOwnershipKey = stableJson(ancestors.ownership);
@@ -267,17 +301,20 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
         if (form.stateId !== scope.stateId || form.resetVersion !== scope.resetKey) return false;
         // Form writes are synchronous, even before React commits. Follow the stable owner after
         // movement; never interpret its old numeric path as the current row's ownership.
+        const currentRead = optionRead(form);
         const currentField =
           scope.contextKey === '[]'
-            ? form.getField(config.path)
-            : form.fields.find(
-                (item) =>
-                  item.templatePath === scope.owner &&
-                  stableJson(item.rowContext) === scope.contextKey,
-              );
-        const currentDependencies = resolveDependencies(remote, form, currentField);
-        const currentAncestors = resolveAncestorSources(
-          form,
+            ? currentRead.field(config.path)
+            : currentRead
+                .fields()
+                .find(
+                  (item) =>
+                    item.templatePath === scope.owner &&
+                    stableJson(item.rowContext) === scope.contextKey,
+                );
+        const currentDependencies = resolveDependencies(remote, currentRead, currentField);
+        const currentAncestors = collectAncestorSources(
+          currentRead,
           currentField,
           currentDependencies.chains,
         );
