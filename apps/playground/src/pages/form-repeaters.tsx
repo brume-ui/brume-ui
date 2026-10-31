@@ -101,7 +101,12 @@ export function FormRepeatersPage() {
           >
             Show address error
           </Button>
-          <output data-testid="repeater-values">{JSON.stringify(api.values)}</output>
+          <details>
+            <summary>Current values (diagnostic)</summary>
+            <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+              <output data-testid="repeater-values">{JSON.stringify(api.values)}</output>
+            </pre>
+          </details>
         </Panel>
         <Panel>
           <GridView

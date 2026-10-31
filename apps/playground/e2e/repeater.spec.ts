@@ -32,11 +32,16 @@ for (const scheme of ['light', 'dark'] as const) {
 test('pointer dragging nested rows preserves their values and cannot reorder the parent', async ({
   page,
 }) => {
+  // Both tall outer rows must be visible so native drag does not scroll its source away.
+  await page.setViewportSize({ width: 1440, height: 1900 });
   await page.goto('/#/form-repeaters');
   const outer = page.locator('[data-repeater-key="a"]');
   await outer
     .getByRole('button', { name: /^(Reorder|排序) Thresholds 1$/ })
     .dragTo(outer.locator('[data-repeater-key="ab"]'));
+  await expect(
+    outer.getByRole('textbox', { name: 'Threshold amount', exact: true }).first(),
+  ).toHaveValue('200.00');
   const values = JSON.parse((await page.getByTestId('repeater-values').textContent()) ?? '');
   expect(values.groups.map((row: { name: string }) => row.name)).toEqual(['First', 'Second']);
   expect(values.groups[0].thresholds.map((row: { amount: string }) => row.amount)).toEqual([
@@ -46,6 +51,9 @@ test('pointer dragging nested rows preserves their values and cannot reorder the
   await page
     .getByRole('button', { name: /^(Reorder|排序) Groups 1$/ })
     .dragTo(page.locator('[data-repeater-key="b"]'));
+  await expect(page.getByRole('textbox', { name: 'Group name', exact: true }).first()).toHaveValue(
+    'Second',
+  );
   const moved = JSON.parse((await page.getByTestId('repeater-values').textContent()) ?? '');
   expect(moved.groups.map((row: { name: string }) => row.name)).toEqual(['Second', 'First']);
   expect(moved.groups[1].thresholds.map((row: { amount: string }) => row.amount)).toEqual([

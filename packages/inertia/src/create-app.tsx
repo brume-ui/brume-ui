@@ -17,6 +17,9 @@ export interface CreateBrumeAppOptions {
   mode: RegistryMode;
   // biome-ignore lint/suspicious/noExplicitAny: custom components define their own props
   components?: Record<string, ComponentType<any>>;
+  /** Public custom field registration, including opt-in inlineEditable metadata. */
+  fields?: Parameters<typeof createRegistry>[0]['fields'];
+  displays?: Parameters<typeof createRegistry>[0]['displays'];
   /** Hand-written pages, e.g. `import.meta.glob('./pages/**\/*.tsx')`. */
   pages?: PageModules;
   /** Id selector of the mount element (Inertia reads the initial page from it). Default `#app`. */
@@ -79,7 +82,12 @@ export async function resolvePage(
 }
 
 export function createBrumeApp(opts: CreateBrumeAppOptions): Promise<void> {
-  const registry = createRegistry({ mode: opts.mode, components: opts.components });
+  const registry = createRegistry({
+    mode: opts.mode,
+    components: opts.components,
+    fields: opts.fields,
+    displays: opts.displays,
+  });
   const id = (opts.el ?? '#app').replace(/^#/, '');
   const appName = readAppName(document.getElementById(id) ?? document.body);
   // Inertia drops the server's <title inertia>; pages set theirs with <Head title>

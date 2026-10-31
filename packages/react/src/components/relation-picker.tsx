@@ -272,7 +272,6 @@ export function RelationPicker(props: RelationPickerProps) {
                     <span>{labelOf(item)}</span>
                     <Button
                       variant="ghost"
-                      aria-label={t('combobox.remove', { label: labelOf(item) })}
                       onClick={() => {
                         owners.current.delete(item.id);
                         setDraft(
@@ -280,7 +279,7 @@ export function RelationPicker(props: RelationPickerProps) {
                         );
                       }}
                     >
-                      {t('common.delete')}
+                      {t('combobox.remove', { label: labelOf(item) })}
                     </Button>
                   </div>
                   {props.renderSelection?.(

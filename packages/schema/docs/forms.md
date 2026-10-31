@@ -215,7 +215,7 @@ submitted/saving hook 可以中止儲存，回 HTTP 200：
 
 ## 0.4.0 遞迴表單協定
 
-本節定義 wire contract；條件運算、遠端載入、關聯／repeater 操作及 custom 註冊由後續 runtime 工作實作。
+本節定義已實作的遞迴 wire contract；公開 runtime 由 renderer/react 提供，實際套件發布另經 release gates。
 `schemaVersion` 為 `0.4.0`，套件版本另依 release 流程更新。
 
 `FieldDef` 新增下列欄位。所有欄位沿用 `FieldBase`（`name`、`label`、`rules` 等）：
@@ -230,14 +230,17 @@ submitted/saving hook 可以中止儲存，回 HTTP 200：
 relation 的 fields 放在選取物件的同一層，沒有額外 `extra` envelope。
 單選值是 `null` 或 `{id:string,...declaredSelectionFields}`；多選值是有順序的此類物件陣列（`RelationValue`）。
 `RelationItem` 表示一個 `{id:string,...declaredSelectionFields}`；`RelationValue` 表示整個欄位的 wire value，為 `null | RelationItem | RelationItem[]`。
-未來 picker 的 selection-facing props 使用 `value:RelationItem[]`、`onChange(next:RelationItem[]):void`，
-以及 `renderSelection?(item:RelationItem,index:number,onChange:(next:RelationItem)=>void):ReactNode`。
+picker 的 selection-facing props 使用 `value:RelationItem[]`、`onChange(next:RelationItem[]):void`，
+以及 `renderSelection?(item, index, onChange, draft, getDraft, getDraftIdentity):ReactNode`。
 picker entry 與 renderSelection 的 draft callback 都接一個 RelationItem，因此可直接取用 `item.id`，
 並在型別檢查後使用 flattened extras；不能把 null 或選取陣列當成一個 entry。
 `RelationValue[]` 是整個欄位值的陣列，會容許 null／巢狀陣列，不適合作為 picker entries。
 單選 picker 內部也用長度 0／1 的陣列；renderer 在邊界把 null／單一物件轉成該陣列，commit 時轉回 `items[0] ?? null`。
 多選維持有順序的 RelationItem[]。renderSelection 的第三個參數只修改 picker draft；取消捨棄 draft，commit 才呼叫外部 onChange，不能提前改 FormApi。
-這是後續 Task4 props 的契約澄清；本次不實作 picker runtime。
+第四個參數 `draft:readonly RelationItem[]` 是目前 render 的草稿；第五個 `getDraft():readonly RelationItem[]` 讀取當下選取草稿。
+第六個 `getDraftIdentity(id:string):number | undefined` 回傳該選取項目的私有 opaque generation；移除再加入／替換會更新，普通編輯與排序不變。
+兩個 accessor 均綁定原選取項目與開啟 session；關閉、過期、unmount 後 getDraft 回空陣列、getDraftIdentity 回 undefined，不能讀取下一次 session。
+較短 arity callback 保持相容。這些私有身分只用於 stale reply fencing，不得放進 wire 或儲存值。
 
 `id` 是選取來源的身分，不是中介 child 的身分，標籤由搜尋／hydration 回覆提供。
 關聯／資料表／association 名稱保留在伺服器宣告，不放進 schema。
@@ -257,11 +260,11 @@ custom 的完整形狀例如：
 ```
 
 可寫 custom 使用既有 renderer `FieldProps` 的 `def/value/onChange/onBlur/errors/path/form` 契約；
-`errors` 相對於欄位，`path` 是完整數字路徑。後續 runtime 會加上 row context，不能建立另一套 value 介面。
+`errors` 相對於欄位，`path` 是完整數字路徑。另帶 `rowContext` 與既有 FormApi；不能建立另一套 value 介面。
 `displayOnly:true` 可以有元件內部互動狀態，但不能呼叫 FormApi.setValue，也不寫入 model。
 Grid custom inline editor 是 `{type:'custom',component:ComponentRef,rules?:ClientRule[]}`，使用一般 cell 更新端點與宣告規則。
 custom display 沿用 `DisplaySchema` 既有的 ComponentRef alternative，沒有新的 custom display envelope。
-既有 ComponentSlot registrations 仍接收 declaration props 與 `context:{row,column}`；後續 display registry 不得改壞此契約。
+既有 ComponentSlot registrations 仍接收 declaration props 與 `context:{row,column}`；display registry 維持此契約。
 
 ### 條件與路徑
 
@@ -383,3 +386,31 @@ A leading plus and a trailing decimal point are accepted and canonicalized for c
 trailing whitespace/newlines and overprecision remain invalid. The standalone `canonicalDecimal`
 rounding utility retains its wider input contract. Server-emitted pattern rules carry the translated
 format message; condition evaluation keeps invalid controllers conservative.
+
+
+### Options、nested uploads 與來源實例
+
+搜尋／hydration 的公開參數為 `q`, `page`, `per_page`, `value[]`, `section`, JSON `depends`,
+JSON `rowContext`，以及選用的 JSON `dependencyContexts`、`ancestorSources`。
+`dependencyContexts` 為已宣告 dependency 名稱 → target RowContext 的 map；跨列／numeric target
+需要精確身分，缺少可辨識 context 時 server 回 422，不會猜測儲存位置或信任 readonly draft 值。
+`ancestorSources` 是 `{path, rowContext, depends, dependencyContexts?}` 陣列；canonical picker path +
+該 picker 之前的 ordered owner prefix 決定唯一實例。同一 template 在不同外層列可有不同實例。
+共享的無環實例可重用，實際 cycle、重複／不可達實例、未知名稱或 foreign chain 均拒絕。
+
+巢狀暫存上傳 multipart 保留 numeric `field`，另傳 JSON `rowContext` 與同一格式的選用
+`ancestorSources`。token 綁定 canonical upload template + exact verified row chain；numeric index
+只是位置，移動列不會轉移檔案身分。新增 picker owner 必須先通過宣告 source query 才能讀寫後代。
+搜尋、hydration、upload 的回覆均以目前 endpoint、依賴值、祖先來源、owner/reset/lifetime fence；
+移除重建相同 public key 不能接受舊回覆。私有 generation 不會送到 server。
+
+### Custom registry 與整合範例
+
+`createRegistry({mode:'vite', fields:{TaiwanAddress:{component:AddressField, inlineEditable:true}},
+ displays:{TaiwanAddress:AddressDisplay}})` 與 `createBrumeApp` 的 `fields`/`displays` 使用同一套型別。
+inline eligibility 需要明確 opt-in；`components` 的既有 ComponentSlot 用法不變。
+Playground `/#/form-composition` 組合 JSON→JSON、model-owned relation→relation→picker、
+條件必填、dependent hydration、自訂值與 Grid 單／多選 table filters；focused routes 保留各種
+延遲、取消、paging、reorder、source failure/retry 案例。Grid filters 儲存 scalar ID／ID[]，不是
+relation selection objects。Laravel 的 `/admin/compositions` 則以公開 DSL 與真實 Resource 端點
+驗證同一組合，不需 workbench AJAX 或 relation-saving hook。

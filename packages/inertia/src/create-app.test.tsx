@@ -1,16 +1,17 @@
 import { createRegistry } from '@brume-ui/brume-renderer';
 import { type PageEnvelope, SCHEMA_VERSION } from '@brume-ui/brume-schema';
-import { usePage } from '@inertiajs/react';
+import { type ResolvedComponent, usePage } from '@inertiajs/react';
 import { render, screen } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { resolvePage } from './create-app';
+import { createBrumeApp, resolvePage } from './create-app';
 import { LoginPage } from './pages/login';
 import { makeShared } from './test-fixtures';
 
 vi.mock('@inertiajs/react', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@inertiajs/react')>()),
   usePage: vi.fn(),
+  createInertiaApp: vi.fn(async () => undefined),
   Head: () => null,
 }));
 
@@ -90,4 +91,26 @@ describe('persistent layout through resolvePage', () => {
       mount,
     );
   });
+});
+
+const Address = () => null;
+const Display = () => null;
+
+// Removing registry forwarding must make actual custom-field/display resolution fail.
+it('createBrumeApp carries public field and display registrations into built-in pages', async () => {
+  const { createInertiaApp } = await import('@inertiajs/react');
+  await createBrumeApp({
+    mode: 'vite',
+    fields: { Address: { component: Address, inlineEditable: true } },
+    displays: { Address: Display },
+  });
+  const options = vi.mocked(createInertiaApp).mock.calls.at(-1)?.[0];
+  if (!options) throw new Error('App not initialized');
+  const Page = await options.resolve('brume/page');
+  const layout = (Page as ResolvedComponent).layout as (
+    p: ReactElement,
+  ) => ReactElement<{ registry: ReturnType<typeof createRegistry> }>;
+  const actual = layout(<p />).props.registry;
+  expect(actual.getField('Address')).toEqual({ component: Address, inlineEditable: true });
+  expect(actual.getDisplay('Address')).toBe(Display);
 });

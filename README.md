@@ -23,3 +23,11 @@ pnpm test:e2e
 
 Packages are published to npmjs.com under the `@brume-ui` scope (dist-tag `alpha` for prereleases),
 by `.github/workflows/release.yml` on a `v*` tag push, using npm trusted publishing with provenance.
+
+
+Custom frontends can pass the renderer's public `fields` and `displays` registrations directly to
+`createBrumeApp`, alongside existing `components` and `pages`. A field opts into custom Grid inline
+editing with `{ component: AddressField, inlineEditable: true }`; the default remains form-only.
+See [Form contracts](packages/schema/docs/forms.md) and Playground `/#/form-composition` for nested
+relations/JSON, dependent options, picker drafts and custom fields. These source APIs are staged
+for alpha.13; package versions remain alpha.12 until the reviewed release artifacts are published.
