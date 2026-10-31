@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { collectFields, validateValue } from '@brume-ui/brume-renderer';
 import {
   ClientRuleSchema,
   ConditionSchema,
@@ -10,6 +11,7 @@ import {
 } from '@brume-ui/brume-schema';
 import { describe, expect, it } from 'vitest';
 import { DEMO_FEATURES, filterDemoFeatures, getDemoFeature } from './demo-catalog';
+import { buildFormPage } from './pages/form-data';
 import { INDEX_ENTRIES, ROUTES, SHELL_ROUTE } from './routes';
 
 describe('implemented demo catalog', () => {
@@ -107,5 +109,47 @@ describe('implemented demo catalog', () => {
     expect(names).toContain('BrumeProvider');
     expect(names).toContain('RelationPicker');
     for (const name of names) expect(coverage).toContain(`| \`react.${name}\` |`);
+  });
+
+  it('keeps blocked validation triggers as gaps and names the reachable minimum and picker evidence', () => {
+    const coverage = readFileSync(
+      new URL('../../../docs/demo-coverage.md', import.meta.url),
+      'utf8',
+    );
+    const rows = coverage
+      .split('\n')
+      .filter((line) => line.startsWith('|'))
+      .map((line) =>
+        line
+          .split('|')
+          .slice(1, -1)
+          .map((cell) => cell.trim().replace(/^`|`$/g, '')),
+      );
+    const row = (id: string) => rows.find((cells) => cells[0] === id);
+    const fields = collectFields(buildFormPage().form.nodes);
+    expect(fields.find(({ path }) => path === 'quantity')?.def).toMatchObject({
+      min: 0,
+      step: 1,
+    });
+    expect(fields.find(({ path }) => path === 'title')?.def).toMatchObject({ maxLength: 120 });
+    for (const id of ['form.rule.integer', 'form.rule.numeric', 'form.rule.maxLength']) {
+      expect(row(id)?.slice(2, 4)).toEqual(['GAP-T2', 'Task 2']);
+    }
+    const weight = fields.find(({ path }) => path === 'weight')?.def;
+    if (!weight) throw new Error('Missing weight demo');
+    expect(weight).toMatchObject({ type: 'decimal', decimals: 3 });
+    expect(validateValue(weight, '0.250')).toBe('重量不能小於 0.5。');
+    expect(validateValue(weight, '0.500')).toBeNull();
+    expect(row('form.rule.min')?.slice(1, 3)).toEqual([
+      '重量輸入 0.250 後儲存；小於 0.5，應顯示「重量不能小於 0.5。」。',
+      'READY',
+    ]);
+    expect(row('form.field.number')?.[1]).not.toContain('負數');
+    expect(row('react.RelationPicker')?.[1]).not.toContain('單多選');
+    expect(row('react.RelationPicker')?.[4]).toContain('pages/form-relations.tsx');
+    expect(row('relation.picker-single-multiple')?.[2]).toBe('GAP-T2');
+    for (const status of ['READY', 'GAP-T2', 'GAP-T3', 'GAP-T4', 'GAP-T5', 'GAP-T6']) {
+      expect(coverage).toContain(`${status} ${rows.filter((cells) => cells[2] === status).length}`);
+    }
   });
 });
