@@ -47,7 +47,15 @@ for (const scheme of ['light', 'dark'] as const) {
     const next = dialog.getByRole('button', { name: /Next page|下一頁|下一页/ });
     await expect(previous).toBeEnabled();
     await expect(next).toBeEnabled();
+    await expect(search).toBeFocused();
+    // Layout changes can leave the last pointer over this input. Capture the intentional
+    // focused + hovered state already represented by the baseline, without clicking/refocusing.
+    await search.hover();
     await animationsIdle(page);
+    await expect(search).toBeFocused();
+    expect(
+      await search.evaluate((input) => input.matches(':hover') && input.matches(':focus-visible')),
+    ).toBe(true);
     await expect(previous).toHaveCSS('opacity', '1');
     await expect(next).toHaveCSS('opacity', '1');
     const results = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
