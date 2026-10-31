@@ -8,15 +8,27 @@ import { createRegistry } from '../../registry';
 import { renderWithBrume } from '../../test-utils';
 import { GridView } from '../grid-view';
 
-function NameField({ value, onChange, disabled, def, id }: FieldProps<string, CustomFieldDef>) {
+function NameField({
+  value,
+  onChange,
+  disabled,
+  def,
+  id,
+  errors,
+}: FieldProps<string, CustomFieldDef>) {
   return (
-    <input
-      id={id}
-      aria-label={def.label}
-      value={value}
-      disabled={disabled}
-      onChange={(event) => onChange(event.target.value)}
-    />
+    <>
+      <input
+        id={id}
+        aria-label={def.label}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {errors['']?.map((message) => (
+        <span key={message}>{message}</span>
+      ))}
+    </>
   );
 }
 const page: ListPage = {
@@ -107,4 +119,58 @@ describe('pending custom editor cancellation', () => {
       );
     },
   );
+});
+
+it('enforces serialized custom editor root rules before sending the cell PATCH', async () => {
+  const user = userEvent.setup();
+  const { adapter } = renderWithBrume(
+    <GridView
+      page={{
+        ...page,
+        columns: [
+          {
+            key: 'name',
+            label: 'Name',
+            editor: {
+              type: 'custom',
+              component: { type: 'component', name: 'NameField' },
+              rules: [
+                { rule: 'required', message: 'Contact is required.' },
+                { rule: 'email', message: 'Contact must be an email.' },
+                { rule: 'maxLength', value: 8, message: 'Contact is too long.' },
+              ],
+            },
+          },
+        ],
+      }}
+    />,
+    {
+      locale: 'en',
+      registry: createRegistry({
+        mode: 'vite',
+        fields: { NameField: { component: NameField, inlineEditable: true } },
+      }),
+      respond: () => ({ status: 200, data: { row: { id: 1, name: 'a@b.co' } } }),
+    },
+  );
+  await user.click(screen.getByRole('button', { name: 'Edit Name: Original' }));
+  const input = screen.getByRole('textbox', { name: 'Name' });
+  for (const [value, message] of [
+    ['', 'Contact is required.'],
+    ['bad', 'Contact must be an email.'],
+    ['long@example.com', 'Contact is too long.'],
+  ] as const) {
+    await user.clear(input);
+    if (value) await user.type(input, value);
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(screen.getByText(message)).toBeTruthy();
+    expect(adapter.calls.filter((call) => call.fn === 'request')).toHaveLength(0);
+  }
+  await user.clear(input);
+  await user.type(input, 'a@b.co');
+  await user.click(screen.getByRole('button', { name: 'Save' }));
+  expect(adapter.calls.find((call) => call.fn === 'request')?.args[0]).toMatchObject({
+    method: 'patch',
+    body: { column: 'name', value: 'a@b.co' },
+  });
 });
