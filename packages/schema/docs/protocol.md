@@ -101,3 +101,17 @@ bounded to 999999, search text to 1000 bytes, each context JSON parameter to 655
 levels, and ancestor metadata to 100 instances. Hydration preserves request order, omits unavailable
 IDs, and cannot disclose foreign labels. The legacy Grid remote-combobox API retains its documented
 tolerant paging and truncation behavior.
+
+The renderer's local relation drafts compose private row ownership with the actual parent Form for
+outside dependency targets. The React `RelationPicker.renderSelection` callback has an optional sixth
+argument, `getDraftIdentity(id): number | undefined`; the primitive always supplies it. Custom
+selection renderers that construct draft Form APIs must forward this accessor along with `getDraft`.
+It identifies an item's private lifetime within that picker instance, changes on removal/reselection
+or replacement, and stays stable for ordinary value edits or movement. It is bound to the calling
+selection and open session; obsolete, closed, or unmounted accessors return undefined. These opaque
+numbers are not source IDs, row order, persistence metadata or wire parameters.
+
+Draft ownership combines the parent's applicable lifetime, that selection lifetime, and the local
+descendant lifetime. Outside parent targets delegate to the live parent owner, so intermediate
+remove/readd operations cannot be erased by React batching. A surviving selection also observes the
+new private identity when a sibling selection is removed and re-added with the same ID and payload.

@@ -6,10 +6,16 @@ export interface RowLifetimes {
   sequence: number;
   live: Map<string, number>;
 }
-const instances = new WeakMap<FormApi, RowLifetimes>();
+type RowLifetime = number | string | undefined;
+type LifetimeResolver = (context: RowContext, local: number | undefined) => RowLifetime;
+const instances = new WeakMap<FormApi, { rows: RowLifetimes; resolve?: LifetimeResolver }>();
 export const createRowLifetimes = (): RowLifetimes => ({ sequence: 0, live: new Map() });
-export function bindRowLifetimes(form: FormApi, rows: RowLifetimes): FormApi {
-  instances.set(form, rows);
+export function bindRowLifetimes(
+  form: FormApi,
+  rows: RowLifetimes,
+  resolve?: LifetimeResolver,
+): FormApi {
+  instances.set(form, { rows, resolve });
   return form;
 }
 /** Include declared collection rows even when the collection has no child fields. */
@@ -55,7 +61,9 @@ export function syncRowLifetimes(
   rows.live = next;
 }
 /** Private client lifetime; never included in wire identities and never a persistence authority. */
-export function rowLifetime(form: FormApi, context: RowContext = []): number | undefined {
+export function rowLifetime(form: FormApi, context: RowContext = []): RowLifetime {
   if (!context.length) return 0;
-  return instances.get(form)?.live.get(JSON.stringify(context));
+  const instance = instances.get(form);
+  const local = instance?.rows.live.get(JSON.stringify(context));
+  return instance?.resolve ? instance.resolve(context, local) : local;
 }

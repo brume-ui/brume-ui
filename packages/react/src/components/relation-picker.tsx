@@ -34,6 +34,7 @@ export interface RelationPickerProps {
     onChange: (next: RelationItem) => void,
     draft: readonly RelationItem[],
     getDraft: () => readonly RelationItem[],
+    getDraftIdentity?: (id: string) => number | undefined,
   ): ReactNode;
 }
 
@@ -53,11 +54,21 @@ export function RelationPicker(props: RelationPickerProps) {
   };
   const live = useRef(false);
   const generation = useRef(0);
-  type Owner = { read(): readonly RelationItem[] };
+  const itemGeneration = useRef(0);
+  type Owner = {
+    generation: number;
+    read(): readonly RelationItem[];
+    identity(id: string): number | undefined;
+  };
   const owners = useRef(new Map<string, Owner>());
   const createOwner = (id: string): Owner => {
     const session = generation.current;
     const owner: Owner = {
+      generation: ++itemGeneration.current,
+      identity: (target) =>
+        live.current && session === generation.current && owners.current.get(id) === owner
+          ? owners.current.get(target)?.generation
+          : undefined,
       read: () =>
         live.current && session === generation.current && owners.current.get(id) === owner
           ? (currentDraft.current ?? [])
@@ -290,6 +301,7 @@ export function RelationPicker(props: RelationPickerProps) {
                     },
                     draft,
                     owner?.read ?? (() => []),
+                    owner?.identity ?? (() => undefined),
                   )}
                 </div>
               );

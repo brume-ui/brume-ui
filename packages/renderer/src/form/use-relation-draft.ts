@@ -3,7 +3,12 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { type FieldErrors, isPathWithin } from './errors';
 import { fieldOwnershipKey } from './field-ownership';
 import { getAt, setAt } from './paths';
-import { bindRowLifetimes, createRowLifetimes, syncRowLifetimes } from './row-lifetime';
+import {
+  bindRowLifetimes,
+  createRowLifetimes,
+  rowLifetime,
+  syncRowLifetimes,
+} from './row-lifetime';
 import { collectValueFields } from './traversal';
 import type { FormApi } from './use-form-state';
 
@@ -13,6 +18,7 @@ interface Config {
   prefix: string;
   multiple: boolean;
   getDraft(): readonly RelationItem[];
+  getDraftIdentity?(id: string): number | undefined;
   item: RelationItem;
   onChange(next: RelationItem): void;
   onPending(id: symbol, count: number): void;
@@ -263,5 +269,22 @@ export function useRelationDraft(config: Config): FormApi {
     moveRow: (path, from, to) => editRows(path, from, to),
     removeRow: (path, index) => editRows(path, index),
   };
-  return bindRowLifetimes(api, local.rowLifetimes);
+  return bindRowLifetimes(api, local.rowLifetimes, (context, localLifetime) => {
+    const current = location();
+    const parent = latest.current.parent;
+    const container = current && parent.getField(current.path);
+    if (!container) return undefined;
+    const prefix = container.rowContext;
+    const selection = context[prefix.length];
+    const inside =
+      JSON.stringify(context.slice(0, prefix.length)) === JSON.stringify(prefix) &&
+      selection?.path === container.templatePath;
+    if (!inside) return rowLifetime(parent, context);
+    const inherited = rowLifetime(parent, prefix);
+    if (inherited === undefined || localLifetime === undefined) return undefined;
+    const readIdentity = latest.current.getDraftIdentity;
+    const selectedLifetime = readIdentity?.(selection.id ?? selection.key);
+    if (readIdentity && selectedLifetime === undefined) return undefined;
+    return JSON.stringify([inherited, selectedLifetime ?? null, localLifetime]);
+  });
 }

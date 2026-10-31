@@ -307,3 +307,68 @@ it('commits the current synchronous draft and single mode never emits more than 
   });
   expect(change).toHaveBeenCalledWith([{ id: 'b', quantity: '8' }]);
 });
+
+it('exposes session-bound private sibling identities without changing them on ordinary edits', () => {
+  let identity: ((id: string) => number | undefined) | undefined;
+  let update!: (item: RelationItem) => void;
+  const { unmount } = render(
+    <BrumeProvider adapter={createMemoryAdapter()} locale="en">
+      <RelationPicker
+        label="Products"
+        value={[{ id: 'b' }, { id: 'a' }]}
+        onChange={() => {}}
+        multiple
+        items={[
+          { value: 'a', label: 'Apple' },
+          { value: 'b', label: 'Banana' },
+        ]}
+        pagination={{ page: 1, perPage: 20, hasMore: false }}
+        query=""
+        loading={false}
+        onQueryChange={() => {}}
+        onPageChange={() => {}}
+        onSectionChange={() => {}}
+        onRetry={() => {}}
+        renderSelection={(
+          item,
+          _index,
+          change,
+          _draft,
+          _read,
+          readIdentity?: (id: string) => number | undefined,
+        ) => {
+          if (item.id === 'b') identity = readIdentity;
+          else update = change;
+          return null;
+        }}
+      />
+    </BrumeProvider>,
+  );
+  const trigger = screen.getByRole('button', { name: /Products/ });
+  fireEvent.click(trigger);
+  expect(identity).toBeTypeOf('function');
+  const firstA = identity?.('a');
+  const firstB = identity?.('b');
+  expect(firstA).toBeTypeOf('number');
+  act(() => {
+    update({ id: 'a', unrelated: 'edit' });
+  });
+  expect(identity?.('a')).toBe(firstA);
+  act(() => {
+    fireEvent.click(screen.getByRole('button', { name: 'Remove “Apple”' }));
+    expect(identity?.('a')).toBeUndefined();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Apple' }));
+  });
+  expect(identity?.('a')).not.toBe(firstA);
+  expect(identity?.('b')).toBe(firstB);
+  const oldSession = identity;
+  act(() => {
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(trigger);
+    expect(oldSession?.('a')).toBeUndefined();
+  });
+  expect(identity?.('a')).toBeTypeOf('number');
+  const current = identity;
+  unmount();
+  expect(current?.('a')).toBeUndefined();
+});

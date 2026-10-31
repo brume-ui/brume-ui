@@ -67,13 +67,14 @@ export function RelationField(props: FieldProps<unknown, RelationFieldDef>) {
             props.onChange(props.def.multiple ? next : (next[0] ?? null));
             props.onBlur();
           }}
-          renderSelection={(item, index, onChange, _draft, getDraft) => (
+          renderSelection={(item, index, onChange, _draft, getDraft, getDraftIdentity) => (
             <SelectionFields
               key={item.id}
               {...props}
               item={item}
               index={index}
               getDraft={getDraft}
+              getDraftIdentity={getDraftIdentity}
               update={onChange}
               onPending={onPending}
             />
@@ -89,6 +90,7 @@ function SelectionFields(
     item: RelationItem;
     index: number;
     getDraft(): readonly RelationItem[];
+    getDraftIdentity?(id: string): number | undefined;
     update(next: RelationItem): void;
     onPending(id: symbol, count: number): void;
   },
@@ -102,6 +104,7 @@ function SelectionFields(
     multiple: props.def.multiple,
     item: props.item,
     getDraft: props.getDraft,
+    getDraftIdentity: props.getDraftIdentity,
     onChange: props.update,
     onPending: props.onPending,
   });
