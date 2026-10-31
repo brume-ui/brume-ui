@@ -56,7 +56,7 @@ export interface OptionsQuery {
   section?: string;
   values?: string[];
 }
-const stableJson = (value: unknown): string =>
+export const stableJson = (value: unknown): string =>
   JSON.stringify(value, (_key, item: unknown) =>
     item !== null && typeof item === 'object' && !Array.isArray(item)
       ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b)))

@@ -405,3 +405,126 @@ function PickerUpload() {
     </>
   );
 }
+
+let liveUploadForm: import('../use-form-state').FormApi;
+let liveUploadWrites: { path: string; value: unknown }[] = [];
+function LiveUploadHarness({ endpoint = '/upload' }: { endpoint?: string }) {
+  const form = useFormState(
+    {
+      layout: 'stacked',
+      nodes: [
+        { type: 'field', field: { type: 'text', name: 'tenant', label: 'Tenant' } },
+        {
+          type: 'field',
+          field: {
+            type: 'relation',
+            name: 'products',
+            label: 'Products',
+            multiple: true,
+            remote: {
+              url: '/options/products',
+              dependsOn: { tenant: { scope: 'root', path: 'tenant' } },
+            },
+            fields: [{ type: 'field', field: { ...def, name: 'file', multiple: false } }],
+          },
+        },
+      ],
+    },
+    {
+      tenant: 'a',
+      products: [
+        { id: '31', file: null },
+        { id: '32', file: null },
+      ],
+    },
+  );
+  const setValue = form.setValue;
+  form.setValue = (path, value) => {
+    liveUploadWrites.push({ path, value });
+    setValue(path, value);
+  };
+  liveUploadForm = form;
+  const owner = form.fields.find(
+    (field) => field.templatePath === 'products.*.file' && field.rowContext[0]?.id === '31',
+  );
+  return owner ? (
+    <UploadField
+      def={{ ...def, name: 'file', multiple: false }}
+      value={form.getValue(owner.path)}
+      onChange={(value) => form.setValue(owner.path, value)}
+      onBlur={() => {}}
+      errors={{}}
+      path={owner.path}
+      id="live-upload"
+      invalid={false}
+      readOnly={false}
+      disabled={false}
+      form={form}
+      uploadUrl={endpoint}
+      rowContext={owner.rowContext}
+    />
+  ) : null;
+}
+
+it.each(['dependency', 'remove-readd', 'reset', 'move', 'move-rendered'])(
+  'checks live upload ownership before React commits a synchronous %s',
+  async (mode) => {
+    let respond!: (response: HttpResponse) => void;
+    liveUploadWrites = [];
+    const { container } = renderWithBrume(<LiveUploadHarness />, {
+      respond: () =>
+        new Promise((resolve) => {
+          respond = resolve;
+        }),
+    });
+    select(container);
+    if (mode === 'move-rendered') act(() => liveUploadForm.moveRow('products', 0, 1));
+    await act(async () => {
+      respond(success);
+      if (mode === 'dependency') liveUploadForm.setValue('tenant', 'b');
+      if (mode === 'remove-readd') {
+        liveUploadForm.setValue('products', []);
+        liveUploadForm.setValue('products', [
+          { id: '31', file: null },
+          { id: '32', file: null },
+        ]);
+      }
+      if (mode === 'reset') liveUploadForm.reset();
+      if (mode === 'move') liveUploadForm.moveRow('products', 0, 1);
+      for (let index = 0; index < 12; index++) await Promise.resolve();
+    });
+    const tokenWrites = liveUploadWrites.filter(
+      (write) => JSON.stringify(write.value) === '{"token":"temp"}',
+    );
+    expect(tokenWrites).toEqual(
+      mode.startsWith('move') ? [{ path: 'products.1.file', value: { token: 'temp' } }] : [],
+    );
+    expect(liveUploadForm.getValue('products.0.file')).toBeNull();
+    if (mode.startsWith('move'))
+      expect(liveUploadForm.getValue('products.1.file')).toEqual({ token: 'temp' });
+  },
+);
+
+it('rejects a noncooperative upload response after its endpoint changes', async () => {
+  let respond!: (response: HttpResponse) => void;
+  let signal: AbortSignal | undefined;
+  liveUploadWrites = [];
+  const view = renderWithBrume(<LiveUploadHarness />, {
+    respond: (request) => {
+      signal = request.signal;
+      return new Promise((resolve) => {
+        respond = resolve;
+      });
+    },
+  });
+  select(view.container);
+  view.rerender(<LiveUploadHarness endpoint="/other-upload" />);
+  expect(signal?.aborted).toBe(true);
+  await act(async () => {
+    respond(success);
+  });
+  expect(liveUploadForm.getValue('products.0.file')).toBeNull();
+  expect(liveUploadWrites.some((write) => JSON.stringify(write.value) === '{"token":"temp"}')).toBe(
+    false,
+  );
+});

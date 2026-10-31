@@ -18,7 +18,7 @@ import { scopeErrors } from '../errors';
 import { fieldOwnershipKey } from '../field-ownership';
 import { resolveField } from '../registry';
 import { verifiedRowContext } from '../row-identity';
-import { resolveAncestorSources } from '../use-remote-options';
+import { resolveAncestorSources, stableJson } from '../use-remote-options';
 import { ReadOnlyField } from './misc';
 
 type UploadDef = Extract<FieldProps['def'], { type: 'upload' }>;
@@ -33,6 +33,7 @@ export function UploadField(props: FieldProps) {
     ancestors.values,
     ancestors.ownership,
     ancestors.valid,
+    props.uploadUrl,
   ]);
   const context = useRef(owner);
   const stateId = useRef(props.form.stateId);
@@ -69,6 +70,10 @@ export function UploadField(props: FieldProps) {
       key={generation.current}
       {...props}
       def={props.def}
+      onRelocatedChange={(path, next) => {
+        emitted.current = next;
+        props.form.setValue(path, next);
+      }}
       onChange={(next) => {
         emitted.current = next;
         props.onChange(next);
@@ -77,9 +82,58 @@ export function UploadField(props: FieldProps) {
   );
 }
 
-function UploadControl(props: FieldProps<unknown, UploadDef>) {
+function UploadControl(
+  props: FieldProps<unknown, UploadDef> & { onRelocatedChange(path: string, value: unknown): void },
+) {
   const { def, value, errors, path, id, uploadUrl, form } = props;
   const { adapter, t } = useBrume();
+  const declared = form.getField(path);
+  const rowContext = props.rowContext ?? declared?.rowContext ?? [];
+  const contextKey = stableJson(rowContext);
+  const ownerKey = fieldOwnershipKey(form, path, rowContext);
+  const ancestors = resolveAncestorSources(form, declared, []);
+  const ancestorKey = stableJson([ancestors.values, ancestors.ownership, ancestors.valid]);
+  const scope = {
+    stateId: form.stateId,
+    reset: form.resetVersion,
+    ownerKey,
+    ancestorKey,
+    uploadUrl,
+    adapter,
+  };
+  const latest = useRef(scope);
+  latest.current = scope;
+  // Follow the stable owner in live Form state, including the interval before React renders.
+  const currentField = () =>
+    rowContext.length
+      ? form.fields.find(
+          (field) =>
+            field.templatePath === declared?.templatePath &&
+            stableJson(field.rowContext) === contextKey,
+        )
+      : form.getField(path);
+  const currentOwner = () => {
+    if (
+      form.stateId !== scope.stateId ||
+      form.resetVersion !== scope.reset ||
+      latest.current.stateId !== scope.stateId ||
+      latest.current.reset !== scope.reset ||
+      latest.current.uploadUrl !== scope.uploadUrl ||
+      latest.current.adapter !== scope.adapter ||
+      latest.current.ownerKey !== scope.ownerKey ||
+      latest.current.ancestorKey !== scope.ancestorKey
+    )
+      return false;
+    const field = currentField();
+    if (declared && (!field || field.templatePath !== declared.templatePath)) return false;
+    const currentAncestors = resolveAncestorSources(form, field, []);
+    return (
+      fieldOwnershipKey(form, field?.path ?? path, rowContext) === ownerKey &&
+      currentAncestors.valid &&
+      stableJson([currentAncestors.values, currentAncestors.ownership, currentAncestors.valid]) ===
+        ancestorKey
+    );
+  };
   const currentChange = useRef(props.onChange);
   currentChange.current = props.onChange;
   const [items, setItems] = useState<UploadItem[]>(() => {
@@ -101,7 +155,12 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
     const values = next.flatMap((item) =>
       item.status === 'done' && item.value ? [item.value] : [],
     );
-    currentChange.current(def.multiple ? values : (values[0] ?? null));
+    if (!currentOwner()) return;
+    const nextValue = def.multiple ? values : (values[0] ?? null);
+    const destination = currentField();
+    if (destination && destination.path !== path)
+      props.onRelocatedChange(destination.path, nextValue);
+    else currentChange.current(nextValue);
   };
   // Protocol indices refer to persisted values, never transient/error display rows.
   const valueIndex = (index: number) =>
@@ -150,6 +209,7 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
                 body,
                 signal,
               });
+              if (signal.aborted || !currentOwner()) throw new Error('Obsolete upload response');
               if (res.status === 200) return { ok: true, value: res.data };
               const message =
                 res.status === 422
