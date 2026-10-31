@@ -1,3 +1,4 @@
+import type { FormDef } from '@brume-ui/brume-schema';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
@@ -6,6 +7,10 @@ import {
   UPLOAD_PRESETS,
 } from '../../../apps/playground/src/pages/form-feature-data';
 import { FocusedFormDemo } from '../../../apps/playground/src/pages/form-feature-demo';
+import {
+  createFocusedAdapter,
+  type Store,
+} from '../../../apps/playground/src/pages/form-feature-memory';
 import { renderWithBrume } from './test-utils';
 
 const first = <T,>(values: T[]): T => {
@@ -395,4 +400,169 @@ describe('focused public Form examples', () => {
     await waitFor(() => expect(output('form-saved').type).toBe('product'));
     expect(output('form-saved').requiredCoupon).toBe('已存優惠券');
   });
+  it('does not adopt a deleted owner at a reused index when saving a new default-value row', async () => {
+    renderWithBrume(<FocusedFormDemo exampleId="form.behavior.default-value" />);
+    fireEvent.click(screen.getByRole('button', { name: '移除 預設值列 1' }));
+    fireEvent.click(screen.getByRole('button', { name: /新增.*預設值列/ }));
+    fireEvent.click(screen.getByRole('switch', { name: '編輯列備註' }));
+    expect(output('form-default-effective')[0].note).toBe('新 owner fallback');
+    save();
+    await waitFor(() => expect(output('form-saved').rows[0].note).toBe('新 owner fallback'));
+  });
+  it('preserves the remaining condition-row owner after the first row is removed', async () => {
+    renderWithBrume(<FocusedFormDemo exampleId="form.behavior.conditions-row" />);
+    fireEvent.click(screen.getByRole('button', { name: '移除 條件列 1' }));
+    expect(output('form-draft').rows[0].rowNote).toBe('乙列草稿');
+    save();
+    await waitFor(() => expect(output('form-saved').rows[0].rowNote).toBe('乙列草稿'));
+  });
+  it('matches complete nested key/id chains, shifted picker IDs and explicit stored nulls', async () => {
+    const form: FormDef = {
+      layout: 'stacked',
+      nodes: [
+        {
+          type: 'field',
+          field: {
+            type: 'repeater',
+            name: 'groups',
+            label: '外層',
+            mode: 'relation',
+            nodes: [
+              {
+                type: 'field',
+                field: {
+                  type: 'relation',
+                  name: 'picked',
+                  label: '選取',
+                  multiple: true,
+                  remote: { url: '/demo/focused/options' },
+                  fields: [
+                    {
+                      type: 'field',
+                      field: {
+                        type: 'text',
+                        name: 'note',
+                        label: '備註',
+                        readOnly: true,
+                        defaultValue: '新 owner fallback',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const baseline = {
+      groups: [
+        { _brume: { key: 'a', id: '1' }, picked: [{ id: '7', note: '甲儲存值' }] },
+        {
+          _brume: { key: 'b', id: '2' },
+          picked: [
+            { id: '7', note: null },
+            { id: '8', note: '乙八儲存值' },
+          ],
+        },
+      ],
+    };
+    const shifted = {
+      groups: [
+        {
+          _brume: { key: 'b', id: '2' },
+          picked: [
+            { id: '8', note: '未儲存八' },
+            { id: '7', note: '未儲存七' },
+          ],
+        },
+      ],
+    };
+    const saved = await acceptFixture(form, baseline, shifted);
+    expect(first(saved.groups).picked).toEqual([
+      { id: '8', note: '乙八儲存值' },
+      { id: '7', note: null },
+    ]);
+    for (const owner of [
+      { key: 'b', id: '3' },
+      { key: 'replacement', id: '2' },
+    ]) {
+      const replacement = await acceptFixture(form, baseline, {
+        groups: [{ _brume: owner, picked: [{ id: '7', note: '替換草稿' }] }],
+      });
+      expect(first(first(replacement.groups).picked).note).toBe('新 owner fallback');
+    }
+  });
+  it('runs the direct server422 selector/error/repair retry scenario', async () => {
+    renderWithBrume(<FocusedFormDemo exampleId="form.behavior.server422" />);
+    expect(screen.queryByRole('button', { name: '載入無效控制值' })).toBeNull();
+    fireEvent.change(screen.getByLabelText('模擬回應'), { target: { value: 'server422' } });
+    change('名稱', '待驗證名稱');
+    save();
+    await screen.findAllByText('此名稱已被使用。');
+    expect(screen.getByLabelText('名稱').getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(screen.getByLabelText('名稱'));
+    fireEvent.change(screen.getByLabelText('模擬回應'), { target: { value: 'success' } });
+    change('名稱', '修正名稱');
+    save();
+    await waitFor(() => expect(output('form-saved').name).toBe('修正名稱'));
+  });
+  it('gives concurrent same-name root and nested uploads distinct request tokens', async () => {
+    renderWithBrume(<FocusedFormDemo exampleId="upload.nested-memory" />);
+    const root = first(screen.getAllByLabelText('附件', { selector: 'input' }));
+    const nested = within(screen.getByRole('list', { name: 'JSON 附件列' })).getByLabelText(
+      '附件',
+      { selector: 'input' },
+    );
+    fireEvent.change(root, {
+      target: { files: [new File(['root'], 'same.txt', { type: 'text/plain' })] },
+    });
+    fireEvent.change(nested, {
+      target: { files: [new File(['nested'], 'same.txt', { type: 'text/plain' })] },
+    });
+    await waitFor(() => {
+      expect(output('form-draft').files).toHaveLength(1);
+      expect(output('form-draft').json[0].files).toHaveLength(1);
+    });
+    const draft = output('form-draft');
+    expect(draft.files[0].token).not.toBe(draft.json[0].files[0].token);
+  });
 });
+
+async function acceptFixture(
+  form: FormDef,
+  baseline: Record<string, unknown>,
+  values: Record<string, unknown>,
+) {
+  const store: { current: Store } = {
+    current: {
+      saved: {},
+      wire: {},
+      requests: 0,
+      uploads: 0,
+      aborted: 0,
+      hydrateBatches: [],
+      pendingOptions: 0,
+      currentId: '42',
+      nextId: 43,
+      revision: 0,
+      listeners: new Set(),
+    },
+  };
+  const adapter = createFocusedAdapter(
+    'form.behavior.default-value',
+    { form, values: baseline },
+    { current: { reply: 'success', slow: false, uploadFailure: false } },
+    store,
+    () => {},
+  );
+  const result = await adapter.request({
+    method: 'put',
+    url: '/demo/focused/save',
+    body: { values, after: 'edit' },
+  });
+  expect(result.status).toBe(200);
+  return store.current.saved as typeof values & {
+    groups: { picked: { id: string; note: unknown }[] }[];
+  };
+}

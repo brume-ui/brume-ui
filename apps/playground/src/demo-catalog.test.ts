@@ -38,6 +38,24 @@ describe('implemented demo catalog', () => {
     }
   });
 
+  it('gives the direct server422 target instructions for its actual selector and field', () => {
+    const feature = getDemoFeature('form.behavior.server422');
+    expect(feature?.href).toBe('#/form-behaviors?example=form.behavior.server422');
+    const steps = feature?.steps.join(' ') ?? '';
+    for (const label of ['模擬回應', '422 欄位錯誤', '名稱', '成功'])
+      expect(steps).toContain(label);
+    expect(steps).not.toContain('載入無效控制值');
+    expect(feature?.expected).toContain('此名稱已被使用。');
+    const manifest = readFileSync(
+      new URL('../../../docs/demo-coverage.md', import.meta.url),
+      'utf8',
+    )
+      .split('\n')
+      .find((line) => line.startsWith('| `form.behavior.server422`'));
+    expect(manifest).toContain('422 欄位錯誤');
+    expect(manifest).toContain('此名稱已被使用。');
+    expect(manifest).not.toContain('載入無效控制值');
+  });
   it('searches title, instructions and feature IDs within the selected category', () => {
     expect(filterDemoFeatures('遠端', 'form').map((feature) => feature.id)).toContain(
       'form.remote-options',

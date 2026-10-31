@@ -303,6 +303,11 @@ export const FORM_EXAMPLES: FormExample[] = [
   })),
 ];
 function behaviorSteps(id: string): string[] {
+  if (id === 'server422')
+    return [
+      '在「名稱」填入待驗證文字，將「模擬回應」選為「422 欄位錯誤」，按「儲存後繼續編輯」。',
+      '觀察名稱欄位的「此名稱已被使用。」與錯誤焦點；將模擬回應選回「成功」，修正名稱後重新儲存。',
+    ];
   if (id === 'client-rule-message')
     return [
       '清空必填文字後儲存，查看 ClientRule 的「請填寫名稱。」。',
@@ -334,6 +339,8 @@ function behaviorSteps(id: string): string[] {
   ];
 }
 function behaviorExpected(id: string) {
+  if (id === 'server422')
+    return '名稱顯示「此名稱已被使用。」且草稿保留；選擇成功並修正後可重試，接受值更新、錯誤清除。';
   return id.startsWith('submit-')
     ? '成功後採用記憶體端點重新載入的完整基準；取消、422 與網路錯誤保持草稿，可重試。'
     : id === 'default-value'

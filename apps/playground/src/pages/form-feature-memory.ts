@@ -83,7 +83,7 @@ export function createFocusedAdapter(
         req.url === '/demo/focused/upload' &&
         req.body instanceof FormData
       ) {
-        store.current.uploads++;
+        const uploadSequence = ++store.current.uploads;
         changed();
         let counted = false;
         const aborted = () => {
@@ -107,7 +107,7 @@ export function createFocusedAdapter(
         return {
           status: 200,
           data: {
-            token: `focused-${store.current.uploads}-${file.name}`,
+            token: `focused-${uploadSequence}-${file.name}`,
             name: file.name,
             size: file.size,
             mime: file.type,
@@ -198,20 +198,37 @@ function acceptConditionalDraft(
   values: Record<string, unknown>,
   baseline: Record<string, unknown>,
 ) {
+  const ownerKey = (field: ReturnType<typeof collectValueFields>[number]) =>
+    JSON.stringify([
+      field.templatePath,
+      field.rowContext.map(({ path, key, id }) => [path, key, id ?? null]),
+    ]);
+  const storedFields = new Map(
+    collectValueFields(fixture.form.nodes, baseline, undefined, fixture.form.rowFields).map(
+      (field) => [ownerKey(field), { value: getAt(baseline, field.path) }],
+    ),
+  );
   const fields = collectValueFields(
     fixture.form.nodes,
     values,
     undefined,
     fixture.form.rowFields,
-    (field) => ({
-      known: true,
-      value: getAt(baseline, field.path) ?? field.def.defaultValue ?? null,
-    }),
+    (field) => {
+      const stored = storedFields.get(ownerKey(field));
+      // Presence of the complete owner context is independent of its value (including null).
+      if (stored) return { known: true, value: stored.value };
+      const value = Object.hasOwn(field.def, 'defaultValue')
+        ? field.def.defaultValue
+        : field.def.type === 'repeater' || (field.def.type === 'relation' && field.def.multiple)
+          ? []
+          : null;
+      return { known: true, value };
+    },
   );
   let accepted: Record<string, unknown> = {};
   for (const field of fields) {
     if (field.rowContext.length) continue;
-    const value = field.active ? field.effectiveValue : getAt(baseline, field.path);
+    const value = field.effectiveValue;
     if (value !== undefined) accepted = setAt(accepted, field.path, structuredClone(value));
   }
   return accepted;
