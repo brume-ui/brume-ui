@@ -14,6 +14,7 @@ import { setAt } from '../../form/paths';
 import { useFormState } from '../../form/use-form-state';
 import { MissingComponent } from '../../missing-component';
 import { useRegistry } from '../../registry-context';
+import { ComponentDisplay } from '../displays/component';
 import {
   type ChoiceEditorDef,
   type CloseReason,
@@ -98,6 +99,22 @@ function useCellLabel({ column, row, editor, display }: CellProps, cell: CellUpd
   const { t } = useBrume();
   const separator = t('grid.listSeparator');
   const unconfirmed = cell.pending || cell.held;
+  // A component may contain links or buttons. Preserve it beside a separate edit trigger,
+  // and keep both its value and row context current while a save is pending or held.
+  if (column.display?.type === 'component') {
+    return {
+      content: t('grid.edit'),
+      separateDisplay: (
+        <ComponentDisplay
+          display={column.display}
+          row={unconfirmed ? { ...row, [column.key]: cell.value } : row}
+          column={column.key}
+        />
+      ),
+      variant: 'text' as const,
+      ariaLabel: `${t('grid.edit')} ${column.label}`,
+    };
+  }
   // A display renders the confirmed value; a pending one, no display, or a display with controls of
   // its own (which cannot sit inside the edit button) shows as text.
   const staticDisplay = column.display && STATIC_DISPLAYS.has(column.display.type);
@@ -114,6 +131,7 @@ function useCellLabel({ column, row, editor, display }: CellProps, cell: CellUpd
     showDisplay && (column.display?.type === 'label' || column.display?.type === 'badge');
   return {
     content,
+    separateDisplay: null,
     variant: pill ? ('badge' as const) : ('text' as const),
     ariaLabel: t('grid.editCell', { label: column.label, value: text }),
   };
@@ -122,7 +140,7 @@ function useCellLabel({ column, row, editor, display }: CellProps, cell: CellUpd
 function TextCell(props: CellProps<TextEditorDef>) {
   const { column, row, editor, display } = props;
   const cell = useCellUpdate(row.id, column.key);
-  const { content, variant, ariaLabel } = useCellLabel(props, cell);
+  const { content, separateDisplay, variant, ariaLabel } = useCellLabel(props, cell);
   const errorId = useId();
   const [editing, setEditing] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -158,16 +176,19 @@ function TextCell(props: CellProps<TextEditorDef>) {
           />
         </div>
       ) : (
-        <CellEditButton
-          ref={button}
-          aria-label={ariaLabel}
-          aria-describedby={describedBy}
-          variant={variant}
-          pending={cell.pending}
-          onClick={() => setEditing(true)}
-        >
-          {content}
-        </CellEditButton>
+        <>
+          {separateDisplay}
+          <CellEditButton
+            ref={button}
+            aria-label={ariaLabel}
+            aria-describedby={describedBy}
+            variant={variant}
+            pending={cell.pending}
+            onClick={() => setEditing(true)}
+          >
+            {content}
+          </CellEditButton>
+        </>
       )}
     </CellFrame>
   );
@@ -194,7 +215,7 @@ function sameChoice(a: ChoiceDraft, b: ChoiceDraft): boolean {
 function ChoiceCell(props: CellProps<ChoiceEditorDef>) {
   const { column, row, editor, display } = props;
   const cell = useCellUpdate(row.id, column.key);
-  const { content, variant, ariaLabel } = useCellLabel(props, cell);
+  const { content, separateDisplay, variant, ariaLabel } = useCellLabel(props, cell);
   const errorId = useId();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<ChoiceDraft>('');
@@ -224,6 +245,7 @@ function ChoiceCell(props: CellProps<ChoiceEditorDef>) {
 
   return (
     <CellFrame column={column} cell={cell} errorId={errorId}>
+      {separateDisplay}
       <Popover
         open={open}
         onOpenChange={onOpenChange}
@@ -353,7 +375,7 @@ function CustomCell(props: CellProps<Extract<InlineEditor, { type: 'custom' }>>)
   const registry = useRegistry();
   const registration = registry.getField(editor.component.name);
   const cell = useCellUpdate(row.id, column.key);
-  const { content, variant, ariaLabel } = useCellLabel(props, cell);
+  const { content, separateDisplay, variant, ariaLabel } = useCellLabel(props, cell);
   const errorId = useId();
   const [editing, setEditing] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -375,20 +397,23 @@ function CustomCell(props: CellProps<Extract<InlineEditor, { type: 'custom' }>>)
       {editing ? (
         <CustomEditorSession {...props} cell={cell} onClose={close} />
       ) : (
-        <CellEditButton
-          ref={button}
-          aria-label={ariaLabel}
-          aria-describedby={cell.error ? errorId : undefined}
-          variant={variant}
-          pending={cell.pending}
-          // Stay focusable when cancelling an in-flight save; pending activation is ignored.
-          aria-disabled={cell.pending || undefined}
-          onClick={() => {
-            if (!cell.pending) setEditing(true);
-          }}
-        >
-          {content}
-        </CellEditButton>
+        <>
+          {separateDisplay}
+          <CellEditButton
+            ref={button}
+            aria-label={ariaLabel}
+            aria-describedby={cell.error ? errorId : undefined}
+            variant={variant}
+            pending={cell.pending}
+            // Stay focusable when cancelling an in-flight save; pending activation is ignored.
+            aria-disabled={cell.pending || undefined}
+            onClick={() => {
+              if (!cell.pending) setEditing(true);
+            }}
+          >
+            {content}
+          </CellEditButton>
+        </>
       )}
     </CellFrame>
   );

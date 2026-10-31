@@ -1,7 +1,5 @@
 import type { GridRow, ListColumn } from '@brume-ui/brume-schema';
 import type { ReactNode } from 'react';
-import { ComponentSlot } from '../../component-slot';
-import { useRegistry } from '../../registry-context';
 import { EditableCell } from '../editing/editable-cell';
 import {
   BadgeDisplay,
@@ -11,6 +9,7 @@ import {
   LinkDisplay,
   ProgressDisplay,
 } from './basic';
+import { ComponentDisplay } from './component';
 import { ExpandDisplay, ModalDisplay, TableDisplay } from './content';
 import { formatCell } from './format';
 import { DownloadableDisplay, ImageDisplay, QrCodeDisplay } from './media';
@@ -30,21 +29,14 @@ export function GridCell({ column, row }: { column: ListColumn; row: GridRow }):
 
 /** A cell's display, dispatched on `column.display.type` (plain text without a display). */
 function DisplayCell({ column, row }: { column: ListColumn; row: GridRow }): ReactNode {
-  const registry = useRegistry();
   const display = column.display;
   const value = row[column.key];
   if (!display) return formatCell(value);
   switch (display.type) {
     case 'text':
       return formatCell(value);
-    case 'component': {
-      const Component = registry.getDisplay(display.name);
-      if (Component)
-        return (
-          <Component value={value} row={row} column={column.key} props={display.props ?? {}} />
-        );
-      return <ComponentSlot ref={display} context={{ row, column: column.key }} />;
-    }
+    case 'component':
+      return <ComponentDisplay display={display} row={row} column={column.key} />;
     case 'label':
       return <LabelDisplay column={column} display={display} value={value} />;
     case 'badge':

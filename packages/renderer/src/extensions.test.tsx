@@ -74,6 +74,15 @@ const Text = forwardRef<HTMLInputElement, FieldProps<string | undefined, CustomF
 const Display = ({ value, row, column, props }: DisplayProps) => (
   <span>{`${(value as { county: string }).county}:${row.id}:${column}:${props.zipcode}`}</span>
 );
+const InteractiveDisplay = ({ value }: DisplayProps) => (
+  <div>
+    <a href="#details">Formatted {String(value)}</a>
+    <button type="button">Display action</button>
+  </div>
+);
+const Summary = ({ value, row }: DisplayProps) => (
+  <span>{`${(value as { county: string }).county} / ${(row.address as { county: string }).county}`}</span>
+);
 const Legacy = ({
   prefix,
   context,
@@ -230,13 +239,171 @@ describe('public extensions', () => {
     expect(screen.getByText('Taipei:1:address:100')).toBeTruthy();
     expect(screen.getByText('old:1:legacy')).toBeTruthy();
   });
+  it('keeps a custom display through inline edit cancellation and a confirmed save', async () => {
+    const user = userEvent.setup();
+    const displayPage: ListPage = {
+      ...page,
+      columns: [
+        {
+          key: 'address',
+          label: 'Address',
+          display: component,
+          editor: { type: 'custom', component },
+        },
+      ],
+    };
+    const { adapter } = renderWithBrume(<GridView page={displayPage} />, {
+      registry: createRegistry({
+        mode: 'vite',
+        fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
+        displays: { TaiwanAddress: Display },
+      }),
+      respond: (request) => ({
+        status: 200,
+        data: { row: { id: 1, address: (request.body as { value: unknown }).value } },
+      }),
+    });
+    const row = screen.getByRole('row', { name: /Taipei/ });
+    expect(within(row).getByText('Taipei:1:address:100')).toBeTruthy();
+    expect(row.textContent).not.toContain('{');
+    const edit = screen.getByRole('button', { name: /編輯.*Address/ });
+    expect(edit.getAttribute('aria-label')).not.toContain('{');
+    edit.focus();
+    await user.keyboard('{Enter}');
+    const input = screen.getByRole('textbox', { name: 'Address' });
+    fireEvent.change(input, { target: { value: 'Cancelled' } });
+    await user.keyboard('{Escape}');
+    expect(within(row).getByText('Taipei:1:address:100')).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: /編輯.*Address/ }));
+    expect(adapter.calls.filter((call) => call.fn === 'request')).toHaveLength(0);
+    await user.keyboard('{Enter}');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Address' }), {
+      target: { value: 'Tainan' },
+    });
+    await user.keyboard('{Enter}');
+    expect(await screen.findByText('Tainan:1:address:100')).toBeTruthy();
+    expect(row.textContent).not.toContain('{');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: /編輯.*Address/ }));
+  });
+  it.each(['custom', 'text', 'select'] as const)(
+    'keeps interactive custom displays outside the %s edit trigger',
+    async (type) => {
+      const user = userEvent.setup();
+      const interactivePage: ListPage = {
+        ...page,
+        rows: [{ id: 1, address: 'Taipei' }],
+        columns: [
+          {
+            key: 'address',
+            label: 'Address',
+            display: component,
+            editor:
+              type === 'custom'
+                ? { type, component }
+                : type === 'select'
+                  ? { type, options: [{ value: 'Taipei', label: 'Taipei' }] }
+                  : { type },
+          },
+        ],
+      };
+      renderWithBrume(<GridView page={interactivePage} />, {
+        registry: createRegistry({
+          mode: 'vite',
+          fields: { TaiwanAddress: { component: Text, inlineEditable: true } },
+          displays: { TaiwanAddress: InteractiveDisplay },
+        }),
+      });
+      const link = screen.getByRole('link', { name: 'Formatted Taipei' });
+      const action = screen.getByRole('button', { name: 'Display action' });
+      expect(link.closest('button')).toBeNull();
+      expect(action.parentElement?.closest('button')).toBeNull();
+      await user.click(action);
+      expect(screen.queryByRole('textbox')).toBeNull();
+      const edit = screen.getByRole('button', { name: /編輯.*Address/ });
+      expect(edit.contains(link)).toBe(false);
+      edit.focus();
+      await user.keyboard('{Enter}');
+      if (type === 'select') expect(screen.getByRole('dialog')).toBeTruthy();
+      else expect(screen.getByRole('textbox', { name: 'Address' })).toBeTruthy();
+    },
+  );
+  it('renders pending and held custom values consistently after closing an in-flight session', async () => {
+    const displayPage: ListPage = {
+      ...page,
+      columns: [
+        {
+          key: 'address',
+          label: 'Address',
+          display: component,
+          editor: { type: 'custom', component },
+        },
+      ],
+    };
+    let finish!: (response: {
+      status: number;
+      data: { row: { id: number; address: { county: string } } };
+    }) => void;
+    const result = renderWithBrume(<GridView page={displayPage} />, {
+      registry: createRegistry({
+        mode: 'vite',
+        fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
+        displays: { TaiwanAddress: Summary },
+      }),
+      respond: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    });
+    expect(screen.getByText('Taipei / Taipei')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /編輯.*Address/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Address' }), {
+      target: { value: 'Pending' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '儲存' }));
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    expect(screen.getByText('Pending / Pending')).toBeTruthy();
+    const edit = screen.getByRole('button', { name: /編輯.*Address/ });
+    expect(edit.getAttribute('aria-busy')).toBe('true');
+    fireEvent.click(edit);
+    expect(screen.queryByRole('textbox')).toBeNull();
+    result.rerender(
+      <GridView
+        page={{ ...displayPage, rows: [{ id: 1, address: { county: 'Older refresh' } }] }}
+      />,
+    );
+    await act(async () =>
+      finish({ status: 200, data: { row: { id: 1, address: { county: 'Pending' } } } }),
+    );
+    expect(screen.getByText('Pending / Pending')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /編輯.*Address/ }).hasAttribute('aria-busy')).toBe(
+      false,
+    );
+    result.rerender(
+      <GridView
+        page={{ ...displayPage, rows: [{ id: 1, address: { county: 'Fresh server' } }] }}
+      />,
+    );
+    expect(screen.getByText('Fresh server / Fresh server')).toBeTruthy();
+  });
   it('requires explicit eligibility and submits the exact custom wire value with relative 422 errors', async () => {
     const registry = createRegistry({
       mode: 'vite',
       fields: { TaiwanAddress: { component: Address, inlineEditable: true } },
+      displays: { TaiwanAddress: Display },
     });
     let attempts = 0;
-    const result = renderWithBrume(<GridView page={page} />, {
+    const displayPage: ListPage = {
+      ...page,
+      columns: [
+        {
+          key: 'address',
+          label: 'Address',
+          display: component,
+          editor: { type: 'custom', component },
+        },
+      ],
+    };
+    const result = renderWithBrume(<GridView page={displayPage} />, {
       registry,
       respond: (request) => {
         attempts++;
@@ -248,7 +415,7 @@ describe('public extensions', () => {
             };
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: /編輯Address/ }));
+    fireEvent.click(screen.getByRole('button', { name: /編輯.*Address/ }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Address' }), {
       target: { value: 'Tainan' },
     });
@@ -272,7 +439,7 @@ describe('public extensions', () => {
       target: { value: 'Kaohsiung' },
     });
     fireEvent.click(screen.getByRole('button', { name: '儲存' }));
-    await screen.findByRole('button', { name: /編輯Address/ });
+    await screen.findByRole('button', { name: /編輯.*Address/ });
     expect(result.adapter.calls.filter((call) => call.fn === 'request')[1]?.args[0]).toMatchObject({
       body: {
         column: 'address',
@@ -284,7 +451,9 @@ describe('public extensions', () => {
         },
       },
     });
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: /編輯Address/ }));
+    expect(screen.getByText('Kaohsiung:1:address:100')).toBeTruthy();
+    expect(screen.getByRole('row', { name: /Kaohsiung/ }).textContent).not.toContain('{');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: /編輯.*Address/ }));
   });
   it('does not edit plain registrations', () => {
     renderWithBrume(<GridView page={page} />, {
