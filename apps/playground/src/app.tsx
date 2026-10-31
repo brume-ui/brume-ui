@@ -40,10 +40,10 @@ export function App() {
     document.documentElement.lang = locale;
   }, [locale]);
 
+  const match = ROUTES.find((r) => r.name === route);
   let view: React.ReactNode;
   if (route === SHELL_ROUTE) view = <ShellPage onLocaleChange={setLocale} />;
   else {
-    const match = ROUTES.find((r) => r.name === route);
     view = match ? <match.Component /> : <DemoCatalogPage />;
   }
   const feature = DEMO_FEATURES.find((item) => item.href === `#/${route}`);
@@ -52,11 +52,7 @@ export function App() {
     <SettingsProvider route={route}>
       <BrumeProvider adapter={adapter} locale={locale}>
         <SwitcherBar locale={locale} onLocaleChange={setLocale} />
-        {feature && route !== 'public-contracts' ? (
-          <DemoGuide featureId={feature.id}>{view}</DemoGuide>
-        ) : (
-          view
-        )}
+        {feature && !match?.ownsGuide ? <DemoGuide featureId={feature.id}>{view}</DemoGuide> : view}
         <ConfirmHost />
         <Toaster />
       </BrumeProvider>

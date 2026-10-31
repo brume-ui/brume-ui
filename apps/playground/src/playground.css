@@ -353,7 +353,6 @@ body {
   background: var(--br-accent);
   color: var(--br-surface);
   margin-block: 0.5rem;
-  min-width: 1rem;
 }
 .pg-token-box {
   padding: 1rem;

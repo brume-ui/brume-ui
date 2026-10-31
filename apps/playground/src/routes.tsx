@@ -37,13 +37,20 @@ export interface Route {
   name: string;
   title: string;
   Component: ComponentType;
+  /** The page renders its own guide, including any selected example. */
+  ownsGuide?: boolean;
 }
 
 /** `/#/shell` is rendered by the app itself (it needs the locale handler). */
 export const SHELL_ROUTE = 'shell';
 
 export const ROUTES: Route[] = [
-  { name: 'public-contracts', title: '公開元件與契約', Component: PublicContractsPage },
+  {
+    name: 'public-contracts',
+    title: '公開元件與契約',
+    Component: PublicContractsPage,
+    ownsGuide: true,
+  },
   { name: 'demos', title: '功能示範目錄', Component: DemoCatalogPage },
   { name: 'button', title: 'Button', Component: ButtonPage },
   { name: 'icon-button', title: 'IconButton', Component: IconButtonPage },
@@ -61,18 +68,33 @@ export const ROUTES: Route[] = [
   { name: 'pagination', title: 'Pagination', Component: PaginationPage },
   { name: 'empty-state', title: 'EmptyState', Component: EmptyStatePage },
   { name: 'skeleton', title: 'Skeleton', Component: SkeletonPage },
-  { name: 'form-fields', title: '表單 · 欄位聚焦', Component: FormFieldsPage },
-  { name: 'form-layouts', title: '表單 · 版型聚焦', Component: FormLayoutsPage },
-  { name: 'form-behaviors', title: '表單 · 行為聚焦', Component: FormBehaviorsPage },
+  { name: 'form-fields', title: '表單 · 欄位聚焦', Component: FormFieldsPage, ownsGuide: true },
+  { name: 'form-layouts', title: '表單 · 版型聚焦', Component: FormLayoutsPage, ownsGuide: true },
+  {
+    name: 'form-behaviors',
+    title: '表單 · 行為聚焦',
+    Component: FormBehaviorsPage,
+    ownsGuide: true,
+  },
   { name: 'form', title: '表單 · 標籤在上', Component: FormStackedPage },
   { name: 'form-horizontal', title: '表單 · 標籤在左', Component: FormHorizontalPage },
   { name: 'form-page', title: '表單 · 獨立頁面', Component: FormStandalonePage },
-  { name: 'form-conditions', title: '表單 · 條件式贈品設定', Component: FormConditionsPage },
-  { name: 'form-composition', title: '表單 · 關聯組合驗收', Component: FormCompositionPage },
+  {
+    name: 'form-conditions',
+    title: '表單 · 條件式贈品設定',
+    Component: FormConditionsPage,
+    ownsGuide: true,
+  },
+  {
+    name: 'form-composition',
+    title: '表單 · 關聯組合驗收',
+    Component: FormCompositionPage,
+    ownsGuide: true,
+  },
   { name: 'form-repeaters', title: '表單 · 巢狀重複列', Component: FormRepeatersPage },
   { name: 'form-relations', title: '表單 · 遠端選項與互斥', Component: FormRelationsPage },
   { name: 'form-dialog', title: '表單 · 彈窗', Component: FormDialogPage },
-  { name: 'grid-features', title: 'Grid · 功能聚焦', Component: GridFeaturesPage },
+  { name: 'grid-features', title: 'Grid · 功能聚焦', Component: GridFeaturesPage, ownsGuide: true },
   { name: 'grid', title: 'Grid（訂單）', Component: GridPage },
   { name: 'grid-empty', title: 'Grid（空）', Component: GridEmptyPage },
   { name: 'error-page', title: '錯誤頁', Component: ErrorPagePage },

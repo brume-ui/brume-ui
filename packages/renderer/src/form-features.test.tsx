@@ -26,6 +26,25 @@ const save = (name = '儲存後繼續編輯') => fireEvent.click(screen.getByRol
 const output = (name: string) => JSON.parse(screen.getByTestId(name).textContent || '{}');
 
 describe('focused public Form examples', () => {
+  it.each([
+    ['datetimeRange', 'datetime-local', '2026-11-01T09:30', '2026-11-02T17:00'],
+    ['dateRange', 'date', '2026-11-01', '2026-11-02'],
+  ])(
+    'displays initial %s bounds that match its serialized save payload',
+    async (type, inputType, start, end) => {
+      renderWithBrume(<FocusedFormDemo exampleId={`form.field.${type}`} />);
+      const firstBound = screen.getByLabelText('日期時間（起）');
+      const lastBound = screen.getByLabelText('日期時間（迄）');
+      expect(firstBound).toHaveProperty('type', inputType);
+      expect(lastBound).toHaveProperty('type', inputType);
+      expect(firstBound).toHaveProperty('value', start);
+      expect(lastBound).toHaveProperty('value', end);
+      expect(output('form-draft').value).toEqual({ start, end });
+      save();
+      await waitFor(() => expect(output('form-wire').value).toEqual({ start, end }));
+      await waitFor(() => expect(output('form-saved').value).toEqual({ start, end }));
+    },
+  );
   it.each(FIELD_EXAMPLES)(
     'serializes the public $field.type field through a real save request',
     async ({ field, value }) => {

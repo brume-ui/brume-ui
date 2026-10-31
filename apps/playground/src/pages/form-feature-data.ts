@@ -62,11 +62,14 @@ export const FIELD_EXAMPLES: { field: FieldDef; value: unknown; title: string }[
   },
   ...(['date', 'datetime', 'dateRange', 'datetimeRange'] as const).map((type) => ({
     field: { type, name: 'value', label: '日期時間' },
-    value: type.includes('Range')
-      ? { start: '2026-11-01', end: '2026-11-02' }
-      : type === 'datetime'
-        ? '2026-11-01T09:30'
-        : '2026-11-01',
+    value:
+      type === 'datetimeRange'
+        ? { start: '2026-11-01T09:30', end: '2026-11-02T17:00' }
+        : type === 'dateRange'
+          ? { start: '2026-11-01', end: '2026-11-02' }
+          : type === 'datetime'
+            ? '2026-11-01T09:30'
+            : '2026-11-01',
     title: {
       date: '日期',
       datetime: '日期與時間',
