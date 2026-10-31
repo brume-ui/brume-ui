@@ -1,6 +1,6 @@
 import { ConfirmHost } from '@brume-ui/brume-react';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GridFeaturesPage } from '../../../apps/playground/src/pages/grid-features';
 import { renderWithBrume } from './test-utils';
 
@@ -75,5 +75,66 @@ describe('focused Grid through the public renderer', () => {
     await waitFor(() => expect(output('grid-records')).toContain('獨立頁修改'));
     fireEvent.click(screen.getByRole('button', { name: '返回聚焦列表' }));
     await screen.findByRole('button', { name: '編輯客戶：獨立頁修改' });
+    fireEvent.click(screen.getByRole('button', { name: '編輯客戶：獨立頁修改' }));
+    const customer = screen.getByRole('textbox', { name: '客戶' });
+    fireEvent.change(customer, { target: { value: '新的客戶' } });
+    fireEvent.keyDown(customer, { key: 'Enter' });
+    await waitFor(() => {
+      const rows = JSON.parse(output('grid-rows')) as { id: number; customer: string }[];
+      expect(rows.find((row) => row.id === 24)?.customer).toBe('新的客戶');
+    });
+    fireEvent.click(screen.getByRole('button', { name: '重新整理' }));
+    await screen.findByRole('button', { name: '編輯客戶：新的客戶' });
+    const row = (
+      JSON.parse(output('grid-rows')) as {
+        id: number;
+        customer: string;
+        _meta: { raw: Record<string, unknown> };
+      }[]
+    ).find((row) => row.id === 24);
+    expect(row?.customer).toBe('新的客戶');
+    expect(row?._meta.raw).not.toHaveProperty('customer');
+    expect(
+      (JSON.parse(output('grid-records')) as { id: number; customer: string }[]).find(
+        (row) => row.id === 24,
+      )?.customer,
+    ).toBe('新的客戶');
+  });
+  it('passes the active focused example into the native download bridge', async () => {
+    mount('grid.input.range-text');
+    fireEvent.click(screen.getByRole('button', { name: '篩選' }));
+    fireEvent.change(screen.getByLabelText('聚焦篩選（起）'), { target: { value: 'ORD-2610010' } });
+    fireEvent.change(screen.getByLabelText('聚焦篩選（迄）'), { target: { value: 'ORD-2610015' } });
+    fireEvent.click(screen.getByRole('button', { name: '套用篩選' }));
+    await waitFor(() => expect(output('grid-result-count')).toContain('符合 6 筆'));
+    const OriginalURL = URL;
+    vi.stubGlobal(
+      'URL',
+      class extends OriginalURL {
+        static createObjectURL() {
+          return 'blob:https://demo.invalid/focused-export';
+        }
+        static revokeObjectURL() {}
+      },
+    );
+    vi.useFakeTimers();
+    const link = document.createElement('a');
+    link.href =
+      '/admin/orders/export?filter[focus][start]=ORD-2610010&filter[focus][end]=ORD-2610015&sort=no&export_scope=all';
+    link.download = '';
+    link.addEventListener('click', (event) => event.preventDefault());
+    document.body.append(link);
+    try {
+      // Native Grid exports click an anchor outside the React tree; use that exact bridge.
+      fireEvent.click(link);
+      const events = JSON.parse(output('grid-events')) as { ids?: number[] }[];
+      expect(events.at(-1)?.ids).toEqual([10, 11, 12, 13, 14, 15]);
+      expect(link.download).toBe('orders-all.csv');
+      vi.runOnlyPendingTimers();
+    } finally {
+      link.remove();
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
   });
 });

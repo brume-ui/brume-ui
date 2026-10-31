@@ -289,3 +289,96 @@ it('navigates to real page forms and persists through the shared form server', a
     submit: { method: 'post', url: ORDERS_URL },
   });
 });
+
+it('exports the focused filtered set with original filters sorting paging and selection intact', () => {
+  const db = createFocusedOrderDb();
+  const id = 'grid.input.range-text';
+  const query = `${focusUrl({ start: 'ORD-2610002', end: 'ORD-2610023' }).split('?')[1]}&filter[status][]=paid&sort=-no&page=2&per_page=10`;
+  const displayed = buildFocusedGridPage(id, `${ORDERS_URL}?${query}`, db);
+  expect(displayed.pagination.total).toBe(11);
+  expect(displayed.rows.map((row) => row.id)).toEqual([2]);
+  const all = exportFocusedOrders(`${ORDERS_URL}/export?${query}&export_scope=all`, db, id);
+  const page = exportFocusedOrders(`${ORDERS_URL}/export?${query}&export_scope=page`, db, id);
+  const selected = exportFocusedOrders(
+    `${ORDERS_URL}/export?${query}&export_scope=selected&ids[]=2&ids[]=22&ids[]=24&ids[]=3&ids[]=999`,
+    db,
+    id,
+  );
+  expect(all.ids).toEqual([22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2]);
+  expect(page.ids).toEqual([2]);
+  expect(selected.ids).toEqual([22, 2]);
+  for (const result of [all, page, selected]) {
+    expect(result.text).toContain('ORD-2610002');
+    expect(result.text).not.toContain('ORD-2610024');
+    expect(result.text).not.toContain('ORD-2610003');
+  }
+});
+
+it('projects only focused extension fields after form save then canonical cell edits and reload', async () => {
+  const db = createFocusedOrderDb();
+  const order = db.orders[23];
+  if (!order) throw new Error('Missing order fixture');
+  const amount = order.items.reduce((sum, item) => sum + item.qty * item.price, 0) + 100;
+  expect(
+    await respondFocusedGrid(db, {
+      method: 'put',
+      url: `${ORDERS_URL}/24`,
+      body: {
+        values: {
+          customer: '獨立頁修改',
+          note: '表單備註',
+          amount: '過期金額',
+          status: 'cancelled',
+          payment: 'cod',
+          flags: { rush: false, invoice: false },
+          tags: ['舊標籤'],
+          address: { county: '臺南市', address: '新路' },
+          currency: '2000.50',
+        },
+        after: 'list',
+      },
+    }),
+  ).toMatchObject({ status: 200 });
+  const changes: Record<string, unknown> = {
+    customer: '新的客戶',
+    note: '新的備註',
+    payment: 'atm',
+    status: 'shipped',
+    flags: { rush: true, invoice: true },
+    tags: ['vip'],
+    amount,
+  };
+  for (const [column, value] of Object.entries(changes)) {
+    const response = await respondFocusedGrid(db, {
+      method: 'patch',
+      url: `${ORDERS_URL}/_brume/cells/24`,
+      body: { column, value },
+    });
+    expect(response).toMatchObject({
+      status: 200,
+      data: {
+        row: { [column]: column === 'amount' ? `NT$${amount.toLocaleString('en')}` : value },
+      },
+    });
+  }
+  const row = buildFocusedGridPage('grid.behavior.resource-page', ORDERS_URL, db).rows.find(
+    (row) => row.id === 24,
+  );
+  expect(row).toMatchObject({
+    customer: '新的客戶',
+    note: '新的備註',
+    payment: 'atm',
+    status: 'shipped',
+    flags: { rush: true, invoice: true },
+    tags: ['vip'],
+    amount: `NT$${amount.toLocaleString('en')}`,
+    currency: 'NT$ 2000.50',
+    address: { county: '臺南市', address: '新路' },
+    _meta: { raw: { amount, currency: '2000.50' } },
+  });
+  expect(row?._meta?.raw).not.toHaveProperty('customer');
+  expect(row?._meta?.raw).not.toHaveProperty('note');
+  expect(row?._meta?.raw).not.toHaveProperty('status');
+  expect(order.customer).toBe('新的客戶');
+  expect(order.note).toBe('新的備註');
+});

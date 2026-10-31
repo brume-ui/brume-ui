@@ -225,7 +225,7 @@ function FocusedGrid({ id }: { id: string }) {
       if (!(target instanceof HTMLAnchorElement) || !target.hasAttribute('download')) return;
       const parsed = new URL(target.href, window.location.origin);
       if (parsed.pathname !== `${ORDERS_URL}/export`) return;
-      const result = exportFocusedOrders(target.href, db);
+      const result = exportFocusedOrders(target.href, db, id);
       record({
         export: parsed.pathname + parsed.search,
         ids: result.ids,
@@ -238,7 +238,7 @@ function FocusedGrid({ id }: { id: string }) {
     };
     document.addEventListener('click', download, true);
     return () => document.removeEventListener('click', download, true);
-  }, [db, record]);
+  }, [db, id, record]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: version re-reads mutable memory server records
   const grid = useMemo(() => buildFocusedGridPage(id, url, db), [id, url, db, version]);
   const form = buildFocusedResourcePage(url, db);

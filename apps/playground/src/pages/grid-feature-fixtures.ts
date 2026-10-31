@@ -144,7 +144,12 @@ export function createFocusedOrderDb(): OrderDb {
 }
 function enrich(row: GridRow, db: OrderDb): GridRow {
   const order = db.orders.find((item) => item.id === row.id);
-  const fields = order?.formValues ?? {};
+  // Resource forms retain a complete saved snapshot; canonical Grid values remain authoritative.
+  const fields = Object.fromEntries(
+    Object.entries(order?.formValues ?? {}).filter(([key]) =>
+      GRID_EXTRA_COLUMNS.some((column) => column.key === key && column.editor),
+    ),
+  );
   return {
     ...row,
     ...fields,
@@ -426,15 +431,23 @@ export async function respondFocusedGrid(db: OrderDb, req: HttpRequest): Promise
 export function exportFocusedOrders(
   url: string,
   db: OrderDb,
+  exampleId = 'grid.behavior.export-memory',
 ): { filename: string; text: string; ids: (string | number)[] } {
   const parsed = new URL(url, 'https://demo.invalid');
   const scope = parsed.searchParams.get('export_scope');
   const selected = parsed.searchParams.getAll('ids[]');
-  const page = buildOrdersPage(`${ORDERS_URL}${parsed.search}`, db);
-  parsed.searchParams.set('per_page', '50');
-  parsed.searchParams.set('page', '1');
-  const rows =
-    scope === 'page' ? page.rows : buildOrdersPage(`${ORDERS_URL}${parsed.search}`, db).rows;
+  const current = buildFocusedGridPage(exampleId, `${ORDERS_URL}${parsed.search}`, db);
+  const rows = [...current.rows];
+  if (scope !== 'page') {
+    parsed.searchParams.set('per_page', '50');
+    parsed.searchParams.set('page', '1');
+    const first = buildFocusedGridPage(exampleId, `${ORDERS_URL}${parsed.search}`, db);
+    rows.splice(0, rows.length, ...first.rows);
+    for (let page = 2; page <= first.pagination.lastPage; page++) {
+      parsed.searchParams.set('page', String(page));
+      rows.push(...buildFocusedGridPage(exampleId, `${ORDERS_URL}${parsed.search}`, db).rows);
+    }
+  }
   const result =
     scope === 'selected' ? rows.filter((row) => selected.includes(String(row.id))) : rows;
   const quote = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
