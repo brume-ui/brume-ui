@@ -180,7 +180,9 @@ function BackendGridGuide({ id }: { id: string }) {
 function FocusedGrid({ id }: { id: string }) {
   const { locale } = useBrume();
   const db = useMemo(() => createFocusedOrderDb(), []);
-  const [url, setUrl] = useState(ORDERS_URL);
+  // Adjacent IDs expose both paid and pending records for the mixed-batch scenario.
+  const initialUrl = id === 'grid.behavior.batch-errors' ? `${ORDERS_URL}?sort=-no` : ORDERS_URL;
+  const [url, setUrl] = useState(initialUrl);
   const [version, setVersion] = useState(0);
   const [events, setEvents] = useState<unknown[]>([]);
   const record = useCallback(
@@ -188,7 +190,7 @@ function FocusedGrid({ id }: { id: string }) {
     [],
   );
   const adapter = useMemo<BrumeAdapter>(() => {
-    const base = createMemoryAdapter(ORDERS_URL, {
+    const base = createMemoryAdapter(initialUrl, {
       respond: async (request) => {
         const response = await respondFocusedGrid(db, request);
         record({
@@ -218,7 +220,7 @@ function FocusedGrid({ id }: { id: string }) {
         record({ reload: true });
       },
     };
-  }, [db, record]);
+  }, [db, record, initialUrl]);
   useEffect(() => {
     // Grid exports use native <a download> (they deliberately bypass adapter.request).
     // This app-only memory server supplies a real CSV using the exact public export URL.
@@ -247,14 +249,14 @@ function FocusedGrid({ id }: { id: string }) {
   return (
     <BrumeProvider adapter={adapter} locale={locale}>
       <RegistryProvider registry={registry}>
-        {form ? <Button onClick={() => adapter.visit(ORDERS_URL)}>返回聚焦列表</Button> : null}
+        {form ? <Button onClick={() => adapter.visit(initialUrl)}>返回聚焦列表</Button> : null}
         <section data-testid="focused-grid" style={{ minWidth: 0 }}>
           <BrumePageView envelope={{ schemaVersion: SCHEMA_VERSION, page: form ?? grid }} />
         </section>
         <Panel>
           <Button
             onClick={() => {
-              adapter.visit(ORDERS_URL);
+              adapter.visit(initialUrl);
               adapter.reload();
             }}
           >

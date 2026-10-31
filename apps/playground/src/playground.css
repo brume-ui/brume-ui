@@ -308,6 +308,9 @@ body {
 }
 
 /* Public API labs retain the selected scheme and wrap long wire fixtures at narrow widths. */
+.pg-public-contracts {
+  overflow-wrap: anywhere;
+}
 .pg-contract-lab {
   display: grid;
   gap: 1rem;

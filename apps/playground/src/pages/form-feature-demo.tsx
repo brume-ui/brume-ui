@@ -7,9 +7,10 @@ import {
   useFormSubmit,
 } from '@brume-ui/brume-renderer';
 import type { AfterSave, FormPage } from '@brume-ui/brume-schema';
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { addressRegistry } from './custom-address';
 import { DemoGuide, useDemoExample } from './demo-guide';
+import { keepFormActionStable } from './form-action-focus';
 import { FORM_EXAMPLES } from './form-feature-data';
 import { buildFocusedFixture } from './form-feature-fixtures';
 import { createFocusedAdapter, type Reply, type Store } from './form-feature-memory';
@@ -168,6 +169,20 @@ function FocusedContent({
   }, []);
   const current = useRef(api);
   current.current = api;
+  const failedFocus = useRef<{ element: HTMLElement; stateId: typeof api.stateId } | null>(null);
+  useLayoutEffect(() => {
+    if (submitting || synchronizing) return;
+    const focus = failedFocus.current;
+    failedFocus.current = null;
+    if (
+      focus &&
+      mounted.current &&
+      current.current.stateId === focus.stateId &&
+      focus.element.isConnected &&
+      (document.activeElement === document.body || document.activeElement === focus.element)
+    )
+      focus.element.focus();
+  }, [submitting, synchronizing]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: Seed one unknown owner once per mounted demo, without overwriting later edits.
   useEffect(() => {
     if (exampleId.startsWith('relation.') && exampleId !== 'relation.picker-large-selection')
@@ -177,6 +192,7 @@ function FocusedContent({
   async function save(after: AfterSave) {
     if (saving.current) return;
     saving.current = true;
+    failedFocus.current = null;
     setSynchronizing(true);
     setMessage('儲存中…');
     const draft = api.values;
@@ -184,17 +200,8 @@ function FocusedContent({
     const previousFocus = document.activeElement;
     try {
       const result = await submit(after);
-      if (!result && previousFocus instanceof HTMLElement) {
-        requestAnimationFrame(() => {
-          if (
-            mounted.current &&
-            current.current.stateId === state &&
-            previousFocus.isConnected &&
-            (document.activeElement === document.body || document.activeElement === previousFocus)
-          )
-            previousFocus.focus();
-        });
-      }
+      if (!result && previousFocus instanceof HTMLElement)
+        failedFocus.current = { element: previousFocus, stateId: state };
       if (
         !result ||
         !mounted.current ||
@@ -328,6 +335,7 @@ function FocusedContent({
                   key={after}
                   type="button"
                   disabled={submitting || synchronizing}
+                  onMouseDown={keepFormActionStable}
                   onClick={() => void save(after)}
                 >
                   {afterLabels[after]}

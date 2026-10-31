@@ -1,8 +1,17 @@
 import type { ReactNode } from 'react';
 
-export function Page(props: { name: string; title: string; lead?: string; children: ReactNode }) {
+export function Page(props: {
+  name: string;
+  title: string;
+  lead?: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <main className="pg-page" data-testid={`pg-${props.name}`}>
+    <main
+      className={props.className ? `pg-page ${props.className}` : 'pg-page'}
+      data-testid={`pg-${props.name}`}
+    >
       <h1>{props.title}</h1>
       {props.lead ? <p className="pg-lead">{props.lead}</p> : null}
       {props.children}

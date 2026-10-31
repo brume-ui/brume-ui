@@ -823,6 +823,7 @@ export function PublicContractsPage() {
     <DemoGuide featureId={id}>
       <Page
         name="public-contracts"
+        className="pg-public-contracts"
         title="公開元件與契約實驗"
         lead="以真實公開 API 操作前端；後端契約以實際來源測試重現。"
       >

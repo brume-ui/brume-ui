@@ -1,4 +1,4 @@
-import { ConfirmHost } from '@brume-ui/brume-react';
+import { ConfirmHost, Toaster } from '@brume-ui/brume-react';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GridFeaturesPage } from '../../../apps/playground/src/pages/grid-features';
@@ -99,6 +99,40 @@ describe('focused Grid through the public renderer', () => {
         (row) => row.id === 24,
       )?.customer,
     ).toBe('新的客戶');
+  });
+  it('starts the batch demo with visible paid and pending rows and reports partial/all-invalid results', async () => {
+    window.location.hash = '/grid-features?example=grid.behavior.batch-errors';
+    renderWithBrume(
+      <>
+        <GridFeaturesPage />
+        <Toaster />
+      </>,
+    );
+    fireEvent.click(screen.getByRole('checkbox', { name: '選取 ORD-2610024' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '選取 ORD-2610023' }));
+    fireEvent.click(
+      within(screen.getByRole('region', { name: '批次操作' })).getByRole('button', {
+        name: '標記為已出貨',
+      }),
+    );
+    await screen.findByText(/1 筆尚未付款所以略過/);
+    await waitFor(() => {
+      const records = JSON.parse(output('grid-records')) as { id: number; status: string }[];
+      expect(records.find((row) => row.id === 24)?.status).toBe('shipped');
+      expect(records.find((row) => row.id === 23)?.status).toBe('pending');
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: '選取 ORD-2610023' }));
+    fireEvent.click(
+      within(screen.getByRole('region', { name: '批次操作' })).getByRole('button', {
+        name: '標記為已出貨',
+      }),
+    );
+    await waitFor(() => expect(output('grid-events')).toContain('422'));
+    expect(
+      (JSON.parse(output('grid-records')) as { id: number; status: string }[]).find(
+        (row) => row.id === 23,
+      )?.status,
+    ).toBe('pending');
   });
   it('passes the active focused example into the native download bridge', async () => {
     mount('grid.input.range-text');

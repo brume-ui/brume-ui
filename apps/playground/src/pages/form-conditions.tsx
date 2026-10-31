@@ -8,6 +8,7 @@ import {
 import type { FormDef, FormPage } from '@brume-ui/brume-schema';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DemoGuide } from './demo-guide';
+import { keepFormActionStable } from './form-action-focus';
 import { createGiftMemory, giftForm, giftValues } from './gift-demo';
 import { Page, Panel } from './page';
 
@@ -136,7 +137,11 @@ export function GiftForm({
         切換類型會保留尚未儲存的草稿。只驗證目前分支；成功儲存會載入完整記憶體基準，隱藏分支還原既存資料。重設會捨棄未儲存變更。優惠券與點數僅為設定，沒有實際發放。
       </p>
       <FormView ref={view} form={form} api={api} />
-      <Button disabled={submitting || synchronizing} onClick={() => void save()}>
+      <Button
+        disabled={submitting || synchronizing}
+        onMouseDown={keepFormActionStable}
+        onClick={() => void save()}
+      >
         {composition ? 'Save composition' : '儲存贈品設定'}
       </Button>
       <Button
