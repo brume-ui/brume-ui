@@ -1,6 +1,14 @@
 import { createTranslator } from '@brume-ui/brume-react';
-import type { FormDef } from '@brume-ui/brume-schema';
+import type { FormDef, PickerAuthority, RowContext } from '@brume-ui/brume-schema';
 import { useRef, useState } from 'react';
+import {
+  type AuthorityRow,
+  type AuthorityValue,
+  authoritativeValue,
+  effectiveTree,
+  rowKey,
+} from './authority';
+import { resolveConditionPath } from './conditions';
 import { type FieldErrors, isPathWithin } from './errors';
 import { assertSafePath, getAt, setAt } from './paths';
 import { bindRowLifetimes, createRowLifetimes, syncRowLifetimes } from './row-lifetime';
@@ -20,6 +28,15 @@ export interface FormApi {
   pendingUploads: number;
   errors: FieldErrors;
   getValue(path: string): unknown;
+  getEffectiveValue(path: string): unknown;
+  getEffectiveField(path: string): ValueField | undefined;
+  readonly effectiveFields: readonly ValueField[];
+  getAuthority(field: ValueField): AuthorityValue;
+  setRowAuthority(
+    row: RowContext,
+    snapshot: PickerAuthority | undefined,
+    dependencies?: string[],
+  ): void;
   /** Snapshot metadata from the shared walker; identity may change after any value write. */
   getField(path: string): ValueField | undefined;
   /** Declaration identity plus explicit row origin; used by useFieldConditions. */
@@ -62,6 +79,8 @@ export function useFormState(
     rowLifetimes: createRowLifetimes(),
     values: initial,
     baseline: initial,
+    authorityRows: [] as AuthorityRow[],
+    authorityVersion: 0,
     baselineKey: stable(initial),
     touched: new Set<string>(),
     server: {} as FieldErrors,
@@ -72,6 +91,7 @@ export function useFormState(
       | undefined
       | {
           values: Record<string, unknown>;
+          authorityVersion: number;
           nodes: FormDef['nodes'];
           rowFields: FormDef['rowFields'];
           t: Translate;
@@ -79,16 +99,24 @@ export function useFormState(
         },
   });
   const current = state.current;
+  const activeAuthorityRows = () =>
+    current.authorityRows.filter(
+      (entry) =>
+        entry.lifetime === undefined ||
+        current.rowLifetimes.live.get(rowKey(entry.row)) === entry.lifetime,
+    );
   const fields = () => {
     if (
       !current.fieldCache ||
       current.fieldCache.values !== current.values ||
+      current.fieldCache.authorityVersion !== current.authorityVersion ||
       current.fieldCache.nodes !== form.nodes ||
       current.fieldCache.rowFields !== form.rowFields ||
       current.fieldCache.t !== t
     ) {
       current.fieldCache = {
         values: current.values,
+        authorityVersion: current.authorityVersion,
         nodes: form.nodes,
         rowFields: form.rowFields,
         t,
@@ -96,7 +124,14 @@ export function useFormState(
           form.nodes,
           current.values,
           (def) => `${def.label}${t('common.hasError')}`,
-          form.rowFields,
+          [
+            ...(form.rowFields ?? []),
+            ...current.authorityRows.flatMap((entry) => entry.snapshot.rowFields ?? []),
+          ].filter(
+            (entry, index, all) =>
+              all.findIndex((other) => rowKey(other.row) === rowKey(entry.row)) === index,
+          ),
+          (field) => authoritativeValue(current.baseline, field, activeAuthorityRows()),
         ),
       };
     }
@@ -165,10 +200,27 @@ export function useFormState(
       }),
     );
     syncRowLifetimes(current.rowLifetimes, fields(), false, (path) => getAt(current.values, path));
+    current.authorityRows = current.authorityRows.filter(
+      (entry) =>
+        entry.lifetime === undefined ||
+        current.rowLifetimes.live.get(rowKey(entry.row)) === entry.lifetime,
+    );
+    current.authorityVersion++;
     notify();
   };
   const api: FormApi = {
-    definition: form,
+    get definition() {
+      return {
+        ...form,
+        rowFields: [
+          ...(form.rowFields ?? []),
+          ...current.authorityRows.flatMap((entry) => entry.snapshot.rowFields ?? []),
+        ].filter(
+          (entry, index, all) =>
+            all.findIndex((other) => rowKey(other.row) === rowKey(entry.row)) === index,
+        ),
+      };
+    },
     stateId: current.stateId,
     get values() {
       return current.values;
@@ -189,6 +241,60 @@ export function useFormState(
       return errors();
     },
     getValue: (path) => getAt(current.values, path),
+    getEffectiveValue: (path) => getAt(effectiveTree(fields(), current.values), path),
+    get effectiveFields() {
+      return collectValueFields(
+        form.nodes,
+        effectiveTree(fields(), current.values),
+        undefined,
+        api.definition.rowFields,
+      );
+    },
+    getEffectiveField: (path) => api.effectiveFields.find((field) => field.path === path),
+    getAuthority: (field) => authoritativeValue(current.baseline, field, activeAuthorityRows()),
+    setRowAuthority(row, snapshot, dependencies) {
+      const existing = current.authorityRows.find((entry) => rowKey(entry.row) === rowKey(row));
+      if (
+        !snapshot &&
+        !existing &&
+        !current.authorityRows.some(
+          (entry) => rowKey(entry.row.slice(0, row.length)) === rowKey(row),
+        )
+      )
+        return;
+      if (snapshot && existing && stable(existing.snapshot) === stable(snapshot)) return;
+      current.authorityRows = current.authorityRows.filter((entry) =>
+        snapshot
+          ? rowKey(entry.row) !== rowKey(row)
+          : rowKey(entry.row.slice(0, row.length)) !== rowKey(row),
+      );
+      if (snapshot) {
+        const sourceFields = fields().filter(
+          (field) =>
+            field.def.type === 'relation' &&
+            row.some(
+              (owner, index) =>
+                owner.path === field.templatePath &&
+                rowKey(row.slice(0, index)) === rowKey(field.rowContext),
+            ),
+        );
+        const paths = sourceFields.flatMap((field) =>
+          field.def.type === 'relation'
+            ? Object.values(field.def.remote.dependsOn ?? {}).map((dependency) =>
+                resolveConditionPath(dependency, field.rowPath),
+              )
+            : [],
+        );
+        current.authorityRows.push({
+          row,
+          snapshot,
+          lifetime: current.rowLifetimes.live.get(rowKey(row)),
+          dependencies: [...new Set([...paths, ...(dependencies ?? [])])],
+        });
+      }
+      current.authorityVersion++;
+      notify();
+    },
     get fields() {
       return fields();
     },
@@ -213,10 +319,24 @@ export function useFormState(
           return stable(getAt(previous, compare)) === stable(getAt(next, compare));
         }),
       );
+      // A dependency edit changes source scope; unrelated edits retain the snapshot.
+      current.authorityRows = current.authorityRows.filter(
+        (entry) =>
+          !(entry.dependencies ?? []).some(
+            (dependency) => isPathWithin(path, dependency) || isPathWithin(dependency, path),
+          ),
+      );
+      current.authorityVersion++;
       current.values = next;
       syncRowLifetimes(current.rowLifetimes, fields(), false, (path) =>
         getAt(current.values, path),
       );
+      current.authorityRows = current.authorityRows.flatMap((entry) => {
+        const lifetime = current.rowLifetimes.live.get(rowKey(entry.row));
+        if (entry.lifetime !== undefined && lifetime !== entry.lifetime) return [];
+        return [{ ...entry, lifetime: entry.lifetime ?? lifetime }];
+      });
+      current.authorityVersion++;
       notify();
     },
     touch(path) {
@@ -225,7 +345,9 @@ export function useFormState(
     },
     validateAll() {
       for (const { path } of fields()) current.touched.add(path);
-      const valid = Object.values(errors()).every((messages) => messages.length === 0);
+      const valid =
+        fields().every((field) => field.ready) &&
+        Object.values(errors()).every((messages) => messages.length === 0);
       notify();
       return valid;
     },
@@ -237,6 +359,8 @@ export function useFormState(
     },
     reset(values = current.baseline) {
       current.resetVersion += 1;
+      current.authorityRows = [];
+      current.authorityVersion++;
       current.values = values;
       current.baseline = values;
       current.baselineKey = stable(values);

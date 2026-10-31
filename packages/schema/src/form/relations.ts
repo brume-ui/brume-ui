@@ -1,5 +1,6 @@
 import { type Static, Type } from '@sinclair/typebox';
-import { TemplatePathSchema } from './conditions';
+import { ScalarPathSchema, TemplatePathSchema } from './conditions';
+import { ClientRuleSchema } from './rules';
 
 /** Stable UI identity. An id is a scoped relation record hint, never authorization. */
 export const RowIdentitySchema = Type.Object(
@@ -37,3 +38,22 @@ export const RelationValueSchema = Type.Union([
 ]);
 /** Complete field wire: null/single item for single selection, or an ordered item array for multiple. */
 export type RelationValue = Static<typeof RelationValueSchema>;
+
+/** Resolved capabilities for declared fields of one stable owner. */
+export const RowFieldsSchema = Type.Array(
+  Type.Object(
+    {
+      row: RowContextSchema,
+      fields: Type.Record(
+        ScalarPathSchema,
+        Type.Object(
+          { readOnly: Type.Boolean(), rules: Type.Array(ClientRuleSchema) },
+          { additionalProperties: false },
+        ),
+        { additionalProperties: false },
+      ),
+    },
+    { additionalProperties: false },
+  ),
+);
+export type RowFields = Static<typeof RowFieldsSchema>;

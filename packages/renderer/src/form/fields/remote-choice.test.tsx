@@ -326,3 +326,15 @@ it.each([
     }
   },
 );
+
+it('keeps unmatched remote Tags strings as valid literals on fresh mount and scope change', async () => {
+  const tags: FieldDef = { type: 'tags', name: 'product', label: 'Product', remote };
+  renderWithBrume(<Harness def={tags} />, { respond: () => reply() });
+  await act(async () => {});
+  expect(screen.getByText('7')).toBeTruthy();
+  expect(screen.queryByText(/無法使用/)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Scope B' }));
+  await act(async () => {});
+  expect(screen.getByText('7')).toBeTruthy();
+  expect(screen.queryByText(/無法使用/)).toBeNull();
+});

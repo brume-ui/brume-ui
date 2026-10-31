@@ -435,3 +435,21 @@ The actual `/#/form-repeaters` example registers `AddressField` once as `TaiwanA
 Repeater, exposes a county-error button and displays the same JSON value with `AddressDisplay`.
 Source: `apps/playground/src/pages/custom-address.tsx` and `form-repeaters.tsx`. It uses only public
 imports. The address value stays an object (`zipcode`, `county`, `district`, `address`).
+
+
+Conditional chains use effective values independently of retained drafts. `FormApi.getValue` reads
+the editable draft; `getEffectiveValue`, `getEffectiveField`, and `effectiveFields` read the shared condition/dependency
+projection, including restored inactive container membership/order. `getAuthority(field)` resolves
+initial snapshots by stable owner, then a selected-owner snapshot or a server-declared `defaultValue`
+for a genuinely new JSON/repeater owner. Explicit stored null remains null. `setRowAuthority` stores
+read metadata separately and never writes submitted values. Reset/removal/external scope edits
+invalidate fetched authority; initial stored owner snapshots retain their normal baseline semantics.
+`ValueField.ready/effectiveKnown` prevent editing dependent unknown authority while a promised
+selected-owner snapshot loads. A failed/missing snapshot leaves retry and disables picker commit.
+Legacy relation definitions without `hydrateAuthority` keep their existing standalone behavior.
+
+Both `source.resolveLabels(values)` and `source.request({values})` enforce the protocol's 100-ID
+request bound through ordered deduplicated sequential batches under one labels operation. Search
+has its own controller. All existing source/row/reset/dependency fences apply before and after every
+batch, and no partial result is published. Unavailable strict IDs remain omitted. TagsInput alone
+preserves unmatched strings as valid literals; Select/MultipleSelect/pickers remain strict.

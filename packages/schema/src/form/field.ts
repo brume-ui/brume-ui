@@ -21,6 +21,8 @@ export type FieldBase = {
   /** 相對於所在容器的鍵；`embeds` 會加一層前綴 */
   name: string;
   label: string;
+  /** Authoritative new-owner fallback; does not initialize or overwrite the editable draft. */
+  defaultValue?: unknown;
   help?: string;
   placeholder?: string;
   required?: boolean;
@@ -37,6 +39,7 @@ export type FieldBase = {
 const fieldBase = {
   name: Type.String({ pattern: '^(?!_brume$).*$' }),
   label: Type.String(),
+  defaultValue: Type.Optional(Type.Unknown()),
   help: Type.Optional(Type.String()),
   placeholder: Type.Optional(Type.String()),
   required: Type.Optional(Type.Boolean()),
@@ -96,6 +99,8 @@ export type ExclusiveChoiceFieldDef = ExclusiveChoice<
 
 export type RelationFieldDef = FieldBase & {
   type: 'relation';
+  /** Selected-owner authority is available through the declared options endpoint. */
+  hydrateAuthority?: true;
   multiple: boolean;
   remote: RemoteOptions;
   fields?: FormNode[];
@@ -266,6 +271,7 @@ export const FieldDefRaw = Type.Union(
     exclusiveVariant(plainFields[13]),
     exclusiveVariant(plainFields[15]),
     variant(literals('relation'), {
+      hydrateAuthority: Type.Optional(Type.Literal(true)),
       multiple: Type.Boolean(),
       remote: RemoteOptionsSchema,
       fields: Type.Optional(Type.Array(formNodeRef)),

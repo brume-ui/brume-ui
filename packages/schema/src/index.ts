@@ -130,6 +130,8 @@ export {
   OptionItemSchema,
   type OptionsResponse,
   OptionsResponseSchema,
+  type PickerAuthority,
+  PickerAuthoritySchema,
   type PickerSearchResponse,
   PickerSearchResponseSchema,
 } from './protocol/options';

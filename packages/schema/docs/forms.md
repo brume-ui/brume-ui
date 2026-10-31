@@ -285,7 +285,7 @@ FieldBase 的 `showWhen?:Condition` 與 `enableWhen?:Condition` 是 JSON AST，�
 - `all`／`any` 使用 `conditions:Condition[]`；`not` 使用 `condition:Condition`。`all([])=true`，`any([])=false`。
 - equality 是嚴格型別比較；`empty` 是 null／undefined／空字串／空陣列，false 與 0 不是空值。依欄位型別 canonicalize，不能把產品代碼 `"001"` 一律轉成數字。
 - row 路徑相對於所在 repeater row 或選取物件，不能從 numeric segments 猜 origin。未知宣告路徑或 activity dependency cycle 必須在宣告階段拒絕。
-- 隱藏或條件停用欄位保留 browser draft，但不參與 client 驗證或 server writes；原有儲存值不變。伺服器使用送出的 controlling values 及權威 readonly values 重新判斷，visibility 不提供授權。
+- 隱藏或條件停用欄位保留 browser draft，但不參與 client 驗證或 server writes；原有儲存值不變。條件與遠端依賴共用 effective values：active 欄位使用目前輸入，inactive／readonly 欄位使用原始 owner snapshot 或 server 宣告的新 owner default；伺服器依同樣權威規則重新判斷，visibility 不提供授權。
 - 無效的 controlling value 要先得到自己的驗證錯誤，不能靠它隱藏 dependent requirement。inactive server errors 留在內部；重新啟用且值未變時恢復。未對應宣告的 server errors 仍是 blocking summary entries。
 
 `excludeSelectedIn?:ExclusionPath[]`（form-only remote choices／relation）使用相同 explicit scope，另外允許 wildcard：
@@ -414,3 +414,21 @@ Playground `/#/form-composition` 組合 JSON→JSON、model-owned relation→rel
 延遲、取消、paging、reorder、source failure/retry 案例。Grid filters 儲存 scalar ID／ID[]，不是
 relation selection objects。Laravel 的 `/admin/compositions` 則以公開 DSL 與真實 Resource 端點
 驗證同一組合，不需 workbench AJAX 或 relation-saving hook。
+
+
+`FieldBase.defaultValue?: unknown` carries the normalized server value for a genuinely new owner;
+it does not initialize or overwrite retained browser drafts. `false`, `0`, `""`, and mapped object/list
+values are preserved; an absent property means null unless the field is a collection. Existing
+snapshot null is authoritative and never replaced with a non-null default. JSON row declarations use
+missing-JSON-property semantics (`valueFromJson([])`), which can differ from new-model defaults for
+mapped fields. Existing row values follow stable identity across moves/removals; explicit reset
+replaces the authority baseline. Containers also project effective child values for whole-collection
+dependencies and restore authoritative membership/order when inactive.
+
+A Form relation declaration may set `hydrateAuthority: true` when its generated endpoint supplies
+selected-owner `authority` snapshots (see protocol.md). Newly selected existing source extras cannot
+be inferred from an empty draft. The renderer fetches their declared public snapshot separately,
+blocks dependent unknown authority and commit until ready, and retains all drafts unchanged.
+Snapshots and resolved row capabilities are scoped by owner/source/lifetime/reset, not numeric row
+position. Source-owned BelongsTo/direct HasMany storage remains distinct from intermediary/pivot
+storage and nullable new-association evaluation callbacks.

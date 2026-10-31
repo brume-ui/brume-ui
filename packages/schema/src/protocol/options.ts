@@ -1,5 +1,5 @@
 import { type Static, Type } from '@sinclair/typebox';
-import type { RowContext } from '../form/relations';
+import { type RowContext, RowFieldsSchema } from '../form/relations';
 import { OptionSchema } from './display';
 
 export const OptionItemSchema = Type.Intersect([
@@ -34,7 +34,7 @@ export const OPTIONS_PARAMS = {
   perPage: 'per_page',
   /** 帶已選的值換回標籤：`value[]=7&value[]=9` */
   value: 'value[]',
-  /** 挑選器的分區鍵（`PickerSearchResponse.sections[].key`）；省略時為第一個分區。 */
+  /** 挑選器的分區鍵（`PickerSearchResponse.sections[].key`）；搜尋省略時為第一個分區；value 標籤解析省略時使用授權基本範圍。 */
   section: 'section',
   /** JSON object of declaration-known dependency names and resolved values. */
   depends: 'depends',
@@ -53,6 +53,16 @@ export const OptionsResponseSchema = Type.Object({
 });
 export type OptionsResponse = Static<typeof OptionsResponseSchema>;
 
+/** Server-owned declared values for an eligible selected Form picker owner. */
+export const PickerAuthoritySchema = Type.Object(
+  {
+    values: Type.Record(Type.String(), Type.Unknown()),
+    rowFields: Type.Optional(RowFieldsSchema),
+  },
+  { additionalProperties: false },
+);
+export type PickerAuthority = Static<typeof PickerAuthoritySchema>;
+
 const LabeledKeySchema = Type.Object({ key: Type.String(), label: Type.String() });
 
 /** 挑選器搜尋：比 OptionsResponse 多 `columns`、`sections`，請求多一個 `section` 參數（`OPTIONS_PARAMS.section`）。 */
@@ -60,7 +70,10 @@ export const PickerSearchResponseSchema = Type.Object({
   data: Type.Array(
     Type.Intersect([
       OptionItemSchema,
-      Type.Object({ columns: Type.Optional(Type.Record(Type.String(), Type.Unknown())) }),
+      Type.Object({
+        columns: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+        authority: Type.Optional(PickerAuthoritySchema),
+      }),
     ]),
   ),
   pagination: OptionsPaginationSchema,

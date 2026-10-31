@@ -149,7 +149,8 @@ export function TagsInput({
         setKnown({ scope, items });
         setLabelState({
           scope,
-          missing: value.filter((v) => !items.some((o) => o.value === v)),
+          // Tags accept literals; a scoped source miss never makes free text unavailable.
+          missing: [],
           failed: false,
           loading: false,
         });

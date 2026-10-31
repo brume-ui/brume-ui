@@ -7,9 +7,10 @@ import type {
   FormNode,
   RowContext,
 } from '@brume-ui/brume-schema';
+import type { AuthorityValue } from './authority';
 import { canonicalizeFieldValue, conditionPaths, evaluateCondition } from './conditions';
 import { isPathWithin } from './errors';
-import { assertSafePath, getAt, joinPath } from './paths';
+import { assertSafePath, getAt, joinPath, setAt } from './paths';
 import { repeaterIdentities } from './row-identity';
 import { collectFields, validateValue } from './validate';
 
@@ -151,6 +152,11 @@ export interface ValueField {
   /** Editable activity, including inherited parent state; literal hidden retains its old semantics. */
   active: boolean;
   validationError: string | null;
+  /** Effective controller value uses stored/default authority while inactive. */
+  authorityRequired: boolean;
+  effectiveValue: unknown;
+  effectiveKnown: boolean;
+  ready: boolean;
 }
 
 /** Expand only declared array boundaries; never infer a row from a numeric field name. */
@@ -175,6 +181,7 @@ export function collectValueFields(
   values: Record<string, unknown>,
   invalidMessage: (def: FieldDef) => string = defaultError,
   rowFields: FormDef['rowFields'] = [],
+  authority?: (field: ValueField) => AuthorityValue,
 ): ValueField[] {
   const entries = declarations(nodes);
   checkDeclarations(entries);
@@ -255,6 +262,13 @@ export function collectValueFields(
         readOnly: !!def.readOnly,
         active: true,
         validationError,
+        authorityRequired: entry.parents.some((path) => {
+          const parent = entries.find((entry) => entry.path === path)?.def;
+          return parent?.type === 'relation' && parent.hydrateAuthority === true;
+        }),
+        effectiveValue: value,
+        effectiveKnown: true,
+        ready: true,
       };
       return [
         {
@@ -276,30 +290,84 @@ export function collectValueFields(
     return 0;
   });
   const byPath = new Map(pending.map(({ field }) => [field.path, field]));
-  const options = {
-    getField: (path: string) =>
-      byPath.get(path)?.def ?? entries.find((entry) => matches(entry.path, path))?.def,
-    isInvalid: (path: string) => byPath.get(path)?.validationError != null,
-  };
-  // Base validation was computed for every controller before any condition is evaluated.
-  for (const { field, parents } of pending) {
-    const parentFields = parents.map((path) => byPath.get(path));
+  const completed = new Set<string>();
+  const parentsByPath = new Map(pending.map(({ field, parents }) => [field.path, parents]));
+  const resolve = (field: ValueField): ValueField => {
+    if (completed.has(field.path)) return field;
+    const parentFields = (parentsByPath.get(field.path) ?? []).flatMap((path) => {
+      const parent = byPath.get(path);
+      return parent ? [resolve(parent)] : [];
+    });
+    const dependencies = [field.def.showWhen, field.def.enableWhen].flatMap((condition) =>
+      condition
+        ? conditionPaths(condition).map((dependency) => {
+            const path =
+              dependency.scope === 'root'
+                ? dependency.path
+                : joinPath(field.rowPath ?? '', dependency.path);
+            const target = byPath.get(path);
+            return target ? resolve(target) : undefined;
+          })
+        : [],
+    );
+    field.ready =
+      parentFields.every((parent) => parent.ready) &&
+      dependencies.every((target) => target?.effectiveKnown !== false);
+    const options = {
+      getField: (path: string) =>
+        byPath.get(path)?.def ?? entries.find((entry) => matches(entry.path, path))?.def,
+      getValue: (path: string) => {
+        const ancestor = pending.find(
+          ({ field: candidate }) =>
+            (candidate.def.type === 'repeater' || candidate.def.type === 'relation') &&
+            path.startsWith(`${candidate.path}.`) &&
+            !resolve(candidate).active,
+        )?.field;
+        return ancestor
+          ? getAt(ancestor.effectiveValue, path.slice(ancestor.path.length + 1))
+          : byPath.get(path)?.effectiveValue;
+      },
+      isInvalid: (path: string) => {
+        const target = byPath.get(path);
+        return !!target && target.active && target.validationError !== null;
+      },
+    };
     const evaluate = (condition: Condition | undefined) =>
-      !condition || evaluateCondition(condition, values, field.rowPath, options);
-    field.visible =
-      parentFields.every((parent) => parent?.visible !== false) && evaluate(field.def.showWhen);
+      !condition || !field.ready || evaluateCondition(condition, values, field.rowPath, options);
+    field.visible = parentFields.every((parent) => parent.visible) && evaluate(field.def.showWhen);
     field.enabled =
-      parentFields.every((parent) => parent?.enabled !== false) &&
+      field.ready &&
+      parentFields.every((parent) => parent.enabled) &&
       !field.def.disabled &&
       evaluate(field.def.enableWhen);
-    field.readOnly = !!field.def.readOnly || parentFields.some((parent) => parent?.readOnly);
+    field.readOnly = !!field.def.readOnly || parentFields.some((parent) => parent.readOnly);
     field.active =
       field.visible &&
       field.enabled &&
       !field.readOnly &&
       field.def.type !== 'display' &&
       !(field.def.type === 'custom' && field.def.displayOnly);
-  }
+    const stored = authority?.(field) ?? { known: true, value: getAt(values, field.path) };
+    field.effectiveKnown = field.active || stored.known;
+    field.effectiveValue = field.active ? getAt(values, field.path) : stored.value;
+    completed.add(field.path);
+    if (field.active && (field.def.type === 'repeater' || field.def.type === 'relation')) {
+      let projected = { value: getAt(values, field.path) };
+      for (const { field: child, parents } of pending) {
+        if (parents.at(-1) !== field.path) continue;
+        resolve(child);
+        projected = setAt(
+          projected,
+          `value.${child.path.slice(field.path.length + 1)}`,
+          child.effectiveValue,
+        );
+        field.effectiveKnown &&= child.effectiveKnown;
+      }
+      field.effectiveValue = projected.value;
+    }
+    return field;
+  };
+  for (const { field } of pending) resolve(field);
   // Distinct compares each declared child with its field-specific canonical value.
   // Empty/invalid/inactive values are handled by their own validation and never coerce IDs.
   for (const { field: container } of pending) {

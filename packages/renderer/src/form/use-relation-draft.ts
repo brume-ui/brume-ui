@@ -1,5 +1,6 @@
-import type { RelationItem } from '@brume-ui/brume-schema';
+import type { PickerAuthority, RelationItem, RowContext } from '@brume-ui/brume-schema';
 import { useLayoutEffect, useRef, useState } from 'react';
+import { authoritativeValue, effectiveTree, rowKey } from './authority';
 import { type FieldErrors, isPathWithin } from './errors';
 import { fieldOwnershipKey } from './field-ownership';
 import { getAt, setAt } from './paths';
@@ -23,6 +24,8 @@ interface Config {
   item: RelationItem;
   onChange(next: RelationItem): void;
   onPending(id: symbol, count: number): void;
+  authority?: PickerAuthority;
+  authorityRow?: RowContext;
 }
 /** A mounted selection owns all writes, errors, touch state and uploads; root reads stay live. */
 export function useRelationDraft(config: Config): FormApi {
@@ -80,6 +83,16 @@ export function useRelationDraft(config: Config): FormApi {
     return () => {
       local.alive = false;
       latest.current.onPending(local.id, 0);
+      const c = latest.current;
+      if (
+        c.authorityRow &&
+        !c.parent.fields.some(
+          (field) =>
+            rowKey(field.rowContext.slice(0, c.authorityRow?.length)) ===
+            rowKey(c.authorityRow ?? []),
+        )
+      )
+        c.parent.setRowAuthority(c.authorityRow, undefined);
     };
   }, [local]);
   const relative = (path: string) => {
@@ -96,13 +109,26 @@ export function useRelationDraft(config: Config): FormApi {
       ? setAt(c.parent.values, current.path, c.multiple ? draft : (draft[0] ?? null))
       : c.parent.values;
   };
+  const getAuthority = (field: import('./traversal').ValueField) => {
+    const c = latest.current;
+    const inherited = c.parent.getAuthority(field);
+    if (inherited.known || !c.authority || !c.authorityRow) return inherited;
+    return authoritativeValue({}, field, [{ row: c.authorityRow, snapshot: c.authority }]);
+  };
   const fields = () =>
     location()
       ? collectValueFields(
           latest.current.parent.definition.nodes,
           values(),
           undefined,
-          latest.current.parent.definition.rowFields,
+          [
+            ...(latest.current.parent.definition.rowFields ?? []),
+            ...(latest.current.authority?.rowFields ?? []),
+          ].filter(
+            (entry, index, all) =>
+              all.findIndex((other) => rowKey(other.row) === rowKey(entry.row)) === index,
+          ),
+          getAuthority,
         )
       : [];
   const lifetimes = draftRowLifetimes(
@@ -228,6 +254,19 @@ export function useRelationDraft(config: Config): FormApi {
       return errors();
     },
     getValue: (path) => getAt(values(), path),
+    getEffectiveValue: (path) => getAt(effectiveTree(fields(), values()), path),
+    get effectiveFields() {
+      return collectValueFields(
+        latest.current.parent.definition.nodes,
+        effectiveTree(fields(), values()),
+        undefined,
+        latest.current.parent.definition.rowFields,
+      );
+    },
+    getEffectiveField: (path) => api.effectiveFields.find((field) => field.path === path),
+    getAuthority,
+    setRowAuthority: (row, snapshot, dependencies) =>
+      latest.current.parent.setRowAuthority(row, snapshot, dependencies),
     getField: (path) => fields().find((field) => field.path === path),
     setValue: write,
     touch(path) {
@@ -241,7 +280,7 @@ export function useRelationDraft(config: Config): FormApi {
         if (isPathWithin(field.path, location()?.prefix ?? ''))
           local.touched.add(relative(field.path));
       notify();
-      return Object.keys(errors()).length === 0;
+      return fields().every((field) => field.ready) && Object.keys(errors()).length === 0;
     },
     setServerErrors(next) {
       if (!active()) return;

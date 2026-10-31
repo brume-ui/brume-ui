@@ -629,3 +629,127 @@ it('rejects duplicate resolved contexts and unsafe relative override paths', () 
     ]),
   ).toThrow();
 });
+
+for (const condition of ['showWhen', 'enableWhen'] as const) {
+  it(`uses stored authority for ${condition} chains while retaining drafts through move/remove/reset`, () => {
+    const fields = (scope: 'root' | 'row'): FormNode[] => [
+      node({ type: 'switch', name: 'visible', label: 'Visible' }),
+      node({
+        type: 'text',
+        name: 'kind',
+        label: 'Kind',
+        [condition]: { op: 'eq', field: { scope, path: 'visible' }, value: true },
+      }),
+      node({
+        type: 'text',
+        name: 'note',
+        label: 'Note',
+        rules: required,
+        showWhen: { op: 'eq', field: { scope, path: 'kind' }, value: 'B' },
+      }),
+    ];
+    const definition: FormDef = {
+      layout: 'stacked',
+      nodes: [
+        ...fields('root'),
+        node({ type: 'repeater', name: 'rows', label: 'Rows', mode: 'json', nodes: fields('row') }),
+      ],
+    };
+    const a = { _brume: { key: 'a' }, visible: true, kind: 'A', note: 'stored' };
+    const b = { _brume: { key: 'b' }, visible: true, kind: 'B', note: 'B stored' };
+    const { result } = renderHook(() =>
+      useFormState(definition, { visible: true, kind: 'A', note: 'stored', rows: [a, b] }),
+    );
+    act(() => {
+      result.current.setValue('kind', 'B');
+      result.current.setValue('note', '');
+      result.current.setValue('rows.0.kind', 'B');
+      result.current.setValue('rows.0.note', '');
+    });
+    expect(result.current.getField('note')?.active).toBe(true);
+    act(() => {
+      result.current.setValue('visible', false);
+      result.current.setValue('rows.0.visible', false);
+    });
+    expect(result.current.getField('note')?.active).toBe(false);
+    expect(result.current.getField('rows.0.note')?.active).toBe(false);
+    act(() => expect(result.current.validateAll()).toBe(true));
+    expect(result.current.getValue('kind')).toBe('B');
+    expect((result.current.getEffectiveValue('rows') as Array<{ kind: string }>)[0]?.kind).toBe(
+      'A',
+    );
+    act(() => result.current.moveRow('rows', 0, 1));
+    expect(result.current.getField('rows.1.note')?.active).toBe(false);
+    expect(result.current.getField('rows.0.note')?.active).toBe(true);
+    act(() => result.current.removeRow('rows', 0));
+    expect(result.current.getField('rows.0.note')?.active).toBe(false);
+    act(() => {
+      result.current.setValue('visible', true);
+      result.current.setValue('rows.0.visible', true);
+    });
+    expect(result.current.getField('note')?.active).toBe(true);
+    expect(result.current.getField('rows.0.note')?.active).toBe(true);
+    act(() => expect(result.current.validateAll()).toBe(false));
+    act(() =>
+      result.current.reset({
+        visible: false,
+        kind: 'B',
+        note: 'fresh',
+        rows: [{ ...a, visible: false, kind: 'B', note: 'fresh' }],
+      }),
+    );
+    expect(result.current.getField('note')?.active).toBe(true);
+    expect(result.current.getField('rows.0.note')?.active).toBe(true);
+  });
+}
+
+it('uses declared defaults for new nested JSON owners and preserves explicit stored null', () => {
+  const definition: FormDef = {
+    layout: 'stacked',
+    nodes: [
+      node({
+        type: 'repeater',
+        name: 'rows',
+        label: 'Rows',
+        mode: 'json',
+        nodes: [
+          node({ type: 'switch', name: 'visible', label: 'Visible', defaultValue: false }),
+          node({
+            type: 'text',
+            name: 'kind',
+            label: 'Kind',
+            defaultValue: 'B',
+            rules: required,
+            showWhen: { op: 'eq', field: { scope: 'row', path: 'visible' }, value: true },
+          }),
+          node({
+            type: 'text',
+            name: 'note',
+            label: 'Note',
+            rules: required,
+            showWhen: { op: 'eq', field: { scope: 'row', path: 'kind' }, value: 'B' },
+          }),
+        ],
+      }),
+    ],
+  };
+  const { result } = renderHook(() =>
+    useFormState(definition, {
+      rows: [{ _brume: { key: 'stored' }, visible: false, kind: null, note: '' }],
+    }),
+  );
+  expect(result.current.getField('rows.0.note')?.active).toBe(false);
+  act(() =>
+    result.current.setValue('rows', [
+      { _brume: { key: 'stored' }, visible: false, kind: 'B', note: '' },
+      { _brume: { key: 'new' }, visible: false, kind: 'A', note: '' },
+    ]),
+  );
+  expect(result.current.getField('rows.0.note')?.active).toBe(false);
+  expect(result.current.getField('rows.1.note')?.active).toBe(true);
+  expect(result.current.getEffectiveValue('rows.1.kind')).toBe('B');
+  act(() => expect(result.current.validateAll()).toBe(false));
+  act(() => result.current.moveRow('rows', 1, 0));
+  expect(result.current.getField('rows.0.note')?.active).toBe(true);
+  expect(result.current.getField('rows.1.note')?.active).toBe(false);
+});

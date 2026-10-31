@@ -72,25 +72,32 @@ function resolveDependencies(
   const contexts: Record<string, RowContext> = {};
   const ownership: Record<string, unknown> = {};
   const chains: RowContext[] = [];
+  let ready = true;
   for (const [name, dependency] of Object.entries(remote?.dependsOn ?? {})) {
     if (!field) {
       values[name] = null;
       continue;
     }
     const target = resolveConditionPath(dependency, field.rowPath);
-    const declared = form.getField(target);
-    const canonical = canonicalizeFieldValue(declared?.def, form.getValue(target));
+    const draftField = form.getField(target);
+    const declared = form.getEffectiveField(target) ?? draftField;
+    if (
+      draftField?.effectiveKnown === false &&
+      stableJson(draftField.rowContext) === stableJson(declared?.rowContext)
+    )
+      ready = false;
+    const canonical = canonicalizeFieldValue(declared?.def, form.getEffectiveValue(target));
     values[name] = canonical.valid ? (canonical.value ?? null) : null;
     if (declared?.rowContext.length) contexts[name] = declared.rowContext;
     ownership[name] = fieldOwnershipKey(form, target, declared?.rowContext);
     if (declared) chains.push(declared.rowContext);
     if (declared?.def.type === 'repeater' || declared?.def.type === 'relation') {
-      const descendants = form.fields.filter(
+      const descendants = form.effectiveFields.filter(
         (candidate) => candidate.path === target || candidate.path.startsWith(`${target}.`),
       );
       const descendantChains = descendants.flatMap((candidate) => [
         candidate.rowContext,
-        ...collectionRowContexts(candidate, form.getValue(candidate.path)),
+        ...collectionRowContexts(candidate, form.getEffectiveValue(candidate.path)),
       ]);
       chains.push(...descendantChains);
       ownership[name] = [
@@ -99,7 +106,7 @@ function resolveDependencies(
       ];
     }
   }
-  return { values, contexts, ownership, chains };
+  return { values, contexts, ownership, chains, ready };
 }
 
 /** Collect by declaration AND owner instance; the same template can occur in many outer rows. */
@@ -115,7 +122,7 @@ export function resolveAncestorSources(
   const collect = (chain: RowContext) => {
     for (const [index, row] of chain.entries()) {
       const prefix = chain.slice(0, index);
-      const container = form.fields.find(
+      const container = [...form.fields, ...form.effectiveFields].find(
         (candidate) =>
           candidate.templatePath === row.path &&
           stableJson(candidate.rowContext) === stableJson(prefix),
@@ -137,6 +144,7 @@ export function resolveAncestorSources(
       }
       visiting.add(key);
       const dependencies = resolveDependencies(container.def.remote, form, container);
+      if (!dependencies.ready) valid = false;
       collect(prefix);
       for (const target of dependencies.chains) collect(target);
       visiting.delete(key);
@@ -169,7 +177,13 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
   const localOwner = useRef(Symbol('remote-source'));
   const dependencies = form
     ? resolveDependencies(remote, form, field)
-    : { values: config.resolvedDepends ?? {}, contexts: {}, ownership: {}, chains: [] };
+    : {
+        values: config.resolvedDepends ?? {},
+        contexts: {},
+        ownership: {},
+        chains: [],
+        ready: true,
+      };
   const dependsKey = stableJson(dependencies.values);
   const dependencyContextsKey = stableJson(dependencies.contexts);
   const dependencyOwnershipKey = stableJson(dependencies.ownership);
@@ -187,6 +201,7 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
   const enabled =
     active &&
     ancestors.valid &&
+    dependencies.ready &&
     !!endpoint &&
     (!form || (!!field && stableJson(field.rowContext) === contextKey));
   const scope = useMemo(
@@ -268,6 +283,7 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
         );
         return (
           !!currentField &&
+          currentDependencies.ready &&
           currentField.templatePath === scope.owner &&
           rowLifetime(form, currentField.rowContext) === scope.lifetime &&
           stableJson(currentDependencies.values) === scope.dependsKey &&
@@ -295,20 +311,53 @@ export function useRemoteOptions(config: RemoteOptionsConfig): RemoteOptionsSour
       if (query.page !== undefined) params[OPTIONS_PARAMS.page] = String(query.page);
       if (query.perPage !== undefined) params[OPTIONS_PARAMS.perPage] = String(query.perPage);
       if (query.section !== undefined) params[OPTIONS_PARAMS.section] = query.section;
-      const response = await adapter.request<T>({
-        method: 'get',
-        url: scope.endpoint ?? '',
-        query: params,
-        signal: controller.signal,
-      });
-      if (
-        !currentOwner() ||
-        controller.signal.aborted ||
-        scope.channels.get(channel) !== controller
-      )
-        throw new Error('Obsolete options response');
-      if (response.status !== 200) throw new Error(`Options request failed (${response.status})`);
-      return response.data;
+      // One controller owns every batch. Starting another hydration cancels the complete
+      // operation, while sequential batches cannot abort their own labels channel.
+      const values = query.values ? [...new Set(query.values)] : undefined;
+      const batches = values
+        ? Array.from({ length: Math.max(1, Math.ceil(values.length / 100)) }, (_, index) =>
+            values.slice(index * 100, (index + 1) * 100),
+          )
+        : [undefined];
+      let result: T | undefined;
+      const found = new Map<string, OptionItem>();
+      for (const batch of batches) {
+        if (
+          !currentOwner() ||
+          controller.signal.aborted ||
+          scope.channels.get(channel) !== controller
+        )
+          throw new Error('Obsolete options scope');
+        const response = await adapter.request<T>({
+          method: 'get',
+          url: scope.endpoint ?? '',
+          query: batch ? { ...params, value: batch } : params,
+          signal: controller.signal,
+        });
+        if (
+          !currentOwner() ||
+          controller.signal.aborted ||
+          scope.channels.get(channel) !== controller
+        )
+          throw new Error('Obsolete options response');
+        if (response.status !== 200) throw new Error(`Options request failed (${response.status})`);
+        result ??= response.data;
+        for (const option of response.data.data) found.set(option.value, option);
+      }
+      if (!result) throw new Error('Missing options response');
+      return values
+        ? {
+            ...result,
+            data: values.flatMap((value) => {
+              const option = found.get(value);
+              return option ? [option] : [];
+            }),
+            pagination:
+              batches.length === 1
+                ? result.pagination
+                : { page: 1, perPage: Math.max(1, values.length), hasMore: false },
+          }
+        : result;
     },
     [adapter, scope, cancel, form, config.path, remote],
   );

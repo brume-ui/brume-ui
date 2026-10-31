@@ -681,3 +681,231 @@ it('collects whole picker eligibility with no extras and fences remove-readd of 
     await rejected;
   });
 });
+
+for (const count of [100, 101, 250]) {
+  for (const path of ['resolveLabels', 'request'] as const) {
+    it(`hydrates ${count} selections through ${path} in bounded deduplicated ordered batches`, async () => {
+      let source!: ReturnType<typeof useRemoteOptions>;
+      const requests: HttpRequest[] = [];
+      renderWithBrume(
+        <Harness
+          capture={(next) => {
+            source = next;
+          }}
+        />,
+        {
+          respond: (req) => {
+            requests.push(req);
+            const ids = req.query?.value as string[];
+            if (ids.length > 100) return { status: 422, data: {} };
+            return {
+              status: 200,
+              data: {
+                data: [...ids]
+                  .reverse()
+                  .filter((id) => id !== 'missing')
+                  .map((value) => ({ value, label: `Label ${value}` })),
+                pagination: { page: 1, perPage: ids.length, hasMore: false },
+              },
+            };
+          },
+        },
+      );
+      const ids = Array.from({ length: count }, (_, i) => String(i + 1));
+      ids[count - 1] = 'missing';
+      let labels: { value: string; label: string }[] = [];
+      await act(async () => {
+        labels =
+          path === 'request'
+            ? (await source.request({ values: [...ids, '1'] })).data
+            : await source.resolveLabels([...ids, '1']);
+      });
+      expect(requests.map((req) => ((req.query?.value ?? []) as string[]).length)).toEqual(
+        Array.from({ length: Math.ceil(count / 100) }, (_, i) => Math.min(100, count - i * 100)),
+      );
+      expect(labels.map((item) => item.value)).toEqual(ids.filter((id) => id !== 'missing'));
+      expect(requests.every((req) => !req.signal?.aborted)).toBe(true);
+    });
+  }
+}
+
+for (const change of ['reset', 'remove', 'dependency'] as const) {
+  for (const path of ['resolveLabels', 'request'] as const) {
+    it(`rejects the whole ${path} hydration when ${change} invalidates a later batch`, async () => {
+      let source!: ReturnType<typeof useRemoteOptions>;
+      let form!: FormApi;
+      let finish!: (value: HttpResponse) => void;
+      const requests: HttpRequest[] = [];
+      renderWithBrume(
+        <Harness
+          capture={(s, f) => {
+            source = s;
+            form = f;
+          }}
+        />,
+        {
+          respond: (req) => {
+            requests.push(req);
+            if (requests.length === 2)
+              return new Promise((resolve) => {
+                finish = resolve;
+              });
+            return {
+              status: 200,
+              data: {
+                data: ((req.query?.value ?? []) as string[]).map((value) => ({
+                  value,
+                  label: value,
+                })),
+                pagination: { page: 1, perPage: 100, hasMore: false },
+              },
+            };
+          },
+        },
+      );
+      let pending!: Promise<unknown>;
+      await act(async () => {
+        const values = Array.from({ length: 250 }, (_, i) => String(i));
+        pending = (
+          path === 'request' ? source.request({ values }) : source.resolveLabels(values)
+        ).catch((error: Error) => error.message);
+        await Promise.resolve();
+      });
+      expect(requests).toHaveLength(2);
+      await act(async () => {
+        if (change === 'reset') form.reset();
+        else if (change === 'remove') form.removeRow('rows', 0);
+        else form.setValue('rows.0.amount', '9.9');
+        finish(response);
+        expect(await pending).toMatch(/Obsolete/);
+      });
+      expect(requests).toHaveLength(2);
+      expect(requests[1]?.signal?.aborted).toBe(true);
+    });
+  }
+}
+
+it('uses the effective inactive controller authority for remote scopes without losing its draft', async () => {
+  let source!: ReturnType<typeof useRemoteOptions>;
+  let form!: FormApi;
+  const requests: HttpRequest[] = [];
+  // biome-ignore lint/correctness/noComponentHookFactories: this test mounts one stable harness instance.
+  function EffectiveHarness() {
+    form = useFormState(
+      {
+        layout: 'stacked',
+        nodes: [
+          { type: 'field', field: { type: 'switch', name: 'visible', label: 'Visible' } },
+          {
+            type: 'field',
+            field: {
+              type: 'text',
+              name: 'kind',
+              label: 'Kind',
+              showWhen: { op: 'eq', field: { scope: 'root', path: 'visible' }, value: true },
+            },
+          },
+          {
+            type: 'field',
+            field: {
+              type: 'select',
+              name: 'product',
+              label: 'Product',
+              remote: { url: '/options', dependsOn: { kind: { scope: 'root', path: 'kind' } } },
+            },
+          },
+        ],
+      },
+      { visible: true, kind: 'A', product: '7' },
+    );
+    source = useRemoteOptions({
+      form,
+      path: 'product',
+      remote: { url: '/options', dependsOn: { kind: { scope: 'root', path: 'kind' } } },
+    });
+    return null;
+  }
+  renderWithBrume(<EffectiveHarness />, {
+    respond: (req) => {
+      requests.push(req);
+      return response;
+    },
+  });
+  act(() => {
+    form.setValue('kind', 'B');
+    form.setValue('visible', false);
+  });
+  await act(async () => {
+    await source.load({ q: '', page: 1 });
+  });
+  expect(requests[0]?.query?.depends).toBe('{"kind":"A"}');
+  expect(form.getValue('kind')).toBe('B');
+});
+
+it('restores inactive collection order and its stable dependency target after draft movement and removal', async () => {
+  let source!: ReturnType<typeof useRemoteOptions>;
+  let form!: FormApi;
+  const requests: HttpRequest[] = [];
+  const remote = {
+    url: '/effective-rows',
+    dependsOn: { kind: { scope: 'root' as const, path: 'rows.0.kind' } },
+  };
+  // biome-ignore lint/correctness/noComponentHookFactories: this test mounts one stable harness instance.
+  function CollectionHarness() {
+    form = useFormState(
+      {
+        layout: 'stacked',
+        nodes: [
+          { type: 'field', field: { type: 'switch', name: 'visible', label: 'Visible' } },
+          {
+            type: 'field',
+            field: {
+              type: 'repeater',
+              name: 'rows',
+              label: 'Rows',
+              mode: 'json',
+              showWhen: { op: 'eq', field: { scope: 'root', path: 'visible' }, value: true },
+              nodes: [{ type: 'field', field: { type: 'text', name: 'kind', label: 'Kind' } }],
+            },
+          },
+          { type: 'field', field: { type: 'select', name: 'product', label: 'Product', remote } },
+        ],
+      },
+      {
+        visible: true,
+        rows: [
+          { _brume: { key: 'a' }, kind: 'A' },
+          { _brume: { key: 'b' }, kind: 'B' },
+        ],
+        product: '7',
+      },
+    );
+    source = useRemoteOptions({ form, path: 'product', remote });
+    return null;
+  }
+  renderWithBrume(<CollectionHarness />, {
+    respond: (request) => {
+      requests.push(request);
+      return response;
+    },
+  });
+  act(() => {
+    form.moveRow('rows', 0, 1);
+    form.setValue('visible', false);
+  });
+  await act(async () => {
+    await source.load({ q: '', page: 1 });
+  });
+  expect(requests.at(-1)?.query?.depends).toBe('{"kind":"A"}');
+  expect(JSON.parse(String(requests.at(-1)?.query?.dependencyContexts))).toEqual({
+    kind: [{ path: 'rows', key: 'a' }],
+  });
+  act(() => form.removeRow('rows', 1));
+  await act(async () => {
+    await source.load({ q: '', page: 1 });
+  });
+  expect(requests.at(-1)?.query?.depends).toBe('{"kind":"A"}');
+  expect(JSON.parse(String(requests.at(-1)?.query?.dependencyContexts))).toEqual({
+    kind: [{ path: 'rows', key: 'a' }],
+  });
+});

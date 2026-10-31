@@ -80,6 +80,7 @@ export function canonicalizeFieldValue(
 }
 
 export interface ConditionEvaluationOptions {
+  getValue?(path: string): unknown;
   getField?(path: string): FieldDef | undefined;
   /** Invalid dependencies conservatively activate the entire AST, including not/all/any. */
   isInvalid?(path: string): boolean;
@@ -100,7 +101,10 @@ export function evaluateCondition(
     dependencies.some(
       (path) =>
         options.isInvalid?.(path) ||
-        !canonicalizeFieldValue(options.getField?.(path), getAt(values, path)).valid,
+        !canonicalizeFieldValue(
+          options.getField?.(path),
+          options.getValue ? options.getValue(path) : getAt(values, path),
+        ).valid,
     )
   )
     return true;
@@ -110,7 +114,7 @@ export function evaluateCondition(
     if (node.op === 'not') return !evaluate(node.condition);
     const path = resolveConditionPath(node.field, rowPath);
     const def = options.getField?.(path);
-    const raw = getAt(values, path);
+    const raw = options.getValue ? options.getValue(path) : getAt(values, path);
     if (node.op === 'empty')
       return raw == null || raw === '' || (Array.isArray(raw) && raw.length === 0);
     const value = canonicalizeFieldValue(def, raw).value;

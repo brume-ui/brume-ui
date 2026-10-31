@@ -47,7 +47,7 @@
 
 ## 挑選器
 
-`PickerSearchResponse` 的 `columns` 與 `sections` 供挑選器顯示欄位與分區。挑選器搜尋打的是同一個 `endpoints.options`（`{source}` 為挑選器的來源鍵），多帶 `section=<key>` 選分區，`key` 取自 `sections[].key`；省略時為第一個分區。參數名稱定義在 `OPTIONS_PARAMS`。挑選器 UI 在子計畫 3 實作。
+`PickerSearchResponse` 的 `columns` 與 `sections` 供挑選器顯示欄位與分區。挑選器搜尋打的是同一個 `endpoints.options`（`{source}` 為挑選器的來源鍵），多帶 `section=<key>` 選分區，`key` 取自 `sections[].key`；搜尋省略時為第一個分區；帶 `value[]` 解析已選標籤且未指定 section 時使用授權 base scope，明確指定 section 時仍限於該分區。參數名稱定義在 `OPTIONS_PARAMS`。挑選器 UI 在子計畫 3 實作。
 
 Form options and picker requests also accept `rowContext` (`OPTIONS_PARAMS.rowContext`): a JSON
 outer-to-inner `RowContext` chain, separate from `depends`. Omission and `[]` both mean root.
@@ -121,3 +121,32 @@ run. Descendant removal/readdition updates it synchronously at every configured 
 whole-collection dependency projections. Resetting or unmounting one selection preserves its peers'
 lifetimes. Nested pickers compose this tracker with their actual parent's ownership; sessions remain
 isolated. This adds no public callback argument or request metadata.
+
+
+### Selected-owner authority and literal Tags (schema 0.4)
+
+A generated Form picker with declared extras advertises `hydrateAuthority: true`. Its selected-value
+hydration response may attach `data[].authority: { values, rowFields? }`, containing only declared
+public field values and the same stable-owner capability snapshots as a normal Form page. This is
+server-owned read metadata, never a submitted field value or an authorization token. Search responses
+and Grid picker responses do not eagerly snapshot candidates. Base source eligibility and verified
+parent ownership still apply; source storage and intermediary/pivot evaluation contexts stay distinct.
+A custom adapter promising this capability must supply the snapshot for eligible selected owners.
+Missing/error responses keep affected dependent fields and picker commit blocked with retry.
+Definitions without the marker retain the legacy/standalone contract.
+
+Hydration without `section` uses the authorized base source scope across browsing partitions;
+explicit `section` still restricts hydration, and search without `section` still uses the first section.
+There is no global fallback and no required universal `all` section.
+
+Only a server-declared Form Tags control preserves unmatched hydration strings as literal tags.
+Integer/string source IDs that match receive scoped source labels; other strings remain their own
+labels. The browser cannot enable this with a query flag. Select, MultipleSelect and relation pickers
+retain strict ID validation and unavailable-ID behavior. TagsInput also treats a scoped suggestion
+miss as normal free text, while transport failures still offer retry.
+
+The 100 distinct IDs bound applies to each request, not to selection size. Both renderer hydration
+entry points deduplicate, issue sequential batches of at most 100, and merge labels in requested
+order, omitting scoped misses for strict controls. All batches belong to one controller and scope;
+reset, removal, dependency replacement, cancellation or a newer hydration invalidates the entire
+operation. Partial labels are not committed from an obsolete or failed operation.
