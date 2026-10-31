@@ -29,5 +29,5 @@ Custom frontends can pass the renderer's public `fields` and `displays` registra
 `createBrumeApp`, alongside existing `components` and `pages`. A field opts into custom Grid inline
 editing with `{ component: AddressField, inlineEditable: true }`; the default remains form-only.
 See [Form contracts](packages/schema/docs/forms.md) and Playground `/#/form-composition` for nested
-relations/JSON, dependent options, picker drafts and custom fields. Prepared alpha.13 artifacts
+relations/JSON, dependent options, picker drafts and custom fields. Prepared alpha.14 artifacts
 include these APIs and schema `0.4.0`; publication follows review and ordinary CI.
