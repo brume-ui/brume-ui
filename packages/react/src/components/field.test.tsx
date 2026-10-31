@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
@@ -178,4 +178,63 @@ describe('Field', () => {
     expect(group.hasAttribute('aria-invalid')).toBe(false);
     expect(group.hasAttribute('aria-describedby')).toBe(false);
   });
+
+  it('names a required native fieldset without unsupported aria-required, preserving hints and errors', () => {
+    render(
+      <>
+        <p id="selection-hint">選擇後可調整數量</p>
+        <Field label="贈品" group required description="選擇商品" error="請選擇贈品">
+          <fieldset id="gifts" aria-describedby="selection-hint">
+            <button type="button">選擇贈品</button>
+          </fieldset>
+        </Field>
+      </>,
+    );
+    const group = screen.getByRole('group');
+    expect(group.tagName).toBe('FIELDSET');
+    expect(group.hasAttribute('aria-required')).toBe(false);
+    expect(screen.getByRole('group', { name: /^贈品\s*\(必填\)$/ })).toBe(group);
+    expect(group.getAttribute('aria-invalid')).toBe('true');
+    expect(describedBy(group)).toEqual([
+      'selection-hint',
+      screen.getByText('選擇商品').id,
+      screen.getByText('請選擇贈品').id,
+    ]);
+    expect(document.getElementById('gifts-label')?.textContent).toContain('*');
+    screen.getByRole('button').focus();
+    expect(document.activeElement).toBe(screen.getByRole('button'));
+  });
+
+  it.each([
+    ['en', 'Required'],
+    ['zh-TW', '必填'],
+    ['zh-CN', '必填'],
+  ] as const)(
+    'localizes native fieldset requirement for %s and removes it when optional',
+    (locale, text) => {
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <BrumeProvider adapter={createMemoryAdapter()} locale={locale}>
+          {children}
+        </BrumeProvider>
+      );
+      const { rerender } = render(
+        <Field label="Gifts" group required>
+          <fieldset />
+        </Field>,
+        { wrapper },
+      );
+      expect(
+        screen.getByRole('group', { name: new RegExp(`^Gifts\\s*\\(${text}\\)$`) }),
+      ).toBeTruthy();
+      rerender(
+        <Field label="Gifts" group>
+          <fieldset />
+        </Field>,
+      );
+      expect(screen.getByRole('group', { name: 'Gifts' }).hasAttribute('aria-required')).toBe(
+        false,
+      );
+      expect(screen.queryByText(`(${text})`)).toBeNull();
+    },
+  );
 });

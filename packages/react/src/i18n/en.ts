@@ -1,6 +1,7 @@
 import type { MessageKey } from './index';
 
 export const en: Record<MessageKey, string> = {
+  'field.required': 'Required',
   'repeater.add': 'Add {label}',
   'repeater.remove': 'Remove {name}',
   'repeater.up': 'Move up {name}',

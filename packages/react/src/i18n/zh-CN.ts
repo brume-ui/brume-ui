@@ -1,6 +1,7 @@
 import type { MessageKey } from './index';
 
 export const zhCN: Record<MessageKey, string> = {
+  'field.required': '必填',
   'repeater.add': '新增 {label}',
   'repeater.remove': '移除 {name}',
   'repeater.up': '上移 {name}',

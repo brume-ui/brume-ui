@@ -1,5 +1,6 @@
 import { cloneElement, createContext, type ReactElement, useContext, useId, useRef } from 'react';
 import { cn } from '../cn';
+import { useFieldRequiredText } from '../provider';
 
 export const FieldLayoutContext = createContext<'stacked' | 'horizontal'>('stacked');
 
@@ -42,6 +43,9 @@ export interface FieldProps {
 
 export function Field({ label, description, error, required, group, children }: FieldProps) {
   const layout = useContext(FieldLayoutContext);
+  const requiredText = useFieldRequiredText();
+  // A native fieldset is a group, not an input widget: aria-required is not supported.
+  const nativeFieldset = children.type === 'fieldset';
   const autoId = useId();
   // The hint present on first render is part of the page; one that appears or changes later drops in.
   const initialDescription = useRef(description);
@@ -56,15 +60,18 @@ export function Field({ label, description, error, required, group, children }: 
   const injected: Record<string, unknown> = { id };
   if (describedBy) injected['aria-describedby'] = describedBy;
   if (error) injected['aria-invalid'] = true;
-  if (required) injected['aria-required'] = true;
+  if (required && !nativeFieldset) injected['aria-required'] = true;
   if (group) injected['aria-labelledby'] = labelId;
   const caption = (
     <>
       {label}
       {required ? (
-        <span aria-hidden="true" className="br:text-danger">
-          {' *'}
-        </span>
+        <>
+          <span aria-hidden="true" className="br:text-danger">
+            {' *'}
+          </span>
+          {nativeFieldset ? <span className="br:sr-only">{` (${requiredText})`}</span> : null}
+        </>
       ) : null}
     </>
   );

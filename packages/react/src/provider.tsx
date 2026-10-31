@@ -29,3 +29,10 @@ export function useBrume(): BrumeContextValue {
   if (!ctx) throw new Error('useBrume must be used inside <BrumeProvider>.');
   return ctx;
 }
+
+/** Internal: Field also works standalone, using the default locale without a provider. */
+export function useFieldRequiredText(): string {
+  return (
+    useContext(BrumeContext)?.t('field.required') ?? createTranslator('zh-TW')('field.required')
+  );
+}

@@ -1,5 +1,6 @@
 import type { FormDef } from '@brume-ui/brume-schema';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
+import axe from 'axe-core';
 import { expect, it } from 'vitest';
 import { renderWithBrume } from '../../test-utils';
 import type { FieldProps } from '../contract';
@@ -36,6 +37,64 @@ const form: FormDef = {
     },
   ],
 };
+
+it.each(['editable', 'disabled', 'readOnly'] as const)(
+  'exposes required relation group label, help and errors with valid ARIA (%s)',
+  async (state) => {
+    const definition: FormDef = {
+      layout: 'stacked',
+      nodes: [
+        {
+          type: 'field',
+          field: {
+            type: 'relation',
+            name: 'gifts',
+            label: 'Gifts',
+            required: true,
+            help: 'Choose at least one gift',
+            multiple: true,
+            disabled: state === 'disabled',
+            readOnly: state === 'readOnly',
+            rules: [{ rule: 'required', message: 'Choose a gift' }],
+            remote: { url: '/gifts' },
+            fields: [],
+          },
+        },
+      ],
+    };
+    let api!: FormApi;
+    // biome-ignore lint/correctness/noComponentHookFactories: one stable harness per state.
+    function Harness() {
+      api = useFormState(definition, { gifts: [] });
+      return <Nodes nodes={definition.nodes} api={api} idPrefix="required" layout="stacked" />;
+    }
+    const { container } = renderWithBrume(<Harness />, { locale: 'en' });
+    act(() => api.setServerErrors({ gifts: ['Choose a gift'] }));
+    const group = screen.getByRole('group');
+    expect(group.tagName).toBe('FIELDSET');
+    expect(group.hasAttribute('aria-required')).toBe(false);
+    expect(screen.getByRole('group', { name: /^Gifts\s*\(Required\)$/ })).toBe(group);
+    expect(group.getAttribute('aria-invalid')).toBe(state === 'editable' ? 'true' : null);
+    const helpId = screen.getByText('Choose at least one gift').id;
+    expect(group.getAttribute('aria-describedby')?.split(' ')).toEqual(
+      state === 'editable' ? [helpId, screen.getByText('Choose a gift').id] : [helpId],
+    );
+    expect(screen.getByRole('button', { name: /Gifts/ })).toHaveProperty(
+      'disabled',
+      state !== 'editable',
+    );
+    expect((await axe.run(container, { runOnly: ['aria-allowed-attr'] })).violations).toEqual([]);
+    if (state === 'editable') {
+      let valid!: boolean;
+      act(() => {
+        valid = api.validateAll();
+      });
+      expect(valid).toBe(false);
+      expect(api.errors.gifts).toEqual(['Choose a gift']);
+      expect(api.getValue('gifts')).toEqual([]);
+    }
+  },
+);
 it('renders real draft Nodes with relative errors and conditions without touching parent values before commit', async () => {
   let api!: FormApi;
   // biome-ignore lint/correctness/noComponentHookFactories: this test mounts one stable harness instance.
