@@ -20,6 +20,7 @@ import {
 } from './pages/form';
 import { FormBehaviorsPage } from './pages/form-behaviors';
 import { FormCompositionPage } from './pages/form-composition';
+import { FormConditionsPage } from './pages/form-conditions';
 import { FormFieldsPage } from './pages/form-fields';
 import { FormLayoutsPage } from './pages/form-layouts';
 import { FormRelationsPage } from './pages/form-relations';
@@ -64,6 +65,7 @@ export const ROUTES: Route[] = [
   { name: 'form', title: '表單 · 標籤在上', Component: FormStackedPage },
   { name: 'form-horizontal', title: '表單 · 標籤在左', Component: FormHorizontalPage },
   { name: 'form-page', title: '表單 · 獨立頁面', Component: FormStandalonePage },
+  { name: 'form-conditions', title: '表單 · 條件式贈品設定', Component: FormConditionsPage },
   { name: 'form-composition', title: '表單 · 關聯組合驗收', Component: FormCompositionPage },
   { name: 'form-repeaters', title: '表單 · 巢狀重複列', Component: FormRepeatersPage },
   { name: 'form-relations', title: '表單 · 遠端選項與互斥', Component: FormRelationsPage },

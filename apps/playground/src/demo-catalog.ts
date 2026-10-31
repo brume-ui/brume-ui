@@ -29,6 +29,28 @@ export const PERSISTENCE_LABELS: Record<DemoFeature['persistence'], string> = {
   contract: '契約說明：依來源與測試說明行為，不代表此頁執行後端操作。',
 };
 export const DEMO_FEATURES: DemoFeature[] = [
+  ...(['root', 'row'] as const).map((scope) => ({
+    id: `gift.${scope}-three-branches`,
+    category: 'form' as const,
+    title: scope === 'root' ? '根層三種贈品設定' : '門檻獨立三種贈品設定',
+    summary: '以 radio 切換商品、優惠券與點數，核對驗證、草稿與完整儲存基準。',
+    href: scope === 'root' ? '#/form-conditions' : '#/form-composition',
+    steps: [
+      '切換贈品類型為優惠券或點數，清空必填值再儲存，觀察目前分支錯誤。',
+      '輸入優惠券代碼、金額與到期時間，或正整數點數；來回切換，確認儲存前草稿仍在。',
+      '按載入無效贈品類型後儲存，觀察類型錯誤；選回任一合法類型即可修正。',
+      scope === 'root'
+        ? '改回商品並調整商品與數量；儲存後比較送出與已存值，再重設贈品草稿。'
+        : '分別操作兩個 Thresholds 的類型與商品，排序、刪除及新增門檻，核對每列草稿與已存值。',
+    ],
+    expected:
+      '只顯示並驗證目前分支；成功儲存採用完整基準，保留隱藏既存值並捨棄隱藏未存草稿。優惠券與點數僅為設定，沒有發放。',
+    persistence: 'memory' as const,
+    sources: [
+      'brume-ui:apps/playground/src/pages/gift-demo.ts',
+      'brume-ui:apps/playground/src/pages/form-conditions.tsx',
+    ],
+  })),
   ...GRID_EXAMPLES.map((example) => ({
     id: example.id,
     category: 'grid' as const,

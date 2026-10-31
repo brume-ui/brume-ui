@@ -34,7 +34,7 @@ for (const scheme of ['light', 'dark'] as const) {
   }
 }
 
-test('composition dependency hydration follows latest category and hidden required fields retain their draft', async ({
+test('composition dependency hydration follows latest category and hidden drafts survive switching until canonical save', async ({
   page,
 }) => {
   await page.goto('/#/form-composition');
@@ -50,10 +50,15 @@ test('composition dependency hydration follows latest category and hidden requir
   await expect(instructions).toHaveAttribute('aria-invalid', 'true');
   await instructions.fill('Keep the draft');
   await page.getByRole('switch', { name: 'Delivery required', exact: true }).uncheck();
-  await page.getByRole('button', { name: 'Save composition', exact: true }).click();
-  await expect(page.getByTestId('composition-saved')).toContainText('Keep the draft');
   await page.getByRole('switch', { name: 'Delivery required', exact: true }).check();
   await expect(instructions).toHaveValue('Keep the draft');
+  await page.getByRole('switch', { name: 'Delivery required', exact: true }).uncheck();
+  await page.getByRole('button', { name: 'Save composition', exact: true }).click();
+  await expect(page.getByText('已儲存並載入完整基準', { exact: true })).toBeVisible();
+  const saved = JSON.parse((await page.getByTestId('composition-saved').textContent()) ?? '{}');
+  expect(saved.instructions).toBe('');
+  await page.getByRole('switch', { name: 'Delivery required', exact: true }).check();
+  await expect(instructions).toHaveValue('');
 });
 
 test('Grid table pickers emit scalar and ID-array filters rather than relation objects', async ({

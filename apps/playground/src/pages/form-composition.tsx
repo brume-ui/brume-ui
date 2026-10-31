@@ -1,12 +1,15 @@
-import { BrumeProvider, Button, createMemoryAdapter, useBrume } from '@brume-ui/brume-react';
-import { FormView, GridView, RegistryProvider, useFormState } from '@brume-ui/brume-renderer';
+import { BrumeProvider, createMemoryAdapter, useBrume } from '@brume-ui/brume-react';
+import { GridView, RegistryProvider } from '@brume-ui/brume-renderer';
 import type { FieldDef, FormDef, ListPage } from '@brume-ui/brume-schema';
 import { useMemo, useState } from 'react';
 import { addressRegistry } from './custom-address';
+import { DemoGuide } from './demo-guide';
+import { GiftForm } from './form-conditions';
+import { createGiftMemory, giftFields, giftValues } from './gift-demo';
 import { Page, Panel } from './page';
 
 const field = (field: FieldDef) => ({ type: 'field' as const, field });
-const form: FormDef = {
+export const compositionForm: FormDef = {
   layout: 'stacked',
   nodes: [
     field({
@@ -80,21 +83,14 @@ const form: FormDef = {
           sortable: true,
           nodes: [
             field({ type: 'currency', name: 'amount', label: 'Threshold amount', decimals: 2 }),
-            field({
-              type: 'relation',
-              name: 'gifts',
-              label: 'Composition gifts',
-              multiple: true,
-              remote: { url: '/composition/picker' },
-              fields: [field({ type: 'number', name: 'quantity', label: 'Gift quantity' })],
-            }),
+            ...giftFields('row').map(field),
           ],
         }),
       ],
     }),
   ],
 };
-const initial = {
+export const compositionInitial = {
   address: { zipcode: '100', county: 'Taipei', district: 'Zhongzheng', address: 'Example road' },
   delivery: false,
   instructions: '',
@@ -112,7 +108,13 @@ const initial = {
       _brume: { key: 't1', id: '1' },
       name: 'First tier',
       thresholds: [
-        { _brume: { key: 'h1', id: '1' }, amount: '100.00', gifts: [{ id: '1', quantity: 2 }] },
+        { _brume: { key: 'h1', id: '1' }, amount: '100.00', ...giftValues('H1') },
+        {
+          _brume: { key: 'h2', id: '2' },
+          amount: '200.00',
+          ...giftValues('H2'),
+          gifts: [{ id: '2', quantity: 3 }],
+        },
       ],
     },
   ],
@@ -151,8 +153,11 @@ export function FormCompositionPage() {
   const { locale } = useBrume();
   const [visited, setVisited] = useState('');
   const adapter = useMemo(() => {
+    const memory = createGiftMemory(compositionForm, compositionInitial);
     const base = createMemoryAdapter('/composition', {
       respond: async (request) => {
+        const response = await memory.respond(request);
+        if (response) return response;
         const category = JSON.parse(String(request.query?.depends ?? '{}')).category ?? 'A';
         await new Promise((resolve) => setTimeout(resolve, category === 'A' ? 200 : 20));
         const options = Array.from({ length: 24 }, (_, i) => ({
@@ -192,31 +197,15 @@ export function FormCompositionPage() {
   );
 }
 function Composition() {
-  const api = useFormState(form, initial);
-  const [saved, setSaved] = useState('');
   return (
     <Page
       name="form-composition"
       title="Composition acceptance"
       lead="JSON notes, model-owned nested tiers, picker extras and custom fields use the public renderer."
     >
-      <Panel>
-        <FormView form={form} api={api} />
-        <Button
-          onClick={() => {
-            if (api.validateAll()) setSaved(JSON.stringify(api.values));
-          }}
-        >
-          Save composition
-        </Button>
-        <p role="status">{saved ? 'Composition saved' : ''}</p>
-        <details>
-          <summary>Saved values (diagnostic)</summary>
-          <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            <output data-testid="composition-saved">{saved}</output>
-          </pre>
-        </details>
-      </Panel>
+      <DemoGuide featureId="gift.row-three-branches">
+        <GiftForm form={compositionForm} initial={compositionInitial} composition />
+      </DemoGuide>
       <Panel>
         <GridView page={grid} />
       </Panel>

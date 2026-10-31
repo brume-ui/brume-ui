@@ -193,7 +193,7 @@ export function createFocusedAdapter(
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Local acceptance fixture only: inactive declarations use the last stored snapshot, not hidden drafts. */
-function acceptConditionalDraft(
+export function acceptConditionalDraft(
   fixture: ReturnType<typeof buildFocusedFixture>,
   values: Record<string, unknown>,
   baseline: Record<string, unknown>,

@@ -56,6 +56,30 @@ describe('implemented demo catalog', () => {
     expect(manifest).toContain('此名稱已被使用。');
     expect(manifest).not.toContain('載入無效控制值');
   });
+  it('points both gift IDs at real memory routes with reset and canonical-baseline instructions', () => {
+    const coverage = readFileSync(
+      new URL('../../../docs/demo-coverage.md', import.meta.url),
+      'utf8',
+    );
+    for (const [scope, route] of [
+      ['root', 'form-conditions'],
+      ['row', 'form-composition'],
+    ] as const) {
+      const id = `gift.${scope}-three-branches`;
+      const feature = getDemoFeature(id);
+      expect(feature?.href).toBe(`#/${route}`);
+      expect(feature?.persistence).toBe('memory');
+      const instructions = feature?.steps.join(' ') ?? '';
+      for (const label of ['優惠券', '點數', '載入無效贈品類型', '儲存'])
+        expect(instructions).toContain(label);
+      expect(feature?.expected).toContain('完整基準');
+      expect(feature?.expected).toContain('沒有發放');
+      const row = coverage.split('\n').find((line) => line.startsWith(`| \`${id}\``));
+      expect(row).toContain('READY');
+      expect(row).toContain(`#/${route} / memory`);
+      expect(row).not.toContain('GAP-T4');
+    }
+  });
   it('searches title, instructions and feature IDs within the selected category', () => {
     expect(filterDemoFeatures('遠端', 'form').map((feature) => feature.id)).toContain(
       'form.remote-options',

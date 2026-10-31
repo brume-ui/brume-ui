@@ -296,3 +296,136 @@ test('all Grid focused targets render their guide and real grid or explicit back
     );
   }
 });
+
+// Gift settings are memory-only. Browser execution and screenshot acceptance run in isolated CI.
+for (const scheme of SCHEMES) {
+  for (const width of [1440, 390]) {
+    test.describe(`gift forms ${scheme} ${width}px`, () => {
+      test.use({ viewport: { width, height: 900 } });
+      test('standalone radio keyboard, validation, canonical save and reset', async ({ page }) => {
+        await storeScheme(page, scheme);
+        await page.goto('/#/form-conditions');
+        const root = page.getByTestId('pg-form-conditions');
+        await root.getByRole('radio', { name: '商品', exact: true }).focus();
+        await page.keyboard.press('ArrowRight');
+        const coupon = root.getByRole('radio', { name: '優惠券', exact: true });
+        await expect(coupon).toBeFocused();
+        await expect(coupon).toBeChecked();
+        await expect(root.getByRole('button', { name: /贈品商品/ })).toHaveCount(0);
+        const code = root.getByLabel(/^優惠券代碼/);
+        await code.fill('');
+        await root.getByRole('button', { name: '儲存贈品設定', exact: true }).click();
+        await expect(code).toBeFocused();
+        await expect(code).toHaveAttribute('aria-invalid', 'true');
+        await code.fill('  COUPON-NEW  ');
+        await root.getByLabel(/^優惠券金額/).fill('123.45');
+        await root.getByLabel(/^優惠券到期時間/).fill('2031-01-02T03:04');
+        await coupon.focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(root.getByRole('radio', { name: '點數', exact: true })).toBeChecked();
+        await root.getByLabel(/^贈送點數/).fill('250');
+        await root.getByRole('radio', { name: '點數', exact: true }).focus();
+        await page.keyboard.press('ArrowLeft');
+        await expect(code).toHaveValue('  COUPON-NEW  ');
+        await root.getByRole('button', { name: '儲存贈品設定', exact: true }).click();
+        await expect(code).toHaveValue('COUPON-NEW');
+        await expect(root.getByTestId('gift-dirty')).toHaveText('無未儲存變更');
+        const saved = JSON.parse((await root.getByTestId('gift-saved').textContent()) ?? '{}');
+        expect(saved).toMatchObject({
+          coupon_amount: '123.45',
+          points: 100,
+          gifts: [{ id: '1', quantity: 2 }],
+        });
+        await code.fill('discard after save');
+        await root.getByRole('button', { name: '重設贈品草稿', exact: true }).click();
+        await expect(code).toHaveValue('COUPON-NEW');
+        await root.getByRole('button', { name: '載入無效贈品類型', exact: true }).click();
+        await root.getByRole('button', { name: '儲存贈品設定', exact: true }).click();
+        await expect(
+          root.getByRole('radiogroup', { name: '贈品類型', exact: true }),
+        ).toHaveAttribute('aria-invalid', 'true');
+        await root.getByRole('button', { name: '重設贈品草稿', exact: true }).click();
+        await animationsIdle(page);
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        await expect(root).toHaveScreenshot(`gift-root-${scheme}-${width}.png`);
+      });
+      test('threshold radios preserve independent identities through sort, remove, add and canonical save', async ({
+        page,
+      }) => {
+        await storeScheme(page, scheme);
+        await page.goto('/#/form-composition');
+        const root = page.getByTestId('pg-form-composition');
+        const rows = root
+          .getByRole('list', { name: 'Thresholds', exact: true })
+          .locator(':scope > li');
+        await expect(rows).toHaveCount(2);
+        await rows.nth(0).getByRole('radio', { name: '優惠券', exact: true }).click();
+        await rows
+          .nth(0)
+          .getByLabel(/^優惠券代碼/)
+          .fill('  H1-NEW  ');
+        await rows.nth(1).getByRole('radio', { name: '點數', exact: true }).click();
+        await rows
+          .nth(1)
+          .getByLabel(/^贈送點數/)
+          .fill('222');
+        await rows.nth(0).getByRole('radio', { name: '商品', exact: true }).click();
+        await expect(rows.nth(0).getByRole('button', { name: /贈品商品/ })).toHaveText(
+          '贈品商品 · 1',
+        );
+        await rows.nth(0).getByRole('radio', { name: '優惠券', exact: true }).click();
+        await expect(rows.nth(0).getByLabel(/^優惠券代碼/)).toHaveValue('  H1-NEW  ');
+        await rows.nth(1).getByRole('button', { name: '上移 Thresholds 2', exact: true }).click();
+        await expect(rows.nth(0)).toHaveAttribute('data-repeater-key', 'h2');
+        await expect(rows.nth(0).getByLabel(/^贈送點數/)).toHaveValue('222');
+        await root.getByRole('button', { name: 'Save composition', exact: true }).click();
+        await expect(rows.nth(1).getByLabel(/^優惠券代碼/)).toHaveValue('H1-NEW');
+        const stored = JSON.parse(
+          (await root.getByTestId('composition-saved').textContent()) ?? '{}',
+        );
+        expect(stored.tiers[0].thresholds[0]).toMatchObject({
+          points: 222,
+          coupon_code: 'STORED-H2',
+          gifts: [{ id: '2', quantity: 3 }],
+        });
+        await rows.nth(0).getByRole('button', { name: '移除 Thresholds 1', exact: true }).click();
+        await root.getByRole('button', { name: '新增 Thresholds', exact: true }).click();
+        await expect(rows.nth(1).getByRole('radio', { name: '商品', exact: true })).toBeChecked();
+        await root.getByRole('button', { name: 'Save composition', exact: true }).click();
+        await expect(rows.nth(1).getByText('請選擇至少一件商品。')).toBeVisible();
+        await rows.nth(1).getByRole('radio', { name: '點數', exact: true }).click();
+        await expect(rows.nth(1).getByLabel(/^贈送點數/)).toHaveValue('');
+        await rows
+          .nth(1)
+          .getByLabel(/^贈送點數/)
+          .fill('333');
+        await root.getByRole('button', { name: 'Save composition', exact: true }).click();
+        await expect(root.getByTestId('gift-dirty')).toHaveText('無未儲存變更');
+        const replaced = JSON.parse(
+          (await root.getByTestId('composition-saved').textContent()) ?? '{}',
+        );
+        expect(replaced.tiers[0].thresholds[1]).toMatchObject({
+          points: 333,
+          coupon_code: null,
+          gifts: [],
+        });
+        expect(JSON.stringify(replaced)).not.toContain('h2');
+        await rows
+          .nth(1)
+          .getByLabel(/^點數備註/)
+          .fill('discard');
+        await root.getByRole('button', { name: '重設贈品草稿', exact: true }).click();
+        await expect(rows.nth(1).getByLabel(/^點數備註/)).toHaveValue('');
+        await animationsIdle(page);
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        await expect(root).toHaveScreenshot(`gift-thresholds-${scheme}-${width}.png`);
+      });
+    });
+  }
+}

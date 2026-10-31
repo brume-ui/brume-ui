@@ -8,7 +8,7 @@
 
 來源格式 `brume-ui:path#symbol`／`brume-laravel:path#symbol` 明確標示 repository；PHP 來源指向 read-only sibling 的相對路徑，不要求 UI-only CI 有 sibling。根層 catalog 保留所有舊 route，新增 `#/demos` 為相同目錄別名；未知路由回目錄。只有 memory/visual entry 目前列入 catalog；database/contract 保留介面但尚不冒充已有說明頁。
 
-盤點列數：335；GAP-T2 0，GAP-T3 0，GAP-T4 2，GAP-T5 2，GAP-T6 47，READY 284。catalog 情境：197。
+盤點列數：335；GAP-T2 0，GAP-T3 0，GAP-T4 0，GAP-T5 2，GAP-T6 47，READY 286。catalog 情境：199。
 
 ## 既有可用情境
 
@@ -392,8 +392,8 @@
 | `contract.inertia`             | createInertiaAdapter/BrumeLayout/createBrumeApp/resolvePage/formatTitle、useShared、locale cookie 與 flash 去重；需真實 host/來源測試。 | GAP-T6 | `Task 6`               | `brume-ui:packages/inertia/src/index.ts`                                                                                          |
 | `contract.schema`              | validateEnvelope/emitJsonSchema、PageEnvelope/SharedProps、ComponentRef allowlist，型別／版本契約非視覺元件。                           | GAP-T6 | `Task 6`               | `brume-ui:packages/schema/src/index.ts`                                                                                           |
 | `style.tokens`                 | tokens.css 語意色、空間、圓角、陰影、字體與焦點樣式公開 export；需可比較各 family 的例子。                                              | GAP-T6 | `Task 6`               | `brume-ui:packages/tokens/package.json`                                                                                           |
-| `gift.root-three-branches`     | 根層 radio 選 product/coupon/points：只驗證 active、非法 type 拒絕、切回保留草稿至成功 save/reset。                                     | GAP-T4 | `Task 4`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
-| `gift.row-three-branches`      | 每個 threshold 的三分支獨立；移動／刪除／新增不交叉污染；沒有 group showWhen。                                                          | GAP-T4 | `Task 4`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
+| `gift.root-three-branches`     | 根層 radio 切換商品／券／點數；清空 active 必填阻擋、載入無效類型後拒絕；切回保留草稿，成功後 GET 完整記憶體基準，隱藏未存草稿還原為既存值。                                     | READY | `#/form-conditions / memory`               | `brume-ui:apps/playground/src/pages/gift-demo.ts; brume-ui:apps/playground/src/pages/form-conditions.tsx` |
+| `gift.row-three-branches`      | 兩個 threshold 獨立切換三分支；調整商品數量與券／點數後排序、刪除及新增，核對 owner 未交叉；成功回載完整基準，重設回已存值，沒有 group showWhen。                                                          | READY | `#/form-composition / memory`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
 | `gift.database-three-branches` | 相同欄位由普通 Resource 持久化，inactive stored scalar／relation 保留；券與點數只是設定。                                               | GAP-T5 | `Task 5`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
 | `gift.database-upgrade`        | 新增欄位 default product，舊 gifts/counters/uploads/id 保留，安全 upgrade/down 與重開證據。                                             | GAP-T5 | `Task 5`               | `brume-laravel:workbench/app/Http/Controllers/CompositionController.php; brume-ui:apps/playground/src/pages/form-composition.tsx` |
 
