@@ -20,7 +20,7 @@ describe('implemented demo catalog', () => {
     const names = [...ROUTES.map((route) => route.name), SHELL_ROUTE];
     expect(new Set(names).size).toBe(names.length);
     for (const feature of DEMO_FEATURES) {
-      expect(feature.id).toMatch(/^[a-z][a-z0-9.-]+$/);
+      expect(feature.id).toMatch(/^[a-z][A-Za-z0-9.-]+$/);
       expect(names).toContain(feature.href.replace(/^#\//, '').split('?')[0]);
       expect(feature.title.length).toBeGreaterThan(1);
       expect(feature.summary.length).toBeGreaterThan(8);
@@ -111,7 +111,7 @@ describe('implemented demo catalog', () => {
     for (const name of names) expect(coverage).toContain(`| \`react.${name}\` |`);
   });
 
-  it('keeps blocked validation triggers as gaps and names the reachable minimum and picker evidence', () => {
+  it('exposes previously blocked validation triggers with focused inputs while retaining original control bounds', () => {
     const coverage = readFileSync(
       new URL('../../../docs/demo-coverage.md', import.meta.url),
       'utf8',
@@ -133,21 +133,19 @@ describe('implemented demo catalog', () => {
     });
     expect(fields.find(({ path }) => path === 'title')?.def).toMatchObject({ maxLength: 120 });
     for (const id of ['form.rule.integer', 'form.rule.numeric', 'form.rule.maxLength']) {
-      expect(row(id)?.slice(2, 4)).toEqual(['GAP-T2', 'Task 2']);
+      expect(row(id)?.[2]).toBe('READY');
+      expect(row(id)?.[3]).toContain(`#/form-behaviors?example=${id}`);
     }
     const weight = fields.find(({ path }) => path === 'weight')?.def;
     if (!weight) throw new Error('Missing weight demo');
     expect(weight).toMatchObject({ type: 'decimal', decimals: 3 });
     expect(validateValue(weight, '0.250')).toBe('重量不能小於 0.5。');
     expect(validateValue(weight, '0.500')).toBeNull();
-    expect(row('form.rule.min')?.slice(1, 3)).toEqual([
-      '重量輸入 0.250 後儲存；小於 0.5，應顯示「重量不能小於 0.5。」。',
-      'READY',
-    ]);
+    expect(row('form.rule.min')?.[2]).toBe('READY');
     expect(row('form.field.number')?.[1]).not.toContain('負數');
     expect(row('react.RelationPicker')?.[1]).not.toContain('單多選');
     expect(row('react.RelationPicker')?.[4]).toContain('pages/form-relations.tsx');
-    expect(row('relation.picker-single-multiple')?.[2]).toBe('GAP-T2');
+    expect(row('relation.picker-single-multiple')?.[2]).toBe('READY');
     for (const status of ['READY', 'GAP-T2', 'GAP-T3', 'GAP-T4', 'GAP-T5', 'GAP-T6']) {
       expect(coverage).toContain(`${status} ${rows.filter((cells) => cells[2] === status).length}`);
     }

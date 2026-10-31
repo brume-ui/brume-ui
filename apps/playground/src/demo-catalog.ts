@@ -1,3 +1,4 @@
+import { FORM_EXAMPLES } from './pages/form-feature-data';
 /** Only operable existing targets belong here; missing focused demos are tracked in docs/demo-coverage.md. */
 export const DEMO_CATEGORIES = {
   controls: '基礎元件',
@@ -27,6 +28,35 @@ export const PERSISTENCE_LABELS: Record<DemoFeature['persistence'], string> = {
   contract: '契約說明：依來源與測試說明行為，不代表此頁執行後端操作。',
 };
 export const DEMO_FEATURES: DemoFeature[] = [
+  ...FORM_EXAMPLES.map((example) => ({
+    id: example.id,
+    category: 'form' as const,
+    title: example.title,
+    summary: `${example.title}：操作公開表單欄位並核對草稿、請求與記憶體資料。`,
+    href: `#/${example.route}?example=${example.id}`,
+    steps: example.steps,
+    expected: example.expected,
+    persistence: 'memory' as const,
+    sources: [
+      'brume-ui:apps/playground/src/pages/form-feature-data.ts',
+      'brume-ui:apps/playground/src/pages/form-feature-demo.tsx',
+    ],
+  })),
+  ...(['form-fields', 'form-layouts', 'form-behaviors'] as const).map((route) => ({
+    id: `form.focused.${route}`,
+    category: 'form' as const,
+    title: {
+      'form-fields': '所有表單欄位',
+      'form-layouts': '所有表單版型',
+      'form-behaviors': '所有表單行為',
+    }[route],
+    summary: '選擇單一功能範例，操作表單並比較送出前後的記憶體值。',
+    href: `#/${route}`,
+    steps: ['由頁面選單選擇聚焦範例，依操作說明測試並重設資料。'],
+    expected: '直接進入可操作範例；所有值僅保存在目前頁面記憶體。',
+    persistence: 'memory' as const,
+    sources: ['brume-ui:apps/playground/src/pages/form-feature-demo.tsx'],
+  })),
   {
     id: 'component.button',
     category: 'controls',

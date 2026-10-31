@@ -18,7 +18,10 @@ import {
   FormStackedPage,
   FormStandalonePage,
 } from './pages/form';
+import { FormBehaviorsPage } from './pages/form-behaviors';
 import { FormCompositionPage } from './pages/form-composition';
+import { FormFieldsPage } from './pages/form-fields';
+import { FormLayoutsPage } from './pages/form-layouts';
 import { FormRelationsPage } from './pages/form-relations';
 import { FormRepeatersPage } from './pages/form-repeaters';
 import { ErrorPagePage, GridEmptyPage, GridPage } from './pages/grid';
@@ -54,6 +57,9 @@ export const ROUTES: Route[] = [
   { name: 'pagination', title: 'Pagination', Component: PaginationPage },
   { name: 'empty-state', title: 'EmptyState', Component: EmptyStatePage },
   { name: 'skeleton', title: 'Skeleton', Component: SkeletonPage },
+  { name: 'form-fields', title: '表單 · 欄位聚焦', Component: FormFieldsPage },
+  { name: 'form-layouts', title: '表單 · 版型聚焦', Component: FormLayoutsPage },
+  { name: 'form-behaviors', title: '表單 · 行為聚焦', Component: FormBehaviorsPage },
   { name: 'form', title: '表單 · 標籤在上', Component: FormStackedPage },
   { name: 'form-horizontal', title: '表單 · 標籤在左', Component: FormHorizontalPage },
   { name: 'form-page', title: '表單 · 獨立頁面', Component: FormStandalonePage },
