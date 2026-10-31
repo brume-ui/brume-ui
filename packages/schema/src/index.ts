@@ -125,6 +125,7 @@ export {
 } from './protocol/http';
 export {
   OPTIONS_PARAMS,
+  type OptionAncestorSourceContext,
   type OptionItem,
   OptionItemSchema,
   type OptionsResponse,

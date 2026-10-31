@@ -1,4 +1,5 @@
 import { type Static, Type } from '@sinclair/typebox';
+import type { RowContext } from '../form/relations';
 import { OptionSchema } from './display';
 
 export const OptionItemSchema = Type.Intersect([
@@ -18,6 +19,14 @@ const OptionsPaginationSchema = Type.Object({
   hasMore: Type.Boolean(),
 });
 
+/** Verification metadata for an ancestor picker instance, never an authorization proof. */
+export interface OptionAncestorSourceContext {
+  path: string;
+  rowContext: RowContext;
+  depends: Record<string, unknown>;
+  dependencyContexts?: Record<string, RowContext>;
+}
+
 /** 遠端選項與挑選器搜尋的查詢參數名稱（GET `endpoints.options`）。 */
 export const OPTIONS_PARAMS = {
   q: 'q',
@@ -31,6 +40,10 @@ export const OPTIONS_PARAMS = {
   depends: 'depends',
   /** JSON-encoded canonical row identity chain; omitted and [] both mean root. */
   rowContext: 'rowContext',
+  /** JSON map of dependency name to its target's stable row chain. */
+  dependencyContexts: 'dependencyContexts',
+  /** JSON array of ancestor picker source instances and their dependency context. */
+  ancestorSources: 'ancestorSources',
 } as const;
 
 /** GET endpoints.options?q=&page=&per_page=&value[]= */

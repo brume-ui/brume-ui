@@ -57,3 +57,47 @@ keys are exactly that selected source string ID. An intermediary child ID must b
 the authoritative parent association, never substituted for a selected source ID. The server must
 validate this chain before reevaluating readonly dependencies and applying the declared query scope.
 Array hydration uses adapter query `{value: ids}` so transport emits `value[]=...` once.
+
+Nested dependency targets also send optional JSON `dependencyContexts`: a map from declared
+`dependsOn` name to the target field's current `RowContext`. Root scalar targets omit it. A root
+numeric path such as `rows.0.region` addresses the current draft position, so after reorder its
+readonly value must be resolved using this target chain, not the owner's chain or stored index.
+The server rejects missing ambiguous chains, malformed chains, and undeclared dependency names.
+Only unambiguous row-relative current-row/ancestor targets may derive their chain from the owner.
+
+Requests that traverse picker selections send optional JSON `ancestorSources`, an array of
+`OptionAncestorSourceContext` entries:
+
+```ts
+{
+  path: 'groups.*.products',       // canonical picker declaration
+  rowContext: [{path: 'groups', key: 'group-a', id: '12'}], // before the selection
+  depends: { category: 'books' },
+  dependencyContexts: { category: [{path: 'groups', key: 'group-a', id: '12'}] }
+}
+```
+
+An instance is identified by `path` plus its exact ordered owner chain. Two outer rows using the
+same picker declaration need separate entries; multiple selected IDs of the same instance reuse
+one. Collect instances reachable from the owner, dependency targets, and declared descendants of
+whole collection dependencies, recursively including source dependencies. Servers reject duplicate,
+unreachable, unknown or cyclic entries. Before calling a child source, a new selected source ID
+must belong to the ancestor's scoped source query. Existing intermediary identity resolves only
+through the actual parent association; a new row's callback model is null.
+
+`depends` and each ancestor's `depends` are JSON **objects**. Their declared custom child values
+retain object versus list semantics, including `{}` versus `[]`; there are no client type hints.
+Whole collection dependencies project declared children and identity only and restore readonly or
+statically disabled descendants from verified storage. This endpoint does not write a relation graph.
+
+All dependency values, target chains, ancestor instances and private row lifetimes participate in
+both search and hydration ownership, including synchronous checks before React commits. Removing
+and re-adding an identical row invalidates its old replies. Private lifetime counters never travel
+over the wire. Cyclic source contexts disable the client source without throwing during rendering.
+
+New scoped-source endpoints default to page 1 and 20 rows, accept at most 50 rows per page and
+100 distinct hydration IDs, and reject malformed paging/IDs or unknown sections with 422. Page is
+bounded to 999999, search text to 1000 bytes, each context JSON parameter to 65536 bytes/64 JSON
+levels, and ancestor metadata to 100 instances. Hydration preserves request order, omits unavailable
+IDs, and cannot disclose foreign labels. The legacy Grid remote-combobox API retains its documented
+tolerant paging and truncation behavior.

@@ -103,7 +103,7 @@ export function useFormState(
     return current.fieldCache.fields;
   };
   // Fail configuration even when no consumer reads errors or values yet.
-  syncRowLifetimes(current.rowLifetimes, fields());
+  syncRowLifetimes(current.rowLifetimes, fields(), false, (path) => getAt(current.values, path));
   const notify = () => refresh((version) => version + 1);
   const errors = (): FieldErrors => {
     const walked = fields();
@@ -164,7 +164,7 @@ export function useFormState(
         return next === null ? [] : [[next, value]];
       }),
     );
-    syncRowLifetimes(current.rowLifetimes, fields());
+    syncRowLifetimes(current.rowLifetimes, fields(), false, (path) => getAt(current.values, path));
     notify();
   };
   const api: FormApi = {
@@ -214,7 +214,9 @@ export function useFormState(
         }),
       );
       current.values = next;
-      syncRowLifetimes(current.rowLifetimes, fields());
+      syncRowLifetimes(current.rowLifetimes, fields(), false, (path) =>
+        getAt(current.values, path),
+      );
       notify();
     },
     touch(path) {
@@ -241,7 +243,7 @@ export function useFormState(
       current.touched = new Set();
       current.server = {};
       current.submitting = false;
-      syncRowLifetimes(current.rowLifetimes, fields(), true);
+      syncRowLifetimes(current.rowLifetimes, fields(), true, (path) => getAt(current.values, path));
       notify();
     },
     trackUpload() {

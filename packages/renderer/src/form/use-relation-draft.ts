@@ -98,7 +98,7 @@ export function useRelationDraft(config: Config): FormApi {
           latest.current.parent.definition.rowFields,
         )
       : [];
-  syncRowLifetimes(local.rowLifetimes, fields());
+  syncRowLifetimes(local.rowLifetimes, fields(), false, (path) => getAt(values(), path));
   const errors = (): FieldErrors => {
     const prefix = location()?.prefix;
     if (prefix === undefined) return {};
@@ -131,7 +131,7 @@ export function useRelationDraft(config: Config): FormApi {
       ),
     );
     latest.current.onChange(value);
-    syncRowLifetimes(local.rowLifetimes, fields());
+    syncRowLifetimes(local.rowLifetimes, fields(), false, (path) => getAt(values(), path));
     notify();
   };
   const editRows = (path: string, from: number, to?: number) => {
@@ -233,7 +233,7 @@ export function useRelationDraft(config: Config): FormApi {
     reset(next) {
       if (!active()) return;
       local.reset++;
-      syncRowLifetimes(local.rowLifetimes, fields(), true);
+      syncRowLifetimes(local.rowLifetimes, fields(), true, (path) => getAt(values(), path));
       local.touched.clear();
       local.server = {};
       const prefix = location()?.prefix;
