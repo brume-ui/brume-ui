@@ -31,6 +31,7 @@ import { InputsPage } from './pages/inputs';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
 import { MotionPage } from './pages/motion';
 import { ConfirmPage, DialogPage, MenusPage, ToastPage } from './pages/overlays';
+import { PublicContractsPage } from './pages/public-contracts';
 
 export interface Route {
   name: string;
@@ -42,6 +43,7 @@ export interface Route {
 export const SHELL_ROUTE = 'shell';
 
 export const ROUTES: Route[] = [
+  { name: 'public-contracts', title: '公開元件與契約', Component: PublicContractsPage },
   { name: 'demos', title: '功能示範目錄', Component: DemoCatalogPage },
   { name: 'button', title: 'Button', Component: ButtonPage },
   { name: 'icon-button', title: 'IconButton', Component: IconButtonPage },

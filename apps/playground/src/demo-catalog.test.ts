@@ -105,6 +105,28 @@ describe('implemented demo catalog', () => {
     expect(filterDemoFeatures('never-a-demo', 'all')).toEqual([]);
   });
 
+  it('resolves every inventory row to an actionable catalog target without dropping original IDs', () => {
+    const coverage = readFileSync(
+      new URL('../../../docs/demo-coverage.md', import.meta.url),
+      'utf8',
+    );
+    const rows = coverage.split('\n').filter((line) => /^\| `[^`]+`/.test(line));
+    expect(rows).toHaveLength(336);
+    const ids = rows.map((line) => line.match(/^\| `([^`]+)`/)?.[1]);
+    expect(new Set(ids).size).toBe(336);
+    for (const row of rows) {
+      expect(row).toMatch(/\| READY\s*\|/);
+      const target = row.split('|')[4]?.trim().replace(/^`|`$/g, '') ?? '';
+      if (target.startsWith('#/') || target.startsWith('http')) {
+        const href = target.split(' / ')[0];
+        expect(
+          DEMO_FEATURES.some((feature) => feature.href === href),
+          `Unmapped ${target}`,
+        ).toBe(true);
+      } else expect(getDemoFeature(target), `Unknown legacy target ${target}`).toBeTruthy();
+    }
+  });
+
   it('accounts for public source variants independently of the ready catalog', () => {
     const coverage = readFileSync(
       new URL('../../../docs/demo-coverage.md', import.meta.url),
@@ -145,6 +167,10 @@ describe('implemented demo catalog', () => {
     // Pin known features so removing a declaration cannot silently lower the denominator.
     expect(variants(FieldDefSchema, 'type')).toContain('relation');
     expect(variants(InlineEditorSchema, 'type')).toContain('tags');
+    expect(variants(FilterInputSchema, 'type')).toContain('range');
+    expect(getDemoFeature('contract.query')?.href).toBe(
+      '#/public-contracts?example=contract.query',
+    );
     expect(coverage).toContain('| `grid.operator.findInSet` |');
     expect(coverage).toContain('| `lifecycle.upload-rollback` |');
   });

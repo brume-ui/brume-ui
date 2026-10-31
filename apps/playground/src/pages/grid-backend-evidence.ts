@@ -20,9 +20,13 @@ const OPERATORS: Record<string, { value: unknown; expected: string }> = {
   between: { value: { start: '10', end: '20' }, expected: 'FD-001、FD-002；包含邊界，亦允許單端' },
   whereBetween: {
     value: { end: '20' },
-    expected: 'FD-001、FD-002；callback 收到 start/end，OR 不擴大根查詢',
+    expected:
+      'FD-001、FD-002；callback 收到 start/end，OR stock=0（合法 unsigned sentinel）不擴大根查詢',
   },
-  where: { value: '20', expected: 'FD-002；callback 收值，OR 不擴大根查詢' },
+  where: {
+    value: '20',
+    expected: 'FD-002；callback 收值，OR stock=0（合法 unsigned sentinel）不擴大根查詢',
+  },
   group: {
     value: { op: 'gt', value: '20' },
     expected: 'FD-003、FD-004；非法 op 不會套用（200，沒有 chip），不是任意 SQL',

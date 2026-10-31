@@ -306,3 +306,57 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Public API labs retain the selected scheme and wrap long wire fixtures at narrow widths. */
+.pg-contract-lab {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.pg-contract-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.pg-contract-json {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 0.8rem;
+}
+.pg-contract-field {
+  container-type: inline-size;
+  width: 100%;
+}
+.pg-contract-lab textarea {
+  width: 100%;
+  max-width: 100%;
+  background: var(--br-surface);
+  color: var(--br-text);
+  border: 1px solid var(--br-border);
+  padding: 0.5rem;
+}
+.pg-token-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.pg-token-swatch {
+  display: block;
+  width: 4rem;
+  height: 2rem;
+  border: 1px solid var(--br-border);
+}
+.pg-token-space {
+  display: block;
+  height: 1.5rem;
+  background: var(--br-accent);
+  color: var(--br-surface);
+  margin-block: 0.5rem;
+  min-width: 1rem;
+}
+.pg-token-box {
+  padding: 1rem;
+  border: 1px solid var(--br-border);
+  background: var(--br-surface);
+}

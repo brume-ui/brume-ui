@@ -1,3 +1,4 @@
+import { CLOSURE_EXAMPLES } from './pages/coverage-closure-data';
 import { FORM_EXAMPLES } from './pages/form-feature-data';
 import { GRID_EXAMPLES } from './pages/grid-feature-data';
 /** Only operable existing targets belong here; missing focused demos are tracked in docs/demo-coverage.md. */
@@ -29,6 +30,37 @@ export const PERSISTENCE_LABELS: Record<DemoFeature['persistence'], string> = {
   contract: '契約說明：依來源與測試說明行為，不代表此頁執行後端操作。',
 };
 export const DEMO_FEATURES: DemoFeature[] = [
+  ...CLOSURE_EXAMPLES.map((example) => ({
+    id: example.id,
+    category: example.id.startsWith('lifecycle.')
+      ? ('form' as const)
+      : example.id === 'style.tokens'
+        ? ('style' as const)
+        : ('controls' as const),
+    title: example.title,
+    summary: example.summary,
+    href: `#/public-contracts?example=${example.id}`,
+    steps: [
+      example.fixture,
+      example.id.startsWith('lifecycle.')
+        ? '閱讀精確測試、輸入與結果；只在隔離後端執行列出的測試命令。'
+        : '依下方實驗操作控制，核對可見狀態與來源；後端 host 需另外啟動。',
+    ],
+    expected: example.outcome,
+    persistence: example.persistence,
+    sources: example.evidence,
+  })),
+  {
+    id: 'component.public-contracts',
+    category: 'controls',
+    title: '所有公開元件與契約',
+    summary: '依聚焦選單操作公開元件、renderer、adapter、query 與後端契約。',
+    href: '#/public-contracts',
+    steps: ['選擇聚焦功能，依說明操作與核對來源測試。'],
+    expected: '直接進入可操作元件；後端契約清楚列出測試而不模擬資料庫。',
+    persistence: 'contract',
+    sources: ['brume-ui:apps/playground/src/pages/public-contracts.tsx'],
+  },
   ...(['root', 'row'] as const).map((scope) => ({
     id: `gift.${scope}-three-branches`,
     category: 'form' as const,
