@@ -566,3 +566,66 @@ it('keeps custom composite relative errors owned by the custom field boundary', 
   });
   act(() => expect(result.current.validateAll()).toBe(false));
 });
+
+it('resolves row snapshots by stable identity across moves and preserves inherited locks', () => {
+  const definition = {
+    layout: 'stacked' as const,
+    nodes: [
+      node({
+        type: 'repeater',
+        mode: 'relation',
+        name: 'rows',
+        label: 'Rows',
+        nodes: [
+          node({ type: 'text', name: 'name', label: 'Name', readOnly: true, rules: required }),
+        ],
+      }),
+    ],
+    rowFields: [
+      {
+        row: [{ path: 'rows', key: 'a', id: '1' }],
+        fields: { name: { readOnly: false, rules: [] } },
+      },
+      {
+        row: [{ path: 'rows', key: 'b', id: '2' }],
+        fields: { name: { readOnly: false, rules: required } },
+      },
+    ],
+  };
+  const { result } = renderHook(() =>
+    useFormState(definition, {
+      rows: [
+        { _brume: { key: 'a', id: '1' }, name: '' },
+        { _brume: { key: 'b', id: '2' }, name: '' },
+        { _brume: { key: 'new' }, name: '' },
+      ],
+    }),
+  );
+  expect(result.current.getField('rows.0.name')?.active).toBe(true);
+  expect(result.current.getField('rows.0.name')?.validationError).toBeNull();
+  expect(result.current.getField('rows.1.name')?.validationError).toBe('Required');
+  expect(result.current.getField('rows.2.name')?.readOnly).toBe(true);
+  act(() => result.current.moveRow('rows', 0, 1));
+  expect(result.current.getField('rows.0.name')?.validationError).toBe('Required');
+  expect(result.current.getField('rows.1.name')?.validationError).toBeNull();
+  const first = definition.nodes[0];
+  if (first?.type !== 'field') throw new Error('Expected field');
+  const locked = { ...definition, nodes: [node({ ...first.field, readOnly: true })] };
+  const inherited = renderHook(() => useFormState(locked, result.current.values));
+  expect(inherited.result.current.getField('rows.0.name')?.active).toBe(false);
+});
+
+it('rejects duplicate resolved contexts and unsafe relative override paths', () => {
+  const row = [{ path: 'rows', key: 'a' }];
+  expect(() =>
+    collectValueFields([], {}, undefined, [
+      { row, fields: {} },
+      { row: [{ key: 'a', path: 'rows' }], fields: {} },
+    ]),
+  ).toThrow('Duplicate');
+  expect(() =>
+    collectValueFields([], {}, undefined, [
+      { row, fields: { 'name.__proto__.x': { readOnly: true, rules: [] } } },
+    ]),
+  ).toThrow();
+});

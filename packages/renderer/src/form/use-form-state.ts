@@ -73,6 +73,7 @@ export function useFormState(
       | {
           values: Record<string, unknown>;
           nodes: FormDef['nodes'];
+          rowFields: FormDef['rowFields'];
           t: Translate;
           fields: ValueField[];
         },
@@ -83,16 +84,19 @@ export function useFormState(
       !current.fieldCache ||
       current.fieldCache.values !== current.values ||
       current.fieldCache.nodes !== form.nodes ||
+      current.fieldCache.rowFields !== form.rowFields ||
       current.fieldCache.t !== t
     ) {
       current.fieldCache = {
         values: current.values,
         nodes: form.nodes,
+        rowFields: form.rowFields,
         t,
         fields: collectValueFields(
           form.nodes,
           current.values,
           (def) => `${def.label}${t('common.hasError')}`,
+          form.rowFields,
         ),
       };
     }

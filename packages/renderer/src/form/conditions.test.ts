@@ -104,3 +104,25 @@ it('rejects wildcard field declarations instead of treating them as runtime row 
     ]),
   ).toThrow(/path/i);
 });
+
+it('validates strict raw decimal grammar before canonical condition comparison', () => {
+  const def: FieldDef = { type: 'decimal', name: 'amount', label: 'Amount', decimals: 2 };
+  const condition: Condition = {
+    op: 'eq',
+    field: { scope: 'root', path: 'amount' },
+    value: '0.00',
+  };
+  for (const value of ['.5', '0.5\n']) {
+    expect(
+      publicApi.evaluateCondition(condition, { amount: value }, undefined, { getField: () => def }),
+    ).toBe(true);
+  }
+  expect(
+    publicApi.evaluateCondition({ ...condition, value: '1.00' }, { amount: '+1.' }, undefined, {
+      getField: () => def,
+    }),
+  ).toBe(true);
+  expect(
+    publicApi.evaluateCondition(condition, { amount: '+1.' }, undefined, { getField: () => def }),
+  ).toBe(false);
+});

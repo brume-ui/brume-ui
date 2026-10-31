@@ -3,6 +3,7 @@ import type {
   Condition,
   ConditionPath,
   FieldDef,
+  FormDef,
   FormNode,
   RowContext,
 } from '@brume-ui/brume-schema';
@@ -135,6 +136,7 @@ export function validateConditionDeclarations(nodes: FormNode[]): void {
 }
 
 export interface ValueField {
+  originalDef?: FieldDef;
   path: string;
   def: FieldDef;
   /** Canonical declaration path; '*' occurs only at declared array boundaries. */
@@ -172,9 +174,24 @@ export function collectValueFields(
   nodes: FormNode[],
   values: Record<string, unknown>,
   invalidMessage: (def: FieldDef) => string = defaultError,
+  rowFields: FormDef['rowFields'] = [],
 ): ValueField[] {
   const entries = declarations(nodes);
   checkDeclarations(entries);
+  const rowKey = (row: RowContext) =>
+    JSON.stringify(row.map(({ path, key, id }) => [path, key, id ?? null]));
+  const resolved = new Map<string, NonNullable<FormDef['rowFields']>[number]['fields']>();
+  for (const entry of rowFields) {
+    if (!entry.row.length) throw new Error('Resolved row fields require a row context');
+    for (const row of entry.row) {
+      assertSafePath(row.path, true);
+      if (!row.key) throw new Error('Resolved row requires stable identity');
+    }
+    for (const path of Object.keys(entry.fields)) assertSafePath(path);
+    const key = rowKey(entry.row);
+    if (resolved.has(key)) throw new Error('Duplicate resolved row context');
+    resolved.set(key, entry.fields);
+  }
   const pending = entries.flatMap((entry) =>
     expand(entry.path, values).flatMap((path) => {
       // Every prefix has the same wildcard positions as its descendant declaration.
@@ -202,7 +219,11 @@ export function collectValueFields(
         )
           return [];
       }
-      const def = entry.def;
+      const relative = entry.rowTemplate
+        ? entry.path.slice(entry.rowTemplate.length + 1)
+        : undefined;
+      const override = relative ? resolved.get(rowKey(rowContext))?.[relative] : undefined;
+      const def = override ? { ...entry.def, ...override } : entry.def;
       const value = getAt(values, path);
       const canonical = canonicalizeFieldValue(def, value);
       const noneditable =
@@ -223,6 +244,7 @@ export function collectValueFields(
           : null) ??
         (!noneditable && !canonical.valid ? invalidMessage(def) : null);
       const field: ValueField = {
+        originalDef: entry.def,
         path,
         def,
         templatePath: entry.path,

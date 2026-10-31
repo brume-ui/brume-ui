@@ -1,5 +1,8 @@
 import { type Static, type TSchema, Type } from '@sinclair/typebox';
+import { ScalarPathSchema } from './conditions';
 import { type FieldDef, FieldDefSchema, GridWidthSchema } from './field';
+import { RowContextSchema } from './relations';
+import { ClientRuleSchema } from './rules';
 
 export type FieldNode = { type: 'field'; field: FieldDef };
 
@@ -56,6 +59,25 @@ export const FormNodeSchema = FormNodeRaw as unknown as TSchema & { static: Form
 export const FormDefSchema = Type.Object({
   layout: Type.Union([Type.Literal('stacked'), Type.Literal('horizontal')]),
   nodes: Type.Array(FormNodeSchema),
+  /** Server presentation snapshot keyed by stable row context, never writable values. */
+  rowFields: Type.Optional(
+    Type.Array(
+      Type.Object(
+        {
+          row: RowContextSchema,
+          fields: Type.Record(
+            ScalarPathSchema,
+            Type.Object(
+              { readOnly: Type.Boolean(), rules: Type.Array(ClientRuleSchema) },
+              { additionalProperties: false },
+            ),
+            { additionalProperties: false },
+          ),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  ),
   /** 彈窗內頂層 section 的呈現 */
   sections: Type.Optional(Type.Union([Type.Literal('stack'), Type.Literal('tabs')])),
 });

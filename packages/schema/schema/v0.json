@@ -2326,6 +2326,187 @@
                         "$ref": "#/$defs/FormNode"
                       }
                     },
+                    "rowFields": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "row",
+                          "fields"
+                        ],
+                        "properties": {
+                          "row": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "path",
+                                "key"
+                              ],
+                              "properties": {
+                                "path": {
+                                  "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?:(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)|\\*))*$",
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "fields": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "patternProperties": {
+                              "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+)(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))(?:[A-Za-z_$][A-Za-z0-9_$-]*|[0-9]+))*$": {
+                                "additionalProperties": false,
+                                "type": "object",
+                                "required": [
+                                  "readOnly",
+                                  "rules"
+                                ],
+                                "properties": {
+                                  "readOnly": {
+                                    "type": "boolean"
+                                  },
+                                  "rules": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "rule",
+                                            "message"
+                                          ],
+                                          "properties": {
+                                            "rule": {
+                                              "anyOf": [
+                                                {
+                                                  "const": "required",
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "const": "email",
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "const": "url",
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "const": "integer",
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "const": "numeric",
+                                                  "type": "string"
+                                                }
+                                              ]
+                                            },
+                                            "message": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "rule",
+                                            "value",
+                                            "message"
+                                          ],
+                                          "properties": {
+                                            "rule": {
+                                              "anyOf": [
+                                                {
+                                                  "const": "minLength",
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "const": "maxLength",
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "const": "maxFiles",
+                                                  "type": "string"
+                                                }
+                                              ]
+                                            },
+                                            "value": {
+                                              "minimum": 0,
+                                              "type": "integer"
+                                            },
+                                            "message": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "rule",
+                                            "value",
+                                            "message"
+                                          ],
+                                          "properties": {
+                                            "rule": {
+                                              "anyOf": [
+                                                {
+                                                  "const": "min",
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "const": "max",
+                                                  "type": "string"
+                                                }
+                                              ]
+                                            },
+                                            "value": {
+                                              "type": "number"
+                                            },
+                                            "message": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "rule",
+                                            "pattern",
+                                            "message"
+                                          ],
+                                          "properties": {
+                                            "rule": {
+                                              "const": "pattern",
+                                              "type": "string"
+                                            },
+                                            "pattern": {
+                                              "type": "string"
+                                            },
+                                            "message": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
                     "sections": {
                       "anyOf": [
                         {

@@ -513,3 +513,34 @@ it.each(['earlier', 'owner', 'reselect'] as const)(
     );
   },
 );
+
+it('retains resolved readonly row metadata in the real picker draft renderer', async () => {
+  const definition: FormDef = {
+    ...form,
+    rowFields: [
+      {
+        row: [{ path: 'products', key: 'a', id: 'a' }],
+        fields: { quantity: { readOnly: true, rules: [] } },
+      },
+    ],
+  };
+  // biome-ignore lint/correctness/noComponentHookFactories: one stable test harness.
+  function Harness() {
+    const api = useFormState(definition, { products: [{ id: 'a', quantity: '2' }] });
+    return <Nodes nodes={definition.nodes} api={api} idPrefix="resolved" layout="stacked" />;
+  }
+  renderWithBrume(<Harness />, {
+    locale: 'en',
+    respond: () => ({
+      status: 200,
+      data: {
+        data: [{ value: 'a', label: 'Apple' }],
+        pagination: { page: 1, perPage: 20, hasMore: false },
+      },
+    }),
+  });
+  fireEvent.click(screen.getByRole('button', { name: /Products/ }));
+  await screen.findAllByText('Apple');
+  expect(screen.queryByRole('textbox', { name: 'Quantity' })).toBeNull();
+  expect(screen.getByText('2')).toBeTruthy();
+});

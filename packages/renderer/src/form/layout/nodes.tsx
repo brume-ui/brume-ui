@@ -52,9 +52,9 @@ export function Nodes(props: NodesProps) {
       <Grid {...(row ? { className: 'br:grid br:grid-cols-12 br:gap-4' } : {})}>
         {nodes.map((node, index) => {
           if (node.type === 'field') {
-            const def = node.field;
-            const path = prefix ? `${prefix}.${def.name}` : def.name;
+            const path = prefix ? `${prefix}.${node.field.name}` : node.field.name;
             const activity = api.getField(path);
+            const def = activity?.def ?? node.field;
             if (activity?.visible === false) return null;
             const Component =
               def.type === 'custom'

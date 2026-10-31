@@ -349,3 +349,37 @@ The current resolved field is skipped, current selections remain removable, and 
 choices are disabled/filtered. Tags reject excluded exact values through typing, paste, and suggestions.
 Symmetric exclusions are allowed and do not create activity cycles. Flat Action, quick-create and
 upload-extra `PlainFieldDef` inputs still reject both `remote` and `excludeSelectedIn`.
+
+### Resolved row capabilities
+
+`FormDef.rowFields?` is a server presentation snapshot outside writable `values`:
+
+```json
+[
+  {
+    "row": [{ "path": "items", "key": "record:17", "id": "17" }],
+    "fields": { "quantity": { "readOnly": true, "rules": [] } }
+  }
+]
+```
+
+Each entry matches the exact ordered canonical `RowContext`, never a numeric array index. Field
+keys are safe paths relative to that row, including embeds and nested repeater/picker containers.
+Descendant rows have their own contexts. A matching capability replaces that template field's
+`readOnly` and `rules`; `rules: []` explicitly clears template rules. Parent readonly/disabled
+restrictions still apply. Rendering, validation, conditions and picker overlay drafts consume the
+same effective declaration. Duplicate contexts and unsafe relative paths are configuration errors.
+
+Servers emit entries for all initial authoritative related-row instances, evaluating callbacks on
+the scoped related model. New relation rows use null-context template semantics. JSON row callbacks
+use the original nullable root Form record, including JSON nested inside relations. Missing snapshots
+for client-new rows use templates. Existing initial rows missing required overrides are a serializer
+bug, not a new client authorization signal. Reusing a real selected id may reuse its original
+snapshot; async request lifetime fencing remains separate. The server resolves and reevaluates the
+actual models before persistence and never trusts this metadata from submitted data.
+
+Raw decimal/currency field validity requires digits before the decimal point and the declared scale.
+A leading plus and a trailing decimal point are accepted and canonicalized for comparison; `.5`,
+trailing whitespace/newlines and overprecision remain invalid. The standalone `canonicalDecimal`
+rounding utility retains its wider input contract. Server-emitted pattern rules carry the translated
+format message; condition evaluation keeps invalid controllers conservative.

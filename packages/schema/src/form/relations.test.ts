@@ -246,3 +246,28 @@ describe('form-only remote and exclusive choices', () => {
     },
   );
 });
+
+it('validates resolved row capability snapshots outside writable values', () => {
+  const base = envelope([]);
+  const rowFields = [
+    { row: [{ path: 'rows', key: 'a', id: '1' }], fields: { name: { readOnly: true, rules: [] } } },
+  ];
+  const value = { ...base, page: { ...base.page, form: { ...base.page.form, rowFields } } };
+  expect(check('PageEnvelope', value)).toBe(true);
+  expect(validateEnvelope(value).ok).toBe(true);
+  for (const fields of [
+    { name: { readOnly: 'yes', rules: [] } },
+    { 'a.__proto__.secret': { readOnly: true, rules: [] } },
+    { name: { readOnly: true, rules: [{ rule: 'unknown', message: 'x' }] } },
+  ]) {
+    expect(
+      check('PageEnvelope', {
+        ...value,
+        page: {
+          ...value.page,
+          form: { ...value.page.form, rowFields: [{ ...rowFields[0], fields }] },
+        },
+      }),
+    ).toBe(false);
+  }
+});

@@ -7,7 +7,9 @@ export function useFieldConditions(
   form: FormApi,
   rowPath?: string,
 ): { visible: boolean; enabled: boolean } {
-  const field = form.fields.find((entry) => entry.def === def && entry.rowPath === rowPath);
+  const field = form.fields.find(
+    (entry) => (entry.def === def || entry.originalDef === def) && entry.rowPath === rowPath,
+  );
   if (!field) throw new Error(`Field is not present in the current form row: ${def.name}`);
   return { visible: field.visible, enabled: field.enabled };
 }

@@ -90,7 +90,14 @@ export function useRelationDraft(config: Config): FormApi {
       : c.parent.values;
   };
   const fields = () =>
-    location() ? collectValueFields(latest.current.parent.definition.nodes, values()) : [];
+    location()
+      ? collectValueFields(
+          latest.current.parent.definition.nodes,
+          values(),
+          undefined,
+          latest.current.parent.definition.rowFields,
+        )
+      : [];
   syncRowLifetimes(local.rowLifetimes, fields());
   const errors = (): FieldErrors => {
     const prefix = location()?.prefix;

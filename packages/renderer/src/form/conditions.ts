@@ -27,8 +27,10 @@ export function canonicalizeFieldValue(
     // Field validity is checked on the raw value, before display/paste rounding. This matches
     // the server's declared decimal scale; canonicalDecimal itself remains a rounding utility.
     const withinScale =
-      typeof value === 'string' && (value.split('.')[1]?.length ?? 0) <= def.decimals;
-    const canonical = withinScale ? canonicalDecimal(value, def.decimals) : null;
+      typeof value === 'string' &&
+      /^[+-]?\d+(?:\.\d*)?$(?![\s\S])/.test(value) &&
+      (value.split('.')[1]?.length ?? 0) <= def.decimals;
+    const canonical = withinScale ? canonicalDecimal(value.replace(/^\+/, ''), def.decimals) : null;
     return { valid: canonical !== null, value: canonical };
   }
   if (def?.type === 'number') {
