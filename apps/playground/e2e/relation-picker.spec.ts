@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, storeScheme, test } from './support';
+import { animationsIdle, expect, storeScheme, test } from './support';
 
 for (const scheme of ['light', 'dark'] as const) {
   test(`relation picker keyboard, one dialog and 390px layout (${scheme})`, async ({ page }) => {
@@ -41,6 +41,15 @@ for (const scheme of ['light', 'dark'] as const) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       390,
     );
+    // Reopening starts a fresh options request while the previous page remains visible.
+    // Disabled opacity transitions must finish after the controls become enabled before axe scans.
+    const previous = dialog.getByRole('button', { name: /Previous page|上一頁|上一页/ });
+    const next = dialog.getByRole('button', { name: /Next page|下一頁|下一页/ });
+    await expect(previous).toBeEnabled();
+    await expect(next).toBeEnabled();
+    await animationsIdle(page);
+    await expect(previous).toHaveCSS('opacity', '1');
+    await expect(next).toHaveCSS('opacity', '1');
     const results = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
     expect(results.violations).toEqual([]);
     await expect(dialog).toHaveScreenshot(`relation-picker-${scheme}-390.png`, {
