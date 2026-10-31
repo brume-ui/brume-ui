@@ -1,12 +1,14 @@
+import type { HttpRequest, HttpResponse } from '@brume-ui/brume-react';
 import type { FormDef } from '@brume-ui/brume-schema';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import {
   FIELD_EXAMPLES,
   FORM_EXAMPLES,
   UPLOAD_PRESETS,
 } from '../../../apps/playground/src/pages/form-feature-data';
 import { FocusedFormDemo } from '../../../apps/playground/src/pages/form-feature-demo';
+import * as focusedMemory from '../../../apps/playground/src/pages/form-feature-memory';
 import {
   createFocusedAdapter,
   type Store,
@@ -76,6 +78,12 @@ describe('focused public Form examples', () => {
     expect(screen.getAllByText('請輸入數值。').length).toBeGreaterThan(0);
     expect(screen.getAllByText('最多五個字。').length).toBeGreaterThan(0);
     expect(output('form-wire')).toEqual({});
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '儲存後繼續編輯' })).toHaveProperty(
+        'disabled',
+        false,
+      ),
+    );
     change('整數文字', '2');
     change('數值文字', '2.5');
     change('短文字', 'abc');
@@ -344,6 +352,12 @@ describe('focused public Form examples', () => {
     change('必填文字', '');
     save();
     expect(screen.getAllByText('請填寫名稱。').length).toBeGreaterThan(0);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '儲存後繼續編輯' })).toHaveProperty(
+        'disabled',
+        false,
+      ),
+    );
     expect(output('form-wire')).toEqual({});
     change('必填文字', '已填名稱');
     fireEvent.change(screen.getByLabelText('模擬回應'), { target: { value: 'server422' } });
@@ -566,3 +580,92 @@ async function acceptFixture(
     groups: { picked: { id: string; note: unknown }[] }[];
   };
 }
+
+it.each(['success', 'hidden', 'edit', 'owner', 'status', 'network'] as const)(
+  'coordinates focused Reset with canonical GET %s and never resets to an unconfirmed submitted draft',
+  async (reply) => {
+    const original = focusedMemory.createFocusedAdapter;
+    let release: (() => void) | undefined;
+    let requested = false;
+    const spy = vi.spyOn(focusedMemory, 'createFocusedAdapter').mockImplementation((...args) => {
+      const base = original(...args);
+      return {
+        ...base,
+        async request<T>(request: HttpRequest): Promise<HttpResponse<T>> {
+          if (request.url === '/demo/focused/stored') {
+            requested = true;
+            await new Promise<void>((resolve) => {
+              release = resolve;
+            });
+            if (reply === 'network') throw new Error('canonical connection failed');
+            if (reply === 'status') return { status: 503, data: {} as T };
+          }
+          return base.request<T>(request);
+        },
+      };
+    });
+    try {
+      const result = renderWithBrume(
+        <FocusedFormDemo
+          exampleId={
+            reply === 'hidden' ? 'form.behavior.enable-when' : 'form.behavior.submit-after-edit'
+          }
+        />,
+      );
+      const initial = output('form-draft');
+      if (reply === 'hidden') {
+        fireEvent.click(screen.getByRole('combobox', { name: '類型' }));
+        fireEvent.click(screen.getByRole('option', { name: '優惠券' }));
+        fireEvent.change(screen.getByLabelText(/^優惠券必填/), {
+          target: { value: 'hidden unsaved coupon' },
+        });
+        fireEvent.click(screen.getByRole('combobox', { name: '類型' }));
+        fireEvent.click(screen.getByRole('option', { name: '點數' }));
+      } else change('名稱', '  CANONICAL-NAME  ');
+      save();
+      const reset = screen.getByRole('button', { name: '重設示範資料' });
+      expect(reset).toHaveProperty('disabled', true);
+      await waitFor(() => expect(requested).toBe(true));
+      expect(reset).toHaveProperty('disabled', true);
+      expect(screen.getByText('已儲存，正在載入完整基準…')).toBeTruthy();
+      fireEvent.click(reset);
+      if (reply === 'edit') change('名稱', 'newer draft');
+      if (reply === 'owner')
+        result.rerender(
+          <FocusedFormDemo key="replacement" exampleId="form.behavior.submit-after-edit" />,
+        );
+      await act(async () => {
+        release?.();
+      });
+      if (reply === 'success') {
+        await screen.findByText('已儲存並載入完整基準');
+        expect(screen.getByLabelText('名稱')).toHaveProperty('value', 'CANONICAL-NAME');
+        change('名稱', 'later draft');
+        fireEvent.click(reset);
+        expect(screen.getByLabelText('名稱')).toHaveProperty('value', 'CANONICAL-NAME');
+      } else if (reply === 'hidden') {
+        await screen.findByText('已儲存並載入完整基準');
+        expect(output('form-draft').requiredCoupon).toBe('');
+        change('in 條件欄位', 'later edit');
+        fireEvent.click(reset);
+        expect(output('form-draft')).toEqual(output('form-saved'));
+        expect(output('form-draft').requiredCoupon).toBe('');
+      } else if (reply === 'edit') {
+        await screen.findByText('已確認儲存基準；保留較新的草稿。');
+        expect(screen.getByLabelText('名稱')).toHaveProperty('value', 'newer draft');
+        fireEvent.click(reset);
+        expect(screen.getByLabelText('名稱')).toHaveProperty('value', 'CANONICAL-NAME');
+      } else if (reply === 'owner') {
+        expect(output('form-draft')).toEqual(initial);
+        expect(screen.queryByText('已儲存並載入完整基準')).toBeNull();
+      } else {
+        await screen.findByText('已儲存，但無法載入完整基準；重設將回到上次確認資料。');
+        expect(reset).toHaveProperty('disabled', false);
+        fireEvent.click(reset);
+        expect(output('form-draft')).toEqual(initial);
+      }
+    } finally {
+      spy.mockRestore();
+    }
+  },
+);

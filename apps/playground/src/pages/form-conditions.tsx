@@ -77,37 +77,58 @@ export function GiftForm({
     size: 'lg',
   };
   const { submit, submitting } = useFormSubmit(page, api, view);
+  const confirmed = useRef(initial);
+  const saving = useRef(false);
+  const [synchronizing, setSynchronizing] = useState(false);
   const [saved, setSaved] = useState<Record<string, unknown>>();
   const [wire, setWire] = useState<Record<string, unknown>>();
   const [message, setMessage] = useState('尚未儲存');
   async function save() {
+    if (saving.current) return;
+    saving.current = true;
+    setSynchronizing(true);
+    setMessage('儲存中…');
     const draft = api.values;
     const state = api.stateId;
-    const result = await submit('edit');
-    if (
-      !result ||
-      !mounted.current ||
-      current.current.stateId !== state ||
-      current.current.values !== draft
-    )
-      return;
-    const generation = api.resetVersion;
-    const loaded = await adapter.request<Record<string, unknown>>({
-      method: 'get',
-      url: '/gift/stored',
-    });
-    if (
-      !mounted.current ||
-      current.current.stateId !== state ||
-      api.resetVersion !== generation ||
-      current.current.values !== draft ||
-      loaded.status !== 200
-    )
-      return;
-    api.reset(loaded.data);
-    setSaved(loaded.data);
-    setWire(draft);
-    setMessage('已儲存並載入完整基準');
+    try {
+      const result = await submit('edit');
+      if (
+        !result ||
+        !mounted.current ||
+        current.current.stateId !== state ||
+        current.current.values !== draft
+      ) {
+        if (mounted.current && current.current.stateId === state)
+          setMessage('未完成儲存同步；保留目前草稿。');
+        return;
+      }
+      const generation = api.resetVersion;
+      setMessage('已儲存，正在載入完整基準…');
+      const loaded = await adapter.request<Record<string, unknown>>({
+        method: 'get',
+        url: '/gift/stored',
+      });
+      if (!mounted.current || current.current.stateId !== state || api.resetVersion !== generation)
+        return;
+      if (loaded.status !== 200) throw new Error('Canonical snapshot unavailable');
+      // Confirmation and draft adoption are distinct: a newer edit must survive, while its next
+      // explicit Reset must still use the accepted snapshot rather than the hook's provisional one.
+      confirmed.current = loaded.data;
+      if (current.current.values !== draft) {
+        setMessage('已確認儲存基準；保留較新的草稿。');
+        return;
+      }
+      api.reset(loaded.data);
+      setSaved(loaded.data);
+      setWire(draft);
+      setMessage('已儲存並載入完整基準');
+    } catch {
+      if (mounted.current && current.current.stateId === state)
+        setMessage('已儲存，但無法載入完整基準；重設將回到上次確認資料。');
+    } finally {
+      saving.current = false;
+      if (mounted.current) setSynchronizing(false);
+    }
   }
   return (
     <Panel>
@@ -115,13 +136,14 @@ export function GiftForm({
         切換類型會保留尚未儲存的草稿。只驗證目前分支；成功儲存會載入完整記憶體基準，隱藏分支還原既存資料。重設會捨棄未儲存變更。優惠券與點數僅為設定，沒有實際發放。
       </p>
       <FormView ref={view} form={form} api={api} />
-      <Button disabled={submitting} onClick={() => void save()}>
+      <Button disabled={submitting || synchronizing} onClick={() => void save()}>
         {composition ? 'Save composition' : '儲存贈品設定'}
       </Button>
       <Button
         variant="secondary"
+        disabled={submitting || synchronizing}
         onClick={() => {
-          api.reset();
+          api.reset(structuredClone(confirmed.current));
           setMessage('已重設至儲存基準');
         }}
       >

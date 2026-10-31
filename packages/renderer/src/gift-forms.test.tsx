@@ -69,10 +69,22 @@ describe('standalone gift Form', () => {
     save();
     expect(screen.getAllByText('請輸入優惠券代碼。').length).toBeGreaterThan(0);
     expect(output('gift-saved')).toEqual({});
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '儲存贈品設定' })).toHaveProperty(
+        'disabled',
+        false,
+      ),
+    );
     type('點數');
     change('贈送點數', '');
     save();
     expect(screen.getAllByText('請輸入正整數。').length).toBeGreaterThan(0);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '儲存贈品設定' })).toHaveProperty(
+        'disabled',
+        false,
+      ),
+    );
     type('優惠券');
     change('優惠券代碼', '  COUPON-OK  ');
     change('優惠券金額', '123.45');
@@ -121,6 +133,12 @@ describe('standalone gift Form', () => {
     save();
     expect(screen.getAllByText('贈品類型必須是商品、優惠券或點數。').length).toBeGreaterThan(0);
     expect(output('gift-saved')).toEqual({});
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '儲存贈品設定' })).toHaveProperty(
+        'disabled',
+        false,
+      ),
+    );
     type('點數');
     save();
     await screen.findByText('已儲存並載入完整基準');
@@ -235,7 +253,7 @@ describe('nested threshold gifts', () => {
   });
 });
 
-it.each(['edit', 'reset', 'owner'] as const)(
+it.each(['edit', 'owner'] as const)(
   'does not adopt a late canonical response after a newer %s',
   async (changeKind) => {
     const initial = giftValues();
@@ -258,8 +276,6 @@ it.each(['edit', 'reset', 'owner'] as const)(
     save();
     await waitFor(() => expect(requested).toBe(true));
     if (changeKind === 'edit') change('優惠券代碼', 'newer edit');
-    else if (changeKind === 'reset')
-      fireEvent.click(screen.getByRole('button', { name: '重設贈品草稿' }));
     else
       result.rerender(
         <GiftForm
@@ -274,8 +290,97 @@ it.each(['edit', 'reset', 'owner'] as const)(
     expect(screen.queryByText('已儲存並載入完整基準')).toBeNull();
     if (changeKind === 'edit')
       expect(screen.getByLabelText(/^優惠券代碼/)).toHaveProperty('value', 'newer edit');
-    else if (changeKind === 'owner')
-      expect(screen.getByLabelText(/^優惠券代碼/)).toHaveProperty('value', 'new owner');
-    else expect(screen.getByLabelText(/^優惠券代碼/)).toHaveProperty('value', '  ACCEPTED  ');
+    else expect(screen.getByLabelText(/^優惠券代碼/)).toHaveProperty('value', 'new owner');
+    if (changeKind === 'edit') {
+      fireEvent.click(screen.getByRole('button', { name: '重設贈品草稿' }));
+      expect(screen.getByLabelText(/^優惠券代碼/)).toHaveProperty('value', 'ACCEPTED');
+    }
+  },
+);
+
+it.each(['coupon', 'points'] as const)(
+  'keeps Reset locked through canonical GET for %s and then resets to the accepted complete snapshot',
+  async (branch) => {
+    const initial = giftValues();
+    const memory = createGiftMemory(giftForm, initial);
+    let release: (() => void) | undefined;
+    let requested = false;
+    renderWithBrume(<GiftForm form={giftForm} initial={initial} />, {
+      respond: async (request) => {
+        if (request.url === '/gift/stored') {
+          requested = true;
+          await new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        }
+        return (await memory.respond(request)) ?? { status: 404, data: {} };
+      },
+    });
+    type('優惠券');
+    change('優惠券代碼', '  ACCEPTED  ');
+    if (branch === 'points') {
+      type('點數');
+      change('贈送點數', '444');
+    }
+    save();
+    const reset = screen.getByRole('button', { name: '重設贈品草稿' });
+    expect(reset).toHaveProperty('disabled', true);
+    await waitFor(() => expect(requested).toBe(true));
+    expect(reset).toHaveProperty('disabled', true);
+    expect(screen.getByText('已儲存，正在載入完整基準…')).toBeTruthy();
+    fireEvent.click(reset);
+    await act(async () => {
+      release?.();
+    });
+    await screen.findByText('已儲存並載入完整基準');
+    expect(reset).toHaveProperty('disabled', false);
+    expect(output('gift-draft')).toEqual(memory.store.saved);
+    const code = branch === 'coupon' ? 'ACCEPTED' : initial.coupon_code;
+    expect(output('gift-draft')).toMatchObject({
+      coupon_code: code,
+      points: branch === 'points' ? 444 : 100,
+    });
+    type('優惠券');
+    change('優惠券代碼', 'after-save draft');
+    fireEvent.click(reset);
+    expect(output('gift-draft')).toEqual(memory.store.saved);
+    expect(output('gift-draft').coupon_code).toBe(code);
+  },
+);
+
+it.each(['status', 'network'] as const)(
+  'keeps Reset on its last confirmed baseline when canonical GET fails with %s',
+  async (failure) => {
+    const initial = giftValues();
+    const memory = createGiftMemory(giftForm, initial);
+    let failCanonical = false;
+    renderWithBrume(<GiftForm form={giftForm} initial={initial} />, {
+      respond: async (request) => {
+        if (request.url === '/gift/stored' && failCanonical) {
+          if (failure === 'network') throw new Error('canonical connection failed');
+          return { status: 503, data: {} };
+        }
+        return (await memory.respond(request)) ?? { status: 404, data: {} };
+      },
+    });
+    type('點數');
+    change('贈送點數', '125');
+    save();
+    await screen.findByText('已儲存並載入完整基準');
+    const confirmed = structuredClone(memory.store.saved);
+    failCanonical = true;
+    type('優惠券');
+    change('優惠券代碼', 'hidden unsaved coupon');
+    type('點數');
+    change('贈送點數', '444');
+    save();
+    await screen.findByText('已儲存，但無法載入完整基準；重設將回到上次確認資料。');
+    expect(screen.queryByText('已儲存並載入完整基準')).toBeNull();
+    const reset = screen.getByRole('button', { name: '重設贈品草稿' });
+    expect(reset).toHaveProperty('disabled', false);
+    fireEvent.click(reset);
+    expect(output('gift-draft')).toEqual(confirmed);
+    expect(output('gift-draft').points).toBe(125);
+    expect(output('gift-draft').coupon_code).toBe('STORED-ROOT');
   },
 );

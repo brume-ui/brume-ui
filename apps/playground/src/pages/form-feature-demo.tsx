@@ -156,6 +156,9 @@ function FocusedContent({
   };
   const { submit, submitting } = useFormSubmit(page, api, view);
   const [message, setMessage] = useState('尚未儲存');
+  const confirmed = useRef(fixture.values);
+  const saving = useRef(false);
+  const [synchronizing, setSynchronizing] = useState(false);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -172,45 +175,63 @@ function FocusedContent({
   }, []);
 
   async function save(after: AfterSave) {
+    if (saving.current) return;
+    saving.current = true;
+    setSynchronizing(true);
+    setMessage('儲存中…');
     const draft = api.values;
     const state = api.stateId;
     const previousFocus = document.activeElement;
-    const result = await submit(after);
-    if (!result && previousFocus instanceof HTMLElement) {
-      requestAnimationFrame(() => {
-        if (
-          mounted.current &&
-          current.current.stateId === state &&
-          previousFocus.isConnected &&
-          (document.activeElement === document.body || document.activeElement === previousFocus)
-        )
-          previousFocus.focus();
+    try {
+      const result = await submit(after);
+      if (!result && previousFocus instanceof HTMLElement) {
+        requestAnimationFrame(() => {
+          if (
+            mounted.current &&
+            current.current.stateId === state &&
+            previousFocus.isConnected &&
+            (document.activeElement === document.body || document.activeElement === previousFocus)
+          )
+            previousFocus.focus();
+        });
+      }
+      if (
+        !result ||
+        !mounted.current ||
+        current.current.stateId !== state ||
+        current.current.values !== draft
+      ) {
+        if (mounted.current && current.current.stateId === state)
+          setMessage('未完成儲存同步；保留目前草稿。');
+        return;
+      }
+      const version = api.resetVersion;
+      setMessage('已儲存，正在載入完整基準…');
+      const loaded = await adapter.request<Record<string, unknown>>({
+        method: 'get',
+        url: '/demo/focused/stored',
       });
+      if (!mounted.current || current.current.stateId !== state || api.resetVersion !== version)
+        return;
+      if (loaded.status !== 200) throw new Error('Canonical snapshot unavailable');
+      confirmed.current = after === 'create' ? { name: '' } : loaded.data;
+      if (current.current.values !== draft) {
+        // A requested new form is not the baseline of a newer edit in the current owner.
+        confirmed.current = loaded.data;
+        setMessage('已確認儲存基準；保留較新的草稿。');
+        return;
+      }
+      api.reset(confirmed.current);
+      setTarget(after);
+      adapter.visit(result.urls[after] ?? '/demo/focused/edit');
+      setMessage('已儲存並載入完整基準');
+    } catch {
+      if (mounted.current && current.current.stateId === state)
+        setMessage('已儲存，但無法載入完整基準；重設將回到上次確認資料。');
+    } finally {
+      saving.current = false;
+      if (mounted.current) setSynchronizing(false);
     }
-    if (
-      !result ||
-      !mounted.current ||
-      current.current.stateId !== state ||
-      current.current.values !== draft
-    )
-      return;
-    const version = api.resetVersion;
-    const loaded = await adapter.request<Record<string, unknown>>({
-      method: 'get',
-      url: '/demo/focused/stored',
-    });
-    if (
-      !mounted.current ||
-      current.current.stateId !== state ||
-      api.resetVersion !== version ||
-      current.current.values !== draft ||
-      loaded.status !== 200
-    )
-      return;
-    api.reset(after === 'create' ? { name: '' } : loaded.data);
-    setTarget(after);
-    adapter.visit(result.urls[after] ?? '/demo/focused/edit');
-    setMessage('已儲存並載入完整基準');
   }
   return (
     <>
@@ -272,7 +293,8 @@ function FocusedContent({
             )}
             <Button
               onClick={() => {
-                api.reset(structuredClone(store.saved));
+                confirmed.current = structuredClone(store.saved);
+                api.reset(confirmed.current);
                 setTarget('edit');
               }}
             >
@@ -280,7 +302,8 @@ function FocusedContent({
             </Button>
             <Button
               onClick={() => {
-                api.reset({ name: '' });
+                confirmed.current = { name: '' };
+                api.reset(confirmed.current);
                 setTarget('create');
               }}
             >
@@ -304,7 +327,7 @@ function FocusedContent({
                 <Button
                   key={after}
                   type="button"
-                  disabled={submitting}
+                  disabled={submitting || synchronizing}
                   onClick={() => void save(after)}
                 >
                   {afterLabels[after]}
@@ -313,9 +336,9 @@ function FocusedContent({
             </div>
           </form>
           <Button
-            disabled={submitting}
+            disabled={submitting || synchronizing}
             onClick={() => {
-              api.reset(structuredClone(fixture.values));
+              api.reset(structuredClone(confirmed.current));
               setMessage('已重設示範草稿');
             }}
           >
@@ -344,7 +367,13 @@ function FocusedContent({
             </Button>
           ) : null}
           {exampleId === 'relation.picker-large-selection' ? (
-            <Button onClick={() => api.reset(structuredClone(fixture.values))}>
+            <Button
+              disabled={submitting || synchronizing}
+              onClick={() => {
+                confirmed.current = structuredClone(fixture.values);
+                api.reset(confirmed.current);
+              }}
+            >
               載入101項已選商品
             </Button>
           ) : null}
