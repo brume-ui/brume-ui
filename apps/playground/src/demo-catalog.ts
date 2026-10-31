@@ -1,4 +1,5 @@
 import { FORM_EXAMPLES } from './pages/form-feature-data';
+import { GRID_EXAMPLES } from './pages/grid-feature-data';
 /** Only operable existing targets belong here; missing focused demos are tracked in docs/demo-coverage.md. */
 export const DEMO_CATEGORIES = {
   controls: '基礎元件',
@@ -28,6 +29,33 @@ export const PERSISTENCE_LABELS: Record<DemoFeature['persistence'], string> = {
   contract: '契約說明：依來源與測試說明行為，不代表此頁執行後端操作。',
 };
 export const DEMO_FEATURES: DemoFeature[] = [
+  ...GRID_EXAMPLES.map((example) => ({
+    id: example.id,
+    category: 'grid' as const,
+    title: example.title,
+    summary: `${example.title}：依步驟操作目標與核對真實結果證據。`,
+    href: `#/grid-features?example=${example.id}`,
+    steps: [...example.steps],
+    expected: example.expected,
+    persistence: example.backend ? ('contract' as const) : ('memory' as const),
+    sources: example.backend
+      ? [
+          'brume-laravel:workbench/app/Http/Controllers/GridShowcaseController.php',
+          'brume-laravel:tests/Feature/GridFocusedDemosTest.php',
+        ]
+      : ['brume-ui:apps/playground/src/pages/grid-feature-fixtures.ts'],
+  })),
+  {
+    id: 'grid.focused',
+    category: 'grid',
+    title: '所有 Grid 聚焦範例',
+    summary: '挑選顯示、編輯、篩選或操作，依說明核對結果。',
+    href: '#/grid-features',
+    steps: ['由選單挑選目標功能，依步驟核對結果與證據。'],
+    expected: '直接進入初始可操作的聚焦欄位；後端條件另列契約說明。',
+    persistence: 'memory',
+    sources: ['brume-ui:apps/playground/src/pages/grid-features.tsx'],
+  },
   ...FORM_EXAMPLES.map((example) => ({
     id: example.id,
     category: 'form' as const,

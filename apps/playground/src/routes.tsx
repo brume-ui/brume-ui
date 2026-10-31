@@ -25,6 +25,7 @@ import { FormLayoutsPage } from './pages/form-layouts';
 import { FormRelationsPage } from './pages/form-relations';
 import { FormRepeatersPage } from './pages/form-repeaters';
 import { ErrorPagePage, GridEmptyPage, GridPage } from './pages/grid';
+import { GridFeaturesPage } from './pages/grid-features';
 import { InputsPage } from './pages/inputs';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
 import { MotionPage } from './pages/motion';
@@ -67,6 +68,7 @@ export const ROUTES: Route[] = [
   { name: 'form-repeaters', title: '表單 · 巢狀重複列', Component: FormRepeatersPage },
   { name: 'form-relations', title: '表單 · 遠端選項與互斥', Component: FormRelationsPage },
   { name: 'form-dialog', title: '表單 · 彈窗', Component: FormDialogPage },
+  { name: 'grid-features', title: 'Grid · 功能聚焦', Component: GridFeaturesPage },
   { name: 'grid', title: 'Grid（訂單）', Component: GridPage },
   { name: 'grid-empty', title: 'Grid（空）', Component: GridEmptyPage },
   { name: 'error-page', title: '錯誤頁', Component: ErrorPagePage },

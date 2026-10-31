@@ -150,3 +150,149 @@ test('network failure preserves keyboard focus, draft and duplicate-submit prote
   await save.click();
   await expect(page.getByTestId('form-saved')).toContainText('重試草稿');
 });
+
+// Authored for isolated CI only; --list is the sole permitted local E2E command.
+for (const scheme of SCHEMES) {
+  for (const width of [1440, 390]) {
+    test.describe(`focused grids ${scheme} ${width}px`, () => {
+      test.use({ viewport: { width, height: 900 } });
+      test('textarea cancel, server422 and retry preserve confirmed display', async ({ page }) => {
+        await storeScheme(page, scheme);
+        await page.goto('/#/grid-features?example=grid.editor.textarea');
+        const row = page.locator('tbody tr').filter({ hasText: 'ORD-2610024' });
+        await row.getByRole('button', { name: /^編輯備註/ }).click();
+        await row.getByRole('textbox', { name: '備註', exact: true }).fill('取消的備註');
+        await page.keyboard.press('Escape');
+        await expect(page.getByTestId('grid-records')).not.toContainText('取消的備註');
+        await row.getByRole('button', { name: /^編輯備註/ }).click();
+        await row.getByRole('textbox', { name: '備註', exact: true }).fill('長'.repeat(201));
+        await page.keyboard.press('ControlOrMeta+Enter');
+        await expect(row.getByRole('alert')).toHaveText('備註最多 200 個字。');
+        await row.getByRole('button', { name: /^編輯備註/ }).click();
+        await row.getByRole('textbox', { name: '備註', exact: true }).fill('修正後的備註');
+        await page.keyboard.press('ControlOrMeta+Enter');
+        await expect(page.getByTestId('grid-records')).toContainText('修正後的備註');
+        await expect(page.getByTestId('grid-events')).toContainText('422');
+        await expect(row.getByRole('alert')).toHaveCount(0);
+        await animationsIdle(page);
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+      });
+      test('range filter changes actual rows and chip clearing restores all rows', async ({
+        page,
+      }) => {
+        await storeScheme(page, scheme);
+        await page.goto('/#/grid-features?example=grid.input.range-text');
+        await page.getByRole('button', { name: '篩選', exact: true }).click();
+        await page
+          .getByRole('textbox', { name: '聚焦篩選（起）', exact: true })
+          .fill('ORD-2610010');
+        await page
+          .getByRole('textbox', { name: '聚焦篩選（迄）', exact: true })
+          .fill('ORD-2610015');
+        await page.getByRole('button', { name: '套用篩選', exact: true }).click();
+        await expect(page.getByTestId('grid-result-count')).toContainText('符合 6 筆');
+        await expect(page.locator('tbody tr')).toHaveCount(6);
+        await page.getByRole('button', { name: '移除篩選：聚焦篩選', exact: true }).click();
+        await expect(page.getByTestId('grid-result-count')).toContainText('符合 24 筆');
+        await animationsIdle(page);
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      });
+    });
+  }
+}
+
+test('focused action input can cancel, show422 and retry; mixed batches report actual results', async ({
+  page,
+}) => {
+  await page.goto('/#/grid-features?example=grid.behavior.action-input');
+  const row = page.locator('tbody tr').filter({ hasText: 'ORD-2610024' });
+  await row.getByRole('button', { name: '註記原因', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '註記訂單', exact: true });
+  await dialog.getByRole('textbox', { name: '原因', exact: true }).fill('取消草稿');
+  await dialog.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.getByTestId('grid-records')).not.toContainText('取消草稿');
+  await row.getByRole('button', { name: '註記原因', exact: true }).click();
+  await expect(dialog.getByRole('textbox', { name: '原因', exact: true })).toHaveValue('');
+  await dialog.getByRole('textbox', { name: '原因', exact: true }).fill('短');
+  await dialog.getByRole('button', { name: '套用註記', exact: true }).click();
+  await expect(dialog.getByText('原因至少 3 個字。')).toBeVisible();
+  await dialog.getByRole('textbox', { name: '原因', exact: true }).fill('客服已確認');
+  await dialog.getByRole('button', { name: '套用註記', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByTestId('grid-records')).toContainText('客服已確認');
+  await page.goto('/#/grid-features?example=grid.behavior.batch-errors');
+  await page.getByRole('checkbox', { name: '選取 ORD-2610024', exact: true }).check();
+  await page.getByRole('checkbox', { name: '選取 ORD-2610023', exact: true }).check();
+  await page
+    .getByRole('region', { name: '批次操作', exact: true })
+    .getByRole('button', { name: '標記為已出貨', exact: true })
+    .click();
+  await expect(page.getByRole('status').filter({ hasText: '1 筆尚未付款所以略過' })).toBeVisible();
+  await page.getByRole('button', { name: '送出範圍外 ID（403）', exact: true }).click();
+  await expect(page.getByTestId('grid-events')).toContainText('403');
+});
+
+test('native Grid export controls produce all, page and selected downloadable CSV fixtures', async ({
+  page,
+}) => {
+  const { readFile } = await import('node:fs/promises');
+  await page.goto('/#/grid-features?example=grid.behavior.export-memory');
+  await page.getByRole('checkbox', { name: '選取 ORD-2610024', exact: true }).check();
+  for (const [label, count] of [
+    ['符合條件的全部資料', 24],
+    ['目前這一頁', 10],
+    ['已選取的 1 筆', 1],
+  ] as const) {
+    await page.getByRole('button', { name: '匯出 Excel', exact: true }).click();
+    const downloading = page.waitForEvent('download');
+    await page.getByRole('menuitem', { name: label, exact: true }).click();
+    const download = await downloading;
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    const text = await readFile(path as string, 'utf8');
+    expect(text.trim().split(/\r?\n/)).toHaveLength(count + 1);
+    expect(text).toContain('ORD-2610024');
+    expect(download.suggestedFilename()).toMatch(/orders-(all|page|selected)\.csv/);
+  }
+  await expect(page.getByTestId('grid-events')).toContainText('export_scope=selected');
+});
+
+test('resource page navigation saves through the existing form server and returns to Grid', async ({
+  page,
+}) => {
+  await page.goto('/#/grid-features?example=grid.behavior.resource-page');
+  await page
+    .locator('tbody tr')
+    .filter({ hasText: 'ORD-2610024' })
+    .getByRole('button', { name: 'ORD-2610024', exact: true })
+    .click();
+  await expect(page.getByRole('button', { name: '返回聚焦列表', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: '客戶', exact: true }).fill('獨立頁修改');
+  await page.getByRole('button', { name: '儲存', exact: true }).click();
+  await page.getByRole('button', { name: '返回聚焦列表', exact: true }).click();
+  await expect(page.locator('tbody tr').filter({ hasText: 'ORD-2610024' })).toContainText(
+    '獨立頁修改',
+  );
+});
+
+test('all Grid focused targets render their guide and real grid or explicit backend contract', async ({
+  page,
+}) => {
+  const { GRID_EXAMPLES } = await import('../src/pages/grid-feature-data');
+  test.setTimeout(120_000);
+  for (const example of GRID_EXAMPLES) {
+    await page.goto(`/#/grid-features?example=${example.id}`);
+    await expect(page.getByRole('complementary', { name: '示範操作說明' })).toContainText(
+      example.title,
+    );
+    await expect(
+      page.getByTestId(example.backend ? 'grid-backend-path' : 'focused-grid'),
+    ).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+});
