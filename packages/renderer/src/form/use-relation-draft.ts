@@ -6,6 +6,7 @@ import { getAt, setAt } from './paths';
 import {
   bindRowLifetimes,
   createRowLifetimes,
+  draftRowLifetimes,
   rowLifetime,
   syncRowLifetimes,
 } from './row-lifetime';
@@ -38,7 +39,7 @@ export function useRelationDraft(config: Config): FormApi {
     reader: config.getDraft,
     baseline: config.item,
     id: Symbol('relation-draft'),
-    rowLifetimes: createRowLifetimes(),
+    fallbackLifetimes: createRowLifetimes(),
     alive: true,
     value: config.item,
     accepted: config.item,
@@ -104,7 +105,20 @@ export function useRelationDraft(config: Config): FormApi {
           latest.current.parent.definition.rowFields,
         )
       : [];
-  syncRowLifetimes(local.rowLifetimes, fields(), false, (path) => getAt(values(), path));
+  const lifetimes = draftRowLifetimes(
+    config.parent,
+    ownership.parentOwner,
+    local.id,
+    local.reader,
+    local.fallbackLifetimes,
+  );
+  useLayoutEffect(() => {
+    lifetimes.attach();
+    return lifetimes.release;
+  }, [lifetimes.attach, lifetimes.release]);
+  // An obsolete owner must not replace a surviving peer's tracker with an empty field view.
+  if (location())
+    syncRowLifetimes(lifetimes.rows, fields(), false, (path) => getAt(values(), path));
   const errors = (): FieldErrors => {
     const prefix = location()?.prefix;
     if (prefix === undefined) return {};
@@ -137,7 +151,7 @@ export function useRelationDraft(config: Config): FormApi {
       ),
     );
     latest.current.onChange(value);
-    syncRowLifetimes(local.rowLifetimes, fields(), false, (path) => getAt(values(), path));
+    syncRowLifetimes(lifetimes.rows, fields(), false, (path) => getAt(values(), path));
     notify();
   };
   const editRows = (path: string, from: number, to?: number) => {
@@ -239,7 +253,18 @@ export function useRelationDraft(config: Config): FormApi {
     reset(next) {
       if (!active()) return;
       local.reset++;
-      syncRowLifetimes(local.rowLifetimes, fields(), true, (path) => getAt(values(), path));
+      const current = location();
+      const container = current && latest.current.parent.getField(current.path);
+      const own = container && [
+        ...container.rowContext,
+        { path: container.templatePath, key: local.value.id, id: local.value.id },
+      ];
+      syncRowLifetimes(
+        lifetimes.rows,
+        fields(),
+        (context) => !!own && JSON.stringify(context.slice(0, own.length)) === JSON.stringify(own),
+        (path) => getAt(values(), path),
+      );
       local.touched.clear();
       local.server = {};
       const prefix = location()?.prefix;
@@ -269,7 +294,7 @@ export function useRelationDraft(config: Config): FormApi {
     moveRow: (path, from, to) => editRows(path, from, to),
     removeRow: (path, index) => editRows(path, index),
   };
-  return bindRowLifetimes(api, local.rowLifetimes, (context, localLifetime) => {
+  return bindRowLifetimes(api, lifetimes.rows, (context, localLifetime) => {
     const current = location();
     const parent = latest.current.parent;
     const container = current && parent.getField(current.path);

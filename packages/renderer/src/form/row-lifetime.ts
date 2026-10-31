@@ -5,11 +5,22 @@ import type { FormApi } from './use-form-state';
 export interface RowLifetimes {
   sequence: number;
   live: Map<string, number>;
+  drafts: Set<DraftLifetimeGroup>;
 }
+interface DraftLifetimeGroup {
+  key: string;
+  rows: RowLifetimes;
+  readers: Map<symbol, () => readonly unknown[]>;
+}
+
 type RowLifetime = number | string | undefined;
 type LifetimeResolver = (context: RowContext, local: number | undefined) => RowLifetime;
 const instances = new WeakMap<FormApi, { rows: RowLifetimes; resolve?: LifetimeResolver }>();
-export const createRowLifetimes = (): RowLifetimes => ({ sequence: 0, live: new Map() });
+export const createRowLifetimes = (): RowLifetimes => ({
+  sequence: 0,
+  live: new Map(),
+  drafts: new Set(),
+});
 export function bindRowLifetimes(
   form: FormApi,
   rows: RowLifetimes,
@@ -18,6 +29,37 @@ export function bindRowLifetimes(
   instances.set(form, { rows, resolve });
   return form;
 }
+/** One tracker for a live picker view, acquired during render before either peer's effects.
+ * The primitive returns the same live array to its selected owners. Compare that view, never
+ * mutable item objects or public IDs; separate picker sessions/components therefore stay isolated.
+ */
+export function draftRowLifetimes(
+  parent: FormApi,
+  key: string,
+  id: symbol,
+  read: () => readonly unknown[],
+  fallback: RowLifetimes,
+) {
+  const groups = (instances.get(parent)?.rows ?? fallback).drafts;
+  const view = read();
+  let group = [...groups].find(
+    (candidate) =>
+      candidate.key === key && [...candidate.readers.values()].some((reader) => reader() === view),
+  );
+  if (!group) group = { key, rows: createRowLifetimes(), readers: new Map() };
+  const current = group;
+  const attach = () => {
+    groups.add(current);
+    current.readers.set(id, read);
+  };
+  const release = () => {
+    current.readers.delete(id);
+    if (!current.readers.size) groups.delete(current);
+  };
+  attach();
+  return { group: current, rows: current.rows, attach, release };
+}
+
 /** Include declared collection rows even when the collection has no child fields. */
 export function collectionRowContexts(field: ValueField, value: unknown): RowContext[] {
   if (field.def.type !== 'repeater' && field.def.type !== 'relation') return [];
@@ -44,14 +86,15 @@ export function collectionRowContexts(field: ValueField, value: unknown): RowCon
 export function syncRowLifetimes(
   rows: RowLifetimes,
   fields: readonly ValueField[],
-  reset = false,
+  reset: boolean | ((context: RowContext) => boolean) = false,
   valueAt?: (path: string) => unknown,
 ): void {
   const next = new Map<string, number>();
   const retain = (context: RowContext) => {
     for (let depth = 1; depth <= context.length; depth++) {
       const key = JSON.stringify(context.slice(0, depth));
-      if (!next.has(key)) next.set(key, (!reset && rows.live.get(key)) || ++rows.sequence);
+      const replace = typeof reset === 'function' ? reset(context.slice(0, depth)) : reset;
+      if (!next.has(key)) next.set(key, (!replace && rows.live.get(key)) || ++rows.sequence);
     }
   };
   for (const field of fields) {

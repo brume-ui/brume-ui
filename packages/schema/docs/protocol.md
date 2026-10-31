@@ -111,7 +111,13 @@ or replacement, and stays stable for ordinary value edits or movement. It is bou
 selection and open session; obsolete, closed, or unmounted accessors return undefined. These opaque
 numbers are not source IDs, row order, persistence metadata or wire parameters.
 
-Draft ownership combines the parent's applicable lifetime, that selection lifetime, and the local
-descendant lifetime. Outside parent targets delegate to the live parent owner, so intermediate
+Draft ownership combines the parent's applicable lifetime, that selection lifetime, and the
+descendant lifetime shared by the drafts of the same live picker view. Outside parent targets delegate to the live parent owner, so intermediate
 remove/readd operations cannot be erased by React batching. A surviving selection also observes the
 new private identity when a sibling selection is removed and re-added with the same ID and payload.
+
+The internal descendant tracker is initialized from the complete live selection before peer effects
+run. Descendant removal/readdition updates it synchronously at every configured depth, including
+whole-collection dependency projections. Resetting or unmounting one selection preserves its peers'
+lifetimes. Nested pickers compose this tracker with their actual parent's ownership; sessions remain
+isolated. This adds no public callback argument or request metadata.
