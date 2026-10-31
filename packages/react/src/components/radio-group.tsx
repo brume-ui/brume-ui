@@ -1,6 +1,6 @@
 import type { Option } from '@brume-ui/brume-schema';
 import * as RadixRadioGroup from '@radix-ui/react-radio-group';
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 import { cn } from '../cn';
 import { ariaOn, type FieldControlProps } from './field';
 import { FOCUS_RING } from './focus';
@@ -36,13 +36,17 @@ export function RadioGroup({
   invalid,
 }: RadioGroupProps) {
   const baseId = useId();
+  const changes = useRef(0);
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
   return (
     <RadixRadioGroup.Root
       id={id}
       onBlur={onBlur}
       value={value}
-      onValueChange={onChange}
+      onValueChange={(next) => {
+        changes.current++;
+        onChange(next);
+      }}
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
       // The APG radio group carries the description, error and required state on the group.
@@ -67,6 +71,33 @@ export function RadioGroup({
               id={itemId}
               value={o.value}
               disabled={o.disabled}
+              onKeyDown={(event) => {
+                if (
+                  event.defaultPrevented ||
+                  event.altKey ||
+                  event.ctrlKey ||
+                  event.metaKey ||
+                  event.shiftKey ||
+                  !['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)
+                )
+                  return;
+                const group = event.currentTarget.closest('[role="radiogroup"]');
+                const items = Array.from(
+                  group?.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)') ?? [],
+                );
+                const index = items.indexOf(event.currentTarget);
+                if (disabled || index < 0 || items.length === 0) return;
+                event.preventDefault();
+                const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
+                const next = items[(index + step + items.length) % items.length];
+                if (!next) return;
+                // Radix defers roving focus to a timer. A quick keyup can clear its
+                // arrow flag first, so move synchronously and activate once. Held
+                // arrows may already activate through Radix's onFocus handler.
+                const before = changes.current;
+                next.focus();
+                if (changes.current === before) next.click();
+              }}
               className={cn(
                 'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:bg-surface br:data-[state=checked]:border-accent br:disabled:cursor-not-allowed br:disabled:opacity-50',
                 'br:transition-[border-color,scale] br:duration-fast br:ease-spring br:enabled:active:scale-90 br:motion-reduce:enabled:active:scale-100',
