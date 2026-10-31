@@ -6,8 +6,11 @@ import {
   Toaster,
 } from '@brume-ui/brume-react';
 import { useEffect, useMemo, useState } from 'react';
+import { DEMO_FEATURES } from './demo-catalog';
+import { DemoCatalogPage } from './pages/demo-catalog';
+import { DemoGuide } from './pages/demo-guide';
 import { ShellPage } from './pages/shell';
-import { INDEX_ENTRIES, ROUTES, SHELL_ROUTE } from './routes';
+import { ROUTES, SHELL_ROUTE } from './routes';
 import { SettingsProvider } from './settings';
 import { SwitcherBar } from './switcher-bar';
 
@@ -28,22 +31,6 @@ function useHashRoute(): string {
   return route;
 }
 
-function IndexPage() {
-  return (
-    <main className="pg-page" data-testid="pg-index">
-      <h1>Brume Playground</h1>
-      <p className="pg-lead">One page per component. Use the bar above to switch settings.</p>
-      <ul className="pg-index">
-        {INDEX_ENTRIES.map((e) => (
-          <li key={e.name}>
-            <a href={`#/${e.name}`}>{e.title}</a>
-          </li>
-        ))}
-      </ul>
-    </main>
-  );
-}
-
 export function App() {
   const [locale, setLocale] = useState<Locale>('zh-TW');
   const adapter = useMemo(() => createMemoryAdapter('/admin/users?page=2'), []);
@@ -57,14 +44,15 @@ export function App() {
   if (route === SHELL_ROUTE) view = <ShellPage onLocaleChange={setLocale} />;
   else {
     const match = ROUTES.find((r) => r.name === route);
-    view = match ? <match.Component /> : <IndexPage />;
+    view = match ? <match.Component /> : <DemoCatalogPage />;
   }
+  const feature = DEMO_FEATURES.find((item) => item.href === `#/${route}`);
 
   return (
     <SettingsProvider route={route}>
       <BrumeProvider adapter={adapter} locale={locale}>
         <SwitcherBar locale={locale} onLocaleChange={setLocale} />
-        {view}
+        {feature ? <DemoGuide featureId={feature.id}>{view}</DemoGuide> : view}
         <ConfirmHost />
         <Toaster />
       </BrumeProvider>

@@ -10,6 +10,7 @@ import {
   TextInputPage,
 } from './pages/controls';
 import { DataTablePage, EmptyStatePage, PaginationPage, SkeletonPage } from './pages/data';
+import { DemoCatalogPage } from './pages/demo-catalog';
 import { FontsPage } from './pages/fonts';
 import {
   FormDialogPage,
@@ -36,6 +37,7 @@ export interface Route {
 export const SHELL_ROUTE = 'shell';
 
 export const ROUTES: Route[] = [
+  { name: 'demos', title: '功能示範目錄', Component: DemoCatalogPage },
   { name: 'button', title: 'Button', Component: ButtonPage },
   { name: 'icon-button', title: 'IconButton', Component: IconButtonPage },
   { name: 'text-input', title: 'TextInput', Component: TextInputPage },

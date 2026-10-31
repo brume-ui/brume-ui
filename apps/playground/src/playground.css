@@ -150,6 +150,73 @@ body {
   outline-offset: 2px;
 }
 
+.pg-catalog-filters {
+  align-items: end;
+}
+.pg-catalog-filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.pg-catalog-search {
+  flex: 1;
+  min-width: min(100%, 240px);
+}
+.pg-catalog-filters input,
+.pg-catalog-filters select,
+.pg-catalog-filters button {
+  box-sizing: border-box;
+  min-height: 40px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--br-border-strong);
+  border-radius: var(--br-radius-card);
+  background: var(--br-surface);
+  color: var(--br-text);
+  font: inherit;
+}
+.pg-catalog-filters :focus-visible {
+  outline: 2px solid var(--br-focus-ring);
+  outline-offset: 2px;
+}
+.pg-catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+.pg-catalog-grid li {
+  padding-bottom: 12px;
+  background: var(--br-surface);
+  border-radius: var(--br-radius-card);
+}
+.pg-catalog-grid p,
+.pg-catalog-grid small {
+  display: block;
+  margin: 4px 16px 12px;
+  color: var(--br-text-muted);
+  font-size: 13px;
+}
+.pg-guide {
+  box-sizing: border-box;
+  max-width: 1040px;
+  margin: 16px auto 0;
+  padding: 16px;
+  border-bottom: 1px solid var(--br-border);
+  font-size: 14px;
+}
+.pg-guide h2 {
+  margin: 12px 0 4px;
+  font-size: 18px;
+}
+.pg-guide h3 {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+.pg-guide p {
+  color: var(--br-text-muted);
+}
+.pg-guide a {
+  color: var(--br-accent);
+}
+
 /* Fonts comparison */
 .pg-fonts {
   display: grid;
