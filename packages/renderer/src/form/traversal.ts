@@ -292,6 +292,25 @@ export function collectValueFields(
   const byPath = new Map(pending.map(({ field }) => [field.path, field]));
   const completed = new Set<string>();
   const parentsByPath = new Map(pending.map(({ field, parents }) => [field.path, parents]));
+  // Conditions and readiness must select the same owner: a known inactive collection
+  // supersedes draft descendants, including rows absent from its authoritative snapshot.
+  const effective = (path: string): AuthorityValue => {
+    const ancestor = pending.find(
+      ({ field: candidate }) =>
+        (candidate.def.type === 'repeater' || candidate.def.type === 'relation') &&
+        path.startsWith(`${candidate.path}.`) &&
+        !resolve(candidate).active,
+    )?.field;
+    if (ancestor)
+      return {
+        known: ancestor.effectiveKnown,
+        value: getAt(ancestor.effectiveValue, path.slice(ancestor.path.length + 1)),
+      };
+    const target = byPath.get(path);
+    return target
+      ? { known: resolve(target).effectiveKnown, value: target.effectiveValue }
+      : { known: true, value: undefined };
+  };
   const resolve = (field: ValueField): ValueField => {
     if (completed.has(field.path)) return field;
     const parentFields = (parentsByPath.get(field.path) ?? []).flatMap((path) => {
@@ -305,28 +324,23 @@ export function collectValueFields(
               dependency.scope === 'root'
                 ? dependency.path
                 : joinPath(field.rowPath ?? '', dependency.path);
-            const target = byPath.get(path);
-            return target ? resolve(target) : undefined;
+            return effective(path);
           })
         : [],
     );
     field.ready =
-      parentFields.every((parent) => parent.ready) &&
-      dependencies.every((target) => target?.effectiveKnown !== false);
+      parentFields.some(
+        (parent) =>
+          (parent.def.type === 'repeater' || parent.def.type === 'relation') &&
+          !parent.active &&
+          parent.effectiveKnown,
+      ) ||
+      (parentFields.every((parent) => parent.ready) &&
+        dependencies.every((target) => target.known));
     const options = {
       getField: (path: string) =>
         byPath.get(path)?.def ?? entries.find((entry) => matches(entry.path, path))?.def,
-      getValue: (path: string) => {
-        const ancestor = pending.find(
-          ({ field: candidate }) =>
-            (candidate.def.type === 'repeater' || candidate.def.type === 'relation') &&
-            path.startsWith(`${candidate.path}.`) &&
-            !resolve(candidate).active,
-        )?.field;
-        return ancestor
-          ? getAt(ancestor.effectiveValue, path.slice(ancestor.path.length + 1))
-          : byPath.get(path)?.effectiveValue;
-      },
+      getValue: (path: string) => effective(path).value,
       isInvalid: (path: string) => {
         const target = byPath.get(path);
         return !!target && target.active && target.validationError !== null;
