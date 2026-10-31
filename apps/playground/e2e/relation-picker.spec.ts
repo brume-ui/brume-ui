@@ -62,3 +62,71 @@ test('page draft commits ordered extras after pagination and section change', as
     '[{"id":"1","quantity":"4","note":"Original"},{"id":"3"}]',
   );
 });
+
+test('remote tags, hierarchy, sibling exclusions and failed label hydration recover through retry', async ({
+  page,
+}) => {
+  await page.goto('/#/form-relations');
+  await page.getByRole('checkbox', { name: /Delay Category A/ }).uncheck();
+  const parent = page.getByRole('combobox', { name: 'Remote parent category', exact: true });
+  await expect(parent).toHaveValue('A seven');
+  await parent.click();
+  const root = page.getByRole('option', { name: 'A seven', exact: true });
+  const descendant = page.getByRole('option', { name: 'A nine', exact: true });
+  await expect(descendant).toBeVisible();
+  expect(
+    await descendant.evaluate((element) =>
+      parseFloat(getComputedStyle(element).paddingInlineStart),
+    ),
+  ).toBeGreaterThan(
+    await root.evaluate((element) => parseFloat(getComputedStyle(element).paddingInlineStart)),
+  );
+  await parent.press('Escape');
+
+  const tags = page.getByRole('combobox', {
+    name: 'Remote tag suggestions (free text)',
+    exact: true,
+  });
+  const tagField = page.locator('[data-field-layout]').filter({ has: tags });
+  await tags.fill('fixture-free-text');
+  await tags.press('Enter');
+  await expect(tagField.getByRole('button', { name: /fixture-free-text/ })).toBeVisible();
+  await tags.fill('nine');
+  await page.getByRole('option', { name: 'A nine', exact: true }).click();
+  await tags.press('Escape');
+  await expect(tagField.getByRole('button', { name: /A nine/ })).toBeVisible();
+
+  const siblings = page.getByRole('combobox', { name: 'Exclusive row product', exact: true });
+  await siblings.nth(1).click();
+  await expect(page.getByRole('option', { name: 'A eight', exact: true })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
+  await page.getByRole('option', { name: 'A nine', exact: true }).click();
+  await expect(siblings.nth(1)).toHaveValue('A nine');
+  await siblings.first().click();
+  await expect(page.getByRole('option', { name: 'A eight', exact: true })).not.toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
+  await expect(page.getByRole('option', { name: 'A nine', exact: true })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
+  await siblings.first().press('Escape');
+
+  // A dependency change makes existing ID7 hydrate under B; failures remain visible and retryable.
+  await page.getByRole('checkbox', { name: /Fail source requests/ }).check();
+  await page.getByRole('combobox', { name: 'Category', exact: true }).click();
+  await page.getByRole('option', { name: 'Category B', exact: true }).click();
+  const parentField = page.locator('[data-field-layout]').filter({ has: parent });
+  const retry = parentField.getByRole('button', { name: /Retry|重試|重试/ });
+  await expect(retry).toBeVisible();
+  await page.getByRole('checkbox', { name: /Fail source requests/ }).uncheck();
+  await retry.click();
+  await expect(parent).toHaveValue('B seven');
+  await expect(retry).toHaveCount(0);
+  await page.getByRole('button', { name: 'Reset draft', exact: true }).click();
+  await expect(parent).toHaveValue('A seven');
+  await expect(tagField.getByRole('button', { name: /fixture-free-text/ })).toHaveCount(0);
+});
