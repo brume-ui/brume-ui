@@ -79,6 +79,11 @@ describe('protocol $defs', () => {
 describe('form protocol constants', () => {
   it('names the form header and the upload parameters', () => {
     expect(FORM_HEADER).toBe('X-Brume-Form');
-    expect(UPLOAD_PARAMS).toEqual({ file: 'file', field: 'field', rowContext: 'rowContext' });
+    expect(UPLOAD_PARAMS).toEqual({
+      file: 'file',
+      field: 'field',
+      rowContext: 'rowContext',
+      ancestorSources: 'ancestorSources',
+    });
   });
 });

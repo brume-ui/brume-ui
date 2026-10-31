@@ -103,7 +103,7 @@ function resolveDependencies(
 }
 
 /** Collect by declaration AND owner instance; the same template can occur in many outer rows. */
-function resolveAncestorSources(
+export function resolveAncestorSources(
   form: FormApi,
   field: ValueField | undefined,
   chains: RowContext[],

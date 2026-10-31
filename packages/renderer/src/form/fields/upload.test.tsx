@@ -316,3 +316,92 @@ it.each(['Reset form', 'Next record'])(
     );
   },
 );
+
+it('uploads under a new picker with its declared ancestor source dependencies', async () => {
+  const requests: HttpRequest[] = [];
+  const { container } = renderWithBrume(<PickerUpload />, {
+    respond: (request) => {
+      requests.push(request);
+      return success;
+    },
+  });
+  select(container);
+  await waitFor(() => expect(requests).toHaveLength(1));
+  const body = requests[0]?.body as FormData;
+  expect(JSON.parse(body.get('rowContext') as string)).toEqual([
+    { path: 'products', key: '31', id: '31' },
+  ]);
+  expect(JSON.parse(body.get('ancestorSources') as string)).toEqual([
+    { path: 'products', rowContext: [], depends: { tenant: 'scope-a' } },
+  ]);
+});
+
+it('cancels pending nested uploads when an ancestor source dependency changes', async () => {
+  let respond!: (response: HttpResponse) => void;
+  let signal: AbortSignal | undefined;
+  const { container } = renderWithBrume(<PickerUpload />, {
+    respond: (request) => {
+      signal = request.signal;
+      return new Promise((resolve) => {
+        respond = resolve;
+      });
+    },
+  });
+  select(container);
+  expect(screen.getByTestId('pending').textContent).toBe('1');
+  fireEvent.click(screen.getByRole('button', { name: 'Change tenant' }));
+  expect(signal?.aborted).toBe(true);
+  await act(async () => respond(success));
+  expect(screen.getByTestId('picker-value').textContent).toBe('null');
+  expect(screen.getByTestId('pending').textContent).toBe('0');
+});
+
+function PickerUpload() {
+  const form = useFormState(
+    {
+      layout: 'stacked',
+      nodes: [
+        { type: 'field', field: { type: 'text', name: 'tenant', label: 'Tenant' } },
+        {
+          type: 'field',
+          field: {
+            type: 'relation',
+            name: 'products',
+            label: 'Products',
+            multiple: true,
+            remote: {
+              url: '/options/products',
+              dependsOn: { tenant: { scope: 'root', path: 'tenant' } },
+            },
+            fields: [{ type: 'field', field: { ...def, name: 'file', multiple: false } }],
+          },
+        },
+      ],
+    },
+    { tenant: 'scope-a', products: [{ id: '31', file: null }] },
+  );
+  return (
+    <>
+      <UploadField
+        def={{ ...def, name: 'file', multiple: false }}
+        value={form.getValue('products.0.file')}
+        onChange={(value) => form.setValue('products.0.file', value)}
+        onBlur={() => {}}
+        errors={{}}
+        path="products.0.file"
+        id="picker-upload"
+        invalid={false}
+        readOnly={false}
+        disabled={false}
+        form={form}
+        uploadUrl="/upload"
+        rowContext={form.getField('products.0.file')?.rowContext}
+      />
+      <button type="button" onClick={() => form.setValue('tenant', 'scope-b')}>
+        Change tenant
+      </button>
+      <output data-testid="picker-value">{JSON.stringify(form.getValue('products.0.file'))}</output>
+      <output data-testid="pending">{form.pendingUploads}</output>
+    </>
+  );
+}

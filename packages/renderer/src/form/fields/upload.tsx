@@ -18,6 +18,7 @@ import { scopeErrors } from '../errors';
 import { fieldOwnershipKey } from '../field-ownership';
 import { resolveField } from '../registry';
 import { verifiedRowContext } from '../row-identity';
+import { resolveAncestorSources } from '../use-remote-options';
 import { ReadOnlyField } from './misc';
 
 type UploadDef = Extract<FieldProps['def'], { type: 'upload' }>;
@@ -26,7 +27,13 @@ export function UploadField(props: FieldProps) {
   const accepted = useRef(props.value);
   const emitted = useRef(props.value);
   const generation = useRef(0);
-  const owner = fieldOwnershipKey(props.form, props.path, props.rowContext);
+  const ancestors = resolveAncestorSources(props.form, props.form.getField(props.path), []);
+  const owner = JSON.stringify([
+    fieldOwnershipKey(props.form, props.path, props.rowContext),
+    ancestors.values,
+    ancestors.ownership,
+    ancestors.valid,
+  ]);
   const context = useRef(owner);
   const stateId = useRef(props.form.stateId);
   const resetVersion = useRef(props.form.resetVersion);
@@ -133,6 +140,10 @@ function UploadControl(props: FieldProps<unknown, UploadDef>) {
               const context = verifiedRowContext(form, path, props.rowContext);
               if (!context) throw new Error('Invalid upload row context');
               if (context.length) body.append(UPLOAD_PARAMS.rowContext, JSON.stringify(context));
+              const ancestors = resolveAncestorSources(form, form.getField(path), []);
+              if (!ancestors.valid) throw new Error('Invalid upload ancestor context');
+              if (ancestors.values.length)
+                body.append(UPLOAD_PARAMS.ancestorSources, JSON.stringify(ancestors.values));
               const res = await adapter.request<UploadTempResponse>({
                 method: 'post',
                 url: uploadUrl ?? '',
