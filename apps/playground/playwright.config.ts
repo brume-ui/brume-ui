@@ -12,6 +12,7 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     locale: 'zh-TW',
     timezoneId: 'Asia/Taipei',
+    trace: 'on-first-retry',
   },
   expect: {
     // Strict on purpose: a site-wide font swap must fail. Loosen per screenshot only where flaky, with a reason.

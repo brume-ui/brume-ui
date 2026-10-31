@@ -52,7 +52,11 @@ export function App() {
     <SettingsProvider route={route}>
       <BrumeProvider adapter={adapter} locale={locale}>
         <SwitcherBar locale={locale} onLocaleChange={setLocale} />
-        {feature && !match?.ownsGuide ? <DemoGuide featureId={feature.id}>{view}</DemoGuide> : view}
+        {feature && route !== SHELL_ROUTE && !match?.ownsGuide ? (
+          <DemoGuide featureId={feature.id}>{view}</DemoGuide>
+        ) : (
+          view
+        )}
         <ConfirmHost />
         <Toaster />
       </BrumeProvider>

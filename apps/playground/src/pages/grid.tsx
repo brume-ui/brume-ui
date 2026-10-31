@@ -10,6 +10,7 @@ import { BrumePageView, createRegistry, RegistryProvider } from '@brume-ui/brume
 import { type GridRow, type MenuItem, SCHEMA_VERSION } from '@brume-ui/brume-schema';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useSettings } from '../settings';
+import { DemoGuide } from './demo-guide';
 import { respondForm } from './form-data';
 import {
   buildOrdersPage,
@@ -104,9 +105,11 @@ function OrdersGrid({ name, db }: { name: string; db: OrderDb }) {
           layout={{ menuPosition, accent, sidebarCollapsible: true, breadcrumbs: true }}
           logoutUrl="/admin/logout"
         >
-          <RegistryProvider registry={registry}>
-            <BrumePageView envelope={{ schemaVersion: SCHEMA_VERSION, page }} />
-          </RegistryProvider>
+          <DemoGuide featureId={name === 'grid-empty' ? 'grid.empty' : 'grid.orders'}>
+            <RegistryProvider registry={registry}>
+              <BrumePageView envelope={{ schemaVersion: SCHEMA_VERSION, page }} />
+            </RegistryProvider>
+          </DemoGuide>
         </AppShell>
       </BrumeProvider>
     </div>

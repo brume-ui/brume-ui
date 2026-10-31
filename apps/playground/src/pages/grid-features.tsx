@@ -198,7 +198,9 @@ function FocusedGrid({ id }: { id: string }) {
           body: request.body,
           status: response.status,
         });
-        setVersion((value) => value + 1);
+        // Rejected requests do not change server data. Rebuilding the page on 422 also
+        // replaces declaration identities while the cell still owns its error response.
+        if (response.status >= 200 && response.status < 300) setVersion((value) => value + 1);
         return response;
       },
     });

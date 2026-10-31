@@ -50,7 +50,9 @@ test('pointer dragging nested rows preserves their values and cannot reorder the
   ]);
   await page
     .getByRole('button', { name: /^(Reorder|排序) Groups 1$/ })
-    .dragTo(page.locator('[data-repeater-key="b"]'));
+    // The row center is inside its child repeater; drop on the parent handle
+    // so native drag targets the intended level even when guide height changes.
+    .dragTo(page.getByRole('button', { name: /^(Reorder|排序) Groups 2$/ }));
   await expect(page.getByRole('textbox', { name: 'Group name', exact: true }).first()).toHaveValue(
     'Second',
   );

@@ -13,6 +13,7 @@ import type { ListPage, MenuItem } from '@brume-ui/brume-schema';
 import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSettings } from '../settings';
+import { DemoGuide } from './demo-guide';
 
 const MENU: MenuItem[] = [
   { title: '儀表板', icon: 'layout-dashboard', url: '/admin' },
@@ -113,16 +114,18 @@ export function ShellPage({ onLocaleChange }: { onLocaleChange(locale: Locale): 
         logoutUrl="/admin/logout"
         onLocaleChange={onLocaleChange}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <Button iconStart={Plus} onClick={() => setOpen(true)}>
-              新增使用者
-            </Button>
+        <DemoGuide featureId="component.shell">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <Button iconStart={Plus} onClick={() => setOpen(true)}>
+                新增使用者
+              </Button>
+            </div>
+            <RegistryProvider registry={registry}>
+              <ListPageView page={PAGE} />
+            </RegistryProvider>
           </div>
-          <RegistryProvider registry={registry}>
-            <ListPageView page={PAGE} />
-          </RegistryProvider>
-        </div>
+        </DemoGuide>
       </AppShell>
       <Dialog
         open={open}

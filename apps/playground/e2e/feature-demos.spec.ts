@@ -2,6 +2,26 @@ import AxeBuilder from '@axe-core/playwright';
 import { FORM_EXAMPLES } from '../src/pages/form-feature-data';
 import { animationsIdle, expect, SCHEMES, storeScheme, test } from './support';
 
+// Keep native focus evidence for failures that cannot be reproduced by jsdom layout.
+test.afterEach(async ({ page }, info) => {
+  if (info.status === info.expectedStatus) return;
+  const evidence = await page.evaluate(() => ({
+    active: document.activeElement?.outerHTML,
+    invalid: Array.from(document.querySelectorAll('[aria-invalid="true"]')).map(
+      (node) => node.outerHTML,
+    ),
+    disabled: Array.from(document.querySelectorAll('button:disabled')).map(
+      (node) => node.outerHTML,
+    ),
+    message: document.querySelector('[data-testid="form-message"]')?.textContent,
+    requests: document.querySelector('[data-testid="request-count"]')?.textContent,
+  }));
+  await info.attach('focus-and-validation-state', {
+    body: JSON.stringify(evidence, null, 2),
+    contentType: 'application/json',
+  });
+});
+
 // CI only. No live trial service is a permitted target for these scenarios.
 for (const scheme of SCHEMES) {
   for (const width of [1440, 390]) {
@@ -218,7 +238,14 @@ test('focused action input can cancel, show422 and retry; mixed batches report a
   await expect(dialog.getByRole('textbox', { name: '原因', exact: true })).toHaveValue('');
   await dialog.getByRole('textbox', { name: '原因', exact: true }).fill('短');
   await dialog.getByRole('button', { name: '套用註記', exact: true }).click();
-  await expect(dialog.getByText('原因至少 3 個字。')).toBeVisible();
+  await expect(dialog.getByText('原因至少 3 個字。', { exact: true })).toBeVisible();
+  await expect(
+    dialog.getByRole('link', { name: '原因: 原因至少 3 個字。', exact: true }),
+  ).toBeVisible();
+  await expect(dialog.getByRole('textbox', { name: '原因', exact: true })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
   await dialog.getByRole('textbox', { name: '原因', exact: true }).fill('客服已確認');
   await dialog.getByRole('button', { name: '套用註記', exact: true }).click();
   await expect(dialog).toBeHidden();
@@ -272,7 +299,10 @@ test('resource page navigation saves through the existing form server and return
   await expect(page.getByRole('button', { name: '返回聚焦列表', exact: true })).toBeVisible();
   await page.getByRole('textbox', { name: '客戶', exact: true }).fill('獨立頁修改');
   await page.getByRole('button', { name: '儲存', exact: true }).click();
+  await expect(page.getByTestId('grid-records')).toContainText('獨立頁修改');
+  await expect(page.getByRole('button', { name: '儲存', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '返回聚焦列表', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await expect(page.locator('tbody tr').filter({ hasText: 'ORD-2610024' })).toContainText(
     '獨立頁修改',
   );

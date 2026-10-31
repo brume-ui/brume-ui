@@ -312,6 +312,7 @@ body {
   display: grid;
   gap: 1rem;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 .pg-contract-actions {
   display: flex;
@@ -329,6 +330,7 @@ body {
   width: 100%;
 }
 .pg-contract-lab textarea {
+  box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   background: var(--br-surface);
