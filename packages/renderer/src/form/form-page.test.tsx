@@ -79,7 +79,7 @@ it('discards only after confirmation and restores initial values', async () => {
     </>,
   );
   fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'changed' } });
-  expect(screen.getByText('● 有未儲存的變更')).toBeTruthy();
+  expect(screen.getByText('有未儲存的變更')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: '捨棄變更' }));
   await screen.findByRole('alertdialog');
   fireEvent.click(screen.getByRole('button', { name: '放棄變更' }));

@@ -36,6 +36,8 @@ export function SwitchField(props: FieldProps) {
         onBlur={onBlur}
         id={id}
         label={def.label}
+        onLabel={def.type === 'switch' ? def.onLabel : undefined}
+        offLabel={def.type === 'switch' ? def.offLabel : undefined}
         checked={value === true}
         onCheckedChange={onChange}
         disabled={disabled}

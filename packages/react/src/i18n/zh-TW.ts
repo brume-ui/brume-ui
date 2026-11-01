@@ -6,6 +6,10 @@ export const zhTW = {
   'repeater.down': '下移 {name}',
   'repeater.sort': '排序 {name}',
 
+  'relation.choose': '選擇商品…',
+  'form.errorSeparator': '：',
+  'upload.constraints': '{types} · 每個檔案上限 {size}',
+  'upload.anyType': '所有檔案格式',
   'relation.section': '分類',
   'resource.create': '新增{name}',
   'resource.retry': '重試',

@@ -7,23 +7,45 @@ export interface ActionBarProps {
   children: ReactNode;
   /** Keeps the bar in view while the page scrolls. */
   sticky?: 'top' | 'bottom';
+  formFooter?: boolean;
   'aria-label'?: string;
 }
 
 /** A raised strip of actions about the current context: the selected rows, an unsaved form. */
-export function ActionBar({ label, children, sticky, 'aria-label': ariaLabel }: ActionBarProps) {
+export function ActionBar({
+  label,
+  children,
+  sticky,
+  formFooter,
+  'aria-label': ariaLabel,
+}: ActionBarProps) {
   return (
     <section
       aria-label={ariaLabel}
       className={cn(
-        'br:flex br:flex-wrap br:items-center br:gap-2 br:rounded-card br:bg-surface br:px-4 br:py-2 br:shadow-row',
+        'br:flex br:flex-wrap br:items-center br:gap-2 br:rounded-card br:bg-surface br:px-4 br:py-3',
+        formFooter ? 'br:border-t br:border-border br:shadow-overlay' : 'br:shadow-row',
         sticky && 'br:sticky br:z-10',
         sticky === 'top' && 'br:top-0',
         sticky === 'bottom' && 'br:bottom-0',
       )}
     >
       {label != null ? (
-        <p className="br:mr-2 br:text-sm br:font-semibold br:text-text">{label}</p>
+        <p
+          className={
+            formFooter
+              ? 'br:mr-2 br:flex br:items-center br:gap-2 br:text-sm br:text-text-muted'
+              : 'br:mr-2 br:text-sm br:font-semibold br:text-text'
+          }
+        >
+          {formFooter ? (
+            <span
+              aria-hidden="true"
+              className="br:size-1.5 br:shrink-0 br:rounded-full br:bg-text-muted"
+            />
+          ) : null}
+          {label}
+        </p>
       ) : null}
       {children}
     </section>

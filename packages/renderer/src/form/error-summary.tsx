@@ -34,7 +34,8 @@ export function ErrorSummary({
                   onFocus(error.path);
                 }}
               >
-                {error.label}: {error.messages.join('、')}
+                {error.label}
+                {t('form.errorSeparator')} {error.messages.join('、')}
               </a>
             ) : (
               error.messages.join('、')

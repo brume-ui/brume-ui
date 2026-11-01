@@ -65,6 +65,12 @@ export function RelationField(props: FieldProps<unknown, RelationFieldDef>) {
       <fieldset ref={root} id={props.id} className="br:min-w-0">
         <RemoteRelationPicker
           label={props.def.label}
+          invalid={props.invalid}
+          describedBy={
+            [props.describedBy, props.errors['']?.length ? `${props.id}-error` : undefined]
+              .filter(Boolean)
+              .join(' ') || undefined
+          }
           value={value}
           multiple={props.def.multiple}
           source={source}

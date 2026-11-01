@@ -62,7 +62,7 @@ it('loads create with form header and keeps dialog for create after save', async
   await waitFor(() => expect(respond).toHaveBeenCalledTimes(3));
   expect(adapter.calls.some((c) => c.fn === 'reload')).toBe(true);
 });
-it('loads row and next encoded id, disables next at boundary', async () => {
+it('loads row and next encoded id, hides next at boundary', async () => {
   const respond = vi.fn((_req: HttpRequest) => ({
     status: 200,
     data: { schemaVersion: '0.3.0', page: { ...form, title: '編輯訂單', mode: 'edit' } },
@@ -74,9 +74,7 @@ it('loads row and next encoded id, disables next at boundary', async () => {
   fireEvent.click(screen.getByRole('button', { name: '下一筆' }));
   await waitFor(() => expect(respond).toHaveBeenCalledTimes(2));
   expect(respond.mock.calls[1]?.[0]).toMatchObject({ url: '/admin/orders/a%2Fb/edit' });
-  await waitFor(() =>
-    expect(screen.getByRole('button', { name: '下一筆' }).hasAttribute('disabled')).toBe(true),
-  );
+  await waitFor(() => expect(screen.queryByRole('button', { name: '下一筆' })).toBeNull());
 });
 it('page presentation visits without loading', () => {
   const { adapter } = renderWithBrume(

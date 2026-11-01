@@ -1,4 +1,4 @@
-import { Alert, Card, FormDivider, FormHeading } from '@brume-ui/brume-react';
+import { Alert, Card, FormDivider, FormSection } from '@brume-ui/brume-react';
 import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
 import type { CSSProperties, ReactNode } from 'react';
 import { MissingComponent } from '../../missing-component';
@@ -138,13 +138,14 @@ export function Nodes(props: NodesProps) {
                 ? `${props.sectionIdPrefix}-${encodeURIComponent(node.key)}`
                 : `${idPrefix}-section-${encodeURIComponent(node.key)}`;
               content = (
-                <section aria-labelledby={id} className="br:grid br:gap-4">
-                  <FormHeading id={id} sectionKey={node.key}>
-                    {node.title}
-                  </FormHeading>
-                  {node.description ? <p>{node.description}</p> : null}
+                <FormSection
+                  id={id}
+                  sectionKey={node.key}
+                  title={node.title}
+                  description={node.description}
+                >
                   {children(node.children)}
-                </section>
+                </FormSection>
               );
               break;
             }

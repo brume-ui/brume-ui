@@ -290,3 +290,30 @@ it('restores the original opener when closed while the next record is loading', 
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   await waitFor(() => expect(document.activeElement).toBe(opener));
 });
+
+it('hides record navigation in create mode even when callbacks exist', () => {
+  renderWithBrume(
+    <FormDialog
+      page={{ ...page, mode: 'create' }}
+      open
+      onOpenChange={() => {}}
+      onSaved={() => {}}
+      nav={{ prev: vi.fn(), next: vi.fn() }}
+    />,
+  );
+  expect(screen.queryByRole('button', { name: '上一筆' })).toBeNull();
+  expect(screen.queryByRole('button', { name: '下一筆' })).toBeNull();
+});
+it('omits unavailable navigation on edit instead of rendering disabled controls', () => {
+  renderWithBrume(
+    <FormDialog
+      page={page}
+      open
+      onOpenChange={() => {}}
+      onSaved={() => {}}
+      nav={{ next: vi.fn() }}
+    />,
+  );
+  expect(screen.queryByRole('button', { name: '上一筆' })).toBeNull();
+  expect(screen.getByRole('button', { name: '下一筆' })).toBeTruthy();
+});

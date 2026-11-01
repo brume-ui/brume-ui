@@ -8,6 +8,10 @@ export const zhCN: Record<MessageKey, string> = {
   'repeater.down': '下移 {name}',
   'repeater.sort': '排序 {name}',
 
+  'relation.choose': '选择商品…',
+  'form.errorSeparator': '：',
+  'upload.constraints': '{types} · 每个文件上限 {size}',
+  'upload.anyType': '所有文件格式',
   'relation.section': '分类',
   'resource.create': '新增{name}',
   'resource.retry': '重试',

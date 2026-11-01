@@ -208,7 +208,7 @@ export function NumberInput({
       className={cn(
         'br:tabular-nums',
         prefix &&
-          'br:h-auto br:min-w-0 br:flex-1 br:border-0 br:bg-transparent br:pl-1.5 br:focus-visible:animate-none br:focus-visible:outline-none',
+          'br:h-auto br:min-w-0 br:flex-1 br:border-0 br:bg-transparent br:pl-1.5 br:focus-visible:animate-none br:focus-visible:outline-none br:aria-invalid:focus-visible:outline-none',
         prefix ? undefined : className,
       )}
     />
@@ -222,7 +222,7 @@ export function NumberInput({
         'br:flex br:w-full br:items-stretch br:rounded-input br:pl-3',
         isInvalid ? 'br:border-danger' : CONTROL_BORDER,
         !isInvalid && !disabled && 'br:hover:border-text-muted',
-        'br:has-[input:focus-visible]:outline-solid br:has-[input:focus-visible]:outline-2 br:has-[input:focus-visible]:outline-offset-2 br:has-[input:focus-visible]:outline-focus-ring',
+        'br:has-[input:focus-visible]:outline-solid br:has-[input:focus-visible]:outline-2 br:has-[input:focus-visible]:outline-offset-2 br:has-[input:focus-visible]:outline-focus-ring br:has-[input[aria-invalid=true]:focus-visible]:outline-danger br:has-[input[aria-invalid=true]:focus-visible]:outline-offset-0',
         // Fade the disabled input itself; the prefix is ordinary text and keeps full contrast.
         className,
       )}

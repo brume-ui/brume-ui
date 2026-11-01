@@ -1,5 +1,5 @@
 import type { UploadTempResponse, UploadValue } from '@brume-ui/brume-schema';
-import { ArrowDown, ArrowUp, GripVertical, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, File, GripVertical, Upload, X } from 'lucide-react';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { cn } from '../cn';
 import { isSafeHref } from '../http';
@@ -66,6 +66,11 @@ export function UploadList({
   const { t, locale } = useBrume();
   const autoId = useId();
   const inputId = id ?? autoId;
+  const hintId = `${inputId}-constraints`;
+  const hint = t('upload.constraints', {
+    types: accept.length ? accept.join(', ') : t('upload.anyType'),
+    size: formatBytes(maxSize, locale),
+  });
   const input = useRef<HTMLInputElement>(null);
   const root = useRef<HTMLFieldSetElement>(null);
   const current = useRef(items);
@@ -190,6 +195,8 @@ export function UploadList({
     >
       <button
         type="button"
+        aria-invalid={invalid || ariaOn(aria['aria-invalid']) || undefined}
+        aria-describedby={[aria['aria-describedby'], hintId].filter(Boolean).join(' ')}
         disabled={disabled}
         onClick={() => input.current?.click()}
         onDragOver={(e) => {
@@ -203,13 +210,17 @@ export function UploadList({
           if (!dragged.current) add(Array.from(e.dataTransfer.files));
         }}
         className={cn(
-          'br:rounded-input br:border br:border-dashed br:p-6 br:text-sm br:text-text br:disabled:opacity-50',
+          'br:min-h-24 br:flex br:flex-col br:items-center br:justify-center br:gap-1 br:rounded-card br:border br:border-dashed br:px-4 br:py-3 br:text-sm br:text-text br:enabled:hover:border-accent br:enabled:hover:bg-accent-tint br:disabled:opacity-50',
           FOCUS_RING,
-          over ? 'br:border-accent br:bg-accent-tint' : 'br:border-border',
+          over ? 'br:border-accent br:bg-accent-tint' : 'br:border-border-strong',
           (invalid || ariaOn(aria['aria-invalid'])) && 'br:border-danger',
         )}
       >
-        {t('upload.drop')}
+        <Upload aria-hidden="true" className="br:size-5 br:text-text-muted" />
+        <span>{t('upload.drop')}</span>
+        <span id={hintId} className="br:text-xs br:text-text-muted">
+          {hint}
+        </span>
       </button>
       <input
         ref={input}
@@ -220,6 +231,7 @@ export function UploadList({
         disabled={disabled}
         aria-label={aria['aria-labelledby'] ? undefined : label}
         {...aria}
+        aria-describedby={[aria['aria-describedby'], hintId].filter(Boolean).join(' ')}
         aria-invalid={invalid || ariaOn(aria['aria-invalid']) || undefined}
         className="br:sr-only"
         onChange={(e) => {
@@ -262,6 +274,7 @@ export function UploadList({
               <div className="br:flex br:items-center br:gap-2">
                 {sortable ? (
                   <IconButton
+                    size="sm"
                     icon={GripVertical}
                     label={t('upload.sort', { name: item.name })}
                     disabled={disabled}
@@ -282,38 +295,40 @@ export function UploadList({
                     <img
                       src={preview}
                       alt={item.name}
-                      className="br:size-16 br:rounded-input br:object-cover"
+                      className="br:size-12 br:shrink-0 br:rounded-input br:object-cover"
                     />
                     <span className="br:sr-only">{t('link.newTab')}</span>
                   </a>
-                ) : null}
+                ) : (
+                  <File
+                    aria-hidden="true"
+                    className="br:size-12 br:shrink-0 br:p-3 br:text-text-muted"
+                  />
+                )}
                 <div className="br:min-w-0 br:flex-1">
-                  <span className="br:break-all">{item.name}</span>
+                  <span title={item.name} className="br:block br:truncate">
+                    {item.name}
+                  </span>
                   {item.size !== undefined ? (
-                    <span className="br:ml-2 br:text-text-muted">
+                    <span className="br:block br:text-xs br:text-text-muted">
                       {formatBytes(item.size, locale)}
                     </span>
                   ) : null}
                   {item.status === 'uploading' ? (
-                    <>
-                      <p role="status">{t('upload.uploading')}</p>
-                      <div
-                        role="progressbar"
-                        aria-label={t('upload.uploading')}
-                        className="br:h-1 br:bg-accent-tint"
-                      />
-                    </>
+                    <p role="status">{t('upload.uploading')}</p>
                   ) : null}
                 </div>
                 {sortable ? (
                   <>
                     <IconButton
+                      size="sm"
                       icon={ArrowUp}
                       label={t('upload.up', { name: item.name })}
                       disabled={disabled || index === 0}
                       onClick={() => move(item.key, index - 1)}
                     />
                     <IconButton
+                      size="sm"
                       icon={ArrowDown}
                       label={t('upload.down', { name: item.name })}
                       disabled={disabled || index === items.length - 1}
@@ -322,6 +337,7 @@ export function UploadList({
                   </>
                 ) : null}
                 <IconButton
+                  size="sm"
                   icon={X}
                   label={t('upload.remove', { name: item.name })}
                   disabled={disabled}
@@ -334,6 +350,15 @@ export function UploadList({
                   }}
                 />
               </div>
+              {item.status === 'uploading' ? (
+                <div
+                  role="progressbar"
+                  aria-label={t('upload.uploading')}
+                  className="br:mt-2 br:h-1 br:rounded-pill br:bg-accent-tint"
+                >
+                  <div className="br:h-full br:w-1/3 br:rounded-pill br:bg-accent" />
+                </div>
+              ) : null}
               {error ? (
                 <p id={errorId} className="br:text-danger">
                   {error}

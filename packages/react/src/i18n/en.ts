@@ -8,6 +8,10 @@ export const en: Record<MessageKey, string> = {
   'repeater.down': 'Move down {name}',
   'repeater.sort': 'Reorder {name}',
 
+  'relation.choose': 'Choose…',
+  'form.errorSeparator': ':',
+  'upload.constraints': '{types} · Up to {size} per file',
+  'upload.anyType': 'All file formats',
   'relation.section': 'Section',
   'resource.create': 'Create {name}',
   'resource.retry': 'Retry',

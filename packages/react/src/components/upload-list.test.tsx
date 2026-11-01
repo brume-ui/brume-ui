@@ -187,3 +187,10 @@ describe('UploadList', () => {
     expect(formatBytes(0, 'en')).toBe('0 B');
   });
 });
+
+it('describes allowed formats and maximum size before choosing a file', () => {
+  render(<Harness accept={['image/png', 'image/jpeg']} maxSize={2000000} />);
+  const hint = screen.getByText(/image\/png.*image\/jpeg.*2 MB/);
+  const input = document.querySelector('input[type=file]');
+  expect(input?.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id);
+});

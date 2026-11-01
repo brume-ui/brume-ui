@@ -453,7 +453,7 @@ it.each(['summary', 'imperative'] as const)(
       },
     );
     act(() => result.api().setServerErrors({ products: ['Choose products'] }));
-    const relationLink = screen.getByRole('link', { name: 'Products: Choose products' });
+    const relationLink = screen.getByRole('link', { name: 'Products： Choose products' });
     const trigger = screen.getByRole('button', { name: /Products/ });
     if (navigation === 'summary') fireEvent.click(relationLink);
     else
@@ -463,7 +463,7 @@ it.each(['summary', 'imperative'] as const)(
     expect(document.activeElement).toBe(trigger);
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     act(() => result.api().setServerErrors({ 'products.0.quantity': ['Bad quantity'] }));
-    const extraLink = screen.getByRole('link', { name: 'Quantity: Bad quantity' });
+    const extraLink = screen.getByRole('link', { name: 'Quantity： Bad quantity' });
     expect(screen.queryByLabelText('Quantity')).toBeNull();
     if (navigation === 'summary') fireEvent.click(extraLink);
     else

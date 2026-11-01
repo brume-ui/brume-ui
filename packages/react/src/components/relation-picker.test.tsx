@@ -372,3 +372,35 @@ it('exposes session-bound private sibling identities without changing them on or
   unmount();
   expect(current?.('a')).toBeUndefined();
 });
+
+it('shows a short selected-chip preview while keeping the full accessible field name', () => {
+  const { container } = render(
+    <BrumeProvider adapter={createMemoryAdapter()} locale="en">
+      <RelationPicker
+        label="Products"
+        value={[{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }]}
+        onChange={() => {}}
+        multiple
+        items={[]}
+        selectedOptions={['a', 'b', 'c', 'd'].map((value) => ({
+          value,
+          label: `Product ${value}`,
+        }))}
+        pagination={{ page: 1, perPage: 10, hasMore: false }}
+        query=""
+        loading={false}
+        onQueryChange={() => {}}
+        onPageChange={() => {}}
+        onSectionChange={() => {}}
+        onRetry={() => {}}
+      />
+    </BrumeProvider>,
+  );
+  const trigger = screen.getByRole('button', { name: /Products/ });
+  expect(trigger.textContent).toContain('Product a');
+  expect(trigger.textContent).toContain('+1');
+  expect(trigger.textContent).not.toContain('Products');
+  expect(container.querySelector('button button')).toBeNull();
+  fireEvent.click(trigger);
+  expect(screen.getByRole('textbox')).toBe(document.activeElement);
+});

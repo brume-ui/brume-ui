@@ -19,6 +19,7 @@ export const semantic = {
   'accent-tint-text': { light: '#0e6f86', dark: '#8fd8ea' },
   'text-on-accent': { light: '#ffffff', dark: '#06222b' },
   'focus-ring': { light: '#0e7490', dark: '#4cc3e0' },
+  'danger-tint': { light: '#fbeeea', dark: '#302728' },
   danger: { light: '#c2412d', dark: '#f08a76' },
   success: { light: '#166d38', dark: '#4ade80' },
   warning: { light: '#8a5a00', dark: '#e5b341' },

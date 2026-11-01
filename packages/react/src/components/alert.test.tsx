@@ -31,8 +31,10 @@ describe('Alert', () => {
     for (const tone of ['danger', 'warning', 'info', 'success'] as const) {
       rerender(<Alert tone={tone}>x</Alert>);
       expect(box().getAttribute('data-tone')).toBe(tone);
-      expect(box().className).toContain(`br:border-${tone}`);
-      expect(box().className).toContain(`br:text-${tone}`);
+      expect(box().className).toContain(
+        tone === 'danger' ? 'br:bg-danger-tint' : `br:border-${tone}`,
+      );
+      expect(box().className).toContain(tone === 'danger' ? 'br:text-text' : `br:text-${tone}`);
     }
   });
 });

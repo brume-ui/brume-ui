@@ -1,7 +1,11 @@
 import type { OptionItem, PickerSearchResponse, RelationItem } from '@brume-ui/brume-schema';
+import { ChevronDown } from 'lucide-react';
 import { type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
+import { cn } from '../cn';
 import { useBrume } from '../provider';
 import { Button } from './button';
+import { Chip } from './chip';
+import { FOCUS_RING } from './focus';
 import { TextInput } from './text-input';
 
 export interface RelationPickerProps {
@@ -18,6 +22,9 @@ export interface RelationPickerProps {
   error?: string;
   disabled?: boolean;
   label: string;
+  placeholder?: string;
+  invalid?: boolean;
+  describedBy?: string;
   onQueryChange(query: string): void;
   onPageChange(page: number): void;
   onSectionChange(section: string): void;
@@ -101,10 +108,21 @@ export function RelationPicker(props: RelationPickerProps) {
   const session = generation.current;
   return (
     <div className="br:min-w-0 br:grid br:gap-3">
-      <Button
+      <button
+        type="button"
         ref={trigger}
-        variant="secondary"
+        aria-label={`${props.label} · ${props.value.length}`}
+        aria-description={
+          props.value.length ? props.value.slice(0, 3).map(labelOf).join('、') : undefined
+        }
+        className={cn(
+          'br:flex br:min-h-10 br:w-full br:items-center br:gap-2 br:rounded-input br:border br:border-border-strong br:bg-surface br:px-3 br:py-1.5 br:text-left br:text-sm br:text-text br:enabled:hover:border-accent br:disabled:opacity-50',
+          props.invalid && 'br:border-danger',
+          FOCUS_RING,
+        )}
         disabled={props.disabled}
+        aria-invalid={props.invalid || undefined}
+        aria-describedby={props.describedBy}
         aria-expanded={draft !== null}
         aria-controls={id}
         onClick={() => {
@@ -115,11 +133,29 @@ export function RelationPicker(props: RelationPickerProps) {
           props.onOpenChange?.(true);
         }}
       >
-        {props.label} · {props.value.length}
-      </Button>
-      {!draft && props.value.length ? (
-        <ul className="br:grid br:gap-1 br:text-sm">
-          {props.value.map((item) => (
+        <span
+          aria-hidden="true"
+          className="br:min-w-0 br:flex br:flex-1 br:flex-wrap br:items-center br:gap-1"
+        >
+          {props.value.length ? (
+            <>
+              {props.value.slice(0, 3).map((item) => (
+                <Chip key={item.id} value={labelOf(item)} />
+              ))}
+              {props.value.length > 3 ? <span>+{props.value.length - 3}</span> : null}
+            </>
+          ) : (
+            <span className="br:text-text-muted">{props.placeholder ?? t('relation.choose')}</span>
+          )}
+        </span>
+        <span aria-hidden="true" className="br:shrink-0 br:text-xs br:text-text-muted">
+          {props.value.length}
+        </span>
+        <ChevronDown aria-hidden="true" className="br:size-4 br:shrink-0 br:text-text-muted" />
+      </button>
+      {!draft && props.value.length > 3 ? (
+        <ul className="br:sr-only" aria-label={props.label}>
+          {props.value.slice(3).map((item) => (
             <li key={item.id}>{labelOf(item)}</li>
           ))}
         </ul>

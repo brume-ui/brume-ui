@@ -4,7 +4,7 @@
  * its style explicitly (`outline-solid`) or it never shows.
  */
 export const FOCUS_RING =
-  'br:outline-none br:focus-visible:outline-solid br:focus-visible:outline-2 br:focus-visible:outline-offset-2 br:focus-visible:outline-focus-ring br:focus-visible:animate-[br-focus-ring_var(--br-duration-fast)_var(--br-ease-out)]';
+  'br:outline-none br:focus-visible:outline-solid br:focus-visible:outline-2 br:focus-visible:outline-offset-2 br:focus-visible:outline-focus-ring br:focus-visible:animate-[br-focus-ring_var(--br-duration-fast)_var(--br-ease-out)] br:aria-invalid:focus-visible:outline-danger br:aria-invalid:focus-visible:outline-offset-0 br:aria-invalid:focus-visible:animate-none';
 
 /** The same ring, drawn inside, for menu items that Radix highlights while the keyboard moves. */
 export const HIGHLIGHT_RING =

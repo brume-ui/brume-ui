@@ -12,7 +12,9 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
       <div className="br:min-w-0">
         <h1 className="br:text-2xl br:font-semibold br:text-text">{title}</h1>
         {description ? (
-          <p className="br:mt-1 br:text-sm br:text-text-muted">{description}</p>
+          <p className="br:mt-1 br:max-w-prose br:line-clamp-2 br:text-sm br:text-text-muted">
+            {description}
+          </p>
         ) : null}
       </div>
       {actions ? <div className="br:flex br:items-center br:gap-2">{actions}</div> : null}

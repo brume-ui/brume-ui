@@ -1,3 +1,4 @@
+import { CircleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../cn';
 import { FOCUS_RING } from './focus';
@@ -17,7 +18,7 @@ export interface AlertProps {
 }
 
 const TONES: Record<AlertTone, string> = {
-  danger: 'br:border-danger br:text-danger',
+  danger: 'br:border-transparent br:bg-danger-tint br:text-text',
   warning: 'br:border-warning br:text-warning',
   info: 'br:border-info br:text-info',
   success: 'br:border-success br:text-success',
@@ -32,13 +33,24 @@ export function Alert({ tone, title, children, role = 'alert', id, tabIndex }: A
       tabIndex={tabIndex}
       data-tone={tone}
       className={cn(
-        'br:rounded-card br:border br:bg-surface br:px-4 br:py-3 br:text-sm',
+        'br:rounded-card br:border br:px-4 br:py-3 br:text-sm',
+        tone !== 'danger' && 'br:bg-surface',
         TONES[tone],
         FOCUS_RING,
       )}
     >
-      {title ? <p className="br:font-semibold">{title}</p> : null}
-      {children}
+      <div className="br:flex br:items-start br:gap-3">
+        {tone === 'danger' ? (
+          <CircleAlert
+            aria-hidden="true"
+            className="br:mt-0.5 br:size-4 br:shrink-0 br:text-danger"
+          />
+        ) : null}
+        <div className="br:min-w-0 br:grid br:gap-1">
+          {title ? <p className="br:font-semibold">{title}</p> : null}
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

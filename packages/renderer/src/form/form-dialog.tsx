@@ -77,7 +77,14 @@ function LoadedFormDialog({
   const [after, setAfter] = useState(() => readAfterSave(page));
   const navigating = useRef(false);
   async function navigate(direction: 'prev' | 'next') {
-    if (submitting || api.submitting || navigating.current || !nav?.[direction]) return;
+    if (
+      page.mode === 'create' ||
+      submitting ||
+      api.submitting ||
+      navigating.current ||
+      !nav?.[direction]
+    )
+      return;
     navigating.current = true;
     try {
       if (
@@ -105,7 +112,7 @@ function LoadedFormDialog({
       );
     if (!event.altKey && editable) return;
     const direction = event.key === 'ArrowUp' ? 'prev' : 'next';
-    if (!nav?.[direction]) return;
+    if (page.mode === 'create' || !nav?.[direction]) return;
     event.preventDefault();
     void navigate(direction);
   }
@@ -140,18 +147,22 @@ function LoadedFormDialog({
       onKeyDown={keyDown}
       headerActions={
         <>
-          <IconButton
-            icon={ArrowUp}
-            label={t('form.prev')}
-            disabled={submitting || !nav?.prev}
-            onClick={() => void navigate('prev')}
-          />
-          <IconButton
-            icon={ArrowDown}
-            label={t('form.next')}
-            disabled={submitting || !nav?.next}
-            onClick={() => void navigate('next')}
-          />
+          {page.mode !== 'create' && nav?.prev ? (
+            <IconButton
+              icon={ArrowUp}
+              label={t('form.prev')}
+              disabled={submitting || !nav?.prev}
+              onClick={() => void navigate('prev')}
+            />
+          ) : null}
+          {page.mode !== 'create' && nav?.next ? (
+            <IconButton
+              icon={ArrowDown}
+              label={t('form.next')}
+              disabled={submitting || !nav?.next}
+              onClick={() => void navigate('next')}
+            />
+          ) : null}
         </>
       }
       footer={
