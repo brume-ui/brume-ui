@@ -432,9 +432,9 @@ Task 6：47 個原始 GAP-T6 全數有聚焦目標。28 個 lifecycle 為實際 
 
 ## UI polish public layout additions
 
-| ID | 操作／預期行為與限制 | 狀態 | target | Source evidence |
-| --- | --- | --- | --- | --- |
-| `react.FormBackLink` | 返回列表的次要操作，保留真正連結與離頁保護。 | READY | `form.page` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx` |
-| `react.FormPageContent` | 約 880px 內容欄與依儲存列高度預留的捲動空間。 | READY | `form.page` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx` |
-| `react.FormSection` | 具名段落卡片與說明。 | READY | `form.page` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/layout/nodes.tsx` |
-| `react.CompositeField` | 郵遞區號、縣市、鄉鎮與整列地址；窄容器堆疊並保留群組標籤。 | READY | `#/form-composition / memory` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:apps/playground/src/pages/custom-address.tsx` |
+| ID                      | 操作／預期行為與限制                                       | 狀態  | target                        | Source evidence                                                                                                |
+| ----------------------- | ---------------------------------------------------------- | ----- | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `react.FormBackLink`    | 返回列表的次要操作，保留真正連結與離頁保護。               | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx`     |
+| `react.FormPageContent` | 約 880px 內容欄與依儲存列高度預留的捲動空間。              | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx`     |
+| `react.FormSection`     | 具名段落卡片與說明。                                       | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/layout/nodes.tsx`  |
+| `react.CompositeField`  | 郵遞區號、縣市、鄉鎮與整列地址；窄容器堆疊並保留群組標籤。 | READY | `#/form-composition / memory` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:apps/playground/src/pages/custom-address.tsx` |

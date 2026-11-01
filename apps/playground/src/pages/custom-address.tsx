@@ -30,7 +30,7 @@ export function AddressField({
 }: FieldProps<AddressValue | undefined, CustomFieldDef>) {
   const address: AddressValue = { zipcode: '', county: '', district: '', address: '', ...value };
   const part = (key: keyof AddressValue) => (
-    <Field label={parts.find(([name]) => name === key)![1]} error={errors[key]?.[0]}>
+    <Field label={parts.find(([name]) => name === key)?.[1] ?? key} error={errors[key]?.[0]}>
       <TextInput
         id={`${id}-${key}`}
         value={address[key]}
