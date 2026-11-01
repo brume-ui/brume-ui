@@ -87,17 +87,6 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
   const second = page.locator('li[data-upload-key]').filter({ hasText: 'sample-b.png' });
   const handle = first.getByRole('button', { name: '排序 sample-a.png', exact: true });
   await expect(handle.locator('svg')).toHaveCSS('pointer-events', 'none');
-  await page.evaluate(() => {
-    const events: string[] = [];
-    Object.assign(window, { uploadDragEvents: events });
-    for (const type of ['pointerdown', 'mousedown', 'dragstart', 'dragover', 'drop', 'dragend']) {
-      document.addEventListener(
-        type,
-        (event) => events.push(`${type}:${(event.target as Element).tagName}`),
-        true,
-      );
-    }
-  });
   // Bring both rows into view before pressing: scrolling during mousedown cancels native drag.
   await second.scrollIntoViewIfNeeded();
   await handle.hover();
@@ -106,7 +95,6 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
   await second.hover();
   await second.hover();
   await page.mouse.up();
-  console.log('DRAG EVENTS', await page.evaluate(() => Reflect.get(window, 'uploadDragEvents')));
   await expect(page.locator('li[data-upload-key]').first()).toContainText('sample-b.png');
   await expect(first).toBeFocused();
 });
