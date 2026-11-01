@@ -99,9 +99,11 @@ export function RadioGroup({
                 if (changes.current === before) next.click();
               }}
               className={cn(
-                'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:bg-surface br:data-[state=checked]:border-accent br:disabled:cursor-not-allowed br:disabled:opacity-50',
+                'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:bg-surface br:disabled:cursor-not-allowed br:disabled:opacity-50',
                 'br:transition-[border-color,scale] br:duration-fast br:ease-spring br:enabled:active:scale-90 br:motion-reduce:enabled:active:scale-100',
-                isInvalid ? 'br:border-danger' : 'br:border-border-strong',
+                isInvalid
+                  ? 'br:border-danger'
+                  : 'br:border-border-strong br:data-[state=checked]:border-accent',
                 isInvalid ? INVALID_FOCUS_RING : FOCUS_RING,
               )}
             >

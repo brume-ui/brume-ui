@@ -85,29 +85,6 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
   await openPage(page, 'form', 'light');
   const first = page.locator('li[data-upload-key]').filter({ hasText: 'sample-a.png' });
   const second = page.locator('li[data-upload-key]').filter({ hasText: 'sample-b.png' });
-  await page.evaluate(() => {
-    const events: string[] = [];
-    Object.assign(window, { uploadDragEvents: events });
-    for (const type of [
-      'mousedown',
-      'pointerdown',
-      'dragstart',
-      'dragenter',
-      'dragover',
-      'drop',
-      'dragend',
-    ])
-      document.addEventListener(
-        type,
-        (event) => {
-          const target = event.target as Element;
-          events.push(
-            `${type}:${target.tagName}:${target.closest('[data-upload-key]')?.getAttribute('data-upload-key')}`,
-          );
-        },
-        true,
-      );
-  });
   const handle = first.getByRole('button', { name: '排序 sample-a.png', exact: true });
   await handle.hover();
   await page.mouse.down();
@@ -115,25 +92,6 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
   await second.hover();
   await second.hover();
   await page.mouse.up();
-  const dragEvents = await page.evaluate(() => Reflect.get(window, 'uploadDragEvents'));
-  console.log('Upload drag event trace', dragEvents);
-  if (
-    !(await page.locator('li[data-upload-key]').first().textContent())?.includes('sample-b.png')
-  ) {
-    await handle.locator('svg').evaluate((el) => {
-      (el as SVGElement).style.pointerEvents = 'none';
-    });
-    await handle.hover();
-    await page.mouse.down();
-    await second.hover();
-    await second.hover();
-    await page.mouse.up();
-    console.log(
-      'Upload drag SVG probe',
-      await page.evaluate(() => Reflect.get(window, 'uploadDragEvents')),
-    );
-  }
-
   await expect(page.locator('li[data-upload-key]').first()).toContainText('sample-b.png');
   await expect(first).toBeFocused();
 });

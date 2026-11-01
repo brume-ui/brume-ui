@@ -44,7 +44,11 @@ export function IconButton({
               className,
             )}
           >
-            <Icon aria-hidden="true" className={size === 'sm' ? 'br:size-4' : 'br:size-5'} />
+            {/* Decorative SVGs must not intercept native drag gestures on the button. */}
+            <Icon
+              aria-hidden="true"
+              className={cn('br:pointer-events-none', size === 'sm' ? 'br:size-4' : 'br:size-5')}
+            />
           </button>
         </Tooltip.Trigger>
         <Tooltip.Portal>
