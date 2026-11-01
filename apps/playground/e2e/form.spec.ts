@@ -98,6 +98,8 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
       );
     }
   });
+  // Bring both rows into view before pressing: scrolling during mousedown cancels native drag.
+  await second.scrollIntoViewIfNeeded();
   await handle.hover();
   await page.mouse.down();
   // Native dragover needs two moves; keep the real mouse gesture, not synthetic drop events.
