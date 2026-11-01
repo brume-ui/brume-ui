@@ -311,6 +311,16 @@ body {
 .pg-public-contracts {
   overflow-wrap: anywhere;
 }
+/* Explicit geometry keeps native-select font metrics from shifting the lab by a pixel. */
+.pg-public-contracts label:has(> select) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pg-public-contracts select {
+  height: 36px;
+}
 .pg-contract-lab {
   display: grid;
   gap: 1rem;

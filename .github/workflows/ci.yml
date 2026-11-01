@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      snapshot-filter:
+        description: Optional test-name regex for baseline generation only; ordinary CI always runs all tests
+        type: string
+        default: ""
       update-snapshots:
         description: Regenerate Linux screenshot baselines and commit them back to the branch
         type: boolean
@@ -23,6 +27,7 @@ jobs:
       # write is only used by explicit snapshot mode to push the new baselines
       contents: write
     env:
+      SNAPSHOT_FILTER: ${{ inputs['snapshot-filter'] || '' }}
       # Opt in via workflow_dispatch, or put [update-snapshots] in a trusted push's head commit.
       # PR commit messages never enable updates. Inspect bot PNG changes, then require normal CI.
       UPDATE_SNAPSHOTS: ${{ (github.event_name == 'workflow_dispatch' && inputs['update-snapshots'] == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[update-snapshots]')) }}
@@ -57,7 +62,12 @@ jobs:
 
       - name: E2E (update Linux snapshots)
         if: ${{ env.UPDATE_SNAPSHOTS == 'true' }}
-        run: pnpm --filter ./apps/playground exec playwright test --update-snapshots
+        run: |
+          if [ -n "$SNAPSHOT_FILTER" ]; then
+            pnpm --filter ./apps/playground exec playwright test --update-snapshots --grep "$SNAPSHOT_FILTER"
+          else
+            pnpm --filter ./apps/playground exec playwright test --update-snapshots
+          fi
 
       - name: Commit Linux snapshots
         if: ${{ env.UPDATE_SNAPSHOTS == 'true' }}
@@ -69,7 +79,7 @@ jobs:
             echo 'No snapshot changes.'
           else
             # Deliberately omit the opt-in marker so later pushes use normal assertion mode.
-            git commit -m 'test(playground): update Linux form cards, picker and upload baselines'
+            git commit -m 'test(playground): update Linux public demo native-select geometry baselines'
             git push
           fi
 
