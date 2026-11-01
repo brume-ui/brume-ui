@@ -240,7 +240,7 @@ test('focused action input can cancel, show422 and retry; mixed batches report a
   await dialog.getByRole('button', { name: '套用註記', exact: true }).click();
   await expect(dialog.getByText('原因至少 3 個字。', { exact: true })).toBeVisible();
   await expect(
-    dialog.getByRole('link', { name: '原因：原因至少 3 個字。', exact: true }),
+    dialog.getByRole('link', { name: '原因： 原因至少 3 個字。', exact: true }),
   ).toBeVisible();
   await expect(dialog.getByRole('textbox', { name: '原因', exact: true })).toHaveAttribute(
     'aria-invalid',

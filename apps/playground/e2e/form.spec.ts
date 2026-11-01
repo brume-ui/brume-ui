@@ -100,7 +100,13 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
         true,
       );
   });
-  await first.getByRole('button', { name: '排序 sample-a.png', exact: true }).dragTo(second);
+  const handle = first.getByRole('button', { name: '排序 sample-a.png', exact: true });
+  await handle.hover();
+  await page.mouse.down();
+  // Native dragover needs two moves; keep the real mouse gesture, not synthetic drop events.
+  await second.hover();
+  await second.hover();
+  await page.mouse.up();
   const dragEvents = await page.evaluate(() => Reflect.get(window, 'uploadDragEvents'));
   console.log('Upload drag event trace', dragEvents);
 
