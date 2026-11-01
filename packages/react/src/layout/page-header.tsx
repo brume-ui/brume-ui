@@ -8,16 +8,16 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <header className="br:mb-6 br:flex br:flex-wrap br:items-start br:justify-between br:gap-3">
-      <div className="br:min-w-0">
-        <h1 className="br:text-2xl br:font-semibold br:text-text">{title}</h1>
-        {description ? (
-          <p className="br:mt-1 br:max-w-prose br:line-clamp-2 br:text-sm br:text-text-muted">
-            {description}
-          </p>
-        ) : null}
-      </div>
+    <header className="br:mb-6 br:grid br:grid-cols-[minmax(0,1fr)_auto] br:items-start br:gap-x-3 br:gap-y-1">
+      <h1 className="br:min-w-0 br:self-center br:text-2xl br:font-semibold br:text-text">
+        {title}
+      </h1>
       {actions ? <div className="br:flex br:items-center br:gap-2">{actions}</div> : null}
+      {description ? (
+        <p className="br:col-span-full br:max-w-prose br:line-clamp-2 br:text-sm br:text-text-muted">
+          {description}
+        </p>
+      ) : null}
     </header>
   );
 }

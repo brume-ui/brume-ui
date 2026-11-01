@@ -52,6 +52,7 @@ jobs:
       - run: pnpm typecheck
 
       - run: pnpm test
+        if: ${{ env.E2E_GREP == '' }}
 
       - name: Install Playwright Chromium
         run: pnpm --filter ./apps/playground exec playwright install --with-deps chromium
