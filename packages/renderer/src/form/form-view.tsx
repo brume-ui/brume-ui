@@ -105,7 +105,19 @@ export const FormView = forwardRef<
         if (reveal) flushSync(reveal);
       }
     }
-    const element = error.target ? document.getElementById(error.target) : null;
+    const ownerElement = error.target ? document.getElementById(error.target) : null;
+    const childPath =
+      error.field?.def.type === 'custom' && error.path.startsWith(`${error.field.path}.`)
+        ? error.path.slice(error.field.path.length + 1)
+        : undefined;
+    // Custom composite authors opt in with a relative path; compare strings instead of
+    // interpolating server-provided paths into a selector.
+    const child = childPath
+      ? Array.from(
+          ownerElement?.querySelectorAll<HTMLElement>('[data-brume-field-part]') ?? [],
+        ).find((element) => element.dataset.brumeFieldPart === childPath)
+      : undefined;
+    const element = child ?? ownerElement;
     const focusable = element?.matches(
       'input:not([type=hidden]),textarea,select,button,a[href],[tabindex]',
     )

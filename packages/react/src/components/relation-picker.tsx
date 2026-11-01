@@ -112,9 +112,6 @@ export function RelationPicker(props: RelationPickerProps) {
         type="button"
         ref={trigger}
         aria-label={`${props.label} · ${props.value.length}`}
-        aria-description={
-          props.value.length ? props.value.slice(0, 3).map(labelOf).join('、') : undefined
-        }
         className={cn(
           'br:flex br:min-h-10 br:w-full br:items-center br:gap-2 br:rounded-input br:border br:border-border-strong br:bg-surface br:px-3 br:py-1.5 br:text-left br:text-sm br:text-text br:enabled:hover:border-accent br:disabled:opacity-50',
           props.invalid && 'br:border-danger',
@@ -122,7 +119,11 @@ export function RelationPicker(props: RelationPickerProps) {
         )}
         disabled={props.disabled}
         aria-invalid={props.invalid || undefined}
-        aria-describedby={props.describedBy}
+        aria-describedby={
+          [props.value.length ? `${id}-selected` : undefined, props.describedBy]
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
         aria-expanded={draft !== null}
         aria-controls={id}
         onClick={() => {
@@ -153,6 +154,12 @@ export function RelationPicker(props: RelationPickerProps) {
         </span>
         <ChevronDown aria-hidden="true" className="br:size-4 br:shrink-0 br:text-text-muted" />
       </button>
+      {props.value.length ? (
+        <span
+          id={`${id}-selected`}
+          className="br:sr-only"
+        >{`${props.label}: ${props.value.slice(0, 3).map(labelOf).join('、')}`}</span>
+      ) : null}
       {!draft && props.value.length > 3 ? (
         <ul className="br:sr-only" aria-label={props.label}>
           {props.value.slice(3).map((item) => (

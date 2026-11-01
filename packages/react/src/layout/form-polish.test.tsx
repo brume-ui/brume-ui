@@ -18,6 +18,11 @@ it('keeps page actions inside the bounded content column with reserved clearance
   );
   expect(container.querySelector('[data-form-action-clearance]')).not.toBeNull();
   expect(
+    (container.querySelector('[data-form-content]') as HTMLElement).style.getPropertyValue(
+      '--br-form-footer-clearance',
+    ),
+  ).toBe('120px');
+  expect(
     screen.getByRole('button', { name: 'Save' }).closest('[data-form-content]'),
   ).not.toBeNull();
 });

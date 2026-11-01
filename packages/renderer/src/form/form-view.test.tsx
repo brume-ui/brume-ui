@@ -4,6 +4,7 @@ import axe from 'axe-core';
 import { createRef, type Ref } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import fixture from '../../../schema/fixtures/valid/form-full.json';
+import { createRegistry } from '../registry';
 import { renderWithBrume } from '../test-utils';
 import { FormView, type FormViewHandle, sectionErrorKeys } from './form-view';
 import { type FormApi, useFormState } from './use-form-state';
@@ -479,3 +480,42 @@ it.each(['summary', 'imperative'] as const)(
     expect(document.activeElement).toBe(quantity);
   },
 );
+
+it('targets an explicitly registered custom child and falls back for unknown parts', () => {
+  const registry = createRegistry({
+    mode: 'vite',
+    fields: {
+      // biome-ignore lint/correctness/noComponentHookFactories: a single stable registry for this mounted harness.
+      Address: ({ id }) => (
+        <fieldset id={id}>
+          <input aria-label="Zip" data-brume-field-part="zipcode" />
+          <input aria-label="Street" data-brume-field-part="address" />
+        </fieldset>
+      ),
+    },
+  });
+  const result = setup(
+    {
+      layout: 'stacked',
+      nodes: [
+        {
+          type: 'field',
+          field: {
+            type: 'custom',
+            name: 'address',
+            label: 'Address',
+            component: { type: 'component', name: 'Address' },
+          },
+        },
+      ],
+    },
+    {},
+    { registry },
+  );
+  act(() => result.api().setServerErrors({ 'address.address': ['Street required'] }));
+  act(() => result.ref.current?.focusFirstError());
+  expect(document.activeElement).toBe(screen.getByLabelText('Street'));
+  act(() => result.api().setServerErrors({ 'address.unknown': ['Check address'] }));
+  act(() => result.ref.current?.focusFirstError());
+  expect(document.activeElement).toBe(screen.getByLabelText('Zip'));
+});

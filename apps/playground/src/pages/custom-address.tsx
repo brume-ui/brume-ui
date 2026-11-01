@@ -33,6 +33,7 @@ export function AddressField({
     <Field label={parts.find(([name]) => name === key)?.[1] ?? key} error={errors[key]?.[0]}>
       <TextInput
         id={`${id}-${key}`}
+        data-brume-field-part={key}
         value={address[key]}
         readOnly={readOnly}
         onBlur={onBlur}

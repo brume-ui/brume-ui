@@ -404,3 +404,35 @@ it('shows a short selected-chip preview while keeping the full accessible field 
   fireEvent.click(trigger);
   expect(screen.getByRole('textbox')).toBe(document.activeElement);
 });
+
+it('keeps selected identities and validation in the accessible description', () => {
+  render(
+    <BrumeProvider adapter={createMemoryAdapter()} locale="en">
+      <p id="picker-error">Choose another product</p>
+      <RelationPicker
+        label="Products"
+        value={[{ id: 'gone' }]}
+        onChange={() => {}}
+        items={[]}
+        loading={false}
+        query=""
+        onQueryChange={() => {}}
+        onPageChange={() => {}}
+        onRetry={() => {}}
+        invalid
+        describedBy="picker-error"
+        multiple
+        pagination={{ page: 1, perPage: 20, hasMore: false }}
+        onSectionChange={() => {}}
+      />
+    </BrumeProvider>,
+  );
+  const trigger = screen.getByRole('button', { name: 'Products · 1' });
+  const description = trigger
+    .getAttribute('aria-describedby')
+    ?.split(' ')
+    .map((id) => document.getElementById(id)?.textContent)
+    .join(' ');
+  expect(description).toContain('Unavailable: gone');
+  expect(description).toContain('Choose another product');
+});

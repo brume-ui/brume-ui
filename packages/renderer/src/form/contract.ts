@@ -10,6 +10,8 @@ export interface FieldProps<V = unknown, D extends FieldDef = FieldDef> {
   onBlur(): void;
   errors: FieldErrors;
   path: string;
+  /** Root control/group ID. Custom composites may mark a child control with
+   * data-brume-field-part="relative.path" to route that child's error-summary link. */
   id: string;
   describedBy?: string;
   invalid: boolean;

@@ -22,3 +22,7 @@ export const CONTROL_BASE = `br:rounded-input br:px-3 ${CONTROL_SKIN}`;
 
 /** Resting border of text-like controls; hover darkens it a step. */
 export const CONTROL_BORDER = 'br:border-border-strong br:enabled:hover:border-text-muted';
+
+/** Invalid grouped controls derive visual focus from their group's validation state. */
+export const INVALID_FOCUS_RING =
+  'br:outline-none br:focus-visible:outline-solid br:focus-visible:outline-2 br:focus-visible:outline-offset-0 br:focus-visible:outline-danger br:focus-visible:animate-none';

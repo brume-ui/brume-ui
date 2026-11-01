@@ -3,7 +3,7 @@ import * as RadixRadioGroup from '@radix-ui/react-radio-group';
 import { useId, useRef } from 'react';
 import { cn } from '../cn';
 import { ariaOn, type FieldControlProps } from './field';
-import { FOCUS_RING } from './focus';
+import { FOCUS_RING, INVALID_FOCUS_RING } from './focus';
 
 export interface RadioGroupProps extends FieldControlProps {
   options: Option[];
@@ -102,7 +102,7 @@ export function RadioGroup({
                 'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:bg-surface br:data-[state=checked]:border-accent br:disabled:cursor-not-allowed br:disabled:opacity-50',
                 'br:transition-[border-color,scale] br:duration-fast br:ease-spring br:enabled:active:scale-90 br:motion-reduce:enabled:active:scale-100',
                 isInvalid ? 'br:border-danger' : 'br:border-border-strong',
-                FOCUS_RING,
+                isInvalid ? INVALID_FOCUS_RING : FOCUS_RING,
               )}
             >
               {/* Always mounted so the dot can grow in and shrink out. */}

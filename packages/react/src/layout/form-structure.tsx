@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
+  type CSSProperties,
   type MouseEventHandler,
   type ReactNode,
   useLayoutEffect,
@@ -130,7 +131,11 @@ export function FormPageContent({
     return () => observer.disconnect();
   }, []);
   return (
-    <div data-form-content="" className="br:min-w-0 br:w-full br:max-w-[880px] br:flex-1">
+    <div
+      data-form-content=""
+      className="br:min-w-0 br:w-full br:max-w-[880px] br:flex-1"
+      style={{ '--br-form-footer-clearance': `${height + 24}px` } as CSSProperties}
+    >
       <div data-form-action-clearance="" style={{ paddingBottom: height + 24 }}>
         {children}
       </div>
@@ -145,7 +150,7 @@ export function FormBackLink(props: Omit<AnchorHTMLAttributes<HTMLAnchorElement>
   return (
     <a {...props} className={buttonClasses('ghost')}>
       <ArrowLeft aria-hidden="true" className="br:size-4" />
-      {props.children}
+      <span>{props.children}</span>
     </a>
   );
 }

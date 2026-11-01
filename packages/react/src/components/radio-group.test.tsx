@@ -129,3 +129,11 @@ describe('RadioGroup', () => {
     expect(onChange).toHaveBeenCalledWith('published');
   });
 });
+
+it('uses only danger focus styling on invalid radio items', () => {
+  render(<RadioGroup label="Status" options={options} value="" onChange={() => {}} invalid />);
+  for (const item of screen.getAllByRole('radio')) {
+    expect(item.className).toContain('br:focus-visible:outline-danger');
+    expect(item.className).not.toContain('br:focus-visible:outline-focus-ring');
+  }
+});

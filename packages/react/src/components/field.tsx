@@ -80,7 +80,7 @@ export function Field({ label, description, error, required, group, children }: 
     <div
       data-field-layout={layout}
       className={cn(
-        'br:grid br:grid-cols-1 br:gap-x-4 br:gap-y-1.5 br:scroll-m-2',
+        'br:grid br:grid-cols-1 br:gap-x-4 br:gap-y-1.5 br:scroll-m-2 br:scroll-mb-[var(--br-form-footer-clearance,8px)]',
         layout === 'horizontal' &&
           'br:@min-[480px]:grid-cols-[8rem_1fr] br:@min-[480px]:[&>label]:text-right br:@min-[480px]:[&>span]:text-right',
       )}
