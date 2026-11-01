@@ -40,7 +40,8 @@ for (const scheme of SCHEMES) {
           'aria-valuenow',
           '80',
         );
-        await page.goto('/#/public-contracts?example=react.LinkButton');
+        await page.getByRole('combobox', { name: '聚焦功能' }).click();
+        await page.getByRole('option', { name: /^react\.LinkButton ·/ }).click();
         await page.getByRole('button', { name: '開啟明細' }).focus();
         await page.keyboard.press('Enter');
         await expect(page.getByRole('region', { name: '頁內明細' })).toBeVisible();
