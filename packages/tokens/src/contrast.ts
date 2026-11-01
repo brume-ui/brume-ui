@@ -112,6 +112,10 @@ export const contrastPairs: ContrastPair[] = [
   text('text', 'accent-tint'),
   text('text-muted', 'accent-tint'),
   ui('accent', 'accent-tint'),
+  // Upload hover/drag uses the CSS-derived tint, as well as its legacy fallback above.
+  { fg: 'text', bg: 'surface', min: 4.5, bgMix: { token: 'accent', percent: 12 } },
+  { fg: 'text-muted', bg: 'surface', min: 4.5, bgMix: { token: 'accent', percent: 12 } },
+  { fg: 'accent', bg: 'surface', min: 3, bgMix: { token: 'accent', percent: 12 } },
   // Badge tones.
   tinted('success'),
   tinted('warning'),

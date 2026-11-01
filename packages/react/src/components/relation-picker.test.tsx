@@ -427,12 +427,13 @@ it('keeps selected identities and validation in the accessible description', () 
       />
     </BrumeProvider>,
   );
-  const trigger = screen.getByRole('button', { name: 'Products · 1' });
+  const trigger = screen.getByRole('button', { name: /Products ·/ });
   const description = trigger
     .getAttribute('aria-describedby')
     ?.split(' ')
     .map((id) => document.getElementById(id)?.textContent)
     .join(' ');
+  expect(trigger.getAttribute('aria-label')).toContain('Unavailable: gone');
   expect(description).toContain('Unavailable: gone');
   expect(description).toContain('Choose another product');
 });
