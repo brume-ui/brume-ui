@@ -1,6 +1,6 @@
 import type { OptionItem, PickerSearchResponse, RelationItem } from '@brume-ui/brume-schema';
 import { ChevronDown } from 'lucide-react';
-import { type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
 import { Button } from './button';
@@ -147,14 +147,16 @@ export function RelationPicker(props: RelationPickerProps) {
           {props.value.length ? (
             <>
               {props.value.slice(0, 3).map((item) => (
-                <Chip key={item.id} value={labelOf(item)} />
+                <Fragment key={item.id}>
+                  <Chip value={labelOf(item)} />{' '}
+                </Fragment>
               ))}
               {props.value.length > 3 ? <span>+{props.value.length - 3}</span> : null}
             </>
           ) : (
             <span className="br:text-text-muted">{props.placeholder ?? t('relation.choose')}</span>
           )}
-        </span>
+        </span>{' '}
         <span aria-hidden="true" className="br:shrink-0 br:text-xs br:text-text-muted">
           {props.value.length}
         </span>

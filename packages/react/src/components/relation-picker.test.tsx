@@ -433,6 +433,7 @@ it('keeps selected identities and validation in the accessible description', () 
     ?.split(' ')
     .map((id) => document.getElementById(id)?.textContent)
     .join(' ');
+  expect(trigger.textContent?.replace(/\s+/g, ' ')).toContain('Unavailable: gone 1');
   expect(trigger.getAttribute('aria-label')).toContain('Unavailable: gone');
   expect(description).toContain('Unavailable: gone');
   expect(description).toContain('Choose another product');
