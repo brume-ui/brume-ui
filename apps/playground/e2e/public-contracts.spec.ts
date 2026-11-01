@@ -41,6 +41,7 @@ for (const scheme of SCHEMES) {
           '80',
         );
         await page.getByRole('combobox', { name: '聚焦功能' }).click();
+        await expect(page.getByRole('listbox')).toBeInViewport({ ratio: 1 });
         await page.getByRole('option', { name: /^react\.LinkButton ·/ }).click();
         await page.getByRole('button', { name: '開啟明細' }).focus();
         await page.keyboard.press('Enter');

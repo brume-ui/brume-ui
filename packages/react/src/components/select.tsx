@@ -95,11 +95,11 @@ function SelectContent({ options }: { options: SelectOption[] }) {
       position="popper"
       sideOffset={4}
       className={cn(
-        'br:z-50 br:min-w-(--radix-select-trigger-width) br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay br:[--br-origin:var(--radix-select-content-transform-origin)]',
+        'br:z-50 br:max-h-(--radix-select-content-available-height) br:overflow-hidden br:min-w-(--radix-select-trigger-width) br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay br:[--br-origin:var(--radix-select-content-transform-origin)]',
         POPOVER_MOTION,
       )}
     >
-      <RadixSelect.Viewport ref={highlight.ref}>
+      <RadixSelect.Viewport ref={highlight.ref} className="br:min-h-0">
         <HighlightIndicator state={highlight} />
         {options.map((o) => (
           <RadixSelect.Item
