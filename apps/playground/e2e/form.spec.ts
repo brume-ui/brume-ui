@@ -91,7 +91,11 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
     const events: string[] = [];
     Object.assign(window, { uploadDragEvents: events });
     for (const type of ['pointerdown', 'mousedown', 'dragstart', 'dragover', 'drop', 'dragend']) {
-      document.addEventListener(type, event => events.push(`${type}:${(event.target as Element).tagName}`), true);
+      document.addEventListener(
+        type,
+        (event) => events.push(`${type}:${(event.target as Element).tagName}`),
+        true,
+      );
     }
   });
   await handle.hover();
