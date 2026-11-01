@@ -194,3 +194,8 @@ it('describes allowed formats and maximum size before choosing a file', () => {
   const input = document.querySelector('input[type=file]');
   expect(input?.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id);
 });
+
+it('keeps an explicit file-input name when its external group caption is scrolled away', () => {
+  const { container } = render(<Harness aria-labelledby="upload-caption" />);
+  expect(container.querySelector('input[type=file]')?.getAttribute('aria-label')).toBe('圖片');
+});

@@ -52,7 +52,7 @@ for (const viewport of VIEWPORTS) {
       test(`form page dirty save bar ${scheme}`, async ({ page }) => {
         await openPage(page, 'form-page', scheme);
         await page.getByRole('textbox', { name: '標題', exact: true }).fill('夏季訂單');
-        await expect(page.getByText('● 有未儲存的變更', { exact: true })).toBeVisible();
+        await expect(page.getByText('有未儲存的變更', { exact: true })).toBeVisible();
         await animationsIdle(page);
         await expectNoViolations(page);
       });

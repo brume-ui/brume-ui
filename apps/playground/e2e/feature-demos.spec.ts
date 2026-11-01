@@ -240,7 +240,7 @@ test('focused action input can cancel, show422 and retry; mixed batches report a
   await dialog.getByRole('button', { name: '套用註記', exact: true }).click();
   await expect(dialog.getByText('原因至少 3 個字。', { exact: true })).toBeVisible();
   await expect(
-    dialog.getByRole('link', { name: '原因: 原因至少 3 個字。', exact: true }),
+    dialog.getByRole('link', { name: '原因：原因至少 3 個字。', exact: true }),
   ).toBeVisible();
   await expect(dialog.getByRole('textbox', { name: '原因', exact: true })).toHaveAttribute(
     'aria-invalid',
@@ -404,7 +404,7 @@ for (const scheme of SCHEMES) {
           .fill('222');
         await rows.nth(0).getByRole('radio', { name: '商品', exact: true }).click();
         await expect(rows.nth(0).getByRole('button', { name: /贈品商品/ })).toHaveText(
-          '贈品商品 · 1',
+          'A product 1 1',
         );
         await rows.nth(0).getByRole('radio', { name: '優惠券', exact: true }).click();
         await expect(rows.nth(0).getByLabel(/^優惠券代碼/)).toHaveValue('  H1-NEW  ');

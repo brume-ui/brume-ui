@@ -85,7 +85,25 @@ test('upload drag reorder keeps the same item identities', async ({ page }) => {
   await openPage(page, 'form', 'light');
   const first = page.locator('li[data-upload-key]').filter({ hasText: 'sample-a.png' });
   const second = page.locator('li[data-upload-key]').filter({ hasText: 'sample-b.png' });
+  await page.evaluate(() => {
+    const events: string[] = [];
+    Object.assign(window, { uploadDragEvents: events });
+    for (const type of ['dragstart', 'dragenter', 'dragover', 'drop', 'dragend'])
+      document.addEventListener(
+        type,
+        (event) => {
+          const target = event.target as Element;
+          events.push(
+            `${type}:${target.tagName}:${target.closest('[data-upload-key]')?.getAttribute('data-upload-key')}`,
+          );
+        },
+        true,
+      );
+  });
   await first.getByRole('button', { name: '排序 sample-a.png', exact: true }).dragTo(second);
+  const dragEvents = await page.evaluate(() => Reflect.get(window, 'uploadDragEvents'));
+  console.log('Upload drag event trace', dragEvents);
+
   await expect(page.locator('li[data-upload-key]').first()).toContainText('sample-b.png');
   await expect(first).toBeFocused();
 });

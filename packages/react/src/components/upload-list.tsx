@@ -229,7 +229,7 @@ export function UploadList({
         accept={accept.join(',')}
         multiple={multiple}
         disabled={disabled}
-        aria-label={aria['aria-labelledby'] ? undefined : label}
+        aria-label={label}
         {...aria}
         aria-describedby={[aria['aria-describedby'], hintId].filter(Boolean).join(' ')}
         aria-invalid={invalid || ariaOn(aria['aria-invalid']) || undefined}

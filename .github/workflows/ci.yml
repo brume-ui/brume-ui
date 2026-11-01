@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      e2e-grep:
+        description: Diagnostic browser subset only; never commits snapshot baselines
+        type: string
+        default: ""
       update-snapshots:
         description: Regenerate Linux screenshot baselines and commit them back to the branch
         type: boolean
@@ -23,6 +27,7 @@ jobs:
       # write is only used by explicit snapshot mode to push the new baselines
       contents: write
     env:
+      E2E_GREP: ${{ inputs['e2e-grep'] || '' }}
       # Opt in via workflow_dispatch, or put [update-snapshots] in a trusted push's head commit.
       # PR commit messages never enable updates. Inspect bot PNG changes, then require normal CI.
       UPDATE_SNAPSHOTS: ${{ (github.event_name == 'workflow_dispatch' && inputs['update-snapshots'] == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[update-snapshots]')) }}
@@ -51,16 +56,20 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm --filter ./apps/playground exec playwright install --with-deps chromium
 
+      - name: Focused browser diagnostics (not acceptance)
+        if: ${{ env.E2E_GREP != '' }}
+        run: pnpm --filter ./apps/playground exec playwright test --grep "$E2E_GREP" --update-snapshots
+
       - name: E2E
-        if: ${{ env.UPDATE_SNAPSHOTS != 'true' }}
+        if: ${{ env.UPDATE_SNAPSHOTS != 'true' && env.E2E_GREP == '' }}
         run: pnpm test:e2e
 
       - name: E2E (update Linux snapshots)
-        if: ${{ env.UPDATE_SNAPSHOTS == 'true' }}
+        if: ${{ env.UPDATE_SNAPSHOTS == 'true' && env.E2E_GREP == '' }}
         run: pnpm --filter ./apps/playground exec playwright test --update-snapshots
 
       - name: Commit Linux snapshots
-        if: ${{ env.UPDATE_SNAPSHOTS == 'true' }}
+        if: ${{ env.UPDATE_SNAPSHOTS == 'true' && env.E2E_GREP == '' }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -69,7 +78,7 @@ jobs:
             echo 'No snapshot changes.'
           else
             # Deliberately omit the opt-in marker so later pushes use normal assertion mode.
-            git commit -m 'test(playground): update Linux screenshot baselines'
+            git commit -m 'test(playground): update Linux form cards, picker and upload baselines'
             git push
           fi
 
