@@ -8,7 +8,7 @@
 
 來源格式 `brume-ui:path#symbol`／`brume-laravel:path#symbol` 明確標示 repository；PHP 來源指向成對 sibling 的相對路徑，不要求 UI-only CI 有 sibling。根層 catalog 保留所有舊 route，新增 `#/demos` 為相同目錄別名；未知路由回目錄。catalog 包含 memory/visual/contract 情境；Task 5 的兩個 database 入口連到獨立 Laravel workbench http://127.0.0.1:8100/admin/compositions，需後端啟動及先套用 README 的窄範圍升級。
 
-盤點列數：336；GAP-T2 0，GAP-T3 0，GAP-T4 0，GAP-T5 0，GAP-T6 0，READY 336。catalog 情境：249。
+盤點列數：340；GAP-T2 0，GAP-T3 0，GAP-T4 0，GAP-T5 0，GAP-T6 0，READY 340。catalog 情境：249。
 
 ## 既有可用情境
 
@@ -428,3 +428,13 @@ Task 3 聚焦入口：`grid.focused` → `#/grid-features`（memory）；79 個�
 | `component.public-contracts` | 由聚焦選單選取公開元件、renderer 或契約；操作與來源證據逐項呈現。 | READY | `#/public-contracts / contract` | `brume-ui:apps/playground/src/pages/public-contracts.tsx` |
 
 Task 6：47 個原始 GAP-T6 全數有聚焦目標。28 個 lifecycle 為實際 PHP 測試契約說明，包含 fixture、結果、精確 test 名稱與隔離命令；不宣稱瀏覽器執行交易／鎖定／cleanup。19 個公開 API／樣式項目提供實驗或明確 host/來源契約；LinkButton 為頁內 button，修飾點擊由 Link 展示。額外新增公開契約總入口 1 列，未刪除原始 335 列。READY 表示已有目標與證據；不等於 MySQL／遠端瀏覽器／正式交付驗收完成。PostgreSQL 未驗證，S4 繼續暫停。
+
+
+## UI polish public layout additions
+
+| ID | 操作／預期行為與限制 | 狀態 | target | Source evidence |
+| --- | --- | --- | --- | --- |
+| `react.FormBackLink` | 返回列表的次要操作，保留真正連結與離頁保護。 | READY | `form.page` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx` |
+| `react.FormPageContent` | 約 880px 內容欄與依儲存列高度預留的捲動空間。 | READY | `form.page` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx` |
+| `react.FormSection` | 具名段落卡片與說明。 | READY | `form.page` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/layout/nodes.tsx` |
+| `react.CompositeField` | 郵遞區號、縣市、鄉鎮與整列地址；窄容器堆疊並保留群組標籤。 | READY | `#/form-composition / memory` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:apps/playground/src/pages/custom-address.tsx` |

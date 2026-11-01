@@ -16,6 +16,7 @@ export const compositionForm: FormDef = {
       type: 'custom',
       name: 'address',
       label: 'Delivery address',
+      span: 'full',
       component: { type: 'component', name: 'TaiwanAddress' },
     }),
     field({ type: 'switch', name: 'delivery', label: 'Delivery required' }),

@@ -25,6 +25,7 @@ const form: FormDef = {
               name: 'address',
               label: 'Delivery address',
               span: 'full',
+              span: 'full',
               component: { type: 'component', name: 'TaiwanAddress', props: { zipcode: '100' } },
             },
           },

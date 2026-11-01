@@ -10,6 +10,7 @@ export const address: CustomFieldDef = {
   type: 'custom',
   name: 'address',
   label: '地址',
+  span: 'full',
   component: { type: 'component', name: 'TaiwanAddress' },
 };
 export const upload: FieldDef = {
