@@ -78,9 +78,9 @@ it('switches the actual Field context without replacing its editable value', () 
   show('react.FieldLayoutContext');
   fireEvent.change(screen.getByLabelText('地點'), { target: { value: '新竹' } });
   fireEvent.change(screen.getByLabelText('欄位版型'), { target: { value: 'horizontal' } });
-  expect(document.querySelector('[data-field-layout]')?.getAttribute('data-field-layout')).toBe(
-    'horizontal',
-  );
+  expect(
+    screen.getByLabelText('地點').closest('[data-field-layout]')?.getAttribute('data-field-layout'),
+  ).toBe('horizontal');
   expect((screen.getByLabelText('地點') as HTMLInputElement).value).toBe('新竹');
 });
 it('keeps nested provider requests and locales independently observable', async () => {

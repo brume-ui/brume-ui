@@ -51,10 +51,11 @@ for (const scheme of SCHEMES) {
         await expect(page.getByLabel('外層記錄')).toHaveText('[]');
         await page.goto('/#/public-contracts?example=react.FieldLayoutContext');
         await page.getByRole('combobox', { name: '欄位版型' }).selectOption('horizontal');
-        await expect(page.locator('[data-field-layout]')).toHaveAttribute(
-          'data-field-layout',
-          'horizontal',
-        );
+        await expect(
+          page
+            .locator('[data-field-layout]')
+            .filter({ has: page.getByRole('textbox', { name: '地點' }) }),
+        ).toHaveAttribute('data-field-layout', 'horizontal');
         await page.getByRole('textbox', { name: '地點' }).fill('新竹');
         await expect(page.getByRole('textbox', { name: '地點' })).toHaveValue('新竹');
         await animationsIdle(page);
