@@ -17,7 +17,9 @@ for (const scheme of SCHEMES) {
         )) {
           await page.goto(`/#/public-contracts?example=${example.id}`);
           await expect(page.getByTestId('pg-public-contracts')).toBeVisible();
-          await expect(page.getByRole('combobox', { name: '聚焦功能' })).toHaveValue(example.id);
+          await expect(page.getByRole('combobox', { name: '聚焦功能' })).toHaveText(
+            `${example.id} · ${example.title}`,
+          );
           await animationsIdle(page);
           expect((await new AxeBuilder({ page }).analyze()).violations, example.id).toEqual([]);
           expect(

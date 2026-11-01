@@ -10,6 +10,7 @@ import {
   Link,
   LinkButton,
   ProgressBar,
+  Select,
   StaticValue,
   TextInput,
   useBrume,
@@ -827,21 +828,18 @@ export function PublicContractsPage() {
         title="公開元件與契約實驗"
         lead="以真實公開 API 操作前端；後端契約以實際來源測試重現。"
       >
-        <label>
-          聚焦功能
-          <select
+        <Field label="聚焦功能">
+          <Select
             value={id}
-            onChange={(event) => {
-              window.location.hash = `#/public-contracts?example=${event.target.value}`;
+            onValueChange={(value) => {
+              window.location.hash = `#/public-contracts?example=${value}`;
             }}
-          >
-            {CLOSURE_EXAMPLES.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.id} · {item.title}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={CLOSURE_EXAMPLES.map((item) => ({
+              value: item.id,
+              label: `${item.id} · ${item.title}`,
+            }))}
+          />
+        </Field>
         <Section title={example.title}>
           <p>
             <strong>輸入／操作：</strong>
