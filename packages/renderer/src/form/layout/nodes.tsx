@@ -13,6 +13,8 @@ import { Stacked } from './stacked';
 export function isLongField(def: FieldDef): boolean {
   return (
     def.span === 'full' ||
+    // More than four inline choices need the whole row to stay on one line.
+    (def.type === 'radio' && Array.isArray(def.options) && def.options.length > 4) ||
     [
       'textarea',
       'tags',

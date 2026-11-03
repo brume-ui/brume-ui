@@ -59,14 +59,14 @@ export function RadioGroup({
       name={name}
       disabled={disabled}
       className={cn(
-        'br:flex br:gap-x-5 br:gap-y-2',
+        'br:flex br:gap-x-4 br:gap-y-2',
         orientation === 'horizontal' ? 'br:flex-row br:flex-wrap' : 'br:flex-col',
       )}
     >
       {options.map((o, i) => {
         const itemId = `${baseId}-${i}`;
         return (
-          <div key={o.value} className="br:inline-flex br:items-center br:gap-2">
+          <div key={o.value} className="br:inline-flex br:items-center br:gap-1.5">
             <RadixRadioGroup.Item
               id={itemId}
               value={o.value}
@@ -99,7 +99,7 @@ export function RadioGroup({
                 if (changes.current === before) next.click();
               }}
               className={cn(
-                'br:group br:flex br:size-5 br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:bg-surface br:disabled:cursor-not-allowed br:disabled:opacity-50',
+                'br:group br:flex br:size-[18px] br:shrink-0 br:items-center br:justify-center br:rounded-full br:border br:bg-surface br:disabled:cursor-not-allowed br:disabled:opacity-50',
                 'br:transition-[border-color,scale] br:duration-fast br:ease-spring br:enabled:active:scale-90 br:motion-reduce:enabled:active:scale-100',
                 isInvalid
                   ? 'br:border-danger'
@@ -110,7 +110,7 @@ export function RadioGroup({
               {/* Always mounted so the dot can grow in and shrink out. */}
               <RadixRadioGroup.Indicator
                 forceMount
-                className="br:size-2.5 br:scale-0 br:rounded-full br:bg-accent br:opacity-0 br:transition-[scale,opacity] br:duration-instant br:ease-out br:group-data-[state=checked]:scale-100 br:group-data-[state=checked]:opacity-100 br:group-data-[state=checked]:duration-base br:group-data-[state=checked]:ease-spring"
+                className="br:size-2 br:scale-0 br:rounded-full br:bg-accent br:opacity-0 br:transition-[scale,opacity] br:duration-instant br:ease-out br:group-data-[state=checked]:scale-100 br:group-data-[state=checked]:opacity-100 br:group-data-[state=checked]:duration-base br:group-data-[state=checked]:ease-spring"
               />
             </RadixRadioGroup.Item>
             <label
