@@ -36,18 +36,20 @@ export function ErrorSummary({
             {error.target ? (
               <a
                 href={`#${error.target}`}
-                // Visible text is the field name; the name a screen reader hears adds the message.
-                aria-label={
-                  error.label
-                    ? `${error.label}${t('form.errorSeparator')} ${error.messages.join('、')}`
-                    : undefined
-                }
                 onClick={(event) => {
                   event.preventDefault();
                   onFocus(error.path);
                 }}
               >
-                {error.label ?? error.messages.join('、')}
+                {error.label ? (
+                  <>
+                    {/* Sighted users see the field name; screen readers hear 「欄位： 訊息」 as one name. */}
+                    <span aria-hidden="true">{error.label}</span>
+                    <span className="br:sr-only">{`${error.label}${t('form.errorSeparator')} ${error.messages.join('、')}`}</span>
+                  </>
+                ) : (
+                  error.messages.join('、')
+                )}
               </a>
             ) : (
               error.messages.join('、')
