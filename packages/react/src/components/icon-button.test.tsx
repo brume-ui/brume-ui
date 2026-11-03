@@ -24,12 +24,12 @@ describe('IconButton active', () => {
 });
 
 describe('IconButton size', () => {
-  it('is 40px by default and 26px when small', () => {
+  it('is 36px by default and 28px when small', () => {
     const { rerender } = render(<IconButton icon={Trash2} label="篩選" />);
     const btn = screen.getByRole('button', { name: '篩選' });
-    expect(btn.className).toContain('br:size-10');
+    expect(btn.className).toContain('br:size-9');
     rerender(<IconButton icon={Trash2} label="篩選" size="sm" />);
-    expect(btn.className).toContain('br:size-[26px]');
-    expect(btn.className).not.toContain('br:size-10');
+    expect(btn.className).toContain('br:size-7');
+    expect(btn.className).not.toContain('br:size-9');
   });
 });

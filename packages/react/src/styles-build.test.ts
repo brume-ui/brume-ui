@@ -59,11 +59,11 @@ describe('dist/styles.css', () => {
     expect(repeated).toEqual([]);
   });
 
-  it('pl-10 comes after px-3', () => {
-    // A search field's room for its icon (pl-10) must beat the control's own padding (px-3).
+  it('pl-9 comes after px-3', () => {
+    // A search field's room for its icon (pl-9) must beat the control's own padding (px-3).
     const css = readFileSync(resolve(root, 'dist/styles.css'), 'utf8');
     const px = css.indexOf('.br\\:px-3{');
-    const pl = css.indexOf('.br\\:pl-10{');
+    const pl = css.indexOf('.br\\:pl-9{');
     expect(px).toBeGreaterThan(-1);
     expect(pl).toBeGreaterThan(px);
   });

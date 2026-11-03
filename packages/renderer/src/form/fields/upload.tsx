@@ -221,6 +221,7 @@ function UploadControl(
               finish();
             }
           }}
+          hasExtras={Boolean(def.extra?.length)}
           itemErrors={(index) =>
             items[index]?.status === 'done'
               ? errors[def.multiple ? String(valueIndex(index)) : '']?.[0]

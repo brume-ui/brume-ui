@@ -11,6 +11,8 @@ export const semantic = {
   text: { light: '#1f2a37', dark: '#e6ebf0' },
   // Darkened from spec #6b7785 so it passes 4.5:1 on surface-canvas as well.
   'text-muted': { light: '#5b6776', dark: '#9aa8b6' },
+  // Field labels: one step darker than text-muted, so labels read as labels without bold.
+  'text-label': { light: '#3b4654', dark: '#c3ccd6' },
   border: { light: '#e3e8ee', dark: '#263140' },
   'border-strong': { light: '#878c92', dark: '#5f6a77' },
   accent: { light: '#0e7490', dark: '#38b6d4' },

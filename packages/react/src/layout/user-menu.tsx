@@ -18,7 +18,7 @@ export function UserMenu({ user, logoutUrl }: { user: ShellUser; logoutUrl: stri
       <Dropdown.Trigger
         aria-label={`${t('shell.userMenu')}: ${user.name}`}
         className={cn(
-          'br:inline-flex br:h-10 br:items-center br:gap-2 br:rounded-pill br:pr-3 br:pl-1 br:text-sm br:text-text br:hover:bg-surface-canvas',
+          'br:inline-flex br:h-9 br:items-center br:gap-2 br:rounded-input br:pr-3 br:pl-1 br:text-sm br:text-text br:hover:bg-surface-canvas',
           PRESS,
           FOCUS_RING,
         )}

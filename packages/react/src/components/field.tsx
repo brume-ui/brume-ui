@@ -4,7 +4,8 @@ import { useFieldRequiredText } from '../provider';
 
 export const FieldLayoutContext = createContext<'stacked' | 'horizontal'>('stacked');
 
-const CAPTION = 'br:text-sm br:font-semibold br:text-text';
+/** Labels are 13px medium in text-label: a label, not a heading (design rules: no bold labels). */
+const CAPTION = 'br:text-[13px] br:leading-5 br:font-medium br:text-text-label';
 
 const DROP_IN = 'br:animate-[br-drop-in_var(--br-duration-base)_var(--br-ease-out)]';
 
@@ -95,22 +96,26 @@ export function Field({ label, description, error, required, group, children }: 
         </label>
       )}
       <div className="br:grid br:min-w-0 br:gap-1.5">
+        {cloneElement(children, injected)}
         {description ? (
           <p
             key={description}
             id={descriptionId}
             className={cn(
-              'br:text-sm br:text-text-muted',
+              'br:text-[13px] br:leading-5 br:text-text-muted',
               description !== initialDescription.current && DROP_IN,
             )}
           >
             {description}
           </p>
         ) : null}
-        {cloneElement(children, injected)}
         {error ? (
           // Keyed by the message so each new error drops in again (fade-only under reduced motion).
-          <p key={error} id={errorId} className={cn('br:text-sm br:text-danger', DROP_IN)}>
+          <p
+            key={error}
+            id={errorId}
+            className={cn('br:text-[13px] br:leading-5 br:text-danger', DROP_IN)}
+          >
             {error}
           </p>
         ) : null}

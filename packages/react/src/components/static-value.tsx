@@ -7,7 +7,7 @@ export function StaticValue(props: Omit<HTMLAttributes<HTMLParagraphElement>, 'c
     <p
       {...props}
       className={cn(
-        'br:min-h-10 br:flex br:items-center br:text-sm br:whitespace-pre-wrap',
+        'br:min-h-9 br:flex br:items-center br:text-sm br:whitespace-pre-wrap',
         props.children === '—' ? 'br:text-text-muted' : 'br:text-text',
       )}
     />

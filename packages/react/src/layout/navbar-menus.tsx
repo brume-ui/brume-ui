@@ -12,7 +12,7 @@ import { useBrume } from '../provider';
 export const MENU_CONTENT = `br:relative br:z-50 br:min-w-40 br:rounded-card br:border br:border-border br:bg-surface br:p-1 br:shadow-overlay br:[--br-origin:var(--radix-dropdown-menu-content-transform-origin)] ${POPOVER_MOTION}`;
 /** Item background comes from the gliding HighlightIndicator inside MenuContent. */
 export const MENU_ITEM = `br:relative br:flex br:h-10 br:cursor-default br:items-center br:gap-2 br:rounded-input br:pr-3 br:pl-8 br:text-sm br:text-text br:select-none ${HIGHLIGHT_RING}`;
-export const TRIGGER = `br:inline-flex br:size-10 br:items-center br:justify-center br:rounded-pill br:text-text br:hover:bg-surface-canvas ${PRESS}`;
+export const TRIGGER = `br:inline-flex br:size-9 br:items-center br:justify-center br:rounded-input br:text-text br:hover:bg-surface-canvas ${PRESS}`;
 
 /** Dropdown.Content with the shared look, origin-aware open/close and a gliding highlight. */
 export function MenuContent({

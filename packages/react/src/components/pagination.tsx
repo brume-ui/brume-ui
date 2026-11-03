@@ -35,7 +35,7 @@ export function pageItems(page: number, lastPage: number): Item[] {
 }
 
 const PILL =
-  'br:relative br:inline-flex br:h-9 br:min-w-9 br:items-center br:justify-center br:rounded-pill br:px-3 br:text-sm br:font-semibold';
+  'br:relative br:inline-flex br:h-9 br:min-w-9 br:items-center br:justify-center br:rounded-input br:px-3 br:text-sm br:font-medium';
 
 export function Pagination(props: PaginationProps) {
   if (props.lastPage <= 1) return null;
@@ -81,12 +81,12 @@ function PaginationNav({ page, lastPage, hrefFor, onNavigate, label }: Paginatio
     <nav aria-label={label ?? t('pagination.label')}>
       <ul
         ref={listRef}
-        className="br:relative br:inline-flex br:items-center br:gap-1 br:rounded-pill br:bg-surface br:p-1 br:shadow-row"
+        className="br:relative br:inline-flex br:items-center br:gap-1 br:rounded-[calc(var(--br-radius-input)+4px)] br:bg-surface br:p-1 br:shadow-row"
       >
         <li
           aria-hidden="true"
           style={pill.style}
-          className="br:pointer-events-none br:absolute br:top-0 br:left-0 br:rounded-pill br:bg-accent br:transition-[transform,width,opacity] br:duration-base br:ease-emphasized br:motion-reduce:transition-none"
+          className="br:pointer-events-none br:absolute br:top-0 br:left-0 br:rounded-input br:bg-accent br:transition-[transform,width,opacity] br:duration-base br:ease-emphasized br:motion-reduce:transition-none"
         />
         <li>
           {step(

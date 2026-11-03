@@ -8,7 +8,7 @@
 
 來源格式 `brume-ui:path#symbol`／`brume-laravel:path#symbol` 明確標示 repository；PHP 來源指向成對 sibling 的相對路徑，不要求 UI-only CI 有 sibling。根層 catalog 保留所有舊 route，新增 `#/demos` 為相同目錄別名；未知路由回目錄。catalog 包含 memory/visual/contract 情境；Task 5 的兩個 database 入口連到獨立 Laravel workbench http://127.0.0.1:8100/admin/compositions，需後端啟動及先套用 README 的窄範圍升級。
 
-盤點列數：340；GAP-T2 0，GAP-T3 0，GAP-T4 0，GAP-T5 0，GAP-T6 0，READY 340。catalog 情境：249。
+盤點列數：342；GAP-T2 0，GAP-T3 0，GAP-T4 0，GAP-T5 0，GAP-T6 0，READY 342。catalog 情境：249。
 
 ## 既有可用情境
 
@@ -437,4 +437,6 @@ Task 6：47 個原始 GAP-T6 全數有聚焦目標。28 個 lifecycle 為實際 
 | `react.FormBackLink`    | 返回列表的次要操作，保留真正連結與離頁保護。               | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx`     |
 | `react.FormPageContent` | 約 880px 內容欄與依儲存列高度預留的捲動空間。              | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/form-page.tsx`     |
 | `react.FormSection`     | 具名段落卡片與說明。                                       | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/layout/nodes.tsx`  |
+| `react.FormBlock`       | 段落內的平面子群組（不在段落內時是 Card）。                | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/layout/nodes.tsx`  |
+| `react.FormFieldset`    | 巢狀物件欄位（embeds）：標籤加左側豎線。                   | READY | `form.page`                   | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:packages/renderer/src/form/layout/nodes.tsx`  |
 | `react.CompositeField`  | 郵遞區號、縣市、鄉鎮與整列地址；窄容器堆疊並保留群組標籤。 | READY | `#/form-composition / memory` | `brume-ui:packages/react/src/layout/form-structure.tsx; brume-ui:apps/playground/src/pages/custom-address.tsx` |

@@ -16,7 +16,7 @@ export const HIGHLIGHT_RING =
  * the radius tokens, so overriding `rounded-input` with `rounded-pill` would leave both classes.
  */
 export const CONTROL_SKIN =
-  'br:border br:bg-surface br:text-text br:text-sm br:h-10 br:transition-[color,background-color,border-color] br:duration-fast br:ease-out br:disabled:opacity-50 br:disabled:cursor-not-allowed br:placeholder:text-text-muted';
+  'br:border br:bg-surface br:text-text br:text-sm br:h-9 br:transition-[color,background-color,border-color] br:duration-fast br:ease-out br:disabled:opacity-50 br:disabled:cursor-not-allowed br:placeholder:text-text-muted';
 
 export const CONTROL_BASE = `br:rounded-input br:px-3 ${CONTROL_SKIN}`;
 

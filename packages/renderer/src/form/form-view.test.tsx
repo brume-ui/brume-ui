@@ -63,8 +63,12 @@ describe('FormView', () => {
     expect(screen.getByLabelText('long').closest('[data-field-path]')?.className).toContain(
       'col-span-full',
     );
-    expect(screen.getByLabelText('short').closest('[data-field-path]')?.className).not.toContain(
-      'col-span-full',
+    // An ordinary text field takes two stacked tracks, falling back to the full row when narrow.
+    expect(screen.getByLabelText('short').closest('[data-field-path]')?.className).not.toMatch(
+      /(^| )br:col-span-full/,
+    );
+    expect(screen.getByLabelText('short').closest('[data-field-path]')?.className).toContain(
+      'br:@min-[21rem]/stack:col-span-2',
     );
     expect(container.querySelector('[data-field-path="secret"]')).toBeNull();
     expect(

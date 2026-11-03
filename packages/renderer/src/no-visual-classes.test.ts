@@ -33,7 +33,7 @@ const LAYOUT: RegExp[] = [
 ];
 
 /** Variant prefixes (`sm:`, `max-sm:`, `@md:`, `empty:`): the utility after them is what counts. */
-const VARIANTS = /^(?:(?:@?[a-z0-9-]+|\[[^\]]+\]|@?[a-z-]+-\[[^\]]+\]):)+/;
+const VARIANTS = /^(?:(?:@?[a-z0-9-]+|\[[^\]]+\]|@?[a-z-]+-\[[^\]]+\])(?:\/[a-z0-9-]+)?:)+/;
 
 function isLayout(utility: string): boolean {
   const bare = utility.replace(VARIANTS, '').replace(/^-/, '').replace(/!$/, '');

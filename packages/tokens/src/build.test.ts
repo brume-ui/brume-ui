@@ -43,9 +43,9 @@ describe('build', () => {
 
   test('tokens.css defines radius, shadows and font vars', () => {
     const css = buildTokensCss();
-    expect(css).toContain('--br-radius-input: 8px;');
-    expect(css).toContain('--br-radius-card: 12px;');
-    expect(css).toContain('--br-radius-dialog: 14px;');
+    expect(css).toContain('--br-radius-input: 6px;');
+    expect(css).toContain('--br-radius-card: 10px;');
+    expect(css).toContain('--br-radius-dialog: 12px;');
     expect(css).toContain('--br-radius-pill: 999px;');
     expect(css).toContain('--br-shadow-row: 0 1.5px 0 rgba(31, 42, 55, 0.07);');
   });

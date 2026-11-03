@@ -12,7 +12,7 @@ export interface IconButtonProps
   label: string;
   /** A tool that is in effect (a column filter with a value): accent tint. */
   active?: boolean;
-  /** 'sm' is 26px, for table headers and rows; default 'md' (40px). */
+  /** 'sm' is 28px, for table headers and rows; default 'md' (36px). */
   size?: 'md' | 'sm';
 }
 
@@ -34,11 +34,11 @@ export function IconButton({
             {...rest}
             aria-label={label}
             className={cn(
-              'br:inline-flex br:items-center br:justify-center br:rounded-pill br:disabled:opacity-50 br:disabled:cursor-not-allowed',
-              size === 'sm' ? 'br:size-[26px]' : 'br:size-10',
+              'br:inline-flex br:items-center br:justify-center br:rounded-input br:disabled:opacity-50 br:disabled:cursor-not-allowed',
+              size === 'sm' ? 'br:size-7' : 'br:size-9',
               active
                 ? 'br:bg-accent-tint br:text-accent-tint-text'
-                : 'br:text-text br:hover:bg-surface-canvas',
+                : 'br:text-text-muted br:hover:bg-surface-canvas br:hover:text-text',
               PRESS,
               FOCUS_RING,
               className,

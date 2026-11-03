@@ -110,7 +110,9 @@ export { Card, type CardProps } from './layout/card';
 export {
   CompositeField,
   FormBackLink,
+  FormBlock,
   FormDivider,
+  FormFieldset,
   FormHeading,
   FormPageContent,
   FormSection,

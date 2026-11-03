@@ -18,7 +18,8 @@ export interface AlertProps {
 }
 
 const TONES: Record<AlertTone, string> = {
-  danger: 'br:border-transparent br:bg-danger-tint br:text-text',
+  danger:
+    'br:border-[color-mix(in_oklab,var(--br-danger)_25%,var(--br-danger-tint))] br:bg-danger-tint br:text-text',
   warning: 'br:border-warning br:text-warning',
   info: 'br:border-info br:text-info',
   success: 'br:border-success br:text-success',
@@ -34,6 +35,8 @@ export function Alert({ tone, title, children, role = 'alert', id, tabIndex }: A
       data-tone={tone}
       className={cn(
         'br:rounded-card br:border br:px-4 br:py-3 br:text-sm',
+        // Links and buttons inside (an error summary's field index) read as quiet underlined text.
+        'br:[&_:is(a,button)]:underline br:[&_:is(a,button)]:decoration-[color-mix(in_oklab,currentColor_40%,transparent)] br:[&_:is(a,button)]:underline-offset-2 br:[&_:is(a,button):hover]:decoration-current',
         tone !== 'danger' && 'br:bg-surface',
         TONES[tone],
         FOCUS_RING,
@@ -47,7 +50,7 @@ export function Alert({ tone, title, children, role = 'alert', id, tabIndex }: A
           />
         ) : null}
         <div className="br:min-w-0 br:grid br:gap-1">
-          {title ? <p className="br:font-semibold">{title}</p> : null}
+          {title ? <p className="br:font-medium">{title}</p> : null}
           {children}
         </div>
       </div>

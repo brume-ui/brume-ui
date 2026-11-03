@@ -1,10 +1,15 @@
 /** Non-color scales. Spacing is a 4px grid; everything is exposed as `--br-*`. */
 export const spacingBase = '4px';
 
+/**
+ * Two working radii (design rules, ui-polish-brief-2): 6px for controls (inputs, buttons, menus,
+ * chips' hit areas) and 10px for containers (cards, upload tiles); dialogs one step rounder.
+ * `pill` is reserved for status badges, filter chips, switches and progress tracks.
+ */
 export const radius = {
-  input: '8px',
-  card: '12px',
-  dialog: '14px',
+  input: '6px',
+  card: '10px',
+  dialog: '12px',
   pill: '999px',
 } as const;
 

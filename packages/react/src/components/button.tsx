@@ -9,7 +9,7 @@ export type ButtonSize = 'sm' | 'md';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   ref?: Ref<HTMLButtonElement>;
-  /** `outline` is the tinted pill outline of exposed row actions (row-actions mockup B). */
+  /** `outline` is the tinted outline of exposed row actions (row-actions mockup B). */
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
@@ -25,19 +25,20 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANTS = {
   primary: 'br:bg-accent br:text-text-on-accent br:border-transparent br:hover:brightness-95',
-  secondary: 'br:bg-surface br:text-text br:border-border-strong br:hover:bg-surface-canvas',
+  secondary:
+    'br:bg-surface br:text-text br:border-[color-mix(in_oklab,var(--br-border-strong)_55%,var(--br-surface))] br:shadow-[0_1px_0_rgba(15,21,28,0.04)] br:hover:bg-surface-canvas',
   outline:
     'br:bg-surface br:text-accent-tint-text br:border-[color-mix(in_oklab,var(--br-accent)_35%,var(--br-surface))] br:hover:bg-accent-tint',
   ghost: 'br:bg-transparent br:text-text br:border-transparent br:hover:bg-surface-canvas',
   danger: 'br:bg-danger br:text-text-on-accent br:border-transparent br:hover:brightness-95',
 } as const;
 
-const SIZES = { sm: 'br:h-8 br:px-3 br:text-sm', md: 'br:h-10 br:px-5 br:text-sm' } as const;
+const SIZES = { sm: 'br:h-8 br:px-3 br:text-[13px]', md: 'br:h-9 br:px-4 br:text-sm' } as const;
 
-/** The pill look of a Button, shared with button-styled links. */
+/** The look of a Button (6px rectangle, medium weight), shared with button-styled links. */
 export function buttonClasses(variant: ButtonVariant = 'primary', size: ButtonSize = 'md'): string {
   return cn(
-    'br:relative br:inline-flex br:items-center br:justify-center br:gap-2 br:rounded-pill br:border br:font-semibold',
+    'br:relative br:inline-flex br:items-center br:justify-center br:gap-2 br:rounded-input br:border br:font-medium br:whitespace-nowrap',
     PRESS,
     FOCUS_RING,
     VARIANTS[variant],

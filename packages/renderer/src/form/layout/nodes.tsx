@@ -1,4 +1,4 @@
-import { Alert, Card, FormDivider, FormSection } from '@brume-ui/brume-react';
+import { Alert, FormBlock, FormDivider, FormFieldset, FormSection } from '@brume-ui/brume-react';
 import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
 import type { CSSProperties, ReactNode } from 'react';
 import { MissingComponent } from '../../missing-component';
@@ -25,6 +25,16 @@ export function isLongField(def: FieldDef): boolean {
       'repeater',
     ].includes(def.type)
   );
+}
+/** Fields whose values are a few characters wide: one stacked track instead of two. */
+export function isShortField(def: FieldDef): boolean {
+  return ['number', 'decimal', 'currency', 'date', 'datetime', 'switch'].includes(def.type);
+}
+/** A field cell's span in the stacked grid (see Stacked). */
+function cellClass(def: FieldDef, layout: 'stacked' | 'horizontal'): string {
+  if (isLongField(def)) return 'br:min-w-0 br:col-span-full';
+  if (layout !== 'stacked' || isShortField(def)) return 'br:min-w-0';
+  return 'br:min-w-0 br:@max-[21rem]/stack:col-span-full br:@min-[21rem]/stack:col-span-2';
 }
 export function fieldId(prefix: string, path: string): string {
   return `${prefix}-field-${encodeURIComponent(path)}`;
@@ -120,7 +130,7 @@ export function Nodes(props: NodesProps) {
               <div
                 key={ownership}
                 data-field-path={path}
-                className={isLongField(def) ? 'br:min-w-0 br:col-span-full' : 'br:min-w-0'}
+                className={row ? 'br:min-w-0' : cellClass(def, layout)}
                 style={
                   row
                     ? { gridColumn: `span ${isLongField(def) ? 12 : (def.width ?? 12)}` }
@@ -169,17 +179,16 @@ export function Nodes(props: NodesProps) {
               );
               break;
             case 'block':
-              content = <Card title={node.title}>{children(node.children)}</Card>;
+              content = <FormBlock title={node.title}>{children(node.children)}</FormBlock>;
               break;
             case 'divider':
               content = <FormDivider label={node.label} />;
               break;
             case 'embeds':
               content = (
-                <fieldset className="br:min-w-0 br:grid br:gap-4">
-                  <legend>{node.label}</legend>
+                <FormFieldset legend={node.label}>
                   {children(node.children, prefix ? `${prefix}.${node.name}` : node.name)}
-                </fieldset>
+                </FormFieldset>
               );
               break;
           }

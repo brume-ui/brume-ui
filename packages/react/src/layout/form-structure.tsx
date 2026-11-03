@@ -2,13 +2,34 @@ import { ArrowLeft } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
   type CSSProperties,
+  createContext,
   type MouseEventHandler,
   type ReactNode,
+  useContext,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import { buttonClasses } from '../components/button';
+import { Card } from './card';
+
+/** True inside a FormSection card: nested blocks render flat instead of as another card. */
+const InFormSection = createContext(false);
+
+/**
+ * A titled group of fields. Inside a section card it is a flat sub-group under a hairline, so a
+ * card never holds another card; on its own it is a Card.
+ */
+export function FormBlock({ title, children }: { title?: string; children: ReactNode }) {
+  const nested = useContext(InFormSection);
+  if (!nested) return <Card title={title}>{children}</Card>;
+  return (
+    <section className="br:grid br:min-w-0 br:gap-4 br:border-t br:border-border br:pt-5">
+      {title ? <h3 className="br:text-sm br:font-medium br:text-text">{title}</h3> : null}
+      {children}
+    </section>
+  );
+}
 export function FormHeading({
   id,
   children,
@@ -23,7 +44,7 @@ export function FormHeading({
       id={id}
       tabIndex={-1}
       data-form-section={sectionKey}
-      className="br:text-base br:font-semibold br:text-text br:scroll-m-6"
+      className="br:text-[15px] br:leading-6 br:font-semibold br:text-text br:scroll-m-6"
     >
       {children}
     </h2>
@@ -62,7 +83,7 @@ export function FormSectionLink({
       href={href}
       aria-current={current ? 'true' : undefined}
       onClick={onClick}
-      className="br:flex br:items-center br:gap-2 br:py-2 br:text-text-muted br:aria-[current=true]:text-accent br:focus-visible:outline-focus-ring"
+      className="br:flex br:items-center br:gap-2 br:rounded-input br:px-3 br:py-1.5 br:text-sm br:text-text-muted br:hover:text-text br:aria-[current=true]:bg-surface br:aria-[current=true]:font-medium br:aria-[current=true]:text-text br:focus-visible:outline-focus-ring"
     >
       {children}
       {invalid ? (
@@ -93,20 +114,34 @@ export function FormSection({
     <section
       aria-labelledby={id}
       aria-describedby={description ? `${id}-description` : undefined}
-      className="br:min-w-0 br:grid br:gap-4 br:rounded-card br:border br:border-border br:bg-surface br:max-sm:p-4 br:sm:p-6"
+      className="br:min-w-0 br:grid br:gap-5 br:rounded-card br:border br:border-border br:bg-surface br:max-sm:p-4 br:sm:p-5"
     >
-      <div className="br:grid br:gap-1">
+      <div className="br:grid br:gap-0.5">
         <FormHeading id={id} sectionKey={sectionKey}>
           {title}
         </FormHeading>
         {description ? (
-          <p id={`${id}-description`} className="br:text-sm br:text-text-muted">
+          <p id={`${id}-description`} className="br:text-[13px] br:leading-5 br:text-text-muted">
             {description}
           </p>
         ) : null}
       </div>
-      {children}
+      <InFormSection.Provider value={true}>{children}</InFormSection.Provider>
     </section>
+  );
+}
+
+/** Nested object fields (embeds): a labelled fieldset whose fields hang off a left rail. */
+export function FormFieldset({ legend, children }: { legend: string; children: ReactNode }) {
+  return (
+    <fieldset className="br:m-0 br:min-w-0 br:border-0 br:p-0">
+      <legend className="br:mb-2 br:p-0 br:text-[13px] br:leading-5 br:font-medium br:text-text-label">
+        {legend}
+      </legend>
+      <div className="br:grid br:min-w-0 br:gap-4 br:border-l-2 br:border-border br:pl-4">
+        {children}
+      </div>
+    </fieldset>
   );
 }
 
@@ -139,7 +174,7 @@ export function FormPageContent({
       <div data-form-action-clearance="" style={{ paddingBottom: height + 24 }}>
         {children}
       </div>
-      <div ref={footer} className="br:sticky br:bottom-0 br:z-10">
+      <div ref={footer} className="br:sticky br:bottom-3 br:z-10">
         {actions}
       </div>
     </div>
@@ -191,22 +226,24 @@ export function CompositeField({
       disabled={disabled}
       aria-describedby={descriptions}
       aria-invalid={invalid || !!error || undefined}
-      className="br:min-w-0 br:rounded-input br:border br:border-border br:p-4 br:@container"
+      className="br:min-w-0 br:m-0 br:border-0 br:p-0 br:@container"
     >
-      <legend className="br:px-1 br:text-sm br:font-semibold br:text-text">{label}</legend>
+      <legend className="br:mb-2 br:p-0 br:text-[13px] br:leading-5 br:font-medium br:text-text-label">
+        {label}
+      </legend>
       {description ? (
-        <p id={`${id}-help`} className="br:mb-2 br:text-sm br:text-text-muted">
+        <p id={`${id}-help`} className="br:mb-2 br:text-[13px] br:text-text-muted">
           {description}
         </p>
       ) : null}
-      <div className="br:grid br:gap-3 br:@max-[480px]:grid-cols-1 br:@min-[480px]:grid-cols-[6rem_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="br:grid br:gap-4 br:border-l-2 br:border-border br:pl-4 br:@max-[480px]:grid-cols-1 br:@min-[480px]:grid-cols-[6rem_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="br:min-w-0">{compact}</div>
         <div className="br:min-w-0">{middle}</div>
         <div className="br:min-w-0">{trailing}</div>
         <div className="br:min-w-0 br:col-span-full">{children}</div>
       </div>
       {error ? (
-        <p id={`${id}-error`} className="br:mt-2 br:text-sm br:text-danger">
+        <p id={`${id}-error`} className="br:mt-2 br:text-[13px] br:text-danger">
           {error}
         </p>
       ) : null}

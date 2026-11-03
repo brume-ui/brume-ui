@@ -19,6 +19,11 @@
   :where(html, .br-root, [data-brume]) {
     font-family: var(--br-font-sans);
     font-variant-numeric: tabular-nums;
+    /*
+     * jf 粉圓 ships one weight. Synthesized bold smears its strokes, so Chinese never fakes a
+     * weight: hierarchy comes from size and colour, while Nunito (variable) still renders 500/600.
+     */
+    font-synthesis-weight: none;
   }
   /* A row with a context menu turns the touch callout off (Radix); links and fields keep theirs. */
   [data-br-row-menu] :is(a[href], input, textarea, select) {

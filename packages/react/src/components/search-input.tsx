@@ -69,7 +69,7 @@ export function SearchInput({
     <div className="br:relative br:w-full">
       <Search
         aria-hidden="true"
-        className="br:pointer-events-none br:absolute br:top-1/2 br:left-3.5 br:size-4 br:-translate-y-1/2 br:text-text-muted"
+        className="br:pointer-events-none br:absolute br:top-1/2 br:left-3 br:size-4 br:-translate-y-1/2 br:text-text-muted"
       />
       <input
         ref={inputRef}
@@ -105,7 +105,7 @@ export function SearchInput({
           CONTROL_BORDER,
           FOCUS_RING,
           // The icon and clear button sit inside the pill; padding lives here, not in the caller.
-          'br:w-full br:rounded-pill br:pr-10 br:pl-10',
+          'br:w-full br:rounded-input br:pr-9 br:pl-9',
           'br:[&::-webkit-search-cancel-button]:appearance-none br:[&::-webkit-search-decoration]:appearance-none',
         )}
       />

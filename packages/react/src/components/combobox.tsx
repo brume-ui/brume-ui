@@ -428,7 +428,7 @@ export function Combobox({
           }}
           className={cn(
             CONTROL_SKIN,
-            'br:group br:flex br:h-auto br:min-h-10 br:w-full br:cursor-text br:flex-wrap br:items-center br:gap-1 br:rounded-input br:py-1 br:pr-2 br:pl-1.5',
+            'br:group br:flex br:h-auto br:min-h-9 br:w-full br:cursor-text br:flex-wrap br:items-center br:gap-1 br:rounded-input br:py-0.5 br:pr-2 br:pl-1.5',
             isInvalid ? 'br:border-danger' : CONTROL_BORDER,
             !isInvalid && 'br:hover:border-text-muted',
             'br:outline-none br:has-[input:focus-visible]:outline-solid br:has-[input:focus-visible]:outline-2 br:has-[input:focus-visible]:outline-offset-2 br:has-[input:focus-visible]:outline-focus-ring br:has-[input[aria-invalid=true]:focus-visible]:outline-danger br:has-[input[aria-invalid=true]:focus-visible]:outline-offset-0',
@@ -482,7 +482,7 @@ export function Combobox({
               if (open) close();
               else setEditing(false);
             }}
-            className="br:h-8 br:min-w-[6ch] br:flex-1 br:bg-transparent br:px-1.5 br:text-sm br:text-text br:outline-none br:placeholder:text-text-muted br:disabled:cursor-not-allowed"
+            className="br:h-7 br:min-w-[6ch] br:flex-1 br:bg-transparent br:px-1.5 br:text-sm br:text-text br:outline-none br:placeholder:text-text-muted br:disabled:cursor-not-allowed"
           />
           {clearable && !multiple && values.length > 0 && !disabled ? (
             <IconButton

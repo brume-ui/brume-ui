@@ -119,7 +119,7 @@ export function RelationPicker(props: RelationPickerProps) {
         ref={trigger}
         aria-label={`${props.label} · ${preview} ${props.value.length}`}
         className={cn(
-          'br:flex br:min-h-10 br:w-full br:items-center br:gap-2 br:rounded-input br:border br:border-border-strong br:bg-surface br:px-3 br:py-1.5 br:text-left br:text-sm br:text-text br:enabled:hover:border-accent br:disabled:opacity-50',
+          'br:flex br:min-h-9 br:w-full br:items-center br:gap-2 br:rounded-input br:border br:border-border-strong br:bg-surface br:px-3 br:py-1.5 br:text-left br:text-sm br:text-text br:enabled:hover:border-accent br:disabled:opacity-50',
           props.invalid && 'br:border-danger',
           FOCUS_RING,
         )}

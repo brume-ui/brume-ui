@@ -13,7 +13,7 @@ export function Card({ title, children, padding = 'md' }: CardProps) {
       {title ? (
         <h2
           className={cn(
-            'br:text-base br:font-semibold br:text-text',
+            'br:text-[15px] br:leading-6 br:font-semibold br:text-text',
             padding === 'md' ? 'br:px-5 br:pt-5' : 'br:px-5 br:py-4',
           )}
         >

@@ -133,7 +133,7 @@ describe('grid displays', () => {
       expect(link.getAttribute('target')).toBe('_blank');
       expect(link.getAttribute('rel')).toBe('noopener noreferrer');
       // style: 'button' is the pill outline.
-      expect(link.className).toContain('br:rounded-pill');
+      expect(link.className).toContain('br:rounded-input');
     });
 
     it('internal: a plain click visits through the adapter', async () => {

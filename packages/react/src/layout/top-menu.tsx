@@ -8,7 +8,7 @@ import { useBrume } from '../provider';
 import { containsItem, findCurrentItem, interceptClick, menuKey, resolveIcon } from './menu-utils';
 import { MenuContent } from './navbar-menus';
 
-const ITEM = `br:group br:inline-flex br:h-10 br:items-center br:gap-2 br:rounded-pill br:px-4 br:text-sm br:font-medium ${PRESS}`;
+const ITEM = `br:group br:inline-flex br:h-9 br:items-center br:gap-2 br:rounded-input br:px-3 br:text-sm br:font-medium ${PRESS}`;
 const IDLE = 'br:text-text br:hover:bg-surface-canvas';
 const CURRENT = 'br:bg-accent-tint br:text-accent-tint-text';
 

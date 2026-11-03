@@ -4,7 +4,14 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
-import { formatBytes, type UploadItem, UploadList, type UploadListProps } from './upload-list';
+import {
+  formatBytes,
+  formatLimit,
+  formatTypes,
+  type UploadItem,
+  UploadList,
+  type UploadListProps,
+} from './upload-list';
 
 const a: UploadItem = { key: 'a', name: 'a.png', status: 'done', url: '/a.png', size: 100 };
 const b: UploadItem = { key: 'b', name: 'b.png', status: 'done' };
@@ -50,7 +57,7 @@ describe('UploadList', () => {
     const upload = vi.fn(pending);
     render(<Harness upload={upload} />);
     choose(new File(['x'], 'a.txt', { type: 'text/plain' }));
-    expect(screen.getByText(/請上傳 image\/png/)).toBeTruthy();
+    expect(screen.getByText(/請上傳 PNG/)).toBeTruthy();
     expect(upload).not.toHaveBeenCalled();
   });
   it('rejects excess files without uploading them', () => {
@@ -87,11 +94,9 @@ describe('UploadList', () => {
     const button = screen.getByRole('button', { name: '下移 a.png' });
     button.focus();
     await user.keyboard('{Enter}');
-    expect(screen.getAllByRole('listitem').map((x) => x.textContent?.includes('a.png'))).toEqual([
-      false,
-      true,
-    ]);
-    expect(document.activeElement?.closest('li')?.textContent).toContain('a.png');
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-upload-key]'));
+    expect(rows.map((x) => x.dataset.uploadKey)).toEqual(['b', 'a']);
+    expect(document.activeElement?.closest('li')?.dataset.uploadKey).toBe('a');
   });
   it('reorders by dragging a handle onto another item', () => {
     const spy = vi.fn();
@@ -130,7 +135,7 @@ describe('UploadList', () => {
     choose(png('first.png'));
     choose(png('second.png'));
     expect(signals[0]?.aborted).toBe(true);
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-upload-key]')).toHaveLength(1);
   });
   it('stores successful tokens, previews and handles rejected requests', async () => {
     const upload = vi
@@ -176,7 +181,7 @@ describe('UploadList', () => {
   it('accepts file drops, extensions and MIME wildcards', () => {
     const upload = vi.fn(pending);
     render(<Harness accept={['.png', 'text/*']} upload={upload} />);
-    fireEvent.drop(screen.getByRole('button', { name: /拖曳/ }), {
+    fireEvent.drop(screen.getByRole('group', { name: '圖片' }), {
       dataTransfer: { files: [png(), new File(['x'], 'a.txt', { type: 'text/plain' })] },
     });
     expect(upload).toHaveBeenCalledTimes(2);
@@ -190,7 +195,7 @@ describe('UploadList', () => {
 
 it('describes allowed formats and maximum size before choosing a file', () => {
   render(<Harness accept={['image/png', 'image/jpeg']} maxSize={2000000} />);
-  const hint = screen.getByText(/image\/png.*image\/jpeg.*2 MB/);
+  const hint = screen.getByText('PNG、JPG，單檔最大 2 MB');
   const input = document.querySelector('input[type=file]');
   expect(input?.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id);
 });
@@ -198,4 +203,22 @@ it('describes allowed formats and maximum size before choosing a file', () => {
 it('keeps an explicit file-input name when its external group caption is scrolled away', () => {
   const { container } = render(<Harness aria-labelledby="upload-caption" />);
   expect(container.querySelector('input[type=file]')?.getAttribute('aria-label')).toBe('圖片');
+});
+
+it('names formats and size limits the way people write them', () => {
+  expect(formatTypes(['image/jpeg', 'image/png', 'image/webp', '.pdf'], 'zh-TW')).toBe(
+    'JPG、PNG、WebP、PDF',
+  );
+  expect(formatTypes(['image/*', 'text/plain'], 'en')).toBe('image/*, TXT');
+  expect(formatLimit(10 * 1024 * 1024, 'zh-TW')).toBe('10 MB');
+  expect(formatLimit(2000000, 'en')).toBe('2 MB');
+});
+
+it('shows images as tiles with an add tile, and files as a button with rows', () => {
+  const { unmount } = render(<Harness initial={[a]} />);
+  expect(screen.getByRole('button', { name: '上傳圖片' })).toBeTruthy();
+  unmount();
+  render(<Harness kind="file" accept={['application/pdf']} initial={[a]} />);
+  expect(screen.getByRole('button', { name: '選擇檔案' })).toBeTruthy();
+  expect(screen.getByText('PDF，單檔最大 1 KB')).toBeTruthy();
 });

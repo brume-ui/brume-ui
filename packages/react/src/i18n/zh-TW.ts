@@ -8,7 +8,7 @@ export const zhTW = {
 
   'relation.choose': '選擇商品…',
   'form.errorSeparator': '：',
-  'upload.constraints': '{types} · 每個檔案上限 {size}',
+  'upload.constraints': '{types}，單檔最大 {size}',
   'upload.anyType': '所有檔案格式',
   'relation.section': '分類',
   'resource.create': '新增{name}',
@@ -32,6 +32,7 @@ export const zhTW = {
   'form.loading': '載入中',
 
   'form.errorSummary': '有 {count} 個欄位需要修正',
+  'form.errorMore': '還有 {count} 項',
   'common.close': '關閉',
   'common.cancel': '取消',
   'common.save': '儲存',
@@ -51,6 +52,8 @@ export const zhTW = {
   'combobox.clear': '清除',
   'combobox.remove': '移除「{label}」',
   'upload.drop': '拖曳檔案到這裡，或點選上傳',
+  'upload.addImage': '上傳圖片',
+  'upload.chooseFile': '選擇檔案',
   'upload.uploading': '上傳中…',
   'upload.failed': '上傳失敗，請再試一次。',
   'upload.size': '檔案超過 {max}，請換一個較小的檔案。',

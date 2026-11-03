@@ -11,7 +11,7 @@ describe('Alert', () => {
     );
     const alert = screen.getByRole('alert');
     expect(alert.textContent).toBe('版本不相容請更新前端套件。');
-    expect(screen.getByText('版本不相容').className).toContain('br:font-semibold');
+    expect(screen.getByText('版本不相容').className).toContain('br:font-medium');
   });
 
   it('can be a polite status, take an id and receive focus', () => {
