@@ -68,7 +68,7 @@ describe('FormView', () => {
       /(^| )br:col-span-full/,
     );
     expect(screen.getByLabelText('short').closest('[data-field-path]')?.className).toContain(
-      'br:@min-[21rem]/stack:col-span-2',
+      'br:@min-[28rem]:col-span-2',
     );
     expect(container.querySelector('[data-field-path="secret"]')).toBeNull();
     expect(

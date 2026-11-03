@@ -36,7 +36,8 @@ export function isShortField(def: FieldDef): boolean {
 function cellClass(def: FieldDef, layout: 'stacked' | 'horizontal'): string {
   if (isLongField(def)) return 'br:min-w-0 br:col-span-full';
   if (layout !== 'stacked' || isShortField(def)) return 'br:min-w-0';
-  return 'br:min-w-0 br:@max-[21rem]/stack:col-span-full br:@min-[21rem]/stack:col-span-2';
+  // Two tracks need the form (the FormView container) to leave ~21rem inside cards and rails.
+  return 'br:min-w-0 br:@max-[28rem]:col-span-full br:@min-[28rem]:col-span-2';
 }
 export function fieldId(prefix: string, path: string): string {
   return `${prefix}-field-${encodeURIComponent(path)}`;
