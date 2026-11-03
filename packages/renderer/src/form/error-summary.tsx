@@ -29,29 +29,25 @@ export function ErrorSummary({
       tabIndex={-1}
       title={t('form.errorSummary', { count: errors.length })}
     >
-      {/* Field names only (messages are sr-only): each field shows its own message. */}
+      {/* Field names only: each field shows its own message next to it. */}
       <ul className="br:flex br:flex-wrap br:gap-x-3 br:gap-y-1">
         {shown.map((error) => (
           <li key={error.path}>
             {error.target ? (
               <a
                 href={`#${error.target}`}
+                // Visible text is the field name; the name a screen reader hears adds the message.
+                aria-label={
+                  error.label
+                    ? `${error.label}${t('form.errorSeparator')} ${error.messages.join('、')}`
+                    : undefined
+                }
                 onClick={(event) => {
                   event.preventDefault();
                   onFocus(error.path);
                 }}
               >
-                {error.label ? (
-                  <>
-                    {error.label}
-                    {/* The message stays in the link's name for screen readers; sighted users read it at the field. */}
-                    <span className="br:sr-only">
-                      {t('form.errorSeparator')} {error.messages.join('、')}
-                    </span>
-                  </>
-                ) : (
-                  error.messages.join('、')
-                )}
+                {error.label ?? error.messages.join('、')}
               </a>
             ) : (
               error.messages.join('、')
