@@ -218,7 +218,7 @@ export function RelationPicker(props: RelationPickerProps) {
           data-brume-inline-escape=""
           id={id}
           aria-label={props.label}
-          className="br:@container br:min-w-0 br:overflow-hidden br:rounded-card br:border br:border-border br:bg-surface br:shadow-overlay"
+          className="br:min-w-0 br:overflow-hidden br:rounded-card br:border br:border-border br:bg-surface br:shadow-overlay"
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.stopPropagation();
@@ -231,10 +231,12 @@ export function RelationPicker(props: RelationPickerProps) {
             }
           }}
         >
-          <div className="br:grid br:min-w-0 br:@min-[40rem]:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-            <div className="br:grid br:min-w-0 br:content-start br:gap-3 br:p-4">
+          {/* Flex wrapping, not a container query: Chrome drops nested container-query layouts on
+              re-render. The 1px gap over the border colour draws the divider in either arrangement. */}
+          <div className="br:flex br:min-w-0 br:flex-wrap br:gap-px br:bg-border">
+            <div className="br:grid br:min-w-0 br:flex-[2_1_22rem] br:content-start br:gap-3 br:bg-surface br:p-4">
               <div className="br:flex br:min-w-0 br:flex-wrap br:gap-2">
-                <div className="br:relative br:min-w-48 br:flex-1">
+                <div className="br:relative br:min-w-0 br:flex-[3_1_12rem]">
                   <Search
                     aria-hidden="true"
                     className="br:pointer-events-none br:absolute br:top-1/2 br:left-3 br:size-4 br:-translate-y-1/2 br:text-text-muted"
@@ -255,7 +257,7 @@ export function RelationPicker(props: RelationPickerProps) {
                       CONTROL_BASE,
                       CONTROL_BORDER,
                       FOCUS_RING,
-                      'br:w-full br:@min-[30rem]:w-40',
+                      'br:min-w-0 br:flex-[1_1_10rem]',
                     )}
                     value={props.section ?? ''}
                     onChange={(event) => props.onSectionChange(event.target.value)}
@@ -396,7 +398,7 @@ export function RelationPicker(props: RelationPickerProps) {
                 </Button>
               </nav>
             </div>
-            <div className="br:grid br:min-w-0 br:content-start br:gap-3 br:border-t br:border-border br:p-4 br:@min-[40rem]:border-t-0 br:@min-[40rem]:border-l">
+            <div className="br:grid br:min-w-0 br:flex-[1_1_16rem] br:content-start br:gap-3 br:bg-surface br:p-4">
               <p role="status" className="br:text-sm br:font-medium br:text-text">
                 {t('grid.selectedCount', { count: draft.length })}
               </p>
@@ -457,7 +459,7 @@ export function RelationPicker(props: RelationPickerProps) {
             </div>
           </div>
           <div className="br:flex br:flex-wrap br:items-center br:justify-end br:gap-3 br:border-t br:border-border br:bg-surface-canvas br:px-4 br:py-3">
-            <p className="br:mr-auto br:basis-full br:text-[13px] br:text-text-muted br:@min-[30rem]:basis-auto">
+            <p className="br:mr-auto br:flex-[1_1_14rem] br:text-[13px] br:text-text-muted">
               {t('relation.applyHint')}
             </p>
             <Button variant="secondary" size="sm" onClick={close}>
