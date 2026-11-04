@@ -128,6 +128,10 @@ it('renders real draft Nodes with relative errors and conditions without touchin
   fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
   await waitFor(() => expect(api.getValue('products')).toEqual([{ id: 'a', quantity: '5' }]));
   expect(document.querySelectorAll('form')).toHaveLength(0);
+  // Committed settings stay visible under the trigger once the panel closes.
+  const summary = screen.getByRole('list', { name: 'Products' });
+  expect(summary.textContent).toMatch(/Apple/);
+  expect(summary.textContent).toMatch(/Quantity:\s*5/);
 });
 
 import type { HttpRequest, HttpResponse } from '@brume-ui/brume-react';

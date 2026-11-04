@@ -1,5 +1,7 @@
 import { Field, useBrume } from '@brume-ui/brume-react';
 import type {
+  FieldDef,
+  FormNode,
   PickerAuthority,
   PickerSearchResponse,
   RelationFieldDef,
@@ -125,6 +127,15 @@ export function RelationField(props: FieldProps<unknown, RelationFieldDef>) {
               }
             props.onBlur();
           }}
+          describeSelection={
+            props.def.fields?.length
+              ? (item) => {
+                  const index = value.findIndex((entry) => entry.id === item.id);
+                  const prefix = props.def.multiple ? `${props.path}.${index}` : props.path;
+                  return describeSelection(props.def.fields ?? [], item, prefix, props.form, t);
+                }
+              : undefined
+          }
           renderSelection={(item, index, onChange, _draft, getDraft, getDraftIdentity) => (
             <SelectionFields
               key={item.id}
@@ -271,4 +282,68 @@ function SelectionFields(
       />
     </>
   );
+}
+
+const UNDESCRIBED = new Set(['hidden', 'password', 'upload', 'relation', 'repeater', 'custom']);
+
+function describeValue(
+  def: FieldDef,
+  value: unknown,
+  t: (key: 'common.yes' | 'common.no') => string,
+) {
+  if (value === null || value === undefined || value === '') return undefined;
+  const options = 'options' in def && Array.isArray(def.options) ? def.options : undefined;
+  const one = (entry: unknown) => {
+    if (typeof entry === 'boolean') return t(entry ? 'common.yes' : 'common.no');
+    if (typeof entry !== 'string' && typeof entry !== 'number') return undefined;
+    return (
+      options?.find((option) => String(option.value) === String(entry))?.label ?? String(entry)
+    );
+  };
+  if (Array.isArray(value)) {
+    const parts = value.map(one).filter((part) => part !== undefined);
+    return parts.length ? parts.join('、') : undefined;
+  }
+  return one(value);
+}
+
+/** Readable settings of one committed selection; inactive (conditionally hidden) fields are left out. */
+function describeSelection(
+  nodes: readonly FormNode[],
+  item: RelationItem,
+  prefix: string,
+  form: FieldProps<unknown, RelationFieldDef>['form'],
+  t: (key: 'common.yes' | 'common.no') => string,
+) {
+  const details: { label: string; value: string }[] = [];
+  const walk = (list: readonly FormNode[], scope: unknown, path: string) => {
+    for (const node of list) {
+      if (node.type === 'field') {
+        const def = node.field;
+        if (UNDESCRIBED.has(def.type)) continue;
+        const fieldPath = `${path}.${def.name}`;
+        if (form.getField(fieldPath)?.visible === false) continue;
+        const text = describeValue(
+          def,
+          scope && typeof scope === 'object'
+            ? (scope as Record<string, unknown>)[def.name]
+            : undefined,
+          t,
+        );
+        if (text !== undefined) details.push({ label: def.label, value: text });
+      } else if (node.type === 'embeds') {
+        walk(
+          node.children,
+          scope && typeof scope === 'object'
+            ? (scope as Record<string, unknown>)[node.name]
+            : undefined,
+          `${path}.${node.name}`,
+        );
+      } else if (node.type === 'columns') {
+        for (const column of node.columns) walk(column.children, scope, path);
+      } else if (node.type !== 'divider') walk(node.children, scope, path);
+    }
+  };
+  walk(nodes, item, prefix);
+  return details;
 }

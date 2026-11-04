@@ -14,6 +14,7 @@ type Props = Pick<
   | 'describedBy'
   | 'placeholder'
   | 'renderSelection'
+  | 'describeSelection'
   | 'commitDisabled'
   | 'onOpenChange'
 > & {

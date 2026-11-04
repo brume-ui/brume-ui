@@ -1,11 +1,12 @@
 import type { OptionItem, PickerSearchResponse, RelationItem } from '@brume-ui/brume-schema';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 import { Fragment, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
 import { Button } from './button';
 import { Chip } from './chip';
-import { FOCUS_RING } from './focus';
+import { CONTROL_BASE, CONTROL_BORDER, FOCUS_RING } from './focus';
+import { IconButton } from './icon-button';
 import { TextInput } from './text-input';
 
 export interface RelationPickerProps {
@@ -43,6 +44,8 @@ export interface RelationPickerProps {
     getDraft: () => readonly RelationItem[],
     getDraftIdentity?: (id: string) => number | undefined,
   ): ReactNode;
+  /** Committed selections' settings, listed under the trigger so they stay visible after Apply. */
+  describeSelection?(item: RelationItem): readonly { label: string; value: string }[];
 }
 
 /** Inline search/selection region: the containing page or dialog remains the only surface. */
@@ -119,7 +122,7 @@ export function RelationPicker(props: RelationPickerProps) {
         ref={trigger}
         aria-label={`${props.label} · ${preview} ${props.value.length}`}
         className={cn(
-          'br:flex br:min-h-9 br:w-full br:items-center br:gap-2 br:rounded-input br:border br:border-border-strong br:bg-surface br:px-3 br:py-1.5 br:text-left br:text-sm br:text-text br:enabled:hover:border-accent br:disabled:opacity-50',
+          'br:flex br:min-h-9 br:w-full br:items-center br:gap-2 br:rounded-input br:border br:border-border-strong br:bg-surface br:px-3 br:py-1 br:text-left br:text-sm br:text-text br:enabled:hover:border-text-muted br:disabled:opacity-50',
           props.invalid && 'br:border-danger',
           FOCUS_RING,
         )}
@@ -151,7 +154,9 @@ export function RelationPicker(props: RelationPickerProps) {
                   <Chip value={labelOf(item)} />{' '}
                 </Fragment>
               ))}
-              {props.value.length > 3 ? <span>+{props.value.length - 3}</span> : null}
+              {props.value.length > 3 ? (
+                <span className="br:text-text-muted">+{props.value.length - 3}</span>
+              ) : null}
             </>
           ) : (
             <span className="br:text-text-muted">{props.placeholder ?? t('relation.choose')}</span>
@@ -160,7 +165,13 @@ export function RelationPicker(props: RelationPickerProps) {
         <span aria-hidden="true" className="br:shrink-0 br:text-xs br:text-text-muted">
           {props.value.length}
         </span>
-        <ChevronDown aria-hidden="true" className="br:size-4 br:shrink-0 br:text-text-muted" />
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            'br:size-4 br:shrink-0 br:text-text-muted br:transition-[rotate] br:duration-base br:ease-out',
+            draft && 'br:rotate-180',
+          )}
+        />
       </button>
       {props.value.length ? (
         <span
@@ -168,11 +179,38 @@ export function RelationPicker(props: RelationPickerProps) {
           className="br:sr-only"
         >{`${props.label}: ${props.value.slice(0, 3).map(labelOf).join('、')}`}</span>
       ) : null}
-      {!draft && props.value.length > 3 ? (
+      {!draft && props.value.length > 3 && !props.describeSelection ? (
         <ul className="br:sr-only" aria-label={props.label}>
           {props.value.slice(3).map((item) => (
             <li key={item.id}>{labelOf(item)}</li>
           ))}
+        </ul>
+      ) : null}
+      {!draft && props.describeSelection && props.value.length ? (
+        // Selected items keep their own settings visible after the panel closes.
+        <ul
+          aria-label={props.label}
+          className="br:min-w-0 br:divide-y br:divide-border br:rounded-card br:border br:border-border"
+        >
+          {props.value.map((item) => {
+            const details = props.describeSelection?.(item) ?? [];
+            return (
+              <li key={item.id} className="br:min-w-0 br:grid br:gap-0.5 br:px-4 br:py-2.5">
+                <span className="br:text-sm br:font-medium br:text-text">{labelOf(item)}</span>
+                {details.length ? (
+                  <span className="br:flex br:flex-wrap br:gap-x-4 br:gap-y-0.5 br:text-[13px] br:text-text-muted">
+                    {details.map((detail) => (
+                      <span key={detail.label}>
+                        {detail.label}
+                        {t('form.errorSeparator')}
+                        <span className="br:text-text">{detail.value}</span>
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
       {draft ? (
@@ -180,7 +218,7 @@ export function RelationPicker(props: RelationPickerProps) {
           data-brume-inline-escape=""
           id={id}
           aria-label={props.label}
-          className="br:min-w-0 br:grid br:gap-4 br:rounded-lg br:border br:border-border br:bg-surface br:p-4"
+          className="br:@container br:min-w-0 br:overflow-hidden br:rounded-card br:border br:border-border br:bg-surface br:shadow-overlay"
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.stopPropagation();
@@ -193,175 +231,240 @@ export function RelationPicker(props: RelationPickerProps) {
             }
           }}
         >
-          <TextInput
-            ref={search}
-            aria-label={t('grid.search')}
-            value={props.query}
-            onChange={(event) => props.onQueryChange(event.target.value)}
-          />
-          {props.sections?.length ? (
-            <label className="br:grid br:gap-1">
-              {t('relation.section')}
-              <select
-                className="br:w-full br:rounded-md br:border br:border-border br:bg-surface br:p-2"
-                value={props.section ?? ''}
-                onChange={(event) => props.onSectionChange(event.target.value)}
-              >
-                {props.sections.map((section) => (
-                  <option key={section.key} value={section.key}>
-                    {section.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          {props.loading ? <p role="status">{t('common.loading')}</p> : null}
-          {props.error ? (
-            <div role="alert">
-              {props.error}
-              <Button variant="secondary" onClick={props.onRetry}>
-                {t('combobox.retry')}
-              </Button>
-            </div>
-          ) : null}
-          {!props.loading && !props.error && !props.items.length ? (
-            <p role="status">{t('combobox.empty')}</p>
-          ) : null}
-          <section
-            className="br:max-w-full br:overflow-x-auto"
-            aria-label={t('dataTable.scrollRegion')}
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard access to horizontal scrolling.
-            tabIndex={0}
-          >
-            <table className="br:w-full br:text-left br:text-sm">
-              <caption className="br:sr-only">{props.label}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{props.label}</th>
-                  {props.columns?.map((column) => (
-                    <th key={column.key} scope="col" className="br:px-3">
-                      {column.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {props.items.map((option) => (
-                  <tr key={option.value}>
-                    <td className="br:py-2">
-                      <label className="br:flex br:items-center br:gap-2">
-                        <input
-                          type={props.multiple ? 'checkbox' : 'radio'}
-                          name={id}
-                          aria-label={t('dataTable.selectRow', { label: option.label })}
-                          checked={draft.some((item) => item.id === option.value)}
-                          disabled={
-                            props.disabled || props.loading || !!props.error || option.disabled
-                          }
-                          onChange={() =>
-                            setDraft((current) => {
-                              if (!current || option.disabled) return current;
-                              if (current.some((item) => item.id === option.value)) {
-                                if (props.multiple) owners.current.delete(option.value);
-                                return props.multiple
-                                  ? current.filter((item) => item.id !== option.value)
-                                  : current;
-                              }
-                              if (!props.multiple) owners.current.clear();
-                              owners.current.set(option.value, createOwner(option.value));
-                              return props.multiple
-                                ? [...current, { id: option.value }]
-                                : [{ id: option.value }];
-                            })
-                          }
-                        />
-                        <span>
-                          {option.label}
-                          {option.description ? (
-                            <small className="br:block">{option.description}</small>
-                          ) : null}
-                        </span>
-                      </label>
-                    </td>
-                    {props.columns?.map((column) => (
-                      <td key={column.key} className="br:px-3">
-                        {String(option.columns?.[column.key] ?? '')}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-          <nav
-            aria-label={t('pagination.label')}
-            className="br:flex br:flex-wrap br:items-center br:gap-2"
-          >
-            <Button
-              variant="secondary"
-              disabled={props.loading || props.pagination.page <= 1}
-              onClick={() => props.onPageChange(props.pagination.page - 1)}
-            >
-              {t('pagination.previous')}
-            </Button>
-            <span>{t('pagination.page', { page: props.pagination.page })}</span>
-            <Button
-              variant="secondary"
-              disabled={props.loading || !props.pagination.hasMore}
-              onClick={() => props.onPageChange(props.pagination.page + 1)}
-            >
-              {t('pagination.next')}
-            </Button>
-          </nav>
-          <p role="status">{t('grid.selectedCount', { count: draft.length })}</p>
-          <div className="br:grid br:gap-4">
-            {draft.map((item, index) => {
-              const owner = owners.current.get(item.id);
-              return (
-                <div key={item.id} className="br:min-w-0 br:grid br:gap-2">
-                  <div className="br:flex br:items-center br:justify-between br:gap-2">
-                    <span>{labelOf(item)}</span>
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        owners.current.delete(item.id);
-                        setDraft(
-                          (current) => current?.filter((entry) => entry.id !== item.id) ?? null,
-                        );
-                      }}
-                    >
-                      {t('combobox.remove', { label: labelOf(item) })}
-                    </Button>
-                  </div>
-                  {props.renderSelection?.(
-                    item,
-                    index,
-                    (next) => {
-                      if (
-                        !live.current ||
-                        session !== generation.current ||
-                        owners.current.get(item.id) !== owner ||
-                        next.id !== item.id
-                      )
-                        return;
-                      setDraft(
-                        (current) =>
-                          current?.map((entry) => (entry.id === item.id ? next : entry)) ?? null,
-                      );
-                    },
-                    draft,
-                    owner?.read ?? (() => []),
-                    owner?.identity ?? (() => undefined),
-                  )}
+          <div className="br:grid br:min-w-0 br:@min-[40rem]:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+            <div className="br:grid br:min-w-0 br:content-start br:gap-3 br:p-4">
+              <div className="br:flex br:min-w-0 br:flex-wrap br:gap-2">
+                <div className="br:relative br:min-w-48 br:flex-1">
+                  <Search
+                    aria-hidden="true"
+                    className="br:pointer-events-none br:absolute br:top-1/2 br:left-3 br:size-4 br:-translate-y-1/2 br:text-text-muted"
+                  />
+                  <TextInput
+                    ref={search}
+                    aria-label={t('grid.search')}
+                    placeholder={t('grid.search')}
+                    className="br:pl-9"
+                    value={props.query}
+                    onChange={(event) => props.onQueryChange(event.target.value)}
+                  />
                 </div>
-              );
-            })}
+                {props.sections?.length ? (
+                  <select
+                    aria-label={t('relation.section')}
+                    className={cn(
+                      CONTROL_BASE,
+                      CONTROL_BORDER,
+                      FOCUS_RING,
+                      'br:w-full br:@min-[30rem]:w-40',
+                    )}
+                    value={props.section ?? ''}
+                    onChange={(event) => props.onSectionChange(event.target.value)}
+                  >
+                    {props.sections.map((section) => (
+                      <option key={section.key} value={section.key}>
+                        {section.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+              </div>
+              {props.error ? (
+                <div
+                  role="alert"
+                  className="br:flex br:flex-wrap br:items-center br:justify-between br:gap-2 br:rounded-input br:border br:border-danger br:bg-danger-tint br:px-3 br:py-2 br:text-sm"
+                >
+                  {props.error}
+                  <Button variant="secondary" size="sm" onClick={props.onRetry}>
+                    {t('combobox.retry')}
+                  </Button>
+                </div>
+              ) : null}
+              <section
+                className="br:max-h-72 br:max-w-full br:overflow-auto br:rounded-input br:border br:border-border"
+                aria-label={t('dataTable.scrollRegion')}
+                aria-busy={props.loading || undefined}
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard access to horizontal scrolling.
+                tabIndex={0}
+              >
+                <table className="br:w-full br:border-collapse br:text-left br:text-sm">
+                  <caption className="br:sr-only">{props.label}</caption>
+                  <thead className="br:sticky br:top-0 br:z-[1] br:bg-surface">
+                    <tr className="br:border-b br:border-border">
+                      <th
+                        scope="col"
+                        className="br:px-3 br:py-2 br:text-[13px] br:font-medium br:text-text-label"
+                      >
+                        {props.label}
+                      </th>
+                      {props.columns?.map((column) => (
+                        <th
+                          key={column.key}
+                          scope="col"
+                          className="br:px-3 br:py-2 br:text-[13px] br:font-medium br:text-text-label"
+                        >
+                          {column.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="br:divide-y br:divide-border">
+                    {props.items.map((option) => {
+                      const checked = draft.some((item) => item.id === option.value);
+                      return (
+                        <tr key={option.value} className={cn(checked && 'br:bg-accent-tint')}>
+                          <td className="br:px-3 br:py-2">
+                            <label className="br:flex br:cursor-pointer br:items-center br:gap-2.5">
+                              <input
+                                type={props.multiple ? 'checkbox' : 'radio'}
+                                name={id}
+                                className={cn('br:size-4 br:shrink-0 br:accent-accent', FOCUS_RING)}
+                                aria-label={t('dataTable.selectRow', { label: option.label })}
+                                checked={checked}
+                                disabled={
+                                  props.disabled ||
+                                  props.loading ||
+                                  !!props.error ||
+                                  option.disabled
+                                }
+                                onChange={() =>
+                                  setDraft((current) => {
+                                    if (!current || option.disabled) return current;
+                                    if (current.some((item) => item.id === option.value)) {
+                                      if (props.multiple) owners.current.delete(option.value);
+                                      return props.multiple
+                                        ? current.filter((item) => item.id !== option.value)
+                                        : current;
+                                    }
+                                    if (!props.multiple) owners.current.clear();
+                                    owners.current.set(option.value, createOwner(option.value));
+                                    return props.multiple
+                                      ? [...current, { id: option.value }]
+                                      : [{ id: option.value }];
+                                  })
+                                }
+                              />
+                              <span className="br:min-w-0">
+                                {option.label}
+                                {option.description ? (
+                                  <small className="br:block br:text-[13px] br:text-text-muted">
+                                    {option.description}
+                                  </small>
+                                ) : null}
+                              </span>
+                            </label>
+                          </td>
+                          {props.columns?.map((column) => (
+                            <td key={column.key} className="br:px-3 br:py-2 br:text-text-muted">
+                              {String(option.columns?.[column.key] ?? '')}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {props.loading ? (
+                  <p role="status" className="br:px-3 br:py-6 br:text-center br:text-text-muted">
+                    {t('common.loading')}
+                  </p>
+                ) : !props.error && !props.items.length ? (
+                  <p role="status" className="br:px-3 br:py-6 br:text-center br:text-text-muted">
+                    {t('combobox.empty')}
+                  </p>
+                ) : null}
+              </section>
+              <nav
+                aria-label={t('pagination.label')}
+                className="br:flex br:items-center br:justify-end br:gap-2 br:text-[13px] br:text-text-muted"
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={props.loading || props.pagination.page <= 1}
+                  onClick={() => props.onPageChange(props.pagination.page - 1)}
+                >
+                  {t('pagination.previous')}
+                </Button>
+                <span>{t('pagination.page', { page: props.pagination.page })}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={props.loading || !props.pagination.hasMore}
+                  onClick={() => props.onPageChange(props.pagination.page + 1)}
+                >
+                  {t('pagination.next')}
+                </Button>
+              </nav>
+            </div>
+            <div className="br:grid br:min-w-0 br:content-start br:gap-3 br:border-t br:border-border br:p-4 br:@min-[40rem]:border-t-0 br:@min-[40rem]:border-l">
+              <p role="status" className="br:text-sm br:font-medium br:text-text">
+                {t('grid.selectedCount', { count: draft.length })}
+              </p>
+              {draft.length ? (
+                <div className="br:grid br:max-h-96 br:min-w-0 br:divide-y br:divide-border br:overflow-y-auto">
+                  {draft.map((item, index) => {
+                    const owner = owners.current.get(item.id);
+                    return (
+                      <div
+                        key={item.id}
+                        className="br:min-w-0 br:grid br:gap-3 br:py-3 br:first:pt-0 br:last:pb-0"
+                      >
+                        <div className="br:flex br:min-w-0 br:items-center br:justify-between br:gap-2">
+                          <span className="br:min-w-0 br:text-sm br:font-medium br:text-text">
+                            {labelOf(item)}
+                          </span>
+                          <IconButton
+                            icon={X}
+                            size="sm"
+                            label={t('combobox.remove', { label: labelOf(item) })}
+                            onClick={() => {
+                              owners.current.delete(item.id);
+                              setDraft(
+                                (current) =>
+                                  current?.filter((entry) => entry.id !== item.id) ?? null,
+                              );
+                            }}
+                          />
+                        </div>
+                        {props.renderSelection?.(
+                          item,
+                          index,
+                          (next) => {
+                            if (
+                              !live.current ||
+                              session !== generation.current ||
+                              owners.current.get(item.id) !== owner ||
+                              next.id !== item.id
+                            )
+                              return;
+                            setDraft(
+                              (current) =>
+                                current?.map((entry) => (entry.id === item.id ? next : entry)) ??
+                                null,
+                            );
+                          },
+                          draft,
+                          owner?.read ?? (() => []),
+                          owner?.identity ?? (() => undefined),
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="br:text-[13px] br:text-text-muted">{t('relation.none')}</p>
+              )}
+            </div>
           </div>
-          <div className="br:flex br:flex-wrap br:justify-end br:gap-2">
-            <Button variant="ghost" onClick={close}>
+          <div className="br:flex br:flex-wrap br:items-center br:justify-end br:gap-3 br:border-t br:border-border br:bg-surface-canvas br:px-4 br:py-3">
+            <p className="br:mr-auto br:basis-full br:text-[13px] br:text-text-muted br:@min-[30rem]:basis-auto">
+              {t('relation.applyHint')}
+            </p>
+            <Button variant="secondary" size="sm" onClick={close}>
               {t('common.cancel')}
             </Button>
             <Button
+              size="sm"
               disabled={props.disabled || props.commitDisabled}
               onClick={() => {
                 if (props.commitDisabled) return;
