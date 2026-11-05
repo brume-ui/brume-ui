@@ -147,6 +147,7 @@ export const zhTW = {
   'action.failed': '操作沒有完成：{message}',
   'action.failedUnknown': '操作沒有完成，請稍後再試一次。',
   'renderer.error.home': '回到首頁',
+  'renderer.load.invalid': '伺服器回傳的不是 Brume 頁面。',
   'renderer.version.title': '無法顯示這個頁面',
   'renderer.version.message':
     '頁面資料的 schema 版本是 {received}，這個前端只支援 {supported}。請把 Laravel 端與前端套件更新到相同的版本。',

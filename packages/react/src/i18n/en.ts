@@ -148,6 +148,7 @@ export const en: Record<MessageKey, string> = {
   'action.failed': "The action didn't finish: {message}",
   'action.failedUnknown': "The action didn't finish. Please try again later.",
   'renderer.error.home': 'Back to home',
+  'renderer.load.invalid': 'The server did not return a Brume page.',
   'renderer.version.title': 'This page cannot be displayed',
   'renderer.version.message':
     'The page data uses schema version {received}, but this frontend only supports {supported}. Update the Laravel package and the frontend packages to the same version.',

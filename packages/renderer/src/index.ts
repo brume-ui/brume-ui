@@ -55,4 +55,5 @@ export {
   type RegistryMode,
 } from './registry';
 export { RegistryProvider, useRegistry } from './registry-context';
+export { BrumeRemotePage, type BrumeRemotePageProps } from './remote-page';
 export { BrumePageView } from './render-page';

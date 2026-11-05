@@ -148,6 +148,7 @@ export const zhCN: Record<MessageKey, string> = {
   'action.failed': '操作没有完成：{message}',
   'action.failedUnknown': '操作没有完成，请稍后再试一次。',
   'renderer.error.home': '回到首页',
+  'renderer.load.invalid': '服务器返回的不是 Brume 页面。',
   'renderer.version.title': '无法显示这个页面',
   'renderer.version.message':
     '页面数据的 schema 版本是 {received}，这个前端只支持 {supported}。请把 Laravel 端与前端包更新到相同的版本。',

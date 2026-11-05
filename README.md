@@ -10,6 +10,9 @@ Brume admin-panel UI kit (pnpm monorepo).
 | `@brume-ui/brume-renderer` | Schema renderer                                                  |
 | `@brume-ui/brume-inertia`  | Inertia adapter                                                  |
 
+Without Laravel/Inertia, use `createFetchAdapter` + `BrumeRemotePage` with any backend: see
+[standalone use](docs/standalone.md).
+
 ## Commands
 
 ```sh

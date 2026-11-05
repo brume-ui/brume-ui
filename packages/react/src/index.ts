@@ -91,6 +91,12 @@ export {
 } from './components/upload-list';
 export { canonicalDecimal } from './decimal';
 export {
+  createFetchAdapter,
+  type FetchAdapter,
+  type FetchAdapterOptions,
+  type PageChange,
+} from './fetch-adapter';
+export {
   errorMessage,
   failureMessage,
   fetchJson,
