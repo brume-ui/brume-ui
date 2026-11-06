@@ -3,6 +3,7 @@ import { useContext } from 'react';
 import type { FieldProps } from '../contract';
 import { FieldIdPrefixContext } from '../field-navigation';
 import { Nodes } from '../layout/nodes';
+import { rowDefaults } from '../row-defaults';
 import { repeaterIdentities } from '../row-identity';
 
 export function RepeaterField(props: FieldProps) {
@@ -38,7 +39,7 @@ export function RepeaterField(props: FieldProps) {
               return;
             props.onChange([
               ...(Array.isArray(rows) ? rows : []),
-              { _brume: { key: crypto.randomUUID() } },
+              { ...rowDefaults(def.nodes), _brume: { key: crypto.randomUUID() } },
             ]);
             change();
           }}
