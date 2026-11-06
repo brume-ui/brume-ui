@@ -190,7 +190,18 @@ export function NumberInput({
       value={shown}
       onFocus={(e) => {
         negativeAtFocus.current = value.startsWith('-');
-        setDraft(plain(value));
+        const editable = plain(value);
+        // Switch to the ungrouped draft now, not at React's commit: rewriting the value then would
+        // collapse a selection made on focus (Tab selects all; so does a select() right after
+        // focus), and the typing that should replace it would be appended instead.
+        const el = e.currentTarget;
+        if (el.value !== editable) {
+          const all =
+            el.value.length > 0 && el.selectionStart === 0 && el.selectionEnd === el.value.length;
+          el.value = editable;
+          if (all) el.select();
+        }
+        setDraft(editable);
         edited.current = false;
         setFocused(true);
         onFocus?.(e);

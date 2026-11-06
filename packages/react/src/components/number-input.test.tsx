@@ -319,3 +319,24 @@ describe('NumberInput with a parent that echoes later', () => {
     expect(input().value).toBe('300.00');
   });
 });
+
+describe('NumberInput selection on focus', () => {
+  it('keeps a select-all made right after focus when the grouped value switches to the draft', () => {
+    render(<Harness initial="1000.00" decimals={2} grouping />);
+    expect(input().value).toBe('1,000.00');
+    act(() => {
+      input().focus();
+      input().select();
+    });
+    expect(input().value).toBe('1000.00');
+    expect([input().selectionStart, input().selectionEnd]).toEqual([0, 7]);
+  });
+
+  it('keeps a select-all made before focus (Tab) across the switch', () => {
+    render(<Harness initial="1000.00" decimals={2} grouping />);
+    input().setSelectionRange(0, input().value.length);
+    act(() => input().focus());
+    expect(input().value).toBe('1000.00');
+    expect([input().selectionStart, input().selectionEnd]).toEqual([0, 7]);
+  });
+});
