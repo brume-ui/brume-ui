@@ -329,8 +329,8 @@ function behaviorSteps(id: string): string[] {
     ];
   if (id === 'default-value')
     return [
-      '新增列保持空白可編輯草稿；關閉「編輯列備註」，比較實際列權威值中的新 owner fallback。',
-      '切回啟用時草稿仍空白；停用時儲存採用權威 fallback，既有 owner 保留已存基準。',
+      '新增列直接帶入範本預設值，可再修改；既有列保留已存的值，不會被預設值覆蓋。',
+      '關閉「編輯列備註」後儲存：停用的欄位採用權威 fallback，既有 owner 保留已存基準。',
     ];
   if (id.startsWith('custom'))
     return [
@@ -348,7 +348,7 @@ function behaviorExpected(id: string) {
   return id.startsWith('submit-')
     ? '成功後採用記憶體端點重新載入的完整基準；取消、422 與網路錯誤保持草稿，可重試。'
     : id === 'default-value'
-      ? 'defaultValue 不初始化草稿；模擬儲存時只補新 owner 缺值。'
+      ? '新增列帶入 defaultValue；既有列不被覆蓋，模擬儲存時只補新 owner 缺值。'
       : id === 'readonly-disabled'
         ? 'wire 含整份草稿；模擬接受值保留唯讀／停用／displayOnly 的基準，hidden 仍提交。這不是後端授權證據。'
         : '可見性、可編輯性、錯誤路徑與草稿皆可直接核對；資料只存本頁記憶體。';

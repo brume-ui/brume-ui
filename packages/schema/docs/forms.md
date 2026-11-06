@@ -416,8 +416,9 @@ relation selection objects。Laravel 的 `/admin/compositions` 則以公開 DSL 
 驗證同一組合，不需 workbench AJAX 或 relation-saving hook。
 
 
-`FieldBase.defaultValue?: unknown` carries the normalized server value for a genuinely new owner;
-it does not initialize or overwrite retained browser drafts. `false`, `0`, `""`, and mapped object/list
+`FieldBase.defaultValue?: unknown` carries the normalized server value for a genuinely new owner.
+A newly added repeater row (relation or JSON, at any depth) starts with its template's defaults;
+defaults never overwrite an existing row or a retained browser draft. `false`, `0`, `""`, and mapped object/list
 values are preserved; an absent property means null unless the field is a collection. Existing
 snapshot null is authoritative and never replaced with a non-null default. JSON row declarations use
 missing-JSON-property semantics (`valueFromJson([])`), which can differ from new-model defaults for

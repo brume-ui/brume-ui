@@ -167,14 +167,14 @@ describe('focused public Form examples', () => {
       display: '2026-11-01',
     });
   });
-  it('uses new-owner fallback only on simulated save, never overwrites existing or new editable drafts', async () => {
+  it('seeds a new row with its template default and never overwrites an existing row', async () => {
     renderWithBrume(<FocusedFormDemo exampleId="form.behavior.default-value" />);
     fireEvent.click(screen.getByRole('button', { name: /新增.*預設值列/ }));
-    expect(screen.getAllByLabelText('列備註')[1]).toHaveProperty('value', '');
-    expect(output('form-draft').rows[1]).not.toHaveProperty('note');
+    expect(screen.getAllByLabelText('列備註')[0]).toHaveProperty('value', '既有草稿');
+    expect(screen.getAllByLabelText('列備註')[1]).toHaveProperty('value', '新 owner fallback');
+    expect(output('form-draft').rows[1].note).toBe('新 owner fallback');
     fireEvent.click(screen.getByRole('switch', { name: '編輯列備註' }));
     expect(output('form-default-effective')[1].note).toBe('新 owner fallback');
-    expect(output('form-draft').rows[1]).not.toHaveProperty('note');
 
     save();
     await waitFor(() => expect(output('form-saved').rows[1].note).toBe('新 owner fallback'));
