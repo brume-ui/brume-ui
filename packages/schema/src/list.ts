@@ -26,6 +26,8 @@ export const ListColumnSchema = Type.Object({
   hiddenByDefault: Type.Optional(Type.Boolean()),
   /** 點擊開啟編輯 */
   primary: Type.Optional(Type.Boolean()),
+  /** 樹狀欄：依 row._meta.depth[key] 縮排並畫出層級連接線（列需已按樹的順序排好） */
+  tree: Type.Optional(Type.Boolean()),
 });
 export type ListColumn = Static<typeof ListColumnSchema>;
 
@@ -36,6 +38,8 @@ export const RowMetaSchema = Type.Object({
   href: Type.Optional(Type.Record(Type.String(), Type.String())),
   content: Type.Optional(Type.Record(Type.String(), CellContentSchema)),
   raw: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+  /** 樹狀欄的層級（0 = 頂層），以欄位 key 為鍵 */
+  depth: Type.Optional(Type.Record(Type.String(), Type.Integer({ minimum: 0 }))),
 });
 export type RowMeta = Static<typeof RowMetaSchema>;
 

@@ -13,6 +13,7 @@ import {
   Select,
   StaticValue,
   TextInput,
+  TreeLabel,
   useBrume,
 } from '@brume-ui/brume-react';
 import {
@@ -102,6 +103,27 @@ function ComponentLab({ id }: { id: string }) {
         <ProgressBar value={value} max={80} label="完成進度" />
         <output>value={value} / max=80</output>
       </>
+    );
+  if (id === 'react.TreeLabel')
+    return (
+      <ul aria-label="商品分類樹">
+        {(
+          [
+            ['服飾', 0],
+            ['外套', 1],
+            ['羽絨外套', 2],
+            ['家居', 0],
+          ] as const
+        ).map(([name, depth]) => (
+          <li key={name}>
+            <TreeLabel depth={depth}>
+              <Link href={`#/public-contracts?example=react.TreeLabel&category=${name}`}>
+                {name}
+              </Link>
+            </TreeLabel>
+          </li>
+        ))}
+      </ul>
     );
   if (id === 'react.StaticValue')
     return (

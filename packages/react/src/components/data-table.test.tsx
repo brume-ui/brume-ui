@@ -187,7 +187,7 @@ describe('DataTable', () => {
     });
   });
 
-  it('staggers row fade-in through a delay variable that reduced motion zeroes', () => {
+  it('shows data rows at once, without a per-row enter animation', () => {
     rtlRender(
       <BrumeProvider adapter={createMemoryAdapter()}>
         <DataTable
@@ -199,8 +199,10 @@ describe('DataTable', () => {
       </BrumeProvider>,
     );
     const rows = screen.getAllByRole('row').slice(1);
-    expect(rows.map((r) => r.style.getPropertyValue('--br-row-delay'))).toEqual(['0ms', '30ms']);
-    expect(rows[0]?.className).toContain('br:motion-reduce:[animation-delay:0ms]');
+    for (const row of rows) {
+      expect(row.className).not.toContain('animate-');
+      expect(row.getAttribute('style')).toBeNull();
+    }
   });
   describe('extensions', () => {
     const rows: Row[] = [

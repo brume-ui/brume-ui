@@ -4,6 +4,7 @@ import {
   PageHeader,
   Pagination,
   Select,
+  TreeLabel,
   useBrume,
 } from '@brume-ui/brume-react';
 import type { ActionDef, ActionRequest, GridRow, ListPage } from '@brume-ui/brume-schema';
@@ -231,8 +232,19 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
         numeric: col.numeric,
         width: col.width,
         hidden: hidden.has(col.key),
-        cell: (row) =>
-          col.primary ? <PrimaryCell column={col} row={row} /> : renderCell(col, row),
+        cell: (row) => {
+          const content = col.primary ? (
+            <PrimaryCell column={col} row={row} />
+          ) : (
+            renderCell(col, row)
+          );
+          // A tree column indents each row by its depth; rows arrive in tree order.
+          return col.tree ? (
+            <TreeLabel depth={row._meta?.depth?.[col.key] ?? 0}>{content}</TreeLabel>
+          ) : (
+            content
+          );
+        },
         // Unsorted → ascending → descending → unsorted.
         sort: col.sortable
           ? {

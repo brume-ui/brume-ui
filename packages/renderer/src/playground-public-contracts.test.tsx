@@ -1,6 +1,6 @@
 /** App-only fixtures: source runtime remains unchanged. No PHP checkout or service is needed. */
 import { BrumeProvider, createMemoryAdapter } from '@brume-ui/brume-react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
 import { App } from '../../../apps/playground/src/app';
 import { CLOSURE_EXAMPLES } from '../../../apps/playground/src/pages/coverage-closure-data';
@@ -30,6 +30,13 @@ it('shows an initially visible CompactTable and formatted readOnly values', () =
   show('react.StaticValue');
   expect(screen.getByText('NT$ 1,280.50')).toBeTruthy();
   expect(screen.getByText('臺北、臺中')).toBeTruthy();
+});
+it('shows a TreeLabel hierarchy with the link on the name only', () => {
+  show('react.TreeLabel');
+  const tree = screen.getByRole('list', { name: '商品分類樹' });
+  const depth = (name: string) =>
+    within(tree).getByRole('link', { name }).closest('[data-depth]')?.getAttribute('data-depth');
+  expect(['服飾', '外套', '羽絨外套', '家居'].map(depth)).toEqual(['0', '1', '2', '0']);
 });
 it('exposes a real Link destination, native modified click and ordinary adapter navigation', () => {
   show('react.Link');

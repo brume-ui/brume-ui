@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "0.2.0",
+  "page": {
+    "type": "list",
+    "title": "使用者",
+    "gridId": "users",
+    "columns": [
+      {
+        "key": "name",
+        "label": "姓名",
+        "tree": true
+      }
+    ],
+    "rows": [
+      {
+        "id": 1,
+        "name": "王小明",
+        "_meta": {
+          "depth": {
+            "name": -1
+          }
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "perPage": 15,
+      "total": 1,
+      "lastPage": 1
+    },
+    "query": {
+      "perPage": 15,
+      "filters": {}
+    },
+    "perPageOptions": [15],
+    "appliedFilters": [],
+    "actions": {
+      "row": [],
+      "batch": [],
+      "tools": []
+    }
+  }
+}

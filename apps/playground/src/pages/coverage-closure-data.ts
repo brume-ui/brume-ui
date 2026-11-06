@@ -532,6 +532,20 @@ export const CLOSURE_EXAMPLES: ClosureExample[] = [
     command: '',
   },
   {
+    id: 'react.TreeLabel',
+    title: '樹狀層級標籤',
+    summary: '閱讀 服飾 → 外套 → 羽絨外套 與 家居 的層級縮排與連接線。',
+    persistence: 'visual',
+    fixture: '閱讀 服飾 → 外套 → 羽絨外套 與 家居 的層級縮排與連接線。',
+    outcome: '每層縮排一格並以淡色折角連到上層；連結底線只在名稱上，不含縮排。',
+    evidence: [
+      'brume-ui:packages/react/src/components/tree-label.tsx',
+      'brume-ui:packages/react/src/components/tree-label.test.tsx',
+    ],
+    testName: '',
+    command: '',
+  },
+  {
     id: 'react.FieldLayoutContext',
     title: '欄位標籤版型',
     summary: '切換 stacked/horizontal，查看相同 Field 的標籤與輸入控制。',

@@ -111,9 +111,9 @@ describe('implemented demo catalog', () => {
       'utf8',
     );
     const rows = coverage.split('\n').filter((line) => /^\| `[^`]+`/.test(line));
-    expect(rows).toHaveLength(342);
+    expect(rows).toHaveLength(343);
     const ids = rows.map((line) => line.match(/^\| `([^`]+)`/)?.[1]);
-    expect(new Set(ids).size).toBe(342);
+    expect(new Set(ids).size).toBe(343);
     for (const row of rows) {
       expect(row).toMatch(/\| READY\s*\|/);
       const target = row.split('|')[4]?.trim().replace(/^`|`$/g, '') ?? '';

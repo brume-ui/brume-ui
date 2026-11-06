@@ -67,6 +67,30 @@ describe('ListPageView', () => {
     expect(screen.getByText('目前沒有資料')).toBeTruthy();
   });
 
+  it('indents a tree column by each row depth, keeping the edit link on the name alone', () => {
+    const tree: ListPage = {
+      ...page,
+      columns: [{ key: 'name', label: 'Name', primary: true, tree: true }],
+      rows: [
+        { id: 1, name: '服飾', _meta: { editUrl: '/c/1/edit', depth: { name: 0 } } },
+        { id: 2, name: '外套', _meta: { editUrl: '/c/2/edit', depth: { name: 1 } } },
+        { id: 3, name: 'qq', _meta: { editUrl: '/c/3/edit', depth: { name: 2 } } },
+        { id: 4, name: '家居', _meta: { editUrl: '/c/4/edit' } },
+      ],
+    };
+    renderWithBrume(<ListPageView page={tree} />);
+    const level = (name: string) =>
+      screen.getByRole('link', { name }).closest('[data-depth]')?.getAttribute('data-depth');
+    expect(['服飾', '外套', 'qq', '家居'].map(level)).toEqual(['0', '1', '2', '0']);
+    // The link holds the name only: no indentation characters to underline.
+    expect(screen.getByRole('link', { name: 'qq' }).textContent).toBe('qq');
+  });
+
+  it('leaves a column without tree untouched', () => {
+    renderWithBrume(<ListPageView page={page} />);
+    expect(screen.getByText('Ada').closest('[data-depth]')).toBeNull();
+  });
+
   it('renders component display columns through the registry with row context', () => {
     renderWithBrume(
       <ListPageView

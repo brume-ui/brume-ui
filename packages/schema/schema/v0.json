@@ -796,6 +796,9 @@
                       },
                       "primary": {
                         "type": "boolean"
+                      },
+                      "tree": {
+                        "type": "boolean"
                       }
                     }
                   }
@@ -932,6 +935,15 @@
                                 "type": "object",
                                 "patternProperties": {
                                   "^(.*)$": {}
+                                }
+                              },
+                              "depth": {
+                                "type": "object",
+                                "patternProperties": {
+                                  "^(.*)$": {
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  }
                                 }
                               }
                             }
@@ -3159,6 +3171,15 @@
                       "type": "object",
                       "patternProperties": {
                         "^(.*)$": {}
+                      }
+                    },
+                    "depth": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^(.*)$": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
                       }
                     }
                   }

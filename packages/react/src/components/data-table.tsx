@@ -1,7 +1,6 @@
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import {
-  type CSSProperties,
   Fragment,
   type ReactElement,
   type ReactNode,
@@ -56,11 +55,8 @@ export interface DataTableProps<T> {
 }
 
 const SKELETON_ROWS = 5;
-/** Rows fade in one after another (30ms apart, capped) when data arrives; decoration only. */
-const ROW_STAGGER_MS = 30;
-const ROW_STAGGER_MAX = 8;
-const ROW_ENTER =
-  'br:group/row br:animate-[br-fade-in_var(--br-duration-base)_var(--br-ease-out)_backwards] br:[animation-delay:var(--br-row-delay,0ms)] br:motion-reduce:[animation-delay:0ms]';
+/** Rows appear at once: no per-row enter animation, so a page of data reads as one block. */
+const ROW = 'br:group/row';
 /**
  * Floor for columns without a fixed width, so narrow screens scroll instead of squeezing.
  * 10rem leaves 128px of text, enough for a `Y-m-d H:i` timestamp.
@@ -326,17 +322,12 @@ export function DataTable<T>({
                   {rowActions ? <td className={cn(cellBase, stickyActions)} /> : null}
                 </tr>
               ))
-            : table.getRowModel().rows.map((row, i) => {
+            : table.getRowModel().rows.map((row) => {
                 const tr = (
                   <tr
                     key={row.id}
                     aria-selected={selection ? selection.selected.has(row.id) : undefined}
-                    className={ROW_ENTER}
-                    style={
-                      {
-                        '--br-row-delay': `${Math.min(i, ROW_STAGGER_MAX) * ROW_STAGGER_MS}ms`,
-                      } as CSSProperties
-                    }
+                    className={ROW}
                   >
                     {selection ? (
                       <td className={cn(cellBase, selectCell, rowHover, rowSelected)}>

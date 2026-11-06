@@ -13,7 +13,8 @@
         "display": { "type": "text" },
         "editor": { "type": "text", "maxLength": 40 },
         "primary": true,
-        "hideable": false
+        "hideable": false,
+        "tree": true
       },
       {
         "key": "note",
@@ -150,7 +151,8 @@
             },
             "history": { "type": "text", "text": "10/27 建立" }
           },
-          "raw": { "status": "paid", "amount": 1200 }
+          "raw": { "status": "paid", "amount": 1200 },
+          "depth": { "customer": 0 }
         }
       },
       {
