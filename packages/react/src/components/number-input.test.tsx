@@ -1,5 +1,5 @@
 import { contrastRatio, semantic } from '@brume-ui/brume-tokens';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Field } from './field';
@@ -269,5 +269,53 @@ describe('NumberInput', () => {
       '最多 99',
       '請輸入數量',
     ]);
+  });
+});
+
+/** A parent that applies each change on a later tick, like a form store behind a transition. */
+function Lazy({ initial, spy }: { initial: string; spy(v: string): void }) {
+  const [value, setValue] = useState(initial);
+  return (
+    <NumberInput
+      aria-label="金額"
+      decimals={2}
+      grouping
+      value={value}
+      onChange={(v) => {
+        spy(v);
+        setTimeout(() => setValue(v), 0);
+      }}
+    />
+  );
+}
+
+describe('NumberInput with a parent that echoes later', () => {
+  const settle = () => act(() => new Promise<void>((resolve) => setTimeout(resolve, 20)));
+
+  it('keeps a value set in the same tick as focus', async () => {
+    const spy = vi.fn();
+    render(<Lazy initial="500.00" spy={spy} />);
+    act(() => {
+      input().focus();
+      fireEvent.change(input(), { target: { value: '300' } });
+    });
+    await settle();
+    expect(spy).toHaveBeenLastCalledWith('300');
+    expect(input().value).toBe('300');
+  });
+
+  it('keeps the last of several changes made before the parent echoes the first', async () => {
+    const spy = vi.fn();
+    render(<Lazy initial="" spy={spy} />);
+    act(() => {
+      input().focus();
+      fireEvent.change(input(), { target: { value: '3' } });
+      fireEvent.change(input(), { target: { value: '30' } });
+      fireEvent.change(input(), { target: { value: '300' } });
+    });
+    await settle();
+    expect(input().value).toBe('300');
+    fireEvent.blur(input());
+    expect(input().value).toBe('300.00');
   });
 });
