@@ -321,15 +321,21 @@ describe('NumberInput with a parent that echoes later', () => {
 });
 
 describe('NumberInput selection on focus', () => {
-  it('keeps a select-all made right after focus when the grouped value switches to the draft', () => {
+  it('selects the draft when focus leaves the caret at the start (programmatic focus)', () => {
     render(<Harness initial="1000.00" decimals={2} grouping />);
     expect(input().value).toBe('1,000.00');
-    act(() => {
-      input().focus();
-      input().select();
-    });
+    input().setSelectionRange(0, 0);
+    act(() => input().focus());
     expect(input().value).toBe('1000.00');
     expect([input().selectionStart, input().selectionEnd]).toEqual([0, 7]);
+  });
+
+  it('keeps a caret placed mid-value on focus where React leaves it', () => {
+    render(<Harness initial="1000.00" decimals={2} grouping />);
+    input().setSelectionRange(3, 3);
+    act(() => input().focus());
+    expect(input().value).toBe('1000.00');
+    expect(input().selectionStart).toBe(input().selectionEnd);
   });
 
   it('keeps a select-all made before focus (Tab) across the switch', () => {

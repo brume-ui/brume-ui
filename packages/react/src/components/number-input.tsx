@@ -192,14 +192,16 @@ export function NumberInput({
         negativeAtFocus.current = value.startsWith('-');
         const editable = plain(value);
         // Switch to the ungrouped draft now, not at React's commit: rewriting the value then would
-        // collapse a selection made on focus (Tab selects all; so does a select() right after
-        // focus), and the typing that should replace it would be appended instead.
+        // collapse the selection, so typing meant to replace it would be appended and refused. A
+        // select-all made on focus (Tab) is kept; so is a caret still at the start, which is where a
+        // programmatic focus() leaves it (a click places its caret after this, so it is unaffected).
         const el = e.currentTarget;
         if (el.value !== editable) {
-          const all =
-            el.value.length > 0 && el.selectionStart === 0 && el.selectionEnd === el.value.length;
+          const start = el.selectionStart ?? 0;
+          const end = el.selectionEnd ?? 0;
+          const selectAll = start === 0 && (end === 0 || end === el.value.length);
           el.value = editable;
-          if (all) el.select();
+          if (selectAll) el.select();
         }
         setDraft(editable);
         edited.current = false;
