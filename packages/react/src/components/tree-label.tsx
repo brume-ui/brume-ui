@@ -7,7 +7,18 @@ export interface TreeLabelProps {
 }
 
 /** Indent per level below the first; the elbow sits in the first level's slot. */
-const STEP_REM = 1.25;
+export const TREE_STEP_REM = 1.25;
+
+/** The quiet elbow joining a child to its parent (decoration only). */
+export function TreeElbow() {
+  return (
+    <span
+      aria-hidden="true"
+      data-tree-elbow=""
+      className="br:-mt-[0.55em] br:ms-1 br:h-[0.7em] br:w-2.5 br:shrink-0 br:rounded-bl-[4px] br:border-b-[1.5px] br:border-l-[1.5px] br:border-border-strong"
+    />
+  );
+}
 
 /**
  * A label placed in a hierarchy (a category tree in a grid column): indented by its depth, with a
@@ -21,12 +32,9 @@ export function TreeLabel({ depth, children }: TreeLabelProps) {
     <span
       data-depth={level}
       className="br:inline-flex br:max-w-full br:items-center br:gap-2"
-      style={{ paddingInlineStart: `${(level - 1) * STEP_REM}rem` }}
+      style={{ paddingInlineStart: `${(level - 1) * TREE_STEP_REM}rem` }}
     >
-      <span
-        aria-hidden="true"
-        className="br:-mt-[0.55em] br:ms-1 br:h-[0.7em] br:w-2.5 br:shrink-0 br:rounded-bl-[4px] br:border-b-[1.5px] br:border-l-[1.5px] br:border-border-strong"
-      />
+      <TreeElbow />
       <span className="br:min-w-0">{children}</span>
     </span>
   );

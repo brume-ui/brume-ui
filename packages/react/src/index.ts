@@ -76,6 +76,7 @@ export { RowContextMenu, type RowContextMenuProps } from './components/row-conte
 export { SearchInput, type SearchInputProps } from './components/search-input';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { Skeleton } from './components/skeleton';
+export { SortableTree, type SortableTreeProps, type TreeNode } from './components/sortable-tree';
 export { StaticValue } from './components/static-value';
 export { Switch, type SwitchProps } from './components/switch';
 export { type TabItem, Tabs, type TabsProps } from './components/tabs';

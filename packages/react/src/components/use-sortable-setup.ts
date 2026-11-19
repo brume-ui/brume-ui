@@ -7,7 +7,23 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { useMemo } from 'react';
 import { useBrume } from '../provider';
+
+/**
+ * Pointer dragging (after a 4px move, so a click stays a click) and, unless a component runs its
+ * own keyboard mode, dnd-kit's keyboard sensor.
+ */
+export function useSortableSensors({ keyboard = true }: { keyboard?: boolean } = {}) {
+  const all = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  return useMemo(
+    () => (keyboard ? all : all.filter((descriptor) => descriptor.sensor !== KeyboardSensor)),
+    [all, keyboard],
+  );
+}
 
 /**
  * The dnd-kit wiring shared by every sortable list: pointer + keyboard sensors and localized
@@ -18,10 +34,7 @@ export function useSortableSetup(
   positionOf: (id: string) => number,
 ): Pick<DndContextProps, 'sensors' | 'accessibility'> {
   const { t } = useBrume();
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const sensors = useSortableSensors();
   const announcements: Announcements = {
     onDragStart: ({ active }) => t('dataTable.dragPickedUp', { label: nameOf(String(active.id)) }),
     onDragOver: ({ active, over }) =>
