@@ -87,6 +87,8 @@ const ROW = 'br:group/row';
 const MIN_FLUID_COLUMN = '10rem';
 const SELECT_COLUMN_WIDTH = '44px';
 const HANDLE_COLUMN_WIDTH = '44px';
+/** The 28px handle plus this padding must fit the column, or the cell's ellipsis draws a stray dot. */
+const HANDLE_CELL = 'br:px-2';
 /**
  * A lifted row: shadow and accent tint on its cells. The drop line is an accent inset edge on
  * the cells of the row being hovered. Motion is dnd-kit's transform, switched off under reduced
@@ -483,7 +485,7 @@ export function DataTable<T>({
                     className={cn(ROW, state && DRAG_STATES)}
                   >
                     {reorder && state ? (
-                      <td className={cn(cellBase, selectCell, rowHover, rowSelected)}>
+                      <td className={cn(cellBase, selectCell, rowHover, rowSelected, HANDLE_CELL)}>
                         <DragHandle
                           ref={state.setHandleRef}
                           label={t('dataTable.dragHandle', {

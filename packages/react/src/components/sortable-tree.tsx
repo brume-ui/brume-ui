@@ -37,7 +37,7 @@ import {
   type TreeNode,
   visibleNodes,
 } from './sortable-tree-model';
-import { TREE_STEP_REM, TreeElbow } from './tree-label';
+import { TREE_ELBOW_REM, TREE_STEP_REM, TreeElbow } from './tree-label';
 import { useSortableSensors } from './use-sortable-setup';
 
 export type { TreeNode } from './sortable-tree-model';
@@ -63,10 +63,12 @@ export interface SortableTreeProps<T extends TreeNode> {
   nodeLabel?(node: T): string;
 }
 
-/** Where a child row's handle starts: the indent of its level plus the elbow before it. */
-const ELBOW_REM = 1.125;
+/** The row's horizontal padding (`px-1`), before its handle. */
+const ROW_PAD_REM = 0.25;
 const indentRem = (depth: number) => (depth <= 1 ? 0 : (depth - 2) * TREE_STEP_REM);
-const handleStartRem = (depth: number) => (depth <= 1 ? 0 : indentRem(depth) + ELBOW_REM);
+/** Where a row's handle starts, measured from the row's edge: padding, the level's indent and elbow. */
+const handleStartRem = (depth: number) =>
+  ROW_PAD_REM + (depth <= 1 ? 0 : indentRem(depth) + TREE_ELBOW_REM);
 
 /** One level of horizontal drag, in pixels. */
 function levelWidth(): number {
