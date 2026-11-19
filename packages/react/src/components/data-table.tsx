@@ -1,6 +1,24 @@
+import {
+  type Announcements,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import {
+  type CSSProperties,
   Fragment,
   type ReactElement,
   type ReactNode,
@@ -11,8 +29,10 @@ import {
   useState,
 } from 'react';
 import { cn } from '../cn';
+import { prefersReducedMotion } from '../motion/reduced-motion';
 import { useBrume } from '../provider';
 import { Checkbox } from './checkbox';
+import { DragHandle } from './drag-handle';
 import { EmptyState, type EmptyStateProps } from './empty-state';
 import { FOCUS_RING } from './focus';
 import { Skeleton } from './skeleton';
@@ -52,6 +72,17 @@ export interface DataTableProps<T> {
   rowActions?(row: T): ReactNode;
   /** Full-width content under a data row (an expanded detail); return null for none. */
   rowExpansion?(row: T): ReactNode;
+  /**
+   * Adds a drag-handle column left of the checkbox. Dropping a row calls `onMove` with its new
+   * neighbour: `after` the row now above it, or `before` the row now below it when it reached
+   * the top (never both). The table shows the new order until `rows` changes.
+   */
+  reorder?: {
+    /** false greys the handles out and shows `disabledReason` as their tooltip. */
+    enabled: boolean;
+    disabledReason?: string;
+    onMove(move: { id: string; before?: string; after?: string }): void;
+  };
 }
 
 const SKELETON_ROWS = 5;
@@ -63,6 +94,17 @@ const ROW = 'br:group/row';
  */
 const MIN_FLUID_COLUMN = '10rem';
 const SELECT_COLUMN_WIDTH = '44px';
+const HANDLE_COLUMN_WIDTH = '44px';
+/**
+ * A lifted row: shadow and accent tint on its cells. The drop line is an accent inset edge on
+ * the cells of the row being hovered. Motion is dnd-kit's transform, switched off under reduced
+ * motion in SortableRow.
+ */
+const DRAG_STATES = [
+  'br:data-dragging:*:bg-accent-tint br:data-dragging:*:shadow-overlay',
+  'br:data-[drop=before]:*:shadow-[inset_0_2px_0_var(--br-accent),var(--br-shadow-row)]',
+  'br:data-[drop=after]:*:shadow-[inset_0_-2px_0_var(--br-accent),var(--br-shadow-row)]',
+].join(' ');
 const ACTIONS_COLUMN_WIDTH = '10rem';
 
 function minTableWidth(columns: Array<{ width?: string }>, extra: string[]): string {
@@ -117,8 +159,74 @@ function alignClass(col: { align?: 'start' | 'end'; numeric?: boolean }) {
   return col.numeric || col.align === 'end' ? 'br:text-right' : 'br:text-left';
 }
 
+interface SortableState {
+  dragging: boolean;
+  /** Where the drop line goes while another row hovers this one. */
+  drop: 'before' | 'after' | null;
+  handleProps: Record<string, unknown>;
+  setHandleRef(node: HTMLElement | null): void;
+}
+
+/**
+ * Calls useSortable for one row and hands its state to `children`, which builds the `<tr>`
+ * (so rowWrapper still receives a plain element).
+ */
+function SortableRow({
+  id,
+  disabled,
+  children,
+}: {
+  id: string;
+  disabled: boolean;
+  children(
+    state: SortableState,
+    rowProps: { ref(node: HTMLElement | null): void; style: CSSProperties },
+  ): ReactElement;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+    index,
+    activeIndex,
+  } = useSortable({ id, disabled, transition: prefersReducedMotion() ? null : undefined });
+  const drop = isOver && !isDragging ? (activeIndex < index ? 'after' : 'before') : null;
+  return children(
+    {
+      dragging: isDragging,
+      drop,
+      handleProps: disabled ? {} : { ...attributes, ...listeners },
+      setHandleRef: setActivatorNodeRef,
+    },
+    {
+      ref: setNodeRef,
+      style: {
+        transform: CSS.Translate.toString(transform),
+        transition: prefersReducedMotion() ? undefined : transition,
+        position: isDragging ? 'relative' : undefined,
+        zIndex: isDragging ? 10 : undefined,
+      },
+    },
+  );
+}
+
+/** A human name for a row: the selection label, else its first visible text value, else its id. */
+function rowName<T>(row: T, id: string, labelOf: ((row: T) => string) | undefined, keys: string[]) {
+  if (labelOf) return labelOf(row);
+  for (const key of keys) {
+    const value = (row as Record<string, unknown>)[key];
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+  }
+  return id;
+}
+
 export function DataTable<T>({
-  rows,
+  rows: rowsProp,
   getRowId,
   loading = false,
   empty,
@@ -127,8 +235,12 @@ export function DataTable<T>({
   rowWrapper,
   rowActions,
   rowExpansion,
+  reorder,
   columns: allColumns,
 }: DataTableProps<T>) {
+  // The optimistic order lives only as long as the `rows` array it was made from.
+  const [optimistic, setOptimistic] = useState<{ base: T[]; list: T[] } | null>(null);
+  const rows = optimistic && optimistic.base === rowsProp ? optimistic.list : rowsProp;
   const columns = useMemo(() => allColumns.filter((c) => !c.hidden), [allColumns]);
   const defs = useMemo(
     () =>
@@ -149,6 +261,41 @@ export function DataTable<T>({
     getCoreRowModel: getCoreRowModel(),
   });
   const { t } = useBrume();
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const textKeys = columns.map((c) => c.key);
+  const nameOf = (id: string) => {
+    const row = rows.find((r) => getRowId(r) === id);
+    return row === undefined ? id : rowName(row, id, selection?.rowLabel, textKeys);
+  };
+  const positionOf = (id: string) => rows.findIndex((r) => getRowId(r) === id) + 1;
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => t('dataTable.dragPickedUp', { label: nameOf(String(active.id)) }),
+    onDragOver: ({ active, over }) =>
+      over
+        ? t('dataTable.dragMoved', {
+            label: nameOf(String(active.id)),
+            n: positionOf(String(over.id)),
+          })
+        : undefined,
+    onDragEnd: () => t('dataTable.dragDropped'),
+    onDragCancel: () => t('dataTable.dragCancelled'),
+  };
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!reorder || !over || active.id === over.id) return;
+    const from = rows.findIndex((r) => getRowId(r) === active.id);
+    const to = rows.findIndex((r) => getRowId(r) === over.id);
+    if (from < 0 || to < 0 || from === to) return;
+    const list = arrayMove(rows, from, to);
+    setOptimistic({ base: rowsProp, list });
+    const above = list[to - 1];
+    const below = list[to + 1];
+    const id = String(active.id);
+    if (above !== undefined) reorder.onMove({ id, after: getRowId(above) });
+    else if (below !== undefined) reorder.onMove({ id, before: getRowId(below) });
+  };
   const scrollRef = useRef<HTMLDivElement>(null);
   // A scroll container must be reachable by keyboard when it actually scrolls (WCAG 2.1.1).
   const { overflows: scrolls, moreAtEnd } = useHorizontalOverflow(scrollRef);
@@ -197,11 +344,33 @@ export function DataTable<T>({
     selection.onChange(next);
   };
   const extraWidths = [
+    ...(reorder ? [HANDLE_COLUMN_WIDTH] : []),
     ...(selection ? [SELECT_COLUMN_WIDTH] : []),
     ...(rowActions ? [ACTIONS_COLUMN_WIDTH] : []),
   ];
 
-  return (
+  const wrapDnd = (node: ReactElement) =>
+    reorder ? (
+      <DndContext
+        sensors={sensors}
+        onDragEnd={onDragEnd}
+        accessibility={{
+          announcements,
+          screenReaderInstructions: { draggable: t('dataTable.dragInstructions') },
+        }}
+      >
+        <SortableContext
+          items={rows.map((r) => getRowId(r))}
+          strategy={verticalListSortingStrategy}
+        >
+          {node}
+        </SortableContext>
+      </DndContext>
+    ) : (
+      node
+    );
+
+  return wrapDnd(
     <div
       ref={scrollRef}
       // relative: visually hidden text (sr-only is absolute) in off-screen columns is positioned
@@ -222,6 +391,7 @@ export function DataTable<T>({
       >
         {caption ? <caption className="br:sr-only">{caption}</caption> : null}
         <colgroup>
+          {reorder ? <col style={{ width: HANDLE_COLUMN_WIDTH }} /> : null}
           {selection ? <col style={{ width: SELECT_COLUMN_WIDTH }} /> : null}
           {columns.map((col) => (
             <col key={col.key} style={col.width ? { width: col.width } : undefined} />
@@ -231,6 +401,11 @@ export function DataTable<T>({
         <thead>
           {table.getHeaderGroups().map((group) => (
             <tr key={group.id}>
+              {reorder ? (
+                <th scope="col" className="br:px-3 br:pb-1">
+                  <span className="br:sr-only">{t('dataTable.dragColumn')}</span>
+                </th>
+              ) : null}
               {selection ? (
                 <th scope="col" className={cn(selectCell, 'br:pb-1')}>
                   <Checkbox
@@ -313,6 +488,7 @@ export function DataTable<T>({
             ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder rows
                 <tr key={i}>
+                  {reorder ? <td className={cn(cellBase, selectCell)} /> : null}
                   {selection ? <td className={cn(cellBase, selectCell)} /> : null}
                   {columns.map((col) => (
                     <td key={col.key} className={cn(cellBase, alignClass(col))}>
@@ -323,12 +499,32 @@ export function DataTable<T>({
                 </tr>
               ))
             : table.getRowModel().rows.map((row) => {
-                const tr = (
+                const buildTr = (
+                  state?: SortableState,
+                  rowProps?: { ref(node: HTMLElement | null): void; style: CSSProperties },
+                ) => (
                   <tr
                     key={row.id}
+                    ref={rowProps?.ref}
+                    style={rowProps?.style}
                     aria-selected={selection ? selection.selected.has(row.id) : undefined}
-                    className={ROW}
+                    data-dragging={state?.dragging || undefined}
+                    data-drop={state?.drop ?? undefined}
+                    className={cn(ROW, state && DRAG_STATES)}
                   >
+                    {reorder && state ? (
+                      <td className={cn(cellBase, selectCell, rowHover, rowSelected)}>
+                        <DragHandle
+                          ref={state.setHandleRef}
+                          label={t('dataTable.dragHandle', {
+                            label: rowName(row.original, row.id, selection?.rowLabel, textKeys),
+                          })}
+                          disabled={!reorder.enabled}
+                          disabledReason={reorder.disabledReason}
+                          {...state.handleProps}
+                        />
+                      </td>
+                    ) : null}
                     {selection ? (
                       <td className={cn(cellBase, selectCell, rowHover, rowSelected)}>
                         <Checkbox
@@ -381,13 +577,26 @@ export function DataTable<T>({
                   </tr>
                 );
                 const expansion = rowExpansion?.(row.original);
+                const place = (tr: ReactElement) =>
+                  rowWrapper ? rowWrapper(row.original, tr) : tr;
                 return (
                   <Fragment key={row.id}>
-                    {rowWrapper ? rowWrapper(row.original, tr) : tr}
+                    {reorder ? (
+                      <SortableRow id={row.id} disabled={!reorder.enabled}>
+                        {(state, rowProps) => place(buildTr(state, rowProps))}
+                      </SortableRow>
+                    ) : (
+                      place(buildTr())
+                    )}
                     {expansion != null && expansion !== false ? (
                       <tr data-expansion="">
                         <td
-                          colSpan={columns.length + (selection ? 1 : 0) + (rowActions ? 1 : 0)}
+                          colSpan={
+                            columns.length +
+                            (reorder ? 1 : 0) +
+                            (selection ? 1 : 0) +
+                            (rowActions ? 1 : 0)
+                          }
                           className="br:rounded-card br:bg-surface br:px-4 br:py-3 br:text-sm br:text-text br:shadow-row"
                         >
                           {expansion}
@@ -404,7 +613,7 @@ export function DataTable<T>({
           <EmptyState {...empty} />
         </div>
       ) : null}
-    </div>
+    </div>,
   );
 }
 

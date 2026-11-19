@@ -1,10 +1,11 @@
 import { fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { cloneElement, type ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Card } from '../layout/card';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
-import { type DataColumn, DataTable } from './data-table';
+import { type DataColumn, DataTable, type DataTableProps } from './data-table';
 
 const render = (ui: ReactNode) =>
   rtlRender(<BrumeProvider adapter={createMemoryAdapter()}>{ui}</BrumeProvider>);
@@ -358,5 +359,156 @@ describe('DataTable', () => {
       expect(detail.getAttribute('colspan')).toBe('4');
       expect(detail.textContent).toBe('甲的明細');
     });
+  });
+});
+
+describe('DataTable reorder', () => {
+  const rows: Row[] = [
+    { id: '1', name: '甲', count: 1 },
+    { id: '2', name: '乙', count: 2 },
+    { id: '3', name: '丙', count: 3 },
+  ];
+  const originalRect = Element.prototype.getBoundingClientRect;
+  beforeEach(() => {
+    // jsdom lays nothing out: give each body row its own 40px slot so dnd-kit can step between them.
+    Element.prototype.getBoundingClientRect = function rect(this: Element) {
+      const parent = this.parentElement;
+      const index =
+        this.tagName === 'TR' && parent?.tagName === 'TBODY'
+          ? Array.from(parent.children).indexOf(this)
+          : 0;
+      return {
+        x: 0,
+        y: index * 40,
+        top: index * 40,
+        bottom: index * 40 + 40,
+        left: 0,
+        right: 400,
+        width: 400,
+        height: 40,
+        toJSON: () => ({}),
+      } as DOMRect;
+    };
+    window.scrollTo = vi.fn() as never;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = originalRect;
+  });
+
+  const mount = (
+    onMove = vi.fn(),
+    reorder?: Partial<NonNullable<DataTableProps<Row>['reorder']>>,
+  ) => {
+    render(
+      <DataTable<Row>
+        columns={columns}
+        rows={rows}
+        getRowId={(r) => r.id}
+        empty={empty}
+        reorder={{ enabled: true, onMove, ...reorder }}
+      />,
+    );
+    return onMove;
+  };
+  const handle = (name: string) => screen.getByRole('button', { name: `拖曳排序：${name}` });
+  const names = () =>
+    screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => r.querySelectorAll('td')[1]?.textContent);
+
+  it('renders a drag handle per row when reorder is set', () => {
+    mount();
+    expect(screen.getAllByRole('button', { name: /^拖曳排序：/ })).toHaveLength(3);
+    expect(handle('甲')).toBeTruthy();
+  });
+
+  it('renders no handles without reorder', () => {
+    render(<DataTable<Row> columns={columns} rows={rows} getRowId={(r) => r.id} empty={empty} />);
+    expect(screen.queryAllByRole('button', { name: /^拖曳排序：/ })).toHaveLength(0);
+  });
+
+  it('keyboard move calls onMove with the row it now sits after', async () => {
+    const user = userEvent.setup();
+    const onMove = mount();
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove).toHaveBeenCalledWith({ id: '1', after: '2' });
+    expect(names()).toEqual(['乙', '甲', '丙']);
+  });
+
+  it('moving to the top reports before the first row', async () => {
+    const user = userEvent.setup();
+    const onMove = mount();
+    handle('乙').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowUp}');
+    await user.keyboard(' ');
+    expect(onMove).toHaveBeenCalledWith({ id: '2', before: '1' });
+  });
+
+  it('Esc cancels without calling onMove', async () => {
+    const user = userEvent.setup();
+    const onMove = mount();
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('{Escape}');
+    expect(onMove).not.toHaveBeenCalled();
+    expect(names()).toEqual(['甲', '乙', '丙']);
+  });
+
+  it('dropping on its own position does not call onMove', async () => {
+    const user = userEvent.setup();
+    const onMove = mount();
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard(' ');
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it('disabled handles expose the reason and do not move', async () => {
+    const user = userEvent.setup();
+    const onMove = mount(vi.fn(), { enabled: false, disabledReason: '請先清除排序' });
+    const h = handle('甲');
+    expect(h.getAttribute('aria-disabled')).toBe('true');
+    expect(h.getAttribute('aria-describedby')).toBeTruthy();
+    expect(document.getElementById(h.getAttribute('aria-describedby') as string)?.textContent).toBe(
+      '請先清除排序',
+    );
+    h.focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    expect(onMove).not.toHaveBeenCalled();
+    expect(names()).toEqual(['甲', '乙', '丙']);
+  });
+
+  it('lets a changed rows prop win over the optimistic order', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    const ui = (r: Row[]) => (
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <DataTable<Row>
+          columns={columns}
+          rows={r}
+          getRowId={(x) => x.id}
+          empty={empty}
+          reorder={{ enabled: true, onMove }}
+        />
+      </BrumeProvider>
+    );
+    const { rerender } = rtlRender(ui(rows));
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    expect(names()).toEqual(['乙', '甲', '丙']);
+    rerender(ui([rows[2] as Row, rows[0] as Row, rows[1] as Row]));
+    expect(names()).toEqual(['丙', '甲', '乙']);
   });
 });

@@ -9,14 +9,29 @@ export interface ToastItem {
   key: number;
   kind: ToastKind;
   message: string;
+  action?: ToastAction;
+  /** ms before it dismisses itself; undefined = the kind's default (errors stay). */
+  duration?: number;
   /** Set while the exit animation plays; the toast is already gone for assistive tech. */
   removing?: 'close' | 'swipe';
+}
+
+export interface ToastAction {
+  label: string;
+  onClick(): void;
 }
 
 export interface ToastOptions {
   /** Same id is shown at most once at a time. */
   id?: string;
+  /** A button shown in the toast; running it also closes the toast. */
+  action?: ToastAction;
+  /** ms before it closes itself. With an action the default is 6000. */
+  duration?: number;
 }
+
+/** Long enough to reach for the action button. */
+const ACTION_DURATION_MS = 6000;
 
 /** How long a removed toast stays in the DOM for its exit animation (≈ --br-duration-base). */
 export const EXIT_MS = 200;
@@ -44,7 +59,9 @@ export function subscribeToasts(cb: () => void): () => void {
 function push(kind: ToastKind, message: string, opts?: ToastOptions) {
   const id = opts?.id ?? `br-toast-${++autoId}`;
   if (items.some((t) => t.id === id && !t.removing)) return;
-  emit([...items, { id, key: ++nextKey, kind, message }]);
+  const action = opts?.action;
+  const duration = opts?.duration ?? (action ? ACTION_DURATION_MS : undefined);
+  emit([...items, { id, key: ++nextKey, kind, message, action, duration }]);
 }
 
 /** Starts the exit of the live toast with `id`; it leaves the DOM after EXIT_MS. */

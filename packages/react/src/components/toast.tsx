@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
+import { FOCUS_RING } from './focus';
 import { IconButton } from './icon-button';
 import {
   GAP_PX,
@@ -28,7 +29,7 @@ import {
   type ToastKind,
 } from './toast-store';
 
-export { clearToasts, type ToastOptions, toast } from './toast-store';
+export { clearToasts, type ToastAction, type ToastOptions, toast } from './toast-store';
 
 /** Success, info and warning toasts dismiss themselves after this; errors stay until closed. */
 const DURATION_MS = 4000;
@@ -92,10 +93,10 @@ interface ToastViewProps {
 function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewProps) {
   const { t } = useBrume();
   const { icon: Icon, color } = KINDS[item.kind];
-  const sticky = item.kind === 'error';
+  const sticky = item.kind === 'error' && item.duration === undefined;
   const removing = item.removing !== undefined;
   const entered = useEntered();
-  const remaining = useRef(DURATION_MS);
+  const remaining = useRef(item.duration ?? DURATION_MS);
   const contentRef = useRef<HTMLDivElement>(null);
   // A leaving toast keeps the slot it had, so it fades out where it was.
   const lastSlot = useRef<StackSlot | null>(slot);
@@ -217,6 +218,21 @@ function ToastView({ item, slot, paused, onHeight, onSwipingChange }: ToastViewP
         <span data-toast-message="" className="br:min-w-0 br:flex-1 br:py-0.5 br:select-text">
           {item.message}
         </span>
+        {item.action ? (
+          <button
+            type="button"
+            onClick={() => {
+              item.action?.onClick();
+              dismissToast(item.id);
+            }}
+            className={cn(
+              'br:-my-0.5 br:shrink-0 br:rounded-input br:px-2 br:py-1 br:text-sm br:font-semibold br:text-accent br:transition-colors br:duration-fast br:hover:bg-surface-canvas',
+              FOCUS_RING,
+            )}
+          >
+            {item.action.label}
+          </button>
+        ) : null}
         <IconButton
           icon={X}
           label={t('common.close')}

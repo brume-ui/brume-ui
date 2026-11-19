@@ -102,6 +102,30 @@ describe('toast', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
+  it('a toast with an action renders a button that runs it and closes the toast', async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(<Toaster />);
+    act(() => toast.success('已更新順序', { id: 'undo', action: { label: '復原', onClick } }));
+    await user.click(screen.getByRole('button', { name: '復原' }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+  });
+
+  it('an action toast lasts 6s by default and honours duration', () => {
+    render(<Toaster />);
+    act(() => toast.info('有動作', { id: 'a', action: { label: '做', onClick: () => {} } }));
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+    expect(screen.getByRole('status').textContent).toContain('有動作');
+    act(() => {
+      vi.advanceTimersByTime(1_500);
+    });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('has a close button on every kind of toast', () => {
     render(<Toaster />);
     act(() => {
