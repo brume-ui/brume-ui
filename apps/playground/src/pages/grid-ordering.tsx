@@ -16,6 +16,7 @@ import {
   createBannerDb,
   createMenuDb,
   MENUS_URL,
+  respondBannerAction,
   respondBannerReorder,
   respondMenuReorder,
 } from './grid-ordering-data';
@@ -41,7 +42,7 @@ function OrderingDemo({ kind }: { kind: 'list' | 'tree' }) {
     const base = createMemoryAdapter(home, {
       respond: async (request) => {
         const response = (kind === 'list'
-          ? respondBannerReorder(banners, request)
+          ? (respondBannerReorder(banners, request) ?? respondBannerAction(banners, request))
           : respondMenuReorder(menus, request)) ?? { status: 404, data: { message: '找不到' } };
         return response;
       },

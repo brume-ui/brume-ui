@@ -6,6 +6,7 @@ import { Card } from '../layout/card';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
 import { type DataColumn, DataTable, type DataTableProps } from './data-table';
+import { RowContextMenu } from './row-context-menu';
 
 const render = (ui: ReactNode) =>
   rtlRender(<BrumeProvider adapter={createMemoryAdapter()}>{ui}</BrumeProvider>);
@@ -486,6 +487,33 @@ describe('DataTable reorder', () => {
     await user.keyboard(' ');
     expect(onMove).not.toHaveBeenCalled();
     expect(names()).toEqual(['甲', '乙', '丙']);
+  });
+
+  it('reorders rows that sit under the real row context menu, which still opens', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    render(
+      <DataTable<Row>
+        columns={columns}
+        rows={rows}
+        getRowId={(r) => r.id}
+        empty={empty}
+        reorder={{ enabled: true, onMove }}
+        rowWrapper={(r, tr) => (
+          <RowContextMenu items={[{ key: 'edit', label: `編輯${r.name}`, onSelect: () => {} }]}>
+            {tr}
+          </RowContextMenu>
+        )}
+      />,
+    );
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    expect(onMove).toHaveBeenCalledWith({ id: '1', after: '2' });
+    expect(names()).toEqual(['乙', '甲', '丙']);
+    fireEvent.contextMenu(screen.getAllByRole('row')[1] as HTMLElement);
+    expect(await screen.findByRole('menuitem', { name: /編輯乙/ })).toBeTruthy();
   });
 
   it('lets a changed rows prop win over the optimistic order', async () => {

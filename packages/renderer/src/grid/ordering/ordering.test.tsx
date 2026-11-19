@@ -123,6 +123,23 @@ describe('list ordering', () => {
     );
   });
 
+  it('still posts the move when the grid has row actions (row menu)', async () => {
+    const { user, adapter } = setup(
+      {
+        ...page,
+        actions: { ...page.actions, row: [{ key: 'archive', label: '封存' }] },
+        endpoints: { ...page.endpoints, action: '/admin/categories/_brume/actions/{action}' },
+      },
+      () => ({ status: 200, data: { undo: { id: 1, before: 2 } } }),
+    );
+    expect(document.querySelectorAll('[data-br-row-menu]').length).toBe(3);
+    await dropFirstDown(user);
+    await waitFor(() => expect(reloads(adapter)).toBe(1));
+    expect(requests(adapter)).toEqual([
+      { method: 'post', url: '/admin/categories/_brume/reorder', body: { id: 1, after: 2 } },
+    ]);
+  });
+
   it("maps string ids back to the row's original id", async () => {
     const { user, adapter } = setup(page, () => ({ status: 200, data: {} }));
     handle('丙').focus();

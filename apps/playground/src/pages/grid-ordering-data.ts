@@ -17,6 +17,7 @@ import {
 export const BANNERS_URL = '/admin/banners';
 export const MENUS_URL = '/admin/menus';
 const BANNERS_REORDER = `${BANNERS_URL}/_brume/reorder`;
+const BANNERS_ACTION = `${BANNERS_URL}/_brume/actions/{action}`;
 const MENUS_REORDER = `${MENUS_URL}/_brume/reorder`;
 type Id = string | number;
 const PER_PAGE_OPTIONS = [20, 50];
@@ -126,8 +127,9 @@ export function buildBannersPage(url: string, db: BannerDb): ListPage {
           },
         ]
       : [],
-    actions: { row: [], batch: [], tools: [] },
-    endpoints: { reorder: BANNERS_REORDER },
+    // A row action puts the row menu (right click and ⋯) on every row, next to the drag handle.
+    actions: { row: [{ key: 'pause', label: '下架' }], batch: [], tools: [] },
+    endpoints: { reorder: BANNERS_REORDER, action: BANNERS_ACTION },
     ordering: { mode: 'list', column: 'sort', direction: 'asc' },
   };
 }
@@ -329,4 +331,13 @@ export function respondMenuReorder(db: MenuDb, req: HttpRequest): HttpResponse |
     return conflict('目標位置的項目已不存在，請重新整理。');
   db.nodes = nodes;
   return ok({ undo });
+}
+
+/** The row action: 下架 turns the rows off. Anything else is not this server's. */
+export function respondBannerAction(db: BannerDb, req: HttpRequest): HttpResponse | undefined {
+  if (req.method !== 'post' || req.url !== BANNERS_ACTION.replace('{action}', 'pause'))
+    return undefined;
+  const ids = (req.body as { ids?: Id[] } | undefined)?.ids ?? [];
+  for (const banner of db.banners) if (ids.some((id) => same(id, banner.id))) banner.status = 'off';
+  return ok({ feedback: {} });
 }

@@ -9,6 +9,7 @@ import {
   useRef,
 } from 'react';
 import { ActionMenuContent, type MenuAction, type MenuParts } from './action-menu';
+import { composeRefs } from './compose-refs';
 
 export interface RowContextMenuProps {
   items: MenuAction[];
@@ -85,7 +86,8 @@ function GuardedRow({
   const selectionAtPress = useRef<boolean | null>(null);
   return cloneElement(children, {
     ...rest,
-    ref,
+    // Radix's trigger ref must not replace one the row already carries (e.g. dnd-kit's setNodeRef).
+    ref: composeRefs(ref, (children.props as { ref?: Ref<Element> }).ref),
     'data-br-row-menu': '',
     style: { ...style, ...(children.props as { style?: CSSProperties }).style },
     onPointerDownCapture: (event: PointerEvent) => {

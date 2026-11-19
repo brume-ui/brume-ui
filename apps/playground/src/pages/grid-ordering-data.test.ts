@@ -6,6 +6,7 @@ import {
   createBannerDb,
   createMenuDb,
   MENUS_URL,
+  respondBannerAction,
   respondBannerReorder,
   respondMenuReorder,
 } from './grid-ordering-data';
@@ -79,5 +80,20 @@ describe('menu tree server', () => {
     expect(respondMenuReorder(db, post(menuUrl, { id: 1, parent: 2 }))?.status).toBe(409);
     expect(respondMenuReorder(db, post(menuUrl, { id: 99, parent: null }))?.status).toBe(409);
     expect(order(db)).toEqual(order(createMenuDb()));
+  });
+});
+
+describe('banner row action', () => {
+  it('declares 下架 and turns the row off', () => {
+    const db = createBannerDb();
+    expect(buildBannersPage(BANNERS_URL, db).actions.row.map((a) => a.key)).toEqual(['pause']);
+    const res = respondBannerAction(db, {
+      method: 'post',
+      url: `${BANNERS_URL}/_brume/actions/pause`,
+      body: { ids: [1] },
+    });
+    expect(res?.status).toBe(200);
+    expect(db.banners.find((b) => b.id === 1)?.status).toBe('off');
+    expect(respondBannerAction(db, post(bannerUrl, {}))).toBeUndefined();
   });
 });
