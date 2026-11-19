@@ -145,6 +145,16 @@ export {
   withGridQuery,
 } from './protocol/query';
 export {
+  type ReorderItemsResponse,
+  ReorderItemsResponseSchema,
+  type ReorderListRequest,
+  ReorderListRequestSchema,
+  type ReorderMoveRequest,
+  ReorderMoveRequestSchema,
+  type ReorderResponse,
+  ReorderResponseSchema,
+} from './protocol/reorder';
+export {
   UPLOAD_PARAMS,
   type UploadTempResponse,
   UploadTempResponseSchema,

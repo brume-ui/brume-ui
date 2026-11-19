@@ -293,3 +293,16 @@ describe('v0.json', () => {
     expect(/"\$ref":"(?!#\/\$defs\/)/.test(text)).toBe(false);
   });
 });
+
+describe('ordering (drag sort)', () => {
+  it('accepts ordering in list and tree mode and rejects maxDepth 0 on both validators', () => {
+    for (const name of ['grid-orderable.json', 'grid-tree.json']) {
+      const f = fixture('fixtures/valid', name);
+      expect(validateEnvelope(f).ok, name).toBe(true);
+      expect(checkEnvelope(f), `ajv ${name}`).toBe(true);
+    }
+    const bad = fixture('fixtures/invalid', 'ordering-max-depth-zero.json');
+    expect(validateEnvelope(bad).ok).toBe(false);
+    expect(checkEnvelope(bad)).toBe(false);
+  });
+});

@@ -1,0 +1,12 @@
+{
+  "undo": {
+    "id": 1,
+    "after": 2
+  },
+  "feedback": {
+    "toast": {
+      "type": "success",
+      "message": "已排序"
+    }
+  }
+}

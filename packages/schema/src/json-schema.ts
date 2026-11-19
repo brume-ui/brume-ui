@@ -19,6 +19,12 @@ import {
   ErrorResponseSchema,
 } from './protocol/http';
 import { OptionsResponseSchema, PickerSearchResponseSchema } from './protocol/options';
+import {
+  ReorderItemsResponseSchema,
+  ReorderListRequestSchema,
+  ReorderMoveRequestSchema,
+  ReorderResponseSchema,
+} from './protocol/reorder';
 import { UploadTempResponseSchema, UploadValueSchema } from './protocol/upload';
 import { MenuItemSchema, SharedPropsSchema } from './shared';
 
@@ -66,6 +72,10 @@ export function emitJsonSchema(): string {
       PickerSearchResponse: plain(PickerSearchResponseSchema),
       UploadTempResponse: plain(UploadTempResponseSchema),
       UploadValue: plain(UploadValueSchema),
+      ReorderMoveRequest: plain(ReorderMoveRequestSchema),
+      ReorderListRequest: plain(ReorderListRequestSchema),
+      ReorderResponse: plain(ReorderResponseSchema),
+      ReorderItemsResponse: plain(ReorderItemsResponseSchema),
       FormNode: recursiveDef(FormNodeSchema),
       FieldDef: recursiveDef(FieldDefSchema),
       PlainFieldDef: recursiveDef(PlainFieldDefSchema),

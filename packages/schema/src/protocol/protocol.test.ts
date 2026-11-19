@@ -21,6 +21,10 @@ const PROTOCOL_DEFS = [
   'PickerSearchResponse',
   'UploadTempResponse',
   'UploadValue',
+  'ReorderMoveRequest',
+  'ReorderListRequest',
+  'ReorderResponse',
+  'ReorderItemsResponse',
 ];
 /** 表單的具名型別，由 PageEnvelope 的 fixtures 涵蓋。 */
 const FORM_DEFS = ['FormNode', 'FieldDef', 'PlainFieldDef'];

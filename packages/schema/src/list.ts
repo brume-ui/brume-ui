@@ -40,6 +40,8 @@ export const RowMetaSchema = Type.Object({
   raw: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
   /** 樹狀欄的層級（0 = 頂層），以欄位 key 為鍵 */
   depth: Type.Optional(Type.Record(Type.String(), Type.Integer({ minimum: 0 }))),
+  /** 父列的 id（不用 IdSchema：protocol/http 反向引用 list，會循環匯入），null = 頂層；只在 ordering.mode 為 tree 時出現 */
+  parent: Type.Optional(Type.Union([Type.String(), Type.Number(), Type.Null()])),
 });
 export type RowMeta = Static<typeof RowMetaSchema>;
 
@@ -103,6 +105,19 @@ export const ListPageSchema = Type.Object({
       options: Type.Optional(Type.String()),
       /** POST multipart 暫存上傳（`UploadTempResponse`），沒有佔位字 */
       upload: Type.Optional(Type.String()),
+      /** GET 取全部項目（`ReorderItemsResponse`）；POST 移動單一項目（`ReorderMoveRequest`）或整批（`ReorderListRequest`，只限 list 模式），回 `ReorderResponse` */
+      reorder: Type.Optional(Type.String()),
+    }),
+  ),
+  /** 拖曳排序：只在列表可排序時出現 */
+  ordering: Type.Optional(
+    Type.Object({
+      mode: Type.Union([Type.Literal('list'), Type.Literal('tree')]),
+      /** 只用來顯示，例如 'sort' */
+      column: Type.String(),
+      direction: Type.Union([Type.Literal('asc'), Type.Literal('desc')]),
+      /** tree：最多幾層（根 = 第 1 層）；省略表示不限 */
+      maxDepth: Type.Optional(Type.Integer({ minimum: 1 })),
     }),
   ),
   /** 列表對應的資源：新增、編輯表單的網址與呈現方式 */
