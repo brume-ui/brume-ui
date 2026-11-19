@@ -138,6 +138,55 @@ export const DEMO_FEATURES: DemoFeature[] = [
     persistence: 'memory',
     sources: ['brume-ui:apps/playground/src/pages/grid-features.tsx'],
   },
+  ...(
+    [
+      {
+        id: 'grid.ordering.list',
+        title: '可拖曳排序的橫幅列表',
+        summary: '45 筆橫幅、每頁 20 筆；拖曳握把排序，篩選時握把停用，並可開啟調整順序。',
+        steps: [
+          '拖曳任一橫幅的握把到新位置，放開後出現已調整順序通知；點復原還原。',
+          '切到第 2 頁再拖曳，確認排序數字連續；點調整順序，把項目置頂或置底後儲存。',
+          '開啟篩選並選已下架後套用，把滑鼠停在握把上查看停用原因；調整順序仍可使用。',
+        ],
+        expected:
+          '拖曳後列的排序數字隨之更新並可復原；篩選中握把停用並說明原因；調整順序儲存的是全部 45 筆的順序。',
+      },
+      {
+        id: 'grid.ordering.tree',
+        title: '可拖曳排序的選單樹',
+        summary: '兩層選單；拖曳握把換位，水平位移改變層級，可收合與展開，最多兩層。',
+        steps: [
+          '拖曳 品牌故事 到 商品 底下，觀察落點線的縮排隨水平位移改變。',
+          '把有子項的 商品 往右拖到 會員專區 底下，確認超過兩層的位置沒有落點，商品 只能留在頂層。',
+          '點項目前的箭頭收合與展開，或按全部收合、全部展開；重新整理後收合狀態保留。',
+        ],
+        expected:
+          '落點線標出新位置與層級；成功移動出現可復原的通知；超過兩層的位置沒有落點線（伺服器仍會以 409 拒絕違規移動並還原順序）。',
+      },
+    ] as const
+  ).map((example) => ({
+    ...example,
+    category: 'grid' as const,
+    href: `#/grid-ordering?example=${example.id}`,
+    steps: [...example.steps],
+    persistence: 'memory' as const,
+    sources: [
+      'brume-ui:apps/playground/src/pages/grid-ordering-data.ts',
+      'brume-ui:apps/playground/src/pages/grid-ordering.tsx',
+    ],
+  })),
+  {
+    id: 'grid.ordering.focused',
+    category: 'grid',
+    title: '所有 Grid 拖曳排序範例',
+    summary: '挑選橫幅列表或選單樹，操作拖曳排序。',
+    href: '#/grid-ordering',
+    steps: ['由選單挑選範例，依步驟拖曳、復原並核對排序。'],
+    expected: '直接進入可拖曳的列表；資料只在目前頁面記憶體。',
+    persistence: 'memory',
+    sources: ['brume-ui:apps/playground/src/pages/grid-ordering.tsx'],
+  },
   ...FORM_EXAMPLES.map((example) => ({
     id: example.id,
     category: 'form' as const,

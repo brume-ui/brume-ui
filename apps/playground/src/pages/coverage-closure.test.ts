@@ -41,6 +41,9 @@ it('closes all 47 assigned IDs with runnable targets or concrete source-backed c
     'react.ProgressBar',
     'react.StaticValue',
     'react.TreeLabel',
+    'react.ReorderDialog',
+    'react.SortableTree',
+    'react.TreeNodeContent',
     'react.FieldLayoutContext',
     'react.BrumeProvider',
     'renderer.page-dispatch',
@@ -55,7 +58,7 @@ it('closes all 47 assigned IDs with runnable targets or concrete source-backed c
     'contract.schema',
     'style.tokens',
   ];
-  expect(ids).toHaveLength(48);
+  expect(ids).toHaveLength(51);
   expect(CLOSURE_EXAMPLES.map((item) => item.id).sort()).toEqual(ids.sort());
   const coverage = readFileSync(
     new URL('../../../../docs/demo-coverage.md', import.meta.url),

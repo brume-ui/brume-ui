@@ -27,6 +27,7 @@ import { FormRelationsPage } from './pages/form-relations';
 import { FormRepeatersPage } from './pages/form-repeaters';
 import { ErrorPagePage, GridEmptyPage, GridPage } from './pages/grid';
 import { GridFeaturesPage } from './pages/grid-features';
+import { GridOrderingPage } from './pages/grid-ordering';
 import { InputsPage } from './pages/inputs';
 import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
 import { MotionPage } from './pages/motion';
@@ -95,6 +96,7 @@ export const ROUTES: Route[] = [
   { name: 'form-relations', title: '表單 · 遠端選項與互斥', Component: FormRelationsPage },
   { name: 'form-dialog', title: '表單 · 彈窗', Component: FormDialogPage },
   { name: 'grid-features', title: 'Grid · 功能聚焦', Component: GridFeaturesPage, ownsGuide: true },
+  { name: 'grid-ordering', title: 'Grid · 拖曳排序', Component: GridOrderingPage, ownsGuide: true },
   { name: 'grid', title: 'Grid（訂單）', Component: GridPage, ownsGuide: true },
   { name: 'grid-empty', title: 'Grid（空）', Component: GridEmptyPage, ownsGuide: true },
   { name: 'error-page', title: '錯誤頁', Component: ErrorPagePage },

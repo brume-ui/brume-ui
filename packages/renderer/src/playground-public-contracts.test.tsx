@@ -38,6 +38,27 @@ it('shows a TreeLabel hierarchy with the link on the name only', () => {
     within(tree).getByRole('link', { name }).closest('[data-depth]')?.getAttribute('data-depth');
   expect(['服飾', '外套', '羽絨外套', '家居'].map(depth)).toEqual(['0', '1', '2', '0']);
 });
+it('reorders items in the ReorderDialog lab and saves the new order', async () => {
+  show('react.ReorderDialog');
+  fireEvent.click(screen.getByRole('button', { name: '開啟調整順序' }));
+  const dialog = await screen.findByRole('dialog');
+  fireEvent.click(within(dialog).getAllByRole('button', { name: /置底/ })[0] as HTMLElement);
+  fireEvent.click(within(dialog).getByRole('button', { name: /儲存/ }));
+  await waitFor(() =>
+    expect(screen.getByLabelText('已儲存順序').textContent).toContain(
+      '香蕉、葡萄、芒果、鳳梨、蘋果',
+    ),
+  );
+});
+it('shows the SortableTree and TreeNodeContent labs with a two-level menu', () => {
+  const view = show('react.SortableTree');
+  expect(screen.getByText('品牌故事')).toBeTruthy();
+  expect(screen.getByLabelText('最近一次移動').textContent).toBe('尚未移動');
+  view.unmount();
+  show('react.TreeNodeContent');
+  expect(screen.getByRole('link', { name: '全部商品' })).toBeTruthy();
+  expect(screen.getByText('/products')).toBeTruthy();
+});
 it('exposes a real Link destination, native modified click and ordinary adapter navigation', () => {
   show('react.Link');
   fireEvent.click(screen.getByRole('link', { name: '記錄本範例導覽' }));

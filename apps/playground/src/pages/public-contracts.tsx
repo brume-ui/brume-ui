@@ -40,6 +40,7 @@ import { CLOSURE_EXAMPLES } from './coverage-closure-data';
 import { DemoGuide, useDemoExample } from './demo-guide';
 import { buildFormPage } from './form-data';
 import { buildOrdersPage, createOrderDb } from './grid-data';
+import { ReorderDialogLab, SortableTreeLab } from './ordering-labs';
 import { Page, Panel, Section } from './page';
 
 export function Json({ value, label }: { value: unknown; label: string }) {
@@ -831,6 +832,9 @@ export function PublicContractsPage() {
     );
   else if (id === 'react.BrumeProvider') content = <ProviderLab />;
   else if (id === 'react.Link') content = <AdapterLab links />;
+  else if (id === 'react.ReorderDialog') content = <ReorderDialogLab />;
+  else if (id === 'react.SortableTree') content = <SortableTreeLab />;
+  else if (id === 'react.TreeNodeContent') content = <SortableTreeLab content />;
   else if (id.startsWith('react.')) content = <ComponentLab id={id} />;
   else if (id === 'renderer.form-api') content = <FormApiLab />;
   else if (id === 'renderer.grid-api') content = <GridApiLab />;
