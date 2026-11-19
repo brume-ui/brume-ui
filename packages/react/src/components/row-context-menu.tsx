@@ -9,7 +9,7 @@ import {
   useRef,
 } from 'react';
 import { ActionMenuContent, type MenuAction, type MenuParts } from './action-menu';
-import { composeRefs } from './compose-refs';
+import { useComposedRefs } from './compose-refs';
 
 export interface RowContextMenuProps {
   items: MenuAction[];
@@ -84,10 +84,11 @@ function GuardedRow({
   // The selection as it was when the press began: on some platforms the right press itself selects
   // the word under the pointer, which must not count.
   const selectionAtPress = useRef<boolean | null>(null);
+  const composedRef = useComposedRefs(ref, (children.props as { ref?: Ref<Element> }).ref);
   return cloneElement(children, {
     ...rest,
     // Radix's trigger ref must not replace one the row already carries (e.g. dnd-kit's setNodeRef).
-    ref: composeRefs(ref, (children.props as { ref?: Ref<Element> }).ref),
+    ref: composedRef,
     'data-br-row-menu': '',
     style: { ...style, ...(children.props as { style?: CSSProperties }).style },
     onPointerDownCapture: (event: PointerEvent) => {
