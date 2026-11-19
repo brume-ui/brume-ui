@@ -6,6 +6,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ArrowDownToLine, ArrowUpToLine } from 'lucide-react';
 import { type CSSProperties, useState } from 'react';
 import { cn } from '../cn';
 import { prefersReducedMotion } from '../motion/reduced-motion';
@@ -29,6 +30,15 @@ export interface ReorderDialogProps {
   saving?: boolean;
   onSave(ids: string[]): void;
 }
+
+/**
+ * The list is a size container: in a narrow dialog the move buttons shrink to their icon (the
+ * word stays as the tooltip and the accessible name) so the item name keeps the row.
+ */
+const COMPACT = 'br:px-1.5 br:@min-[340px]:px-3';
+/** Two lines of name when narrow, one with an ellipsis when there is room. */
+const NAME = 'br:line-clamp-2 br:@min-[340px]:line-clamp-none br:@min-[340px]:truncate';
+const WORD = 'br:hidden br:@min-[340px]:inline';
 
 function ReorderRow({
   id,
@@ -67,7 +77,7 @@ function ReorderRow({
       style={style}
       data-dragging={isDragging || undefined}
       className={cn(
-        'br:flex br:items-center br:gap-3 br:rounded-input br:border br:border-border br:bg-surface br:px-2 br:py-1.5',
+        'br:flex br:items-center br:gap-2 br:@min-[340px]:gap-3 br:rounded-input br:border br:border-border br:bg-surface br:px-2 br:py-1.5',
         'br:data-dragging:bg-accent-tint br:data-dragging:shadow-overlay',
       )}
     >
@@ -77,29 +87,35 @@ function ReorderRow({
         {...attributes}
         {...listeners}
       />
-      <span className="br:w-6 br:shrink-0 br:text-right br:text-sm br:text-text-muted br:tabular-nums">
+      <span className="br:w-5 br:@min-[340px]:w-6 br:shrink-0 br:text-right br:text-sm br:text-text-muted br:tabular-nums">
         {index + 1}
       </span>
-      <span className="br:min-w-0 br:flex-1 br:truncate br:text-sm">{label}</span>
-      <span className="br:flex br:shrink-0 br:gap-1">
+      <span className={cn('br:min-w-0 br:flex-1 br:text-sm br:break-words', NAME)}>{label}</span>
+      <span className="br:flex br:shrink-0 br:gap-0.5 br:@min-[340px]:gap-1">
         {index > 0 ? (
           <Button
             variant="ghost"
             size="sm"
+            iconStart={ArrowUpToLine}
+            className={COMPACT}
             aria-label={t('reorderDialog.topLabel', { label })}
+            title={t('reorderDialog.top')}
             onClick={onTop}
           >
-            {t('reorderDialog.top')}
+            <span className={WORD}>{t('reorderDialog.top')}</span>
           </Button>
         ) : null}
         {!last ? (
           <Button
             variant="ghost"
             size="sm"
+            iconStart={ArrowDownToLine}
+            className={COMPACT}
             aria-label={t('reorderDialog.bottomLabel', { label })}
+            title={t('reorderDialog.bottom')}
             onClick={onBottom}
           >
-            {t('reorderDialog.bottom')}
+            <span className={WORD}>{t('reorderDialog.bottom')}</span>
           </Button>
         ) : null}
       </span>
@@ -181,7 +197,7 @@ export function ReorderDialog({
         ) : (
           <DndContext {...dnd} onDragEnd={onDragEnd}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <ol className="br:m-0 br:flex br:list-none br:flex-col br:gap-1.5 br:p-0">
+              <ol className="br:@container br:m-0 br:flex br:list-none br:flex-col br:gap-1.5 br:p-0">
                 {ids.map((id, index) => (
                   <ReorderRow
                     key={id}
