@@ -23,6 +23,7 @@ import { GridScopes } from './filters/scopes';
 import { GridSelectors } from './filters/selectors';
 import { GridContext, type GridContextValue, useGrid } from './grid-context';
 import { ReorderDialogButton } from './ordering/reorder-dialog-button';
+import { TreeToolbarButtons, TreeView, useTreeCollapse } from './ordering/tree-view';
 import { useReorder } from './ordering/use-reorder';
 import { ExportMenu, GridToolbar, ToolActions } from './toolbar';
 import { GRID_VISIT, hrefForPage, useGridNavigation } from './use-grid-navigation';
@@ -174,6 +175,8 @@ function OwnedGridView({ page, onEdit, toolbarStart }: GridViewProps) {
 
   const filterPanelId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const treeMode = page.ordering?.mode === 'tree';
+  const collapse = useTreeCollapse(page);
 
   return (
     <GridContext.Provider value={grid}>
@@ -196,6 +199,7 @@ function OwnedGridView({ page, onEdit, toolbarStart }: GridViewProps) {
           }
           end={
             <>
+              {treeMode ? <TreeToolbarButtons collapse={collapse} /> : null}
               <ReorderDialogButton />
               <ToolActions />
               <ExportMenu />
@@ -205,8 +209,14 @@ function OwnedGridView({ page, onEdit, toolbarStart }: GridViewProps) {
         <FilterPanelView id={filterPanelId} open={filtersOpen} />
         <FilterChips />
         <GridSelectors />
-        <GridTable hidden={hidden} />
-        <GridFooter />
+        {treeMode ? (
+          <TreeView collapse={collapse} hidden={hidden} />
+        ) : (
+          <>
+            <GridTable hidden={hidden} />
+            <GridFooter />
+          </>
+        )}
         {actionForm ? (
           <ActionFormDialog
             def={actionForm.def}

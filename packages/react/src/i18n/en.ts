@@ -134,6 +134,8 @@ export const en: Record<MessageKey, string> = {
   'grid.reordered': 'Order updated',
   'grid.reorderUndo': 'Undo',
   'grid.reorderUndone': 'Undone',
+  'grid.expandAll': 'Expand all',
+  'grid.collapseAll': 'Collapse all',
   'grid.columns': 'Columns',
   'grid.clearFilters': 'Clear all filters',
   'grid.filteredEmptyTitle': 'No matching records',

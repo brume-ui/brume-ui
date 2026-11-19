@@ -134,6 +134,8 @@ export const zhCN: Record<MessageKey, string> = {
   'grid.reordered': '已更新顺序',
   'grid.reorderUndo': '撤销',
   'grid.reorderUndone': '已撤销',
+  'grid.expandAll': '全部展开',
+  'grid.collapseAll': '全部收起',
   'grid.columns': '显示列',
   'grid.clearFilters': '清除所有筛选',
   'grid.filteredEmptyTitle': '没有符合条件的数据',

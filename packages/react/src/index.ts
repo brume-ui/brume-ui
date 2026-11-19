@@ -86,6 +86,7 @@ export { Textarea, type TextareaProps } from './components/textarea';
 export { Thumbnail, type ThumbnailProps } from './components/thumbnail';
 export { Toaster, type ToastOptions, toast } from './components/toast';
 export { TreeLabel, type TreeLabelProps } from './components/tree-label';
+export { TreeNodeContent, type TreeNodeContentProps } from './components/tree-node-content';
 export {
   formatBytes,
   type UploadItem,

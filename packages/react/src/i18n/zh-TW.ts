@@ -133,6 +133,8 @@ export const zhTW = {
   'grid.reordered': '已更新順序',
   'grid.reorderUndo': '復原',
   'grid.reorderUndone': '已復原',
+  'grid.expandAll': '全部展開',
+  'grid.collapseAll': '全部收合',
   'grid.columns': '顯示欄位',
   'grid.clearFilters': '清除所有篩選',
   'grid.filteredEmptyTitle': '沒有符合條件的資料',
