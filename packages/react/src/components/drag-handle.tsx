@@ -58,6 +58,7 @@ export function DragHandle({
         <Tooltip.Portal>
           <Tooltip.Content
             sideOffset={6}
+            collisionPadding={8}
             className={cn(
               'br:z-50 br:rounded-input br:bg-text br:px-2 br:py-1 br:text-xs br:text-surface br:shadow-overlay br:[--br-origin:var(--radix-tooltip-content-transform-origin)]',
               POPOVER_MOTION,

@@ -90,12 +90,13 @@ const HANDLE_COLUMN_WIDTH = '44px';
 /** The 28px handle plus this padding must fit the column, or the cell's ellipsis draws a stray dot. */
 const HANDLE_CELL = 'br:px-2';
 /**
- * A lifted row: shadow and accent tint on its cells. The drop line is an accent inset edge on
+ * A lifted row: an accent tint on its cells and one drop shadow around the whole row (a shadow per
+ * cell would show seams between the cells). The drop line is an accent inset edge on
  * the cells of the row being hovered. Motion is dnd-kit's transform, switched off under reduced
  * motion in SortableRow.
  */
 const DRAG_STATES = [
-  'br:data-dragging:*:bg-accent-tint br:data-dragging:*:shadow-overlay',
+  'br:data-dragging:*:bg-accent-tint br:data-dragging:*:shadow-none br:data-dragging:[filter:drop-shadow(0_10px_12px_rgba(15,21,28,0.16))]',
   'br:data-[drop=before]:*:shadow-[inset_0_2px_0_var(--br-accent),var(--br-shadow-row)]',
   'br:data-[drop=after]:*:shadow-[inset_0_-2px_0_var(--br-accent),var(--br-shadow-row)]',
 ].join(' ');

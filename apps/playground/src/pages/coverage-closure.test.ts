@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { getDemoFeature } from '../demo-catalog';
 import { CLOSURE_EXAMPLES } from './coverage-closure-data';
 
-it('closes all 47 assigned IDs with runnable targets or concrete source-backed contract cases', () => {
+it('closes all 51 assigned IDs with runnable targets or concrete source-backed contract cases', () => {
   // Freeze the assigned IDs independently of catalog/data so removing a mapping fails CI.
   const ids = [
     'lifecycle.save-reload',

@@ -9,9 +9,6 @@ export interface TreeLabelProps {
 /** Indent per level below the first; the elbow sits in the first level's slot. */
 export const TREE_STEP_REM = 1.25;
 
-/** Width of the elbow plus the gap after it: `ms-1` (0.25) + `w-2.5` (0.625) + `gap-2` (0.5). */
-export const TREE_ELBOW_REM = 1.375;
-
 /** The quiet elbow joining a child to its parent (decoration only). */
 export function TreeElbow() {
   return (

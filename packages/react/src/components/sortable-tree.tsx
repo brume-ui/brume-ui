@@ -37,7 +37,7 @@ import {
   type TreeNode,
   visibleNodes,
 } from './sortable-tree-model';
-import { TREE_ELBOW_REM, TREE_STEP_REM, TreeElbow } from './tree-label';
+import { TREE_STEP_REM, TreeElbow } from './tree-label';
 import { useSortableSensors } from './use-sortable-setup';
 
 export type { TreeNode } from './sortable-tree-model';
@@ -63,12 +63,12 @@ export interface SortableTreeProps<T extends TreeNode> {
   nodeLabel?(node: T): string;
 }
 
-/** The row's horizontal padding (`px-1`), before its handle. */
-const ROW_PAD_REM = 0.25;
-const indentRem = (depth: number) => (depth <= 1 ? 0 : (depth - 2) * TREE_STEP_REM);
-/** Where a row's handle starts, measured from the row's edge: padding, the level's indent and elbow. */
-const handleStartRem = (depth: number) =>
-  ROW_PAD_REM + (depth <= 1 ? 0 : indentRem(depth) + TREE_ELBOW_REM);
+/**
+ * Where a node's card starts, measured from the list's edge: one indent step per level below the
+ * first. The step is the gutter holding a child's elbow, directly left of its card; the drop line
+ * starts at the same edge.
+ */
+const cardStartRem = (depth: number) => Math.max(0, depth - 1) * TREE_STEP_REM;
 
 /** One level of horizontal drag, in pixels. */
 function levelWidth(): number {
@@ -139,12 +139,12 @@ function TreeRow({
   if (isDragging) {
     // The dragged row stays in the list as a placeholder showing where it will land.
     return (
-      <li ref={setNodeRef} style={style} {...aria} className="br:flex br:h-10 br:items-center">
+      <li ref={setNodeRef} style={style} {...aria} className="br:flex br:h-11 br:items-center">
         {dropDepth != null ? (
           <span
             data-drop-line=""
             className="br:h-0.5 br:flex-1 br:rounded-full br:bg-accent"
-            style={{ marginInlineStart: `${handleStartRem(dropDepth)}rem` }}
+            style={{ marginInlineStart: `${cardStartRem(dropDepth)}rem` }}
           />
         ) : null}
       </li>
@@ -152,37 +152,49 @@ function TreeRow({
   }
 
   return (
-    <li ref={setNodeRef} style={style} {...aria} data-carried={carried || undefined}>
+    <li
+      ref={setNodeRef}
+      style={{
+        ...style,
+        paddingInlineStart: `${cardStartRem(depth) - (depth > 1 ? TREE_STEP_REM : 0)}rem`,
+      }}
+      {...aria}
+      data-depth={depth}
+      data-carried={carried || undefined}
+      className="br:flex br:items-stretch"
+    >
+      {depth > 1 ? (
+        <span
+          aria-hidden="true"
+          className="br:flex br:shrink-0 br:items-center"
+          style={{ width: `${TREE_STEP_REM}rem` }}
+        >
+          <TreeElbow />
+        </span>
+      ) : null}
       <div
         className={cn(
-          'br:flex br:min-h-10 br:items-center br:gap-1 br:rounded-input br:px-1',
+          'br:flex br:min-h-11 br:min-w-0 br:flex-1 br:items-center br:gap-1 br:rounded-card br:bg-surface br:px-1 br:shadow-row br:transition-colors br:duration-fast br:hover:bg-(--br-row-hover)',
           carried && 'br:bg-accent-tint br:outline-2 br:outline-accent br:outline-dashed',
         )}
       >
-        <span
-          data-depth={depth}
-          className="br:inline-flex br:shrink-0 br:items-center br:gap-2"
-          style={{ paddingInlineStart: `${indentRem(depth)}rem` }}
-        >
-          {depth > 1 ? <TreeElbow /> : null}
-          <DragHandle
-            ref={(node) => {
-              setActivatorNodeRef(node);
-              handleRef(node);
-            }}
-            label={t('dataTable.dragHandle', { label })}
-            disabled={!enabled}
-            {...(enabled
-              ? {
-                  ...attributes,
-                  ...listeners,
-                  'aria-pressed': carried || undefined,
-                  onKeyDown: onHandleKeyDown,
-                  onBlur: onHandleBlur,
-                }
-              : {})}
-          />
-        </span>
+        <DragHandle
+          ref={(node) => {
+            setActivatorNodeRef(node);
+            handleRef(node);
+          }}
+          label={t('dataTable.dragHandle', { label })}
+          disabled={!enabled}
+          {...(enabled
+            ? {
+                ...attributes,
+                ...listeners,
+                'aria-pressed': carried || undefined,
+                onKeyDown: onHandleKeyDown,
+                onBlur: onHandleBlur,
+              }
+            : {})}
+        />
         {hasChildren ? (
           <button
             type="button"
@@ -407,7 +419,7 @@ export function SortableTree<T extends TreeNode>({
       onDragCancel={() => setDrag(null)}
     >
       <SortableContext items={rows.map((n) => n.id)} strategy={verticalListSortingStrategy}>
-        <ul className="br:m-0 br:flex br:list-none br:flex-col br:gap-0.5 br:p-0">
+        <ul className="br:m-0 br:flex br:list-none br:flex-col br:gap-1 br:p-0 br:[--br-row-hover:color-mix(in_oklab,var(--br-surface)_96%,var(--br-text))]">
           {rows.map((node) => {
             const depth = depths.get(node.id) ?? 1;
             const siblings = children.get(node.parent) ?? [];
@@ -441,7 +453,7 @@ export function SortableTree<T extends TreeNode>({
       </SortableContext>
       <DragOverlay dropAnimation={prefersReducedMotion() ? null : undefined}>
         {activeNode ? (
-          <div className="br:flex br:min-h-10 br:cursor-grabbing br:items-center br:gap-1 br:rounded-input br:border br:border-border br:bg-surface br:px-1 br:shadow-overlay">
+          <div className="br:flex br:min-h-11 br:cursor-grabbing br:items-center br:gap-1 br:rounded-card br:bg-accent-tint br:px-1 br:shadow-overlay">
             <span className="br:inline-flex br:size-7 br:shrink-0 br:items-center br:justify-center br:text-text-muted">
               <GripVertical aria-hidden="true" className="br:size-4" />
             </span>

@@ -15,7 +15,7 @@ export function TreeNodeContent({ primary, secondary, actions }: TreeNodeContent
     <div className="br:flex br:min-w-0 br:flex-wrap br:items-center br:gap-x-3 br:gap-y-1">
       <div className="br:min-w-0 br:text-sm br:font-medium br:text-text">{primary}</div>
       {secondary && secondary.length > 0 ? (
-        <div className="br:flex br:min-w-0 br:flex-wrap br:items-center br:gap-x-3 br:gap-y-1 br:text-sm br:text-text-muted">
+        <div className="br:min-w-0 br:truncate br:text-sm br:text-text-muted br:[&>*+*]:ms-3">
           {secondary}
         </div>
       ) : null}

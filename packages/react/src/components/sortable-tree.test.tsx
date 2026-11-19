@@ -84,9 +84,8 @@ describe('SortableTree', () => {
     const rows = items();
     expect(rows.map((r) => r.getAttribute('aria-level'))).toEqual(['1', '2', '3', '1', '2']);
     expect(screen.getByTestId('node-a1').textContent).toBe('上衣（2）');
-    // Same indent as TreeLabel: the elbow fills the first level, then 1.25rem per level.
-    const indent = (r: Element) =>
-      (r.querySelector('[data-depth]') as HTMLElement).style.paddingInlineStart;
+    // Cards step in by 1.25rem per level (the TreeLabel step); the elbow sits in that gutter.
+    const indent = (r: Element) => (r as HTMLElement).style.paddingInlineStart;
     expect(rows.map(indent)).toEqual(['0rem', '0rem', '1.25rem', '0rem', '0rem']);
     const elbow = (r: Element | undefined) => r?.querySelector('[data-tree-elbow]') ?? null;
     expect(elbow(rows[0])).toBeNull();
