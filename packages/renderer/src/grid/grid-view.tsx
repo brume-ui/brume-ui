@@ -22,6 +22,8 @@ import { FilterPanelToggle, FilterPanelView } from './filters/filter-panel';
 import { GridScopes } from './filters/scopes';
 import { GridSelectors } from './filters/selectors';
 import { GridContext, type GridContextValue, useGrid } from './grid-context';
+import { ReorderDialogButton } from './ordering/reorder-dialog-button';
+import { useReorder } from './ordering/use-reorder';
 import { ExportMenu, GridToolbar, ToolActions } from './toolbar';
 import { GRID_VISIT, hrefForPage, useGridNavigation } from './use-grid-navigation';
 
@@ -194,6 +196,7 @@ function OwnedGridView({ page, onEdit, toolbarStart }: GridViewProps) {
           }
           end={
             <>
+              <ReorderDialogButton />
               <ToolActions />
               <ExportMenu />
             </>
@@ -218,7 +221,7 @@ function OwnedGridView({ page, onEdit, toolbarStart }: GridViewProps) {
 }
 
 function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
-  const { page, rows, isExpanded, selection, setSelection, onEdit } = useGrid();
+  const { page, rows, rowById, isExpanded, selection, setSelection, onEdit } = useGrid();
   const { navigate } = useGridNavigation();
   const empty = useGridEmptyState();
   const sort = page.query.sort;
@@ -286,6 +289,29 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
   const canEdit = Boolean(onEdit) || rows.some((row) => row._meta?.editUrl);
   const withRowActions = hasRowActions(page, canEdit);
 
+  // Handles move rows only while the list shows the whole base order (no sort, search, scope or
+  // filter); the toolbar's 「調整順序」 works regardless.
+  const reorder = useReorder(page);
+  const { t } = useBrume();
+  const ordering = page.ordering?.mode === 'list' && page.endpoints?.reorder;
+  const orderIntact =
+    !page.query.sort && !page.query.q && !page.query.scope && page.appliedFilters.length === 0;
+  const dragReorder = ordering
+    ? {
+        enabled: orderIntact,
+        disabledReason: t('grid.reorderDisabled'),
+        onMove: (m: { id: string; before?: string; after?: string }) => {
+          // The table reports string ids; the server wants each row's own value.
+          const original = (id: string) => rowById.get(id)?.id ?? id;
+          void reorder.move({
+            id: original(m.id),
+            ...(m.before !== undefined ? { before: original(m.before) } : {}),
+            ...(m.after !== undefined ? { after: original(m.after) } : {}),
+          });
+        },
+      }
+    : undefined;
+
   return (
     <DataTable
       columns={columns}
@@ -304,6 +330,7 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
           : undefined
       }
       rowWrapper={(row, tr) => <RowMenu row={row}>{tr}</RowMenu>}
+      reorder={dragReorder}
       rowActions={withRowActions ? (row) => <RowActions row={row} /> : undefined}
     />
   );
