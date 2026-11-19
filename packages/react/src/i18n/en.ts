@@ -83,6 +83,10 @@ export const en: Record<MessageKey, string> = {
   'dataTable.dragCancelled': 'Cancelled',
   'dataTable.dragInstructions':
     'Press Space or Enter to pick up, arrow keys to move, Space or Enter to drop, Escape to cancel.',
+  'reorderDialog.top': 'Move to top',
+  'reorderDialog.bottom': 'Move to bottom',
+  'reorderDialog.topLabel': 'Move to top: {label}',
+  'reorderDialog.bottomLabel': 'Move to bottom: {label}',
   'pagination.page': 'Page {page}',
   'pagination.label': 'Pagination',
   'pagination.previous': 'Previous page',

@@ -83,6 +83,10 @@ export const zhCN: Record<MessageKey, string> = {
   'dataTable.dragCancelled': '已取消',
   'dataTable.dragInstructions':
     '按空格键或 Enter 拿起，用方向键移动，再按空格键或 Enter 放下，Esc 取消。',
+  'reorderDialog.top': '置顶',
+  'reorderDialog.bottom': '置底',
+  'reorderDialog.topLabel': '置顶：{label}',
+  'reorderDialog.bottomLabel': '置底：{label}',
   'pagination.page': '第 {page} 页',
   'pagination.label': '分页',
   'pagination.previous': '上一页',

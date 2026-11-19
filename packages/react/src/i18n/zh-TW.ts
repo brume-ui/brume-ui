@@ -82,6 +82,10 @@ export const zhTW = {
   'dataTable.dragCancelled': '已取消',
   'dataTable.dragInstructions':
     '按空白鍵或 Enter 拿起，用方向鍵移動，再按空白鍵或 Enter 放下，Esc 取消。',
+  'reorderDialog.top': '置頂',
+  'reorderDialog.bottom': '置底',
+  'reorderDialog.topLabel': '置頂：{label}',
+  'reorderDialog.bottomLabel': '置底：{label}',
   'pagination.page': '第 {page} 頁',
   'pagination.label': '分頁',
   'pagination.previous': '上一頁',

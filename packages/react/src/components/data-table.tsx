@@ -1,16 +1,7 @@
-import {
-  type Announcements,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
+import { DndContext, type DragEndEvent } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -36,6 +27,7 @@ import { DragHandle } from './drag-handle';
 import { EmptyState, type EmptyStateProps } from './empty-state';
 import { FOCUS_RING } from './focus';
 import { Skeleton } from './skeleton';
+import { useSortableSetup } from './use-sortable-setup';
 
 export interface DataColumn<T> {
   key: string;
@@ -261,28 +253,13 @@ export function DataTable<T>({
     getCoreRowModel: getCoreRowModel(),
   });
   const { t } = useBrume();
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
   const textKeys = columns.map((c) => c.key);
   const nameOf = (id: string) => {
     const row = rows.find((r) => getRowId(r) === id);
     return row === undefined ? id : rowName(row, id, selection?.rowLabel, textKeys);
   };
   const positionOf = (id: string) => rows.findIndex((r) => getRowId(r) === id) + 1;
-  const announcements: Announcements = {
-    onDragStart: ({ active }) => t('dataTable.dragPickedUp', { label: nameOf(String(active.id)) }),
-    onDragOver: ({ active, over }) =>
-      over
-        ? t('dataTable.dragMoved', {
-            label: nameOf(String(active.id)),
-            n: positionOf(String(over.id)),
-          })
-        : undefined,
-    onDragEnd: () => t('dataTable.dragDropped'),
-    onDragCancel: () => t('dataTable.dragCancelled'),
-  };
+  const dnd = useSortableSetup(nameOf, positionOf);
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!reorder || !over || active.id === over.id) return;
     const from = rows.findIndex((r) => getRowId(r) === active.id);
@@ -351,14 +328,7 @@ export function DataTable<T>({
 
   const wrapDnd = (node: ReactElement) =>
     reorder ? (
-      <DndContext
-        sensors={sensors}
-        onDragEnd={onDragEnd}
-        accessibility={{
-          announcements,
-          screenReaderInstructions: { draggable: t('dataTable.dragInstructions') },
-        }}
-      >
+      <DndContext {...dnd} onDragEnd={onDragEnd}>
         <SortableContext
           items={rows.map((r) => getRowId(r))}
           strategy={verticalListSortingStrategy}
