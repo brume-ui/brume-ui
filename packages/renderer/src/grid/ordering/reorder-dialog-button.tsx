@@ -19,13 +19,16 @@ export function ReorderDialogButton() {
   // Brume-react reports string ids; the server gets each item's original value back.
   const originals = useRef(new Map<string, Id>());
   const loads = useRef(0);
+  // Bumped on every open and close: a save from an earlier opening must not touch this one.
+  const session = useRef(0);
 
   if (page.ordering?.mode !== 'list' || !page.endpoints?.reorder) return null;
 
-  async function load() {
+  /** Fetches every item; `keepError` leaves a save failure on screen while the list reloads. */
+  async function load({ keepError = false } = {}) {
     const load = ++loads.current;
     setItems(null);
-    setError(undefined);
+    if (!keepError) setError(undefined);
     try {
       const res = await reorder.loadItems();
       if (load !== loads.current) return;
@@ -39,21 +42,28 @@ export function ReorderDialogButton() {
   }
 
   function changeOpen(next: boolean) {
+    session.current++;
     setOpen(next);
+    setSaving(false);
     if (next) void load();
     else loads.current++;
   }
 
   async function save(ids: string[]) {
+    const current = session.current;
     setSaving(true);
     setError(undefined);
     try {
       await reorder.saveList(ids.map((id) => originals.current.get(id) ?? id));
+      if (current !== session.current) return;
       setOpen(false);
     } catch (e) {
+      if (current !== session.current) return;
+      // The order changed under us (or the save failed): show why next to the current order.
       setError(e instanceof Error ? e.message : String(e));
+      void load({ keepError: true });
     } finally {
-      setSaving(false);
+      if (current === session.current) setSaving(false);
     }
   }
 

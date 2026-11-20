@@ -224,6 +224,58 @@ describe('list ordering', () => {
     expect(reloads(adapter)).toBe(1);
   });
 
+  const dialogItems = (labels: string[]) => ({
+    status: 200,
+    data: { items: labels.map((label, i) => ({ id: i + 1, label })) },
+  });
+
+  it('a conflicting dialog save keeps the error, reloads the items and refreshes the grid', async () => {
+    let gets = 0;
+    const respond: Respond = (req) => {
+      if (req.method === 'get') {
+        gets++;
+        return dialogItems(gets === 1 ? ['甲', '乙'] : ['甲', '乙', '新項目']);
+      }
+      return { status: 409, data: { message: '順序已被其他人變更' } };
+    };
+    const { user, adapter } = setup(page, respond);
+    await user.click(screen.getByRole('button', { name: '調整順序' }));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(dialog.textContent).toContain('乙'));
+    await user.click(screen.getByRole('button', { name: '置頂：乙' }));
+    await user.click(screen.getByRole('button', { name: '儲存' }));
+    await waitFor(() => expect(dialog.textContent).toContain('新項目'));
+    expect(gets).toBe(2);
+    expect(screen.getByRole('alert').textContent).toContain('順序已被其他人變更');
+    expect(screen.getByRole('dialog')).toBe(dialog);
+    expect(reloads(adapter)).toBe(1);
+  });
+
+  it('a save still in flight when the dialog is reopened does not close it', async () => {
+    let finish: (res: HttpResponse) => void = () => {};
+    const respond: Respond = (req) =>
+      req.method === 'get'
+        ? dialogItems(['甲', '乙'])
+        : new Promise<HttpResponse>((resolve) => {
+            finish = resolve;
+          });
+    const { user } = setup(page, respond);
+    const open = () => user.click(screen.getByRole('button', { name: '調整順序' }));
+    await open();
+    await waitFor(() => expect(screen.getByRole('dialog').textContent).toContain('乙'));
+    await user.click(screen.getByRole('button', { name: '置頂：乙' }));
+    await user.click(screen.getByRole('button', { name: '儲存' }));
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await open();
+    await waitFor(() => expect(screen.getByRole('dialog').textContent).toContain('乙'));
+    await act(async () => finish({ status: 200, data: {} }));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(
+      (screen.getByRole('button', { name: '儲存' }) as HTMLButtonElement).getAttribute('aria-busy'),
+    ).toBeNull();
+  });
+
   it('the dialog button stays available while handles are disabled', () => {
     setup({ ...page, query: { ...page.query, sort: { key: 'name', direction: 'asc' } } });
     expect(screen.getByRole('button', { name: '調整順序' })).toBeTruthy();

@@ -15,7 +15,10 @@ export interface Reorder {
   move(m: ReorderMoveRequest): Promise<void>;
   /** GETs every orderable item. Throws an Error with a user-facing message on failure. */
   loadItems(): Promise<ReorderItemsResponse>;
-  /** Posts the full order, then reloads the grid. Throws an Error with a user-facing message on failure. */
+  /**
+   * Posts the full order, then reloads the grid. On failure it reloads the grid too and throws an
+   * Error with a user-facing message.
+   */
   saveList(ids: ReorderListRequest['ids']): Promise<void>;
 }
 
@@ -85,7 +88,11 @@ export function useReorder(page: ListPage): Reorder {
       },
       async saveList(ids) {
         const res = await post({ ids });
-        if (!ok(res)) throw new Error(failureMessage(res, t));
+        if (!ok(res)) {
+          // The grid behind the dialog may be stale too (a conflict): reload it as well.
+          refresh();
+          throw new Error(failureMessage(res, t));
+        }
         // No undo for a whole-list save.
         toast.success(t('grid.reordered'));
         const feedback = res.data?.feedback;
