@@ -42,26 +42,33 @@ export function RichTextField(props: FieldProps) {
     const finish = form.trackUpload();
     signal.addEventListener('abort', finish, { once: true });
     try {
-      const body = new FormData();
-      body.append(UPLOAD_PARAMS.file, file);
-      body.append(UPLOAD_PARAMS.field, path);
-      const context = verifiedRowContext(form, path, props.rowContext);
-      if (!context) throw new Error('Invalid upload row context');
-      if (context.length) body.append(UPLOAD_PARAMS.rowContext, JSON.stringify(context));
-      const ancestors = resolveAncestorSources(form, form.getField(path), []);
-      if (!ancestors.valid) throw new Error('Invalid upload ancestor context');
-      if (ancestors.values.length)
-        body.append(UPLOAD_PARAMS.ancestorSources, JSON.stringify(ancestors.values));
-      const res = await adapter.request<RichTextImageResponse>({
-        method: 'post',
-        url: uploadUrl ?? '',
-        body,
-        signal,
-      });
-      if (res.status === 200) return { ok: true, url: res.data.url };
-      const message =
-        res.status === 422 ? (res.data as unknown as ErrorResponse)?.errors?.file?.[0] : undefined;
-      return { ok: false, message: message ?? failureMessage(res, t) };
+      try {
+        const body = new FormData();
+        body.append(UPLOAD_PARAMS.file, file);
+        body.append(UPLOAD_PARAMS.field, path);
+        const context = verifiedRowContext(form, path, props.rowContext);
+        if (!context) throw new Error('Invalid upload row context');
+        if (context.length) body.append(UPLOAD_PARAMS.rowContext, JSON.stringify(context));
+        const ancestors = resolveAncestorSources(form, form.getField(path), []);
+        if (!ancestors.valid) throw new Error('Invalid upload ancestor context');
+        if (ancestors.values.length)
+          body.append(UPLOAD_PARAMS.ancestorSources, JSON.stringify(ancestors.values));
+        const res = await adapter.request<RichTextImageResponse>({
+          method: 'post',
+          url: uploadUrl ?? '',
+          body,
+          signal,
+        });
+        if (res.status === 200) return { ok: true, url: res.data.url };
+        const message =
+          res.status === 422
+            ? (res.data as unknown as ErrorResponse)?.errors?.file?.[0]
+            : undefined;
+        return { ok: false, message: message ?? failureMessage(res, t) };
+      } catch {
+        // A rejection would leave the editor's placeholder behind forever.
+        return { ok: false, message: t('upload.failed') };
+      }
     } finally {
       signal.removeEventListener('abort', finish);
       finish();

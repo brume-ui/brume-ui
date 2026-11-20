@@ -1,11 +1,12 @@
 import type { HttpRequest } from '@brume-ui/brume-react';
-import type { FieldDef } from '@brume-ui/brume-schema';
+import type { FieldDef, FormDef, RowContext } from '@brume-ui/brume-schema';
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { resolveField } from '../../index';
 import { renderWithBrume } from '../../test-utils';
 import type { FieldProps } from '../contract';
-import { useFormState } from '../use-form-state';
+import { Nodes } from '../layout/nodes';
+import { type FormApi, useFormState } from '../use-form-state';
 import { validateValue } from '../validate';
 import { setup } from './test-utils';
 
@@ -183,5 +184,156 @@ describe('richText required validation', () => {
     ['<p><img src="a.png"></p>', null],
   ])('%s -> %s', (value, error) => {
     expect(validateValue(required, value)).toBe(error);
+  });
+});
+
+const rich = { ...withImages, name: 'body' } as FieldDef;
+const repeaterDef = (extra: Partial<Record<string, unknown>> = {}) =>
+  ({
+    layout: 'stacked',
+    nodes: [
+      {
+        type: 'field',
+        field: {
+          type: 'repeater',
+          mode: 'json',
+          name: 'items',
+          label: 'Items',
+          nodes: [{ type: 'field', field: rich }],
+          ...extra,
+        },
+      },
+    ],
+  }) as FormDef;
+let nestedForm: FormApi;
+function Nested({ rowContext }: { rowContext?: RowContext }) {
+  nestedForm = useFormState(repeaterDef(), { items: [{ _brume: { key: 'r1' }, body: null }] });
+  const Component = resolveField('richText') as NonNullable<ReturnType<typeof resolveField>>;
+  return rowContext ? (
+    <Component
+      def={rich}
+      value={null}
+      onChange={() => {}}
+      onBlur={() => {}}
+      errors={{}}
+      path="items.0.body"
+      id="f"
+      invalid={false}
+      readOnly={false}
+      disabled={false}
+      form={nestedForm}
+      uploadUrl="/up"
+      rowContext={rowContext}
+    />
+  ) : (
+    <Nodes
+      nodes={repeaterDef().nodes}
+      api={nestedForm}
+      idPrefix="t"
+      layout="stacked"
+      uploadUrl="/up"
+    />
+  );
+}
+function Related({ form }: { form: FormDef }) {
+  const api = useFormState(form, { tenant: 'scope-a', products: [{ id: '31', body: null }] });
+  const Component = resolveField('richText') as NonNullable<ReturnType<typeof resolveField>>;
+  return (
+    <Component
+      def={rich}
+      value={null}
+      onChange={() => {}}
+      onBlur={() => {}}
+      errors={{}}
+      path="products.0.body"
+      id="f"
+      invalid={false}
+      readOnly={false}
+      disabled={false}
+      form={api}
+      uploadUrl="/up"
+      rowContext={api.getField('products.0.body')?.rowContext}
+    />
+  );
+}
+
+const sentBody = (request: { mock: { calls: unknown[][] } }) =>
+  ((request.mock.calls[0] ?? [])[0] as { body: FormData }).body;
+const png = new File(['a'], 'a.png', { type: 'image/png' });
+
+describe('richText upload in nested rows', () => {
+  it('sends the row context and the full field path, without ancestorSources', async () => {
+    const request = vi.fn((_r: HttpRequest) => ({ status: 200, data: { url: '/i.png' } }));
+    renderWithBrume(<Nested />, { respond: request });
+    let result: unknown;
+    await act(async () => {
+      result = await editor().upload?.(png, new AbortController().signal);
+    });
+    expect(result).toEqual({ ok: true, url: '/i.png' });
+    const body = sentBody(request);
+    expect(body.get('field')).toBe('items.0.body');
+    expect(JSON.parse(body.get('rowContext') as string)).toEqual([{ path: 'items', key: 'r1' }]);
+    expect(body.get('ancestorSources')).toBeNull();
+  });
+
+  it('sends ancestorSources when the owning relation depends on another field', async () => {
+    const request = vi.fn((_r: HttpRequest) => ({ status: 200, data: { url: '/i.png' } }));
+    const form = {
+      layout: 'stacked',
+      nodes: [
+        { type: 'field', field: { type: 'text', name: 'tenant', label: 'Tenant' } },
+        {
+          type: 'field',
+          field: {
+            type: 'relation',
+            name: 'products',
+            label: 'Products',
+            multiple: true,
+            remote: {
+              url: '/options/products',
+              dependsOn: { tenant: { scope: 'root', path: 'tenant' } },
+            },
+            fields: [{ type: 'field', field: rich }],
+          },
+        },
+      ],
+    } as FormDef;
+    renderWithBrume(<Related form={form} />, { respond: request });
+    await act(async () => {
+      await editor().upload?.(png, new AbortController().signal);
+    });
+    const body = sentBody(request);
+    expect(JSON.parse(body.get('rowContext') as string)).toEqual([
+      { path: 'products', key: '31', id: '31' },
+    ]);
+    expect(JSON.parse(body.get('ancestorSources') as string)).toEqual([
+      { path: 'products', rowContext: [], depends: { tenant: 'scope-a' } },
+    ]);
+  });
+
+  it('resolves {ok:false} without a request when the supplied rowContext does not match', async () => {
+    const request = vi.fn((_r: HttpRequest) => ({ status: 200, data: { url: '/i.png' } }));
+    renderWithBrume(<Nested rowContext={[{ path: 'items', key: 'other' }]} />, {
+      respond: request,
+    });
+    let result: unknown;
+    await act(async () => {
+      result = await editor().upload?.(png, new AbortController().signal);
+    });
+    expect(result).toEqual({ ok: false, message: expect.any(String) });
+    expect(request).not.toHaveBeenCalled();
+    expect(nestedForm.pendingUploads).toBe(0);
+  });
+
+  it('releases the pending count when aborted and never resolves the request', async () => {
+    const request = vi.fn(() => new Promise<never>(() => {}));
+    renderWithBrume(<Nested />, { respond: request as never });
+    const controller = new AbortController();
+    await act(async () => {
+      void editor().upload?.(png, controller.signal);
+    });
+    expect(nestedForm.pendingUploads).toBe(1);
+    act(() => controller.abort());
+    expect(nestedForm.pendingUploads).toBe(0);
   });
 });
