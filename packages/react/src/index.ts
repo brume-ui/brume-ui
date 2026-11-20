@@ -76,7 +76,12 @@ export { RowContextMenu, type RowContextMenuProps } from './components/row-conte
 export { SearchInput, type SearchInputProps } from './components/search-input';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { Skeleton } from './components/skeleton';
-export { SortableTree, type SortableTreeProps, type TreeNode } from './components/sortable-tree';
+export {
+  SortableTree,
+  type SortableTreeProps,
+  type TreeMove,
+  type TreeNode,
+} from './components/sortable-tree';
 export { StaticValue } from './components/static-value';
 export { Switch, type SwitchProps } from './components/switch';
 export { type TabItem, Tabs, type TabsProps } from './components/tabs';
@@ -84,7 +89,7 @@ export { TagsInput, type TagsInputProps } from './components/tags-input';
 export { TextInput, type TextInputProps } from './components/text-input';
 export { Textarea, type TextareaProps } from './components/textarea';
 export { Thumbnail, type ThumbnailProps } from './components/thumbnail';
-export { Toaster, type ToastOptions, toast } from './components/toast';
+export { type ToastAction, Toaster, type ToastOptions, toast } from './components/toast';
 export { TreeLabel, type TreeLabelProps } from './components/tree-label';
 export { TreeNodeContent, type TreeNodeContentProps } from './components/tree-node-content';
 export {

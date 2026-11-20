@@ -40,7 +40,7 @@ import {
 import { TREE_STEP_REM, TreeElbow } from './tree-label';
 import { useSortableSensors } from './use-sortable-setup';
 
-export type { TreeNode } from './sortable-tree-model';
+export type { TreeMove, TreeNode } from './sortable-tree-model';
 
 export interface SortableTreeProps<T extends TreeNode> {
   /** Every node, flat and depth-first; a root has `parent: null`. */
