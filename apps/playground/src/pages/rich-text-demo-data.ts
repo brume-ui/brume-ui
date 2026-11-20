@@ -84,6 +84,15 @@ export function buildRichTextFixture(): { form: FormDef; values: Record<string, 
           contentCss: CONTENT_CSS,
         }),
         node({
+          type: 'richText',
+          name: 'archived',
+          label: '停用的內容',
+          help: '停用：可以閱讀，不能修改。',
+          height: 180,
+          disabled: true,
+          contentCss: CONTENT_CSS,
+        }),
+        node({
           type: 'repeater',
           name: 'sections',
           label: '補充段落',
@@ -106,6 +115,7 @@ export function buildRichTextFixture(): { form: FormDef; values: Record<string, 
       // An "empty" document as older editors stored it: required must still fail.
       summary: '<p><br></p>',
       published: richTextFixture('04-link-blocks'),
+      archived: '<p class="font_lv5">停用時只能閱讀，不能修改。</p>',
       sections: [
         {
           _brume: { key: 's1' },
@@ -120,23 +130,28 @@ export function buildRichTextFixture(): { form: FormDef; values: Record<string, 
   };
 }
 
-/** The same editor inside a form dialog (popup placement inside Brume's Dialog). */
-export function buildRichTextDialogPage(): FormPage {
+/**
+ * The same editor inside a form dialog (popup placement inside Brume's Dialog) or on a form page
+ * (its Meta+Enter save shortcut must work with the caret inside the editor).
+ */
+export function buildRichTextDialogPage(presentation: 'modal' | 'page' = 'modal'): FormPage {
   return {
     type: 'form',
-    title: '在彈窗中編輯',
+    title: presentation === 'modal' ? '在彈窗中編輯' : '表單頁版本',
     name: '商品介紹',
-    formId: 'form.field.richText.dialog',
+    formId: `form.field.richText.${presentation}`,
     mode: 'edit',
     record: { id: '42' },
     form: { layout: 'stacked', nodes: [node({ ...content, height: 360 })] },
     values: {
       content:
-        '<p class="font_lv5">在彈窗裡選取這段文字，再按工具列的「插入連結」。</p><p class="font_lv6 spotDGY">彈出視窗會出現在按鈕旁邊。</p>',
+        presentation === 'modal'
+          ? '<p class="font_lv5">在彈窗裡選取這段文字，再按工具列的「插入連結」。</p><p class="font_lv6 spotDGY">彈出視窗會出現在按鈕旁邊；在編輯區按 Ctrl＋Enter 或 ⌘＋Enter 也能儲存。</p>'
+          : '<p class="font_lv5">在這裡打字，游標留在編輯區按 ⌘＋Enter 儲存。</p><p class="font_lv6 spotDGY">儲存後，下方「實際請求值」會出現剛打的字。</p>',
     },
     submit: { method: 'put', url: '/demo/focused/save', label: '儲存' },
     after: { options: ['edit', 'list'], default: 'edit' },
-    presentation: 'modal',
+    presentation,
     size: 'lg',
     uploadUrl: '/demo/focused/upload',
   };

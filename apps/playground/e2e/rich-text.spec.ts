@@ -58,8 +58,8 @@ async function openDemo(page: Page, scheme?: Scheme) {
   if (scheme) await storeScheme(page, scheme);
   await page.goto(DEMO);
   await expect(page.getByTestId('pg-form-fields')).toBeVisible();
-  // content, summary and the two repeater rows; the read-only field never loads Jodit.
-  await expect(page.locator('.br-rich-text iframe.jodit-wysiwyg_iframe')).toHaveCount(4);
+  // content, summary, the disabled one and the two repeater rows; the read-only field loads no Jodit.
+  await expect(page.locator('.br-rich-text iframe.jodit-wysiwyg_iframe')).toHaveCount(5);
   for (const root of await page.locator('.br-rich-text').all()) await editorReady(root);
 }
 
@@ -72,7 +72,7 @@ function editor(page: Page, label: string): Locator {
 }
 const content = (page: Page) => editor(page, '商品介紹');
 const summary = (page: Page) => editor(page, '簡短說明');
-const section = (page: Page, n: number) => page.locator('.br-rich-text').nth(1 + n); // rows 1, 2
+const section = (page: Page, n: number) => page.locator('.br-rich-text').nth(2 + n); // rows 1, 2
 
 async function editorReady(root: Locator) {
   await expect(root.locator('iframe.jodit-wysiwyg_iframe')).toHaveCount(1);
@@ -107,25 +107,34 @@ const button = (root: Locator, name: string) =>
 const popup = (page: Page) => page.locator('.jodit-popup').last();
 
 /** Focus the editing body and put the caret at the end of its first non-empty text node. */
-async function caretAtFirstText(page: Page, root: Locator, selector = 'body') {
+async function caretAtFirstText(
+  page: Page,
+  root: Locator,
+  selector = 'body',
+  /** Character offset in that text node; default: its end. */
+  offset?: number,
+) {
   const frame = await frameOf(root);
   await frame.locator('body').focus();
-  await frame.evaluate((sel) => {
-    const scope = document.querySelector(sel) ?? document.body;
-    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) =>
-        /\S/.test((n.textContent ?? '').replace(/ /g, ''))
-          ? NodeFilter.FILTER_ACCEPT
-          : NodeFilter.FILTER_SKIP,
-    });
-    const node = walker.nextNode() ?? scope;
-    const range = document.createRange();
-    range.setStart(node, node.nodeType === 3 ? (node.textContent ?? '').length : 0);
-    range.collapse(true);
-    const selection = getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  }, selector);
+  await frame.evaluate(
+    ({ sel, offset }) => {
+      const scope = document.querySelector(sel) ?? document.body;
+      const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) =>
+          /\S/.test((n.textContent ?? '').replace(/ /g, ''))
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_SKIP,
+      });
+      const node = walker.nextNode() ?? scope;
+      const range = document.createRange();
+      range.setStart(node, node.nodeType === 3 ? (offset ?? (node.textContent ?? '').length) : 0);
+      range.collapse(true);
+      const selection = getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    },
+    { sel: selector, offset },
+  );
   await page.waitForTimeout(50);
 }
 
@@ -221,10 +230,11 @@ test.describe('rich-text legacy fixtures', () => {
       await expect(source).toBeVisible();
       const held = await source.inputValue();
       const loaded = await judge(page, html, held);
-      expect(
-        loaded.verdict,
-        `${name}: ${loaded.cats.join('; ')}\n${canonicalDiff(loaded)}`,
-      ).not.toBe('loss');
+      // Every fixture round-trips canonically identical today (not merely "harmless": b→strong or a
+      // dropped empty element would be harmless to the judge but is a re-enabled cleaning option).
+      expect(loaded.verdict, `${name}: ${loaded.cats.join('; ')}\n${canonicalDiff(loaded)}`).toBe(
+        'identical',
+      );
       expect(NBSP_COUNT(held), `${name}: &nbsp; kept`).toBe(NBSP_COUNT(html));
       await button(root, 'source').click();
       await expect(source).toBeHidden();
@@ -240,8 +250,8 @@ test.describe('rich-text legacy fixtures', () => {
       const typed = String(await draftOf(page, 'content'));
       expect(typed.split('Zebra')).toHaveLength(2);
       const rest = await judge(page, html, typed.replace('Zebra', ''));
-      expect(rest.verdict, `${name}: ${rest.cats.join('; ')}\n${canonicalDiff(rest)}`).not.toBe(
-        'loss',
+      expect(rest.verdict, `${name}: ${rest.cats.join('; ')}\n${canonicalDiff(rest)}`).toBe(
+        'identical',
       );
       expect(NBSP_COUNT(typed)).toBe(NBSP_COUNT(html));
     });
@@ -502,17 +512,8 @@ test.describe('rich-text paste, drop and uploads', () => {
     await paste(root, { html: WORD, text: '貼上的粗體文字' });
     await expect.poll(() => draftOf(page, 'content')).toContain('貼上的標題');
     const value = String(await draftOf(page, 'content'));
-    for (const gone of [
-      'Mso',
-      'mso-',
-      'Times',
-      'yellow',
-      '14pt',
-      'ZH-TW',
-      '#123456',
-      'color:red',
-      'color:blue',
-    ])
+    expect(value).not.toMatch(/color:\s*(red|blue)/);
+    for (const gone of ['Mso', 'mso-', 'Times', 'yellow', '14pt', 'ZH-TW', '#123456'])
       expect(value, gone).not.toContain(gone);
     expect(value).toMatch(/貼上的<(b|strong)>粗體<\/(b|strong)>文字/);
     expect(value).toContain('貼上的標題</h2>');
@@ -711,7 +712,7 @@ test.describe('rich-text keyboard, read-only view and dialog', () => {
     expect(tab.url()).toContain('/demo/shop/all');
     await tab.close();
     expect(page.url()).toContain(DEMO.slice(1));
-    await expect(page.locator('.jodit-container')).toHaveCount(4); // the view loads no editor
+    await expect(page.locator('.jodit-container')).toHaveCount(5); // the view loads no editor
   });
 
   test('rich-text link popup inside a form dialog sits by its button and works', async ({
@@ -753,6 +754,203 @@ test.describe('rich-text keyboard, read-only view and dialog', () => {
       .filter((v) => v.impact === 'serious' || v.impact === 'critical')
       .map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target.join(' ')) }));
     expect(serious).toEqual([]);
+  });
+});
+
+/**
+ * Jodit's clean-html walker runs over the whole document after an edit, in idle slices
+ * (`cleanHTML.timeout`, 300 ms in jodit/esm/plugins/clean-html/config.js), and reports what it changed
+ * only as an internal change. Wait past that window, then leave the editor (the blur reports the
+ * current document) so the form value shows whatever the cleaner did.
+ */
+async function settleCleaning(page: Page) {
+  await page.waitForTimeout(1200);
+  await page.getByRole('heading', { name: '表單欄位', exact: true }).click();
+  await page.waitForTimeout(100);
+}
+
+test.describe('rich-text edits next to legacy markup keep it', () => {
+  test('rich-text typing inside <b> and <i> keeps them (no b→strong, i→em)', async ({ page }) => {
+    await openDemo(page);
+    await loadFixture(page, '03-spacers-breaks');
+    const root = content(page);
+    await caretAtFirstText(page, root, 'b', 1);
+    await page.keyboard.type('Q');
+    await caretAtFirstText(page, root, 'i', 1);
+    await page.keyboard.type('R');
+    await settleCleaning(page);
+    const value = String(await draftOf(page, 'content'));
+    expect(value).toContain('<b>均Q勻推開</b>');
+    expect(value).toContain('<i>人R工色素</i>');
+    for (const tag of ['<b>', '<i>', '<strong>', '<em>'])
+      expect(value.split(tag).length, tag).toBe(fixture('03-spacers-breaks').split(tag).length);
+    // The paragraph typed into sits right after a <p>&nbsp;</p> spacer: the spacers stay.
+    expect(value.startsWith('<p>&nbsp;</p>\n<p class="font_lv4">')).toBe(true);
+    expect(NBSP_COUNT(value)).toBe(NBSP_COUNT(fixture('03-spacers-breaks')));
+  });
+
+  test('rich-text typing next to empty decorative elements keeps them and the spacer', async ({
+    page,
+  }) => {
+    await openDemo(page);
+    await loadFixture(page, '12-positioned-banner');
+    const root = content(page);
+    await caretAtFirstText(page, root, 'span.tagBadge[style]', 1);
+    await page.keyboard.type('Q');
+    await settleCleaning(page);
+    const value = String(await draftOf(page, 'content'));
+    expect(value).toContain('早Q鳥');
+    expect(value).toContain(
+      '<div style="position: absolute; top: 0; right: 0; width: 120px; height: 120px; border-radius: 0 0 0 120px; background-color: rgba(255, 255, 255, 0.4); z-index: 1;"></div>',
+    );
+    // An empty inline element (a CSS dot): what Jodit's removeEmptyElements would delete.
+    expect(value).toContain(
+      '<span class="tagDot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #b5452f;"></span><span class="tagBadge">限量</span>',
+    );
+    expect(value.endsWith('<p>&nbsp;</p>\n')).toBe(true);
+  });
+
+  test('rich-text typing next to a YouTube embed leaves the iframe as it was', async ({ page }) => {
+    await openDemo(page);
+    await loadFixture(page, '08-youtube-embed');
+    const root = content(page);
+    await caretAtFirstText(page, root, 'p.font_lv6', 1);
+    await page.keyboard.type('Q');
+    await settleCleaning(page);
+    const value = String(await draftOf(page, 'content'));
+    expect(value).toContain('影Q片約兩分鐘');
+    expect(value).toContain(
+      '<iframe src="https://www.youtube.com/embed/demoVideo01" width="560" height="314" allowfullscreen="allowfullscreen"></iframe>',
+    );
+    expect(value).not.toContain('sandbox');
+  });
+
+  test('rich-text typing inside a target=_blank link adds no rel', async ({ page }) => {
+    await openDemo(page);
+    await loadFixture(page, '04-link-blocks');
+    const root = content(page);
+    await caretAtFirstText(page, root, 'a[target="_blank"]:not([rel])', 1);
+    await page.keyboard.type('Q');
+    await settleCleaning(page);
+    const value = String(await draftOf(page, 'content'));
+    expect(value).toContain('<a href="/demo/shop/all" target="_blank">看Q全部商品</a>');
+    expect(value.split('rel="noopener"').length).toBe(
+      fixture('04-link-blocks').split('rel="noopener"').length,
+    );
+    expect(value).not.toContain('noreferrer');
+  });
+});
+
+test.describe('rich-text disabled, aria and keyboard', () => {
+  test('rich-text disabled editor cannot be edited and its toolbar is inert', async ({ page }) => {
+    await openDemo(page);
+    const root = editor(page, '停用的內容');
+    const frame = await frameOf(root);
+    const before = await draftOf(page, 'archived');
+    expect(before).toBe('<p class="font_lv5">停用時只能閱讀，不能修改。</p>');
+    await expect(frame.locator('body')).toHaveAttribute('aria-disabled', 'true');
+    await expect(frame.locator('body')).not.toHaveAttribute('contenteditable', 'true');
+    await frame.locator('p').click({ force: true });
+    await page.keyboard.type('不該出現');
+    await button(root, 'bold').click({ force: true });
+    await page.waitForTimeout(400);
+    expect(await frame.evaluate(() => document.body.innerHTML)).toBe(String(before));
+    expect(await draftOf(page, 'archived')).toBe(before);
+    await expect(dirty(page)).toHaveText('無未儲存變更');
+    for (const name of ['bold', 'link', 'table', 'source'])
+      await expect(button(root, name)).toBeDisabled();
+  });
+
+  test('rich-text editing iframes carry label, required, invalid and error description', async ({
+    page,
+  }) => {
+    await openDemo(page);
+    const labelOf = (root: Locator) =>
+      root.locator('iframe.jodit-wysiwyg_iframe').evaluate((f) =>
+        (f.getAttribute('aria-labelledby') ?? '')
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent ?? '')
+          .join(' '),
+      );
+    expect(await labelOf(content(page))).toContain('商品介紹');
+    expect(await labelOf(summary(page))).toContain('簡短說明');
+    const body = (await frameOf(summary(page))).locator('body');
+    await expect(body).toHaveAttribute('aria-required', 'true');
+    await expect(body).not.toHaveAttribute('aria-invalid', 'true');
+    await expect((await frameOf(content(page))).locator('body')).not.toHaveAttribute(
+      'aria-required',
+      'true',
+    );
+    await save(page);
+    await expect(body).toHaveAttribute('aria-invalid', 'true');
+    const described = await summary(page)
+      .locator('iframe.jodit-wysiwyg_iframe')
+      .evaluate((f) =>
+        (f.getAttribute('aria-describedby') ?? '')
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent ?? '')
+          .join(' '),
+      );
+    expect(described).toContain('請填寫簡短說明。');
+  });
+
+  test('rich-text Tab enters the editing area in one stop and Shift+Tab goes back', async ({
+    page,
+  }) => {
+    await openDemo(page);
+    const failure = page.getByLabel('模擬上傳失敗');
+    await failure.focus();
+    await page.keyboard.press('Tab');
+    const active = () =>
+      page.evaluate(() => {
+        const el = document.activeElement as HTMLIFrameElement | null;
+        const inner = el?.tagName === 'IFRAME' ? el.contentDocument?.activeElement : null;
+        return `${el?.tagName}:${el?.getAttribute('title') ?? el?.textContent?.slice(0, 20)}>${inner?.tagName ?? ''}`;
+      });
+    // The toolbar buttons are not tab stops (Jodit), so the next stop is the editing body itself:
+    // one stop per editor (not the iframe and then its body).
+    await expect.poll(active).toBe('IFRAME:商品介紹>BODY');
+    await page.keyboard.press('Shift+Tab');
+    await expect(failure).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect.poll(active).toBe('IFRAME:商品介紹>BODY');
+    await page.keyboard.press('Tab');
+    await expect.poll(active).toBe('IFRAME:簡短說明>BODY');
+    await page.keyboard.press('Shift+Tab');
+    await expect.poll(active).toBe('IFRAME:商品介紹>BODY');
+  });
+
+  test('rich-text Meta+Enter inside the editor saves a form page with the typed text', async ({
+    page,
+  }) => {
+    await openDemo(page);
+    await page.getByRole('button', { name: '表單頁版本', exact: true }).click();
+    const host = page.getByTestId('rich-text-form-page');
+    const root = host.locator('.br-rich-text');
+    await editorReady(root);
+    await caretAtFirstText(page, root, 'p');
+    await page.keyboard.type('快捷鍵儲存');
+    await page.keyboard.press('Meta+Enter');
+    await expect(page.getByTestId('form-wire')).toContainText('快捷鍵儲存');
+    // The shortcut saved; it did not insert a line break into the document.
+    expect(
+      await (await frameOf(root)).evaluate(() => document.body.querySelectorAll('p').length),
+    ).toBe(2);
+  });
+
+  test('rich-text Control+Enter inside the editor saves a form dialog with the typed text', async ({
+    page,
+  }) => {
+    await openDemo(page);
+    await page.getByRole('button', { name: '在彈窗中編輯', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: '在彈窗中編輯' });
+    const root = dialog.locator('.br-rich-text');
+    await editorReady(root);
+    await caretAtFirstText(page, root, 'p');
+    await page.keyboard.type('彈窗快捷鍵');
+    await page.keyboard.press('Control+Enter');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByTestId('form-wire')).toContainText('彈窗快捷鍵');
   });
 });
 
