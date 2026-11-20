@@ -25,5 +25,9 @@ export function youtubeEmbedUrl(input: string): string | null {
     if (parts[0] === 'watch') id = url.searchParams.get('v');
     else if (parts[0] === 'shorts' || parts[0] === 'embed') id = parts[1] ?? null;
   }
-  return id && ID.test(id) ? `https://${embedHost}/embed/${id}` : null;
+  if (!id || !ID.test(id) || id === 'videoseries') return null;
+  const start = (url.searchParams.get('start') ?? url.searchParams.get('t') ?? '').match(
+    /^(\d+)s?$/,
+  );
+  return `https://${embedHost}/embed/${id}${start ? `?start=${start[1]}` : ''}`;
 }

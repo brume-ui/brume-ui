@@ -43,6 +43,8 @@ const KEEP_TAGS = new Set([
   'hr',
   'a',
   'img',
+  'pre',
+  'code',
 ]);
 const DROP_WITH_CONTENT =
   'style,script,meta,link,title,xml,head,template,noscript,object,embed,iframe,svg,button,input,select,textarea,form,colgroup';
@@ -135,6 +137,8 @@ export function cleanPastedHtml(html: string): string {
         continue;
       }
     }
+    if (tag === 'A' && el.getAttribute('target')?.toLowerCase() === '_blank')
+      el.setAttribute('rel', 'noopener noreferrer');
     if (tag === 'IMG' && badUrl(el.getAttribute('src') || '')) {
       el.remove();
       continue;

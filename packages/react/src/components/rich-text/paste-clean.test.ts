@@ -74,7 +74,7 @@ describe('cleanPastedHtml', () => {
       '<thead>',
       '<tbody>',
       'target="_blank"',
-      'rel="noopener"',
+      'rel="noopener noreferrer"',
     ]) {
       expect(out).toContain(t);
     }
@@ -95,5 +95,42 @@ describe('cleanPastedHtml', () => {
 
   it('removes empty paragraphs but keeps text order', () => {
     expect(cleanPastedHtml('<p>a</p><p>&nbsp;</p><p>b</p>')).toBe('<p>a</p><p>b</p>');
+  });
+
+  it('adds rel to target=_blank links', () => {
+    expect(cleanPastedHtml('<a href="https://e.com" target="_blank">x</a>')).toBe(
+      '<a href="https://e.com" target="_blank" rel="noopener noreferrer">x</a>',
+    );
+    expect(
+      cleanPastedHtml('<a href="https://e.com" target="_blank" rel="nofollow">x</a>'),
+    ).toContain('noopener noreferrer');
+  });
+
+  it('keeps pre and code without attributes', () => {
+    expect(cleanPastedHtml('<pre class="a"><code style="x:y">a</code></pre>')).toBe(
+      '<pre><code>a</code></pre>',
+    );
+  });
+
+  it('removes obfuscated javascript: links', () => {
+    expect(cleanPastedHtml('<a href=" java\nscript:alert(1)">x</a>')).toBe('x');
+    expect(cleanPastedHtml('<a href="&#106;avascript:alert(1)">x</a>')).toBe('x');
+  });
+
+  it('hostile markup stays inert', () => {
+    expect(cleanPastedHtml('<svg><script>alert(1)</script></svg>')).not.toMatch(/script|alert/i);
+    expect(
+      cleanPastedHtml('<noscript><p title="</noscript><img src=x onerror=alert(1)>">'),
+    ).not.toMatch(/onerror/i);
+    expect(cleanPastedHtml('<template><img src=x onerror=1></template>')).not.toMatch(/onerror/i);
+    expect(cleanPastedHtml('<img src=x onerror=alert(1)>')).toBe('<img src="x">');
+  });
+
+  it('converts Word mso-list paragraphs into one list', () => {
+    const out = cleanPastedHtml(
+      '<p class="MsoListParagraph" style="mso-list:l0 level1 lfo1"><span style="mso-list:Ignore">1.<span>&nbsp;</span></span>One</p>' +
+        '<p class="MsoListParagraph" style="mso-list:l0 level1 lfo1"><span style="mso-list:Ignore">2.<span>&nbsp;</span></span>Two</p>',
+    );
+    expect(out).toBe('<ol><li>One</li><li>Two</li></ol>');
   });
 });
