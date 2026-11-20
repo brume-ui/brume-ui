@@ -67,7 +67,18 @@ describe('ReorderDialog', () => {
   });
 
   it('keyboard drag reorders', async () => {
-    // jsdom lays nothing out: give each list item its own 40px slot so dnd-kit can step between them.
+    layOut();
+    const user = userEvent.setup();
+    mount();
+    screen.getByRole('button', { name: '拖曳排序：甲' }).focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    await waitFor(() => expect(order()).toEqual(['乙', '甲', '丙']));
+  });
+
+  /** jsdom lays nothing out: give each list item its own 40px slot so dnd-kit can step between them. */
+  function layOut() {
     Element.prototype.getBoundingClientRect = function rect(this: Element) {
       const parent = this.parentElement;
       const index =
@@ -88,13 +99,33 @@ describe('ReorderDialog', () => {
     };
     window.scrollTo = vi.fn() as never;
     Element.prototype.scrollIntoView = vi.fn();
+  }
+
+  it('Esc during a keyboard drag cancels only the drag; a second Esc closes', async () => {
+    layOut();
     const user = userEvent.setup();
-    mount();
+    const { onOpenChange } = mount();
+    screen.getByRole('button', { name: '拖曳排序：甲' }).focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await waitFor(() => expect(order()).toEqual(['甲', '乙', '丙']));
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('Esc after a keyboard drag keeps the moved order until the dialog closes', async () => {
+    layOut();
+    const user = userEvent.setup();
+    const { onOpenChange } = mount();
     screen.getByRole('button', { name: '拖曳排序：甲' }).focus();
     await user.keyboard(' ');
     await user.keyboard('{ArrowDown}');
     await user.keyboard(' ');
     await waitFor(() => expect(order()).toEqual(['乙', '甲', '丙']));
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('save sends the ids in the new order', async () => {

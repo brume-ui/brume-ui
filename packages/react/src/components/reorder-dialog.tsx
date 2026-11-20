@@ -152,7 +152,10 @@ export function ReorderDialog({
 
   const nameOf = (id: string) => labels.get(id) ?? id;
   const dnd = useSortableSetup(nameOf, (id) => ids.indexOf(id) + 1);
+  // While a drag runs, Esc belongs to it (dnd-kit cancels the drag), not to the dialog.
+  const [dragging, setDragging] = useState(false);
   const onDragEnd = ({ active, over }: DragEndEvent) => {
+    setDragging(false);
     if (!over || active.id === over.id) return;
     const from = ids.indexOf(String(active.id));
     const to = ids.indexOf(String(over.id));
@@ -196,9 +199,17 @@ export function ReorderDialog({
             ))}
           </div>
         ) : (
-          <DndContext {...dnd} onDragEnd={onDragEnd}>
+          <DndContext
+            {...dnd}
+            onDragStart={() => setDragging(true)}
+            onDragEnd={onDragEnd}
+            onDragCancel={() => setDragging(false)}
+          >
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <ol className="br:m-0 br:flex br:list-none br:flex-col br:gap-1.5 br:p-0">
+              <ol
+                data-brume-inline-escape={dragging ? '' : undefined}
+                className="br:m-0 br:flex br:list-none br:flex-col br:gap-1.5 br:p-0"
+              >
                 {ids.map((id, index) => (
                   <ReorderRow
                     key={id}
