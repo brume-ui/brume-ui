@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -134,6 +134,23 @@ describe('SortableTree', () => {
     ]);
     await user.keyboard('{Enter}{Enter}');
     expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it('goes back to the old tree when the promise from onMove rejects', async () => {
+    const user = userEvent.setup();
+    let fail: (e: Error) => void = () => {};
+    mount({
+      onMove: () =>
+        new Promise<void>((_, reject) => {
+          fail = reject;
+        }),
+    });
+    const levels = () => items().map((r) => r.getAttribute('aria-level'));
+    handle('家居').focus();
+    await user.keyboard(' {ArrowRight} ');
+    expect(levels()).toEqual(['1', '2', '2', '3']);
+    await act(async () => fail(new Error('衝突')));
+    expect(levels()).toEqual(['1', '2', '1', '2']);
   });
 
   it('collapse hides children', async () => {

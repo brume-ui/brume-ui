@@ -1,6 +1,6 @@
 import type { HttpRequest } from '@brume-ui/brume-react';
 import type { GridRow, ListPage } from '@brume-ui/brume-schema';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithBrume } from '../../test-utils';
@@ -90,6 +90,21 @@ describe('tree view', () => {
     // Numeric ids go back as numbers; nesting after 上衣 (id 2) under 服飾 (id 1).
     expect(req?.body).toEqual({ id: 3, parent: 1, after: 2 });
     expect(req?.url).toBe('/admin/cats/_brume/reorder');
+  });
+
+  it('a failed move puts the tree back even when the refresh brings nothing new', async () => {
+    // Before the fix the tree kept the dropped shape (levels 1, 2, 2) after the failure.
+    const user = userEvent.setup();
+    renderWithBrume(<GridView page={page} />, {
+      url: '/admin/cats',
+      respond: () => ({ status: 500, data: {} }),
+    });
+    const levels = () => screen.getAllByRole('listitem').map((li) => li.getAttribute('aria-level'));
+    screen.getByRole('button', { name: '拖曳排序：配件' }).focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowRight}');
+    await user.keyboard(' ');
+    await waitFor(() => expect(levels()).toEqual(['1', '2', '1']));
   });
 
   it('collapse all hides children and is remembered per gridId', async () => {

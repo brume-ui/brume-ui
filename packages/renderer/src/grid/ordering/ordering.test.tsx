@@ -188,6 +188,19 @@ describe('list ordering', () => {
     expect(reloads(adapter)).toBe(1);
   });
 
+  it('a failed move puts the rows back even when the refresh brings nothing new', async () => {
+    const { user, adapter } = setup(page, () => ({ status: 409, data: { message: '衝突' } }));
+    const names = () =>
+      screen
+        .getAllByRole('row')
+        .slice(1)
+        .map((r) => r.textContent?.replace(/^.*?拖曳排序：/, '').slice(0, 1));
+    await dropFirstDown(user);
+    await waitFor(() => expect(reloads(adapter)).toBe(1));
+    // The memory adapter's reload hands back no new rows, like a refresh that failed.
+    await waitFor(() => expect(names()).toEqual(['甲', '乙', '丙']));
+  });
+
   it('the dialog loads every item and saves the full order', async () => {
     const respond: Respond = (req) =>
       req.method === 'get'

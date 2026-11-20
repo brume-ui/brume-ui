@@ -11,7 +11,11 @@ import { applyFeedback } from '../actions/feedback';
 import { useGridNavigation } from '../use-grid-navigation';
 
 export interface Reorder {
-  /** Posts one move (list mode: `before`/`after`; tree mode also `parent`), then reloads the grid. */
+  /**
+   * Posts one move (list mode: `before`/`after`; tree mode also `parent`), then reloads the grid.
+   * A refused move is toasted and reloads too, then rejects, so the component drops its
+   * optimistic order even if that reload never lands.
+   */
   move(m: ReorderMoveRequest): Promise<void>;
   /** GETs every orderable item. Throws an Error with a user-facing message on failure. */
   loadItems(): Promise<ReorderItemsResponse>;
@@ -60,9 +64,10 @@ export function useReorder(page: ListPage): Reorder {
         const res = await post(m);
         if (!ok(res)) {
           // The optimistic order is wrong now: the server's rows replace it.
-          toast.error(failureMessage(res, t));
+          const message = failureMessage(res, t);
+          toast.error(message);
           refresh();
-          return;
+          throw new Error(message);
         }
         const back = res.data?.undo;
         toast.success(

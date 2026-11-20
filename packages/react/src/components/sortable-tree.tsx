@@ -54,8 +54,11 @@ export interface SortableTreeProps<T extends TreeNode> {
   /**
    * A node was dropped somewhere new: under `parent` (`null` = top level), right after the sibling
    * `after`, or as the first child right before `before`; neither when it is the only child.
+   * The new shape shows until `nodes` changes, or until the promise this may return rejects (the
+   * move failed: the old shape comes back).
    */
-  onMove(move: TreeMove): void;
+  // biome-ignore lint/suspicious/noConfusingVoidType: plain void handlers must stay assignable
+  onMove(move: TreeMove): void | Promise<unknown>;
   /** Controlled collapse; when omitted every node starts expanded. */
   collapsed?: ReadonlySet<string>;
   onCollapsedChange?(collapsed: Set<string>): void;
@@ -275,8 +278,13 @@ export function SortableTree<T extends TreeNode>({
   const commit = (move: TreeMove) => {
     const next = applyMove(nodes, move);
     if (sameTree(nodes, next)) return;
-    setOptimistic({ base: nodesProp, list: next });
-    onMove(move);
+    const mine = { base: nodesProp, list: next };
+    setOptimistic(mine);
+    const result = onMove(move);
+    // A failed move drops the optimistic shape (with any move stacked on it before fresh nodes
+    // arrived), even when no fresh nodes ever arrive.
+    if (result && typeof result.then === 'function')
+      result.then(undefined, () => setOptimistic((cur) => (cur?.base === mine.base ? null : cur)));
   };
   /** "X moved under Y, position n" for `id` in `tree`. */
   const describe = (tree: readonly TreeNode[], id: string) => {

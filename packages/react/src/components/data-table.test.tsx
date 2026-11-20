@@ -1,4 +1,4 @@
-import { fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
+import { act, fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -514,6 +514,37 @@ describe('DataTable reorder', () => {
     expect(names()).toEqual(['乙', '甲', '丙']);
     fireEvent.contextMenu(screen.getAllByRole('row')[1] as HTMLElement);
     expect(await screen.findByRole('menuitem', { name: /編輯乙/ })).toBeTruthy();
+  });
+
+  it('goes back to the old order when the promise from onMove rejects', async () => {
+    const user = userEvent.setup();
+    let fail: (e: Error) => void = () => {};
+    mount(
+      vi.fn(
+        () =>
+          new Promise<void>((_, reject) => {
+            fail = reject;
+          }),
+      ),
+    );
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    expect(names()).toEqual(['乙', '甲', '丙']);
+    await act(async () => fail(new Error('衝突')));
+    expect(names()).toEqual(['甲', '乙', '丙']);
+  });
+
+  it('keeps the moved order when the promise from onMove resolves', async () => {
+    const user = userEvent.setup();
+    mount(vi.fn(() => Promise.resolve()));
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    await act(async () => {});
+    expect(names()).toEqual(['乙', '甲', '丙']);
   });
 
   it('lets a changed rows prop win over the optimistic order', async () => {

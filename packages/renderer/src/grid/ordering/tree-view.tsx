@@ -144,7 +144,7 @@ export function TreeView({
       onCollapsedChange={collapse.setCollapsed}
       onMove={(m) => {
         const id = (key: string) => original.get(key) ?? key;
-        void reorder.move({
+        return reorder.move({
           id: id(m.id),
           parent: m.parent === null ? null : id(m.parent),
           ...(m.before !== undefined ? { before: id(m.before) } : {}),

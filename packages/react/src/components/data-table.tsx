@@ -67,13 +67,15 @@ export interface DataTableProps<T> {
   /**
    * Adds a drag-handle column left of the checkbox. Dropping a row calls `onMove` with its new
    * neighbour: `after` the row now above it, or `before` the row now below it when it reached
-   * the top (never both). The table shows the new order until `rows` changes.
+   * the top (never both). The table shows the new order until `rows` changes, or until the
+   * promise `onMove` may return rejects (the move failed: the old order comes back).
    */
   reorder?: {
     /** false greys the handles out and shows `disabledReason` as their tooltip. */
     enabled: boolean;
     disabledReason?: string;
-    onMove(move: { id: string; before?: string; after?: string }): void;
+    // biome-ignore lint/suspicious/noConfusingVoidType: plain void handlers must stay assignable
+    onMove(move: { id: string; before?: string; after?: string }): void | Promise<unknown>;
   };
 }
 
@@ -269,12 +271,21 @@ export function DataTable<T>({
     const to = rows.findIndex((r) => getRowId(r) === over.id);
     if (from < 0 || to < 0 || from === to) return;
     const list = arrayMove(rows, from, to);
-    setOptimistic({ base: rowsProp, list });
+    const mine = { base: rowsProp, list };
+    setOptimistic(mine);
     const above = list[to - 1];
     const below = list[to + 1];
     const id = String(active.id);
-    if (above !== undefined) reorder.onMove({ id, after: getRowId(above) });
-    else if (below !== undefined) reorder.onMove({ id, before: getRowId(below) });
+    const result =
+      above !== undefined
+        ? reorder.onMove({ id, after: getRowId(above) })
+        : below !== undefined
+          ? reorder.onMove({ id, before: getRowId(below) })
+          : undefined;
+    // A failed move drops the optimistic order (with any move stacked on it before fresh rows
+    // arrived), even when no fresh rows ever arrive.
+    if (result && typeof result.then === 'function')
+      result.then(undefined, () => setOptimistic((cur) => (cur?.base === mine.base ? null : cur)));
   };
   const scrollRef = useRef<HTMLDivElement>(null);
   // A scroll container must be reachable by keyboard when it actually scrolls (WCAG 2.1.1).

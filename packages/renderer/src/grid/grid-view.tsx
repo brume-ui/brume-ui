@@ -313,7 +313,7 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
         onMove: (m: { id: string; before?: string; after?: string }) => {
           // The table reports string ids; the server wants each row's own value.
           const original = (id: string) => rowById.get(id)?.id ?? id;
-          void reorder.move({
+          return reorder.move({
             id: original(m.id),
             ...(m.before !== undefined ? { before: original(m.before) } : {}),
             ...(m.after !== undefined ? { after: original(m.after) } : {}),
