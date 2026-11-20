@@ -300,6 +300,17 @@
             {
               "type": "field",
               "field": {
+                "type": "richText",
+                "name": "body",
+                "label": "內文",
+                "height": 400,
+                "contentCss": ["/css/content.css"],
+                "images": { "accept": ["image/jpeg", "image/png"], "maxSize": 2097152 }
+              }
+            },
+            {
+              "type": "field",
+              "field": {
                 "type": "upload",
                 "name": "manual",
                 "label": "說明書",

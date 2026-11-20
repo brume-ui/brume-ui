@@ -11,6 +11,7 @@
 | 遠端選項 (`endpoints.options`)                          | GET                                          | `?q=&page=&per_page=&value[]=`                 | 200 `OptionsResponse`                                                                                                           |
 | 挑選器搜尋 (`endpoints.options`)                        | GET                                          | 同上，多一個 `section=`                        | 200 `PickerSearchResponse`                                                                                                      |
 | 上傳暫存 (`endpoints.upload`、`page.uploadUrl`)         | POST multipart                               | `UPLOAD_PARAMS`：`file`、`field`、`rowContext` | 200 `UploadTempResponse`                                                                                                        |
+| 富文字圖片 (`page.uploadUrl`)                           | POST multipart                               | 同上，`field` 為 richText 欄位的值路徑         | 200 `RichTextImageResponse`（`{ url, name? }`）；422 `ErrorResponse`                                                            |
 | 表單送出 (`page.submit.url`)                            | POST（新增）／PUT（更新）                    | `FormSubmitRequest`                            | 200 `FormSubmitResponse`                                                                                                        |
 | 快速新增 (`quickCreate.submitUrl`)                      | POST                                         | `FormSubmitRequest`                            | 200 `FormSubmitResponse`                                                                                                        |
 | 彈窗載入表單 (`resource.createUrl`、`resource.editUrl`) | GET，標頭 `FORM_HEADER`（`X-Brume-Form: 1`） | —                                              | 200 JSON `PageEnvelope`（`page.type === 'form'`）；401／403／404 `ErrorResponse`。帶與不帶標頭的回應都要有 `Vary: X-Brume-Form` |
@@ -44,6 +45,10 @@
 ## 上傳生命週期
 
 見 [forms.md 的上傳生命週期](./forms.md#上傳生命週期)。`UploadTempResponse.expiresAt` 為 ISO 8601 的 UTC 時間，例如 `2026-10-29T03:00:00Z`。
+
+## 富文字圖片
+
+見 [forms.md 的富文字欄位](./forms.md#富文字欄位richtext)。`RichTextImageResponse.url` 直接寫進 HTML 的 `<img src>`，不是暫存 token。
 
 ## 挑選器
 

@@ -128,6 +128,15 @@ export type FieldDef =
   | RepeaterFieldDef
   | CustomFieldDef
   | (FieldBase & {
+      type: 'richText';
+      /** px，整數 120–2000；省略時由 renderer 決定（預設 500） */
+      height?: number;
+      /** 編輯 iframe 與唯讀檢視載入的樣式表網址 */
+      contentCss?: string[];
+      /** 省略表示不開放圖片上傳；`maxSize` 為 bytes */
+      images?: { accept: string[]; maxSize: number };
+    })
+  | (FieldBase & {
       type: 'upload';
       kind: 'image' | 'file';
       multiple: boolean;
@@ -288,6 +297,16 @@ export const FieldDefRaw = Type.Union(
     variant(literals('custom'), {
       component: ComponentRefSchema,
       displayOnly: Type.Optional(Type.Boolean()),
+    }),
+    variant(literals('richText'), {
+      height: Type.Optional(Type.Integer({ minimum: 120, maximum: 2000 })),
+      contentCss: Type.Optional(Type.Array(Type.String())),
+      images: Type.Optional(
+        Type.Object({
+          accept: Type.Array(Type.String()),
+          maxSize: Type.Integer({ minimum: 1 }),
+        }),
+      ),
     }),
     variant(literals('upload'), {
       kind: literals('image', 'file'),

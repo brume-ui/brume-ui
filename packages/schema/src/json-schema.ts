@@ -25,6 +25,7 @@ import {
   ReorderMoveRequestSchema,
   ReorderResponseSchema,
 } from './protocol/reorder';
+import { RichTextImageResponseSchema } from './protocol/rich-text';
 import { UploadTempResponseSchema, UploadValueSchema } from './protocol/upload';
 import { MenuItemSchema, SharedPropsSchema } from './shared';
 
@@ -72,6 +73,7 @@ export function emitJsonSchema(): string {
       PickerSearchResponse: plain(PickerSearchResponseSchema),
       UploadTempResponse: plain(UploadTempResponseSchema),
       UploadValue: plain(UploadValueSchema),
+      RichTextImageResponse: plain(RichTextImageResponseSchema),
       ReorderMoveRequest: plain(ReorderMoveRequestSchema),
       ReorderListRequest: plain(ReorderListRequestSchema),
       ReorderResponse: plain(ReorderResponseSchema),

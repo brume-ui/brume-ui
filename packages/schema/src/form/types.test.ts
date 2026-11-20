@@ -45,6 +45,17 @@ type NestedUpload = Omit<Extract<FieldDef, { type: 'upload' }>, 'extra'> & { ext
 // @ts-expect-error upload.extra 不可含 upload
 const nestedUpload = (x: NestedUpload): FieldDefInferred => x;
 
+type RichTextInExtra = Omit<Extract<FieldDef, { type: 'upload' }>, 'extra'> & {
+  extra?: Extract<FieldDef, { type: 'richText' }>[];
+};
+// @ts-expect-error richText 不是 PlainFieldDef，不可放進 upload.extra
+const richTextInExtra = (x: RichTextInExtra): FieldDefInferred => x;
+type WrongRichTextImages =
+  | Exclude<FieldDef, { type: 'richText' }>
+  | (Omit<Extract<FieldDef, { type: 'richText' }>, 'images'> & { images?: { accept: string[] } });
+// @ts-expect-error images 少了 maxSize，與 schema 不同
+const wrongRichTextImages = (x: WrongRichTextImages): FieldDefInferred => x;
+
 describe('form types agree with their schemas', () => {
   // 真正的檢查是 tsc（pnpm typecheck）；這裡只讓 vitest 載入本檔，通過不代表型別一致。
   it('is a compile-time guard: pnpm typecheck fails on drift, not this test', () => {
@@ -58,8 +69,10 @@ describe('form types agree with their schemas', () => {
       extraBranch,
       missingBranch,
       wrongOptional,
+      richTextInExtra,
+      wrongRichTextImages,
       nestedUpload,
-    ]).toHaveLength(10);
+    ]).toHaveLength(12);
   });
 });
 

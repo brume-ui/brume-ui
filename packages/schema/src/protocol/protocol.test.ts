@@ -21,6 +21,7 @@ const PROTOCOL_DEFS = [
   'PickerSearchResponse',
   'UploadTempResponse',
   'UploadValue',
+  'RichTextImageResponse',
   'ReorderMoveRequest',
   'ReorderListRequest',
   'ReorderResponse',

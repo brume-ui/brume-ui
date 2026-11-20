@@ -155,6 +155,10 @@ export {
   ReorderResponseSchema,
 } from './protocol/reorder';
 export {
+  type RichTextImageResponse,
+  RichTextImageResponseSchema,
+} from './protocol/rich-text';
+export {
   UPLOAD_PARAMS,
   type UploadTempResponse,
   UploadTempResponseSchema,

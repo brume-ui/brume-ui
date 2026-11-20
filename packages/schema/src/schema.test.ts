@@ -128,6 +128,46 @@ describe('schema 0.4', () => {
     expect(checkEnvelope(copy)).toBe(false);
   });
 
+  it('rejects a richText field in upload.extra and a richText height outside 120–2000', () => {
+    const base = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: { children: { field: { extra: unknown[] } }[] }[] } };
+    };
+    const copy = structuredClone(base);
+    copy.page.form.nodes[2]?.children[1]?.field.extra.push({
+      type: 'richText',
+      name: 'nested',
+      label: '巢狀',
+    });
+    expect(validateEnvelope(copy).ok).toBe(false);
+    expect(checkEnvelope(copy)).toBe(false);
+
+    const rich = { type: 'richText', name: 'body', label: '內文' };
+    for (const height of [50, 119, 2001, 500.5]) {
+      const bad = structuredClone(base) as unknown as {
+        page: { form: { nodes: unknown[] } };
+      };
+      bad.page.form.nodes.push({ type: 'field', field: { ...rich, height } });
+      expect(validateEnvelope(bad).ok, `height ${height}`).toBe(false);
+      expect(checkEnvelope(bad), `ajv height ${height}`).toBe(false);
+    }
+  });
+
+  it('rejects a richText field in an action form or in quick create on both validators', () => {
+    const base = fixture('fixtures/valid', 'grid-full.json') as GridFull;
+    const rich = { type: 'richText', name: 'body', label: '內文' };
+    const inAction = structuredClone(base);
+    inAction.page.actions.tools.find((a) => a.form)?.form?.fields.push(rich);
+    const inQuickCreate = structuredClone(base);
+    inQuickCreate.page.quickCreate?.fields.push(rich);
+    for (const [name, copy] of [
+      ['action form', inAction],
+      ['quick create', inQuickCreate],
+    ] as const) {
+      expect(validateEnvelope(copy).ok, name).toBe(false);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(false);
+    }
+  });
+
   it('rejects a column width outside 1–12 on both validators', () => {
     const base = fixture('fixtures/valid', 'form-full.json') as {
       page: { form: { nodes: { children: { columns?: { width: number }[] }[] }[] } };

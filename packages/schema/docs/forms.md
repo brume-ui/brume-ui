@@ -47,6 +47,7 @@
 | `multipleSelect`、`checkbox`、`tags`                   | `string[]`                                                    |
 | `upload`（單檔）                                       | `UploadValue \| null`                                         |
 | `upload`（多檔）                                       | `UploadValue[]`，陣列順序就是排序                             |
+| `richText`                                             | HTML 字串或 `null`（空文件一律是 `null`）                     |
 | `embeds`                                               | 物件                                                          |
 | `password`                                             | 載入時一律是 `''`；送出 `''` 表示不修改                       |
 
@@ -157,6 +158,18 @@
 
 這些情況都不會移動或刪除任何檔案。
 
+## 富文字欄位（`richText`）
+
+`{ type: 'richText', height?, contentCss?, images? }`，值是 HTML 字串或 `null`。
+
+- `height`：編輯區高度（px），整數 120–2000，省略時 renderer 預設 500。
+- `contentCss`：編輯 iframe 與唯讀檢視（RichTextView）載入的樣式表網址。
+- `images`：`{ accept: string[], maxSize }`（`maxSize` 單位 bytes）。省略表示不開放圖片貼上／拖放上傳；網址插入不受影響。
+- 空文件（`<p><br></p>`、`<p>&nbsp;</p>`、只有空白）送出時一律是 `null`，`required` 在前端與伺服器都以 `null` 判斷。
+- HTML 由伺服器清理：每次寫入與每次送給瀏覽器前都要處理，前端不信任載入的值。
+- 圖片上傳打 `page.uploadUrl`（參數同 `UPLOAD_PARAMS`，`field` 為這個欄位的值路徑），成功回 `RichTextImageResponse`（`{ url, name? }`），`url` 直接寫進 `<img src>`。非圖片、SVG、超過 `maxSize`，或 `field` 不是宣告過 `images` 的 richText 欄位，回 422，不寫入任何檔案。
+- richText 不是 `PlainFieldDef`，所以不能出現在 Action 輸入欄位、快速新增或 `upload.extra`。
+
 ## 前端驗證（`ClientRule`）
 
 伺服器是唯一的權威。前端只先檢查 `FieldDef.rules` 裡的子集，`message` 由伺服器以與 422 同一套翻譯產生。
@@ -185,7 +198,7 @@
 }
 ```
 
-收集到的值放在 `ActionRequest.input`，與 `target`、`ids` 一起送到 `endpoints.action`。值的格式與路徑規則同表單。422 的鍵是 `input` 內的值路徑，不加 `input.` 前綴（上例為 `reason`）。欄位限靜態扁平 `PlainFieldDef`，不接受 remote、relation、repeater、custom 或 upload。
+收集到的值放在 `ActionRequest.input`，與 `target`、`ids` 一起送到 `endpoints.action`。值的格式與路徑規則同表單。422 的鍵是 `input` 內的值路徑，不加 `input.` 前綴（上例為 `reason`）。欄位限靜態扁平 `PlainFieldDef`，不接受 remote、relation、repeater、custom 、upload 或 richText。
 
 ## 快速新增
 
@@ -199,7 +212,7 @@
 }
 ```
 
-送出方式與表單相同：`POST submitUrl`，請求是 `FormSubmitRequest`，成功回 `FormSubmitResponse`，422 的鍵規則與值的處理也相同。欄位限靜態扁平 `PlainFieldDef`，不接受 remote、relation、repeater、custom 或 upload。
+送出方式與表單相同：`POST submitUrl`，請求是 `FormSubmitRequest`，成功回 `FormSubmitResponse`，422 的鍵規則與值的處理也相同。欄位限靜態扁平 `PlainFieldDef`，不接受 remote、relation、repeater、custom 、upload 或 richText。
 
 - 請求不帶 `after`，只有 `{ values }`。
 - 正常儲存回應仍然要帶 `id` 和 `urls.edit`（schema 要求）。前端不依 `urls` 導向。取消分支見下節，不清空欄位或執行成功後的列表重整。
@@ -307,7 +320,7 @@ Grid FilterInput 的 `{type:'selectTable'}`／`{type:'multipleSelectTable'}` 使
 它們沿用 PickerSearchResponse，沒有第二個 URL 或 client model identifier；URL filter value 仍為字串或字串陣列，不是 RelationValue。
 
 `PlainFieldDef` 明列靜態扁平 variants，只供 Action、quick-create 與 upload.extra。
-這些位置不接受 remote、relation、repeater、custom 或 upload，不能因 FieldDef 擴充而自動放寬。
+這些位置不接受 remote、relation、repeater、custom、upload 或 richText，不能因 FieldDef 擴充而自動放寬。
 
 ### Row identity 與 upload context
 
