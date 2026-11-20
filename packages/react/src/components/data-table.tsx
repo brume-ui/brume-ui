@@ -74,6 +74,11 @@ export interface DataTableProps<T> {
     /** false greys the handles out and shows `disabledReason` as their tooltip. */
     enabled: boolean;
     disabledReason?: string;
+    /**
+     * How many rows come before these in the whole list (e.g. `(page - 1) * perPage`), so
+     * announced positions count from the list's start, not the page's. Default 0.
+     */
+    positionOffset?: number;
     // biome-ignore lint/suspicious/noConfusingVoidType: plain void handlers must stay assignable
     onMove(move: { id: string; before?: string; after?: string }): void | Promise<unknown>;
   };
@@ -263,7 +268,8 @@ export function DataTable<T>({
     const row = rows.find((r) => getRowId(r) === id);
     return row === undefined ? id : rowName(row, id, selection?.rowLabel, textKeys);
   };
-  const positionOf = (id: string) => rows.findIndex((r) => getRowId(r) === id) + 1;
+  const positionOf = (id: string) =>
+    rows.findIndex((r) => getRowId(r) === id) + 1 + (reorder?.positionOffset ?? 0);
   const dnd = useSortableSetup(nameOf, positionOf);
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!reorder || !over || active.id === over.id) return;

@@ -310,6 +310,8 @@ function GridTable({ hidden }: { hidden: ReadonlySet<string> }) {
     ? {
         enabled: orderIntact,
         disabledReason: t('grid.reorderDisabled'),
+        // Announced positions count from the first page, not this one.
+        positionOffset: (page.pagination.page - 1) * page.pagination.perPage,
         onMove: (m: { id: string; before?: string; after?: string }) => {
           // The table reports string ids; the server wants each row's own value.
           const original = (id: string) => rowById.get(id)?.id ?? id;

@@ -107,6 +107,18 @@ describe('list ordering', () => {
     expect(handle('甲').getAttribute('aria-disabled')).toBe('true');
   });
 
+  it('announces positions counted from the first page', async () => {
+    const { user } = setup({
+      ...page,
+      pagination: { page: 2, perPage: 20, total: 23, lastPage: 2 },
+    });
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect(document.body.textContent).toContain('甲 移到第 22 位'));
+    await user.keyboard('{Escape}');
+  });
+
   it('dropping posts the move and refreshes', async () => {
     const { user, adapter } = setup(page, () => ({
       status: 200,

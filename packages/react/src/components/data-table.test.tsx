@@ -1,4 +1,11 @@
-import { act, fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render as rtlRender,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -440,6 +447,16 @@ describe('DataTable reorder', () => {
     expect(onMove).toHaveBeenCalledTimes(1);
     expect(onMove).toHaveBeenCalledWith({ id: '1', after: '2' });
     expect(names()).toEqual(['乙', '甲', '丙']);
+  });
+
+  it('announces positions in the whole list when the rows are a later page', async () => {
+    const user = userEvent.setup();
+    mount(vi.fn(), { positionOffset: 20 });
+    handle('甲').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect(document.body.textContent).toContain('甲 移到第 22 位'));
+    await user.keyboard('{Escape}');
   });
 
   it('moving to the top reports before the first row', async () => {
