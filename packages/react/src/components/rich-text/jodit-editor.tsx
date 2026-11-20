@@ -24,9 +24,14 @@ import 'jodit/esm/plugins/drag-and-drop/drag-and-drop.js'; // move text/HTML by 
 import 'jodit/esm/plugins/drag-and-drop-element/drag-and-drop-element.js'; // move images by dragging
 import 'jodit/esm/plugins/add-new-line/add-new-line.js'; // a line after a table/embed at the end
 import 'jodit/esm/plugins/key-arrow-outside/key-arrow-outside.js'; // arrow out of inline formatting
+import 'jodit/esm/plugins/indent/indent.js'; // outdent / indent buttons
 import 'jodit/es2021/jodit.min.css';
+// The list-nesting helper of the `tab` plugin, without the plugin (which would capture the Tab key).
+import { Dom } from 'jodit/esm/core/dom/dom.js';
 import { Button } from 'jodit/esm/core/ui/button/index.js';
 import { UIBlock, UIForm, UIInput } from 'jodit/esm/core/ui/form/index.js';
+import linkPopupItems from 'jodit/esm/plugins/inline-popup/config/items/a.js';
+import { onTabInsideLi } from 'jodit/esm/plugins/tab/cases/on-tab-inside-li.js';
 import { useEffect, useRef, useState } from 'react';
 import type { JoditEditorProps } from './editor-contract';
 import { isEmptyHtml } from './empty';
@@ -57,6 +62,15 @@ function escapeHtml(s: string): string {
 const filesOf = (dt: DataTransfer | null | undefined): File[] => [...(dt?.files ?? [])];
 const carriesFiles = (dt: DataTransfer | null | undefined): boolean =>
   Boolean(dt && [...dt.types].includes('Files'));
+
+/**
+ * Strings of the link, image and video popups that Jodit's language packs lack (Jodit shows the key
+ * as is, e.g. "URL"; zh_cn also lacks "Alternative text").
+ */
+const I18N = {
+  zh_tw: { URL: '網址' },
+  zh_cn: { URL: '网址', 'Alternative text': '替代文字' },
+};
 
 function toOutput(html: string): string | null {
   const value = html.replace(PLACEHOLDER_RE, '');
@@ -206,6 +220,13 @@ export default function JoditEditor(props: JoditEditorProps) {
         popupRoot: host.closest<HTMLElement>('[role="dialog"]') ?? undefined,
         iframeTitle: escapeHtml(p.label),
         iframeStyle: `${Jodit.defaultOptions.iframeStyle}${PAPER_STYLE}`,
+        i18n: I18N,
+        // The popup over a link: open, edit, unlink, colour. Its default also has a `file` button,
+        // whose plugin (Jodit's file browser) is not used here.
+        popup: { a: Jodit.atom(linkPopupItems.filter((item) => item !== 'file')) },
+        // Read by the list-nesting helper and by the outdent button's enabled state (the `tab` plugin's
+        // own options; the plugin itself is not loaded).
+        tab: { tabInsideLiInsertNewList: true, spaces: 0 },
         // Files dropped on the editor go through our own handler below, never Jodit's uploader.
         enableDragAndDropFileToEditor: false,
         controls: {
@@ -243,6 +264,19 @@ export default function JoditEditor(props: JoditEditorProps) {
         editor.history.clear(); // undo starts at the loaded document, not at an empty editor
         lastEmitted.current = toOutput(editor.value);
         editor.e.on('change', emit);
+        // Indent / outdent in a list item nest / un-nest it (as the `tab` plugin would), instead of
+        // adding a margin to the <li>.
+        editor.e.on('beforeCommand', (command: string) => {
+          if (command !== 'indent' && command !== 'outdent') return;
+          const current = editor.s.current();
+          const li = current && Dom.closest(current, 'li', editor.editor);
+          if (!li) return; // outside lists: Jodit's own indent (a margin on the block)
+          // The helper acts only with the caret at the start of the item.
+          editor.s.setCursorIn(li, true);
+          if (!onTabInsideLi(editor as never, command === 'outdent')) return;
+          editor.synchronizeValues();
+          return false;
+        });
         editor.e.on('blur', () => latest.current.onBlur?.());
         // Any file drag: never the browser default (which would open the file in place of the page).
         editor.e.on(editor.ed, 'dragover', (e: DragEvent) => {

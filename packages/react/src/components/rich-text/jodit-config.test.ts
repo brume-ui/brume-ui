@@ -110,7 +110,7 @@ describe('buildJoditConfig', () => {
     expect(cfg().disabled).toBe(false);
   });
 
-  it('has the fixed button list', () => {
+  it('has the fixed button list (outdent/indent after the lists: ruling R-8)', () => {
     expect(cfg().buttons).toEqual([
       'undo',
       'redo',
@@ -130,6 +130,8 @@ describe('buildJoditConfig', () => {
       '|',
       'ul',
       'ol',
+      'outdent',
+      'indent',
       '|',
       'link',
       'image',
@@ -141,6 +143,10 @@ describe('buildJoditConfig', () => {
       '|',
       'source',
     ]);
+  });
+
+  it('link popup: no nofollow checkbox and no class name field (R-8)', () => {
+    expect(cfg().link).toEqual({ noFollowCheckbox: false, modeClassName: false });
   });
 
   it('keeps the image button whether or not images are enabled (P-1) and does not leak imagesEnabled', () => {

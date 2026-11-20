@@ -55,6 +55,8 @@ export function buildJoditConfig(o: JoditConfigOptions): Record<string, unknown>
       '|',
       'ul',
       'ol',
+      'outdent',
+      'indent',
       '|',
       'link',
       'image',
@@ -107,7 +109,7 @@ export function buildJoditConfig(o: JoditConfigOptions): Record<string, unknown>
     askBeforePasteFromWord: false,
     processPasteFromWord: false,
     defaultActionOnPaste: 'insert_as_html',
-    link: { noFollowCheckbox: false },
+    link: { noFollowCheckbox: false, modeClassName: false }, // no free-form class name field
     image: { editSrc: true, useImageEditor: false },
     uploader: { url: '' }, // no Jodit uploader; images go through the component's own upload
   };
