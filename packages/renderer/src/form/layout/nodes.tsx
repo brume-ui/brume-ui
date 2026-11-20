@@ -17,6 +17,7 @@ export function isLongField(def: FieldDef): boolean {
     (def.type === 'radio' && Array.isArray(def.options) && def.options.length > 4) ||
     [
       'textarea',
+      'richText',
       'tags',
       'upload',
       'checkbox',

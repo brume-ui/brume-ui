@@ -1,3 +1,4 @@
+import { isEmptyHtml } from '@brume-ui/brume-react';
 import type { ClientRule, FieldDef, FormNode } from '@brume-ui/brume-schema';
 import { assertSafePath, joinPath } from './paths';
 
@@ -20,10 +21,12 @@ function numeric(value: unknown): number | null {
   return Number.isFinite(number) ? number : null;
 }
 
-function passes(rule: ClientRule, value: unknown): boolean {
+function passes(rule: ClientRule, value: unknown, def: FieldDef): boolean {
   switch (rule.rule) {
     case 'required':
-      return !isEmpty(value);
+      return def.type === 'richText' && typeof value === 'string'
+        ? !isEmptyHtml(value)
+        : !isEmpty(value);
     case 'minLength':
       return typeof value === 'string' && [...value].length >= rule.value;
     case 'maxLength':
@@ -78,7 +81,7 @@ export function validateValue(def: FieldDef, value: unknown): string | null {
     return null;
   for (const rule of def.rules ?? []) {
     if (rule.rule !== 'required' && isEmpty(value)) continue;
-    if (!passes(rule, value)) return rule.message;
+    if (!passes(rule, value, def)) return rule.message;
   }
   return null;
 }

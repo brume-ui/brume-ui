@@ -284,7 +284,15 @@ function SelectionFields(
   );
 }
 
-const UNDESCRIBED = new Set(['hidden', 'password', 'upload', 'relation', 'repeater', 'custom']);
+const UNDESCRIBED = new Set([
+  'hidden',
+  'password',
+  'upload',
+  'richText',
+  'relation',
+  'repeater',
+  'custom',
+]);
 
 function describeValue(
   def: FieldDef,

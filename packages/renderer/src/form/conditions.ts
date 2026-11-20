@@ -65,6 +65,7 @@ export function canonicalizeFieldValue(
     [
       'text',
       'textarea',
+      'richText',
       'email',
       'url',
       'mobile',

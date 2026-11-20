@@ -71,6 +71,7 @@ export { RangeInput, type RangeInputProps, type RangeValue } from './components/
 export { RelationPicker, type RelationPickerProps } from './components/relation-picker';
 export { ReorderDialog, type ReorderDialogProps } from './components/reorder-dialog';
 export { Repeater, type RepeaterProps } from './components/repeater';
+export { isEmptyHtml } from './components/rich-text/empty';
 export {
   RichTextEditor,
   type RichTextEditorProps,

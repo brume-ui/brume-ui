@@ -48,6 +48,8 @@ properties only. Empty paths address the root. Prototype-related path segments
 - `multipleSelect`, `checkbox` and `tags` are `string[]`.
 - Single upload is `UploadValue | null`; multiple upload is `UploadValue[]`, in
   display/sort order. Preserve the schema upload value and any `extra` object.
+- `richText` is an HTML string or null (an empty document is null); the server sanitises it on
+  save and on read. Images upload through `uploadUrl` like `upload`, but the field value stays HTML.
 - `embeds` is an object. Display fields render their supplied JSON value.
 
 ## Nested components
