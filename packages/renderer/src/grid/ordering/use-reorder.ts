@@ -28,6 +28,17 @@ export interface Reorder {
 
 const ok = (res: HttpResponse) => res.status >= 200 && res.status < 300;
 
+/**
+ * Every successful reorder shows its toast under this id, closing the one before it: one undo
+ * at a time, and it always undoes the latest move.
+ */
+const REORDERED_TOAST = 'brume-reordered';
+
+function reordered(message: string, action?: { label: string; onClick(): void }) {
+  toast.dismiss(REORDERED_TOAST);
+  toast.success(message, { id: REORDERED_TOAST, ...(action ? { action } : {}) });
+}
+
 /** Reordering through `endpoints.reorder`; every outcome ends in a grid reload. */
 export function useReorder(page: ListPage): Reorder {
   const { adapter, t } = useBrume();
@@ -70,11 +81,9 @@ export function useReorder(page: ListPage): Reorder {
           throw new Error(message);
         }
         const back = res.data?.undo;
-        toast.success(
+        reordered(
           t('grid.reordered'),
-          back
-            ? { action: { label: t('grid.reorderUndo'), onClick: () => void undo(back) } }
-            : undefined,
+          back ? { label: t('grid.reorderUndo'), onClick: () => void undo(back) } : undefined,
         );
         const feedback = res.data?.feedback;
         if (feedback) applyFeedback(feedback, { adapter, refresh });
@@ -98,8 +107,8 @@ export function useReorder(page: ListPage): Reorder {
           refresh();
           throw new Error(failureMessage(res, t));
         }
-        // No undo for a whole-list save.
-        toast.success(t('grid.reordered'));
+        // No undo for a whole-list save (and an earlier move's undo no longer applies).
+        reordered(t('grid.reordered'));
         const feedback = res.data?.feedback;
         if (feedback) applyFeedback(feedback, { adapter, refresh });
         if (!feedback?.refresh && !feedback?.redirect) refresh();

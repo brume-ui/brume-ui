@@ -181,6 +181,20 @@ describe('toast', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
+  it('dismiss closes a toast by id, so the same id can show a new message at once', () => {
+    render(<Toaster />);
+    act(() => toast.success('第一次', { id: 'latest' }));
+    act(() => {
+      toast.dismiss('latest');
+      toast.success('第二次', { id: 'latest' });
+    });
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.getByRole('status').textContent).toContain('第二次');
+    // Dismissing an id that is not showing does nothing.
+    act(() => toast.dismiss('missing'));
+    expect(screen.getByRole('status').textContent).toContain('第二次');
+  });
+
   it('an id can show again after it has gone', () => {
     render(<Toaster />);
     act(() => toast.info('A', { id: 'x' }));

@@ -170,6 +170,33 @@ describe('list ordering', () => {
     expect(reloads(adapter)).toBe(2);
   });
 
+  it('only the latest move keeps an undo toast', async () => {
+    const dismiss = vi.spyOn(toast, 'dismiss');
+    let n = 0;
+    const { user } = setup(page, () => ({
+      status: 200,
+      data: { undo: { id: 1, before: ++n } },
+    }));
+    await dropFirstDown(user);
+    await waitFor(() => expect(toasts.success).toHaveBeenCalledTimes(1));
+    // The second drop runs before the first refresh lands (the memory adapter never reloads).
+    handle('乙').focus();
+    await user.keyboard(' ');
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    await waitFor(() => expect(toasts.success).toHaveBeenCalledTimes(2));
+    const ids = toasts.success.mock.calls.map((c) => (c[1] as { id?: string } | undefined)?.id);
+    expect(ids[0]).toBeTruthy();
+    expect(ids[1]).toBe(ids[0]);
+    // Each success first closes the toast before it, so the new one is not dropped as a duplicate.
+    const order = (spy: MockInstance, i: number) => spy.mock.invocationCallOrder[i] ?? 0;
+    expect(dismiss).toHaveBeenCalledWith(ids[0]);
+    expect(order(dismiss, 1)).toBeLessThan(order(toasts.success, 1));
+    expect(order(dismiss, 1)).toBeGreaterThan(order(toasts.success, 0));
+    const second = toasts.success.mock.calls[1]?.[1] as { action: { onClick(): void } };
+    expect(second.action).toBeTruthy();
+  });
+
   it('reorder conflict refreshes the grid', async () => {
     const { user, adapter } = setup(page, () => ({
       status: 409,
@@ -233,7 +260,7 @@ describe('list ordering', () => {
       body: { ids: [4, 1, 2, 'c/3'] },
     });
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(toasts.success).toHaveBeenCalledWith('已更新順序');
+    expect(toasts.success).toHaveBeenCalledWith('已更新順序', { id: expect.any(String) });
     expect(reloads(adapter)).toBe(1);
   });
 

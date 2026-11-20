@@ -90,4 +90,6 @@ export const toast = {
   error: (msg: string, opts?: ToastOptions) => push('error', msg, opts),
   info: (msg: string, opts?: ToastOptions) => push('info', msg, opts),
   warning: (msg: string, opts?: ToastOptions) => push('warning', msg, opts),
+  /** Closes the toast showing with this id (no-op if none), so the id is free for a new one. */
+  dismiss: (id: string) => dismissToast(id),
 };
