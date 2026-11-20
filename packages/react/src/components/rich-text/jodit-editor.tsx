@@ -5,7 +5,9 @@
  */
 import { Jodit } from 'jodit';
 // `jodit` registers only a basic plugin set (bold, color, font, format-block, image, link, lists, table,
-// placeholder, redo-undo, iframe, …). The toolbar and behaviours below need these as well:
+// placeholder, redo-undo, iframe, …). The toolbar and behaviours below need these as well.
+// Deliberately absent: `tab` and `table-keyboard-navigation` capture Tab inside lists and tables, which
+// would trap keyboard users in the editor; without them Tab always moves the focus on.
 import 'jodit/esm/plugins/paste/paste.js'; // paste pipeline: beforePaste/processPaste hooks used below
 import 'jodit/esm/plugins/clipboard/clipboard.js'; // copy/cut of HTML inside the editor
 import 'jodit/esm/plugins/clean-html/clean-html.js'; // the cleanHTML options (event attrs, js: links) + eraser
@@ -16,13 +18,11 @@ import 'jodit/esm/plugins/source/source.js'; // source button (sourceEditor: 'ar
 import 'jodit/esm/plugins/select/select.js'; // required by inline-popup and select-cells
 import 'jodit/esm/plugins/select-cells/select-cells.js'; // table: select a cell range
 import 'jodit/esm/plugins/resize-cells/resize-cells.js'; // table: drag column widths
-import 'jodit/esm/plugins/table-keyboard-navigation/table-keyboard-navigation.js'; // table: arrows/tab
 import 'jodit/esm/plugins/resizer/resizer.js'; // resize images and embeds by their handles
 import 'jodit/esm/plugins/image-properties/image-properties.js'; // edit an image's src/alt/size
 import 'jodit/esm/plugins/drag-and-drop/drag-and-drop.js'; // move text/HTML by dragging
 import 'jodit/esm/plugins/drag-and-drop-element/drag-and-drop-element.js'; // move images by dragging
 import 'jodit/esm/plugins/add-new-line/add-new-line.js'; // a line after a table/embed at the end
-import 'jodit/esm/plugins/tab/tab.js'; // tab indents list items
 import 'jodit/esm/plugins/key-arrow-outside/key-arrow-outside.js'; // arrow out of inline formatting
 import 'jodit/es2021/jodit.min.css';
 import { Button } from 'jodit/esm/core/ui/button/index.js';
@@ -32,6 +32,7 @@ import type { JoditEditorProps } from './editor-contract';
 import { isEmptyHtml } from './empty';
 import { buildJoditConfig } from './jodit-config';
 import { cleanPastedHtml } from './paste-clean';
+import { isSingleImageHtml } from './paste-image';
 import { youtubeEmbedUrl } from './youtube';
 
 /** Marks the upload placeholders; they never reach `onChange`. */
@@ -42,7 +43,8 @@ const PLACEHOLDER_STYLE =
 
 /** The editing document is "paper": light, whatever the app's colour scheme (legacy inline colours assume it). */
 const PAPER_STYLE =
-  'html{color-scheme:light;background:#fff}body{color:#1f2a37;font-family:system-ui,sans-serif;font-size:14px}';
+  'html{color-scheme:light;background:#fff}body{color:#1f2a37;font-family:system-ui,sans-serif;font-size:14px}' +
+  'body[aria-disabled="true"]{opacity:.5}';
 
 function escapeHtml(s: string): string {
   return s
@@ -52,8 +54,9 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;');
 }
 
-const imageFiles = (dt: DataTransfer | null | undefined): File[] =>
-  [...(dt?.files ?? [])].filter((f) => f.type.startsWith('image/'));
+const filesOf = (dt: DataTransfer | null | undefined): File[] => [...(dt?.files ?? [])];
+const carriesFiles = (dt: DataTransfer | null | undefined): boolean =>
+  Boolean(dt && [...dt.types].includes('Files'));
 
 function toOutput(html: string): string | null {
   const value = html.replace(PLACEHOLDER_RE, '');
@@ -69,6 +72,8 @@ export default function JoditEditor(props: JoditEditorProps) {
   latest.current = props;
   /** The value (as onChange would report it) that matches the editor's content now. */
   const lastEmitted = useRef<string | null | undefined>(undefined);
+  /** True while this component writes the value: Jodit fires `change` synchronously on a set. */
+  const applying = useRef(false);
   const [ready, setReady] = useState(false);
 
   // One instance per mount (StrictMode-safe: the alive flag drops a destructed instance's ready).
@@ -78,16 +83,15 @@ export default function JoditEditor(props: JoditEditorProps) {
     let alive = true;
     let j: Jodit | null = null;
     const controllers = new Set<AbortController>();
+    /** Upload ids still in flight; any other placeholder (e.g. brought back by undo) is stale. */
+    const active = new Set<string>();
     const p = latest.current;
 
-    const applyValue = (editor: Jodit, value: string | null) => {
-      const next = value ?? '';
-      if (next !== editor.value) editor.value = next;
-      lastEmitted.current = toOutput(editor.value);
-    };
-
     const emit = () => {
-      if (!alive || !j) return;
+      if (!alive || !j || applying.current) return;
+      for (const el of j.editor.querySelectorAll(`[${UPLOAD_ATTR}]`)) {
+        if (!active.has(el.getAttribute(UPLOAD_ATTR) ?? '')) el.remove();
+      }
       const out = toOutput(j.value);
       if (out === lastEmitted.current) return;
       lastEmitted.current = out;
@@ -104,31 +108,36 @@ export default function JoditEditor(props: JoditEditorProps) {
       }
       if (at) editor.s.insertCursorAtPoint(at.x, at.y);
       for (const file of files) {
+        const id = String(++uploadSequence);
         const problem = cur.validateImage(file);
         if (problem) {
           cur.notify(problem);
           continue;
         }
         const placeholder = editor.createInside.element('span');
-        placeholder.setAttribute(UPLOAD_ATTR, String(++uploadSequence));
+        placeholder.setAttribute(UPLOAD_ATTR, id);
         placeholder.setAttribute('contenteditable', 'false');
         placeholder.setAttribute('style', PLACEHOLDER_STYLE);
         placeholder.textContent = cur.messages.uploading;
+        active.add(id);
         editor.s.insertNode(placeholder, true, false);
         const controller = new AbortController();
         controllers.add(controller);
         cur.onUploadingChange(1);
         const done = (url: string | null, message?: string) => {
           controllers.delete(controller);
+          active.delete(id);
           if (!alive || controller.signal.aborted) return;
           latest.current.onUploadingChange(-1);
-          if (url && placeholder.isConnected) {
+          // Looked up by id: undo/redo may have replaced the node with an equal one.
+          const current = editor.editor.querySelector(`[${UPLOAD_ATTR}="${id}"]`);
+          if (url && current) {
             const img = editor.createInside.element('img');
             img.setAttribute('src', url);
             img.setAttribute('alt', '');
-            placeholder.replaceWith(img);
+            current.replaceWith(img);
           } else if (!url) {
-            placeholder.remove();
+            current?.remove();
             latest.current.notify(message || latest.current.messages.uploadFailed);
           } // else: the placeholder was deleted while uploading, so the image is not wanted
 
@@ -190,21 +199,34 @@ export default function JoditEditor(props: JoditEditorProps) {
         contentCss: p.contentCss,
         imagesEnabled: p.imagesEnabled,
       });
+      const controls = base.controls as Record<string, { list?: unknown }>;
       const config = {
         ...base,
         theme: 'brume', // jodit_theme_brume on the editor, its popups and dialogs: rich-text.css styles them
         popupRoot: host.closest<HTMLElement>('[role="dialog"]') ?? undefined,
         iframeTitle: escapeHtml(p.label),
         iframeStyle: `${Jodit.defaultOptions.iframeStyle}${PAPER_STYLE}`,
-        controls: { ...(base.controls as Record<string, unknown>), video: videoControl },
+        // Files dropped on the editor go through our own handler below, never Jodit's uploader.
+        enableDragAndDropFileToEditor: false,
+        controls: {
+          ...controls,
+          // Jodit merges option objects deeply: atom() makes the paragraph list replace the default
+          // one (which also offers h4, blockquote and pre) instead of being merged into it.
+          paragraph: { ...controls.paragraph, list: Jodit.atom(controls.paragraph?.list) },
+          video: videoControl,
+        },
         events: {
           processPaste: (_e: unknown, html: unknown, types: unknown) =>
             typeof html === 'string' && /text\/html/.test(String(types ?? ''))
               ? cleanPastedHtml(html)
               : undefined,
           beforePaste: (e: ClipboardEvent) => {
-            const files = imageFiles(e.clipboardData);
+            const dt = e.clipboardData;
+            const files = filesOf(dt);
             if (!files.length) return;
+            // HTML next to the file (Excel, Word, PowerPoint): paste the HTML, ignore the preview image.
+            const html = dt?.getData('text/html') ?? '';
+            if (html.trim() !== '' && !isSingleImageHtml(html)) return;
             handleFiles(files);
             return false;
           },
@@ -215,15 +237,23 @@ export default function JoditEditor(props: JoditEditorProps) {
       editorRef.current = editor;
       editor.waitForReady().then(() => {
         if (!alive) return;
-        applyValue(editor, latest.current.value);
+        applying.current = true;
+        editor.value = latest.current.value ?? '';
+        applying.current = false;
+        editor.history.clear(); // undo starts at the loaded document, not at an empty editor
+        lastEmitted.current = toOutput(editor.value);
         editor.e.on('change', emit);
         editor.e.on('blur', () => latest.current.onBlur?.());
-        editor.e.on(editor.editor, 'drop', (e: DragEvent) => {
-          const files = imageFiles(e.dataTransfer);
-          if (!files.length) return;
+        // Any file drag: never the browser default (which would open the file in place of the page).
+        editor.e.on(editor.ed, 'dragover', (e: DragEvent) => {
+          if (carriesFiles(e.dataTransfer)) e.preventDefault();
+        });
+        editor.e.on(editor.ed, 'drop', (e: DragEvent) => {
+          if (!carriesFiles(e.dataTransfer)) return;
           e.preventDefault();
           e.stopPropagation();
-          handleFiles(files, { x: e.clientX, y: e.clientY });
+          const files = filesOf(e.dataTransfer);
+          if (files.length) handleFiles(files, { x: e.clientX, y: e.clientY });
           return false;
         });
         setReady(true);
@@ -247,7 +277,10 @@ export default function JoditEditor(props: JoditEditorProps) {
     return () => {
       alive = false;
       observer?.disconnect();
-      for (const controller of controllers) controller.abort();
+      for (const controller of controllers) {
+        controller.abort();
+        latest.current.onUploadingChange(-1);
+      }
       if (j) j.destruct();
       j = null;
       editorRef.current = null;
@@ -262,8 +295,18 @@ export default function JoditEditor(props: JoditEditorProps) {
     const j = editorRef.current;
     if (!ready || !j) return;
     if (value === lastEmitted.current) return;
+    // '' / <p><br></p> while the editor is already empty: nothing to write.
+    if (isEmptyHtml(value) && toOutput(j.value) === null) return;
     const next = value ?? '';
-    if (next !== j.value) j.value = next;
+    if (next !== j.value) {
+      applying.current = true;
+      try {
+        j.value = next;
+      } finally {
+        applying.current = false;
+      }
+      j.history.clear(); // a reset or a new record is not undoable into the previous content
+    }
     lastEmitted.current = toOutput(j.value);
   }, [value, ready]);
 

@@ -12,6 +12,8 @@ export interface RichTextViewProps {
   maxHeight?: number;
   /** Accessible name (the frame's title). */
   label: string;
+  id?: string;
+  'aria-describedby'?: string;
 }
 
 /**
@@ -56,6 +58,8 @@ export function RichTextView({
   contentCss = [],
   maxHeight = DEFAULT_MAX_HEIGHT,
   label,
+  id,
+  'aria-describedby': describedBy,
 }: RichTextViewProps) {
   const { t } = useBrume();
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -92,7 +96,7 @@ export function RichTextView({
 
   if (isEmptyHtml(html)) {
     return (
-      <p className="br:text-sm br:text-text-muted">
+      <p id={id} aria-describedby={describedBy} className="br:text-sm br:text-text-muted">
         <span aria-hidden="true">—</span>
         <span className="br:sr-only">{t('richText.empty')}</span>
       </p>
@@ -102,6 +106,8 @@ export function RichTextView({
   return (
     <iframe
       ref={frameRef}
+      id={id}
+      aria-describedby={describedBy}
       title={label}
       sandbox={VIEW_SANDBOX}
       srcDoc={buildViewDocument(html as string, contentCss)}

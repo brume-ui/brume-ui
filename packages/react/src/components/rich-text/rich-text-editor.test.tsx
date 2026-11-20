@@ -157,7 +157,7 @@ describe('RichTextEditor', () => {
     await screen.findByTestId('fake-editor');
     const root = container.querySelector('.br-rich-text') as HTMLElement;
     expect(root.getAttribute('data-disabled')).toBe('');
-    expect(root.className).toContain('br:opacity-50');
+    expect(root.className).toContain('br:cursor-not-allowed');
     expect(lastProps?.disabled).toBe(true);
   });
 
@@ -173,6 +173,55 @@ describe('RichTextEditor', () => {
     act(() => lastProps?.onUploadingChange(-1));
     act(() => lastProps?.onUploadingChange(-1));
     expect(root.hasAttribute('data-uploading')).toBe(false);
+  });
+
+  it('resets data-uploading when the editor instance goes away (remount, readOnly)', async () => {
+    resolvedChunk();
+    const { container, rerender } = renderEditor({ contentCss: ['/a.css'] });
+    await screen.findByTestId('fake-editor');
+    const root = () => container.querySelector('.br-rich-text') as HTMLElement;
+    act(() => lastProps?.onUploadingChange(1));
+    expect(root().getAttribute('data-uploading')).toBe('1');
+    rerender({ contentCss: ['/b.css'] }); // new Jodit instance
+    await screen.findByTestId('fake-editor');
+    expect(root().hasAttribute('data-uploading')).toBe(false);
+    act(() => lastProps?.onUploadingChange(1));
+    rerender({ contentCss: ['/b.css'], readOnly: true });
+    rerender({ contentCss: ['/b.css'], readOnly: false });
+    await screen.findByTestId('fake-editor');
+    expect(root().hasAttribute('data-uploading')).toBe(false);
+  });
+
+  it('drops unsafe contentCss urls before they reach the editor', async () => {
+    resolvedChunk();
+    renderEditor({ contentCss: ['/site.css', 'javascript:alert(1)', ' '] });
+    await screen.findByTestId('fake-editor');
+    expect(lastProps?.contentCss).toEqual(['/site.css']);
+  });
+
+  it('readOnly keeps the Field id and description', () => {
+    resolvedChunk();
+    renderEditor({
+      readOnly: true,
+      value: '<p>x</p>',
+      id: 'desc',
+      'aria-describedby': 'desc-hint',
+    });
+    const frame = screen.getByTitle('商品說明');
+    expect(frame.id).toBe('desc');
+    expect(frame.getAttribute('aria-describedby')).toBe('desc-hint');
+  });
+
+  it('prevents the browser default for a file dropped on the box', async () => {
+    resolvedChunk();
+    const { container } = renderEditor();
+    await screen.findByTestId('fake-editor');
+    const root = container.querySelector('.br-rich-text') as HTMLElement;
+    const dataTransfer = { types: ['Files'], files: [] };
+    const over = fireEvent.dragOver(root, { dataTransfer });
+    const drop = fireEvent.drop(root, { dataTransfer });
+    expect(over).toBe(false);
+    expect(drop).toBe(false);
   });
 
   it('enables image upload only with images and upload; checks type and size', async () => {

@@ -1,10 +1,12 @@
 import {
   Component,
   type ComponentType,
+  type DragEvent,
   lazy,
   type ReactNode,
   Suspense,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -81,6 +83,24 @@ class ChunkBoundary extends Component<
   }
 }
 
+/** A file drag must never reach the browser's default (open the file, replacing the page). */
+function blockFileDrop(e: DragEvent<HTMLDivElement>) {
+  if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
+}
+
+/**
+ * One Jodit instance (keyed). Its unmount (remount for new options, readOnly, unmount) resets the
+ * shell's upload counter: uploads of a destructed instance are aborted and never report back.
+ */
+function EditorInstance({
+  Editor,
+  onGone,
+  ...props
+}: JoditEditorProps & { Editor: ComponentType<JoditEditorProps>; onGone(): void }) {
+  useEffect(() => onGone, [onGone]);
+  return <Editor {...props} />;
+}
+
 function EditorSkeleton({ label }: { label: string }) {
   return (
     <div role="status" aria-label={label} className="br:flex br:h-full br:flex-col">
@@ -128,7 +148,11 @@ export function RichTextEditor({
   // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is the retry trigger.
   const Editor = useMemo(() => lazy(() => editorChunk.load()), [attempt]);
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
-  const css = useMemo(() => contentCss ?? [], [contentCss]);
+  // Same rule as the view: stylesheet URLs must be relative, http: or https:.
+  const css = useMemo(
+    () => (contentCss ?? []).filter((href) => href.trim() !== '' && isSafeHref(href)),
+    [contentCss],
+  );
 
   const messages = useMemo<RichTextMessages>(
     () => ({
@@ -171,28 +195,46 @@ export function RichTextEditor({
     setUploading((n) => Math.max(0, n + delta));
   }, []);
 
+  const resetUploading = useCallback(() => setUploading(0), []);
+
   const notify = useCallback((message: string) => {
     toast.error(message);
   }, []);
 
   if (readOnly) {
-    return <RichTextView html={value} contentCss={css} maxHeight={height} label={label} />;
+    return (
+      <RichTextView
+        id={id}
+        aria-describedby={describedBy}
+        html={value}
+        contentCss={css}
+        maxHeight={height}
+        label={label}
+      />
+    );
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: a drop guard only (stops the browser opening a dropped file), not an interaction.
     <div
       id={id}
       data-disabled={disabled ? '' : undefined}
       data-invalid={isInvalid ? '' : undefined}
       data-uploading={uploading > 0 ? String(uploading) : undefined}
       style={{ height }}
+      onDragOver={blockFileDrop}
+      onDrop={blockFileDrop}
       className={cn(
         'br-rich-text br:relative br:w-full br:overflow-hidden br:rounded-input br:border br:bg-surface br:text-text',
         'br:transition-[border-color] br:duration-fast br:ease-out',
-        isInvalid ? 'br:border-danger' : 'br:border-border-strong br:hover:border-text-muted',
+        isInvalid
+          ? 'br:border-danger'
+          : disabled
+            ? 'br:border-border'
+            : 'br:border-border-strong br:hover:border-text-muted',
         'br:outline-none br:focus-within:outline-solid br:focus-within:outline-2 br:focus-within:outline-offset-2',
         isInvalid ? 'br:focus-within:outline-danger' : 'br:focus-within:outline-focus-ring',
-        disabled && 'br:opacity-50 br:cursor-not-allowed',
+        disabled && 'br:cursor-not-allowed',
       )}
     >
       <ChunkBoundary
@@ -210,9 +252,11 @@ export function RichTextEditor({
         }
       >
         <Suspense fallback={<EditorSkeleton label={t('richText.loading')} />}>
-          <Editor
-            // A new language or stylesheet set needs a new Jodit instance.
-            key={`${LANGUAGES[locale] ?? 'zh_tw'}|${css.join('\n')}`}
+          <EditorInstance
+            // New language, stylesheets, height or placeholder: a new Jodit instance.
+            key={`${LANGUAGES[locale] ?? 'zh_tw'}|${css.join('\n')}|${height}|${placeholder ?? ''}`}
+            Editor={Editor}
+            onGone={resetUploading}
             value={value}
             onChange={onChange}
             onBlur={onBlur}

@@ -59,10 +59,17 @@
 }
 
 /* The shell draws the border, radius and focus ring; Jodit's container fills it edge to edge. */
+/*
+ * Below the toolbar everything is the white "paper", up to the shell's rounded border (the shell clips
+ * with overflow hidden), so no app-coloured gap or square white corner shows at the bottom edge.
+ */
+.br-rich-text:has(.jodit-container) {
+  background-color: #fff;
+}
 .br-rich-text .jodit-container:not(.jodit_inline) {
   border: 0;
   border-radius: 0;
-  background-color: var(--br-surface);
+  background-color: #fff;
 }
 .br-rich-text .jodit-container:not(.jodit_inline) .jodit-workplace {
   border: 0;
@@ -75,11 +82,32 @@
 .br-rich-text .jodit-wysiwyg_iframe {
   background: #fff;
 }
-.br-rich-text .jodit_disabled {
-  background-color: var(--br-surface);
+/*
+ * Disabled reads as a dimmed page in both schemes: the page stays white, its text is faded (iframe
+ * style), the toolbar is muted like other disabled Brume controls. Jodit's own grey slab is undone.
+ */
+.br-rich-text .jodit-container:not(.jodit_inline).jodit_disabled {
+  background-color: #fff;
+}
+.br-rich-text .jodit-container:not(.jodit_inline).jodit_disabled .jodit-workplace {
+  opacity: 1;
+}
+.br-rich-text[data-disabled] .jodit-toolbar__box > * {
+  opacity: 0.5;
 }
 
 /* Popups and dialogs: Brume surface, border, radius and overlay shadow. */
+.jodit_theme_brume.jodit-popup {
+  border-radius: var(--br-radius-card); /* the shadow follows the rounded content */
+}
+.jodit_theme_brume
+  .jodit-form__inserter
+  .jodit-form__table-creator-box
+  .jodit-form__container
+  > div
+  > span:not(.jodit_hovered) {
+  border-color: var(--br-border-strong);
+}
 .jodit_theme_brume.jodit-popup .jodit-popup__content,
 .jodit-dialog_theme_brume .jodit-dialog__panel {
   border: 1px solid var(--br-border);
@@ -143,8 +171,9 @@
  * pointer blocking do not swallow them. The dialog is centred with the `translate` property, which
  * makes it the containing block of fixed descendants, but Jodit only recognises `transform` /
  * `will-change` when it corrects popup coordinates; declaring will-change lets it place them.
+ * Scoped to Brume's Dialog content (its direct `[data-dialog-body]` child); Popover content is untouched.
  */
-[role="dialog"]:has(.br-rich-text) {
+[role="dialog"]:has(> [data-dialog-body] .br-rich-text) {
   will-change: transform;
 }
 
