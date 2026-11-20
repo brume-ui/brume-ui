@@ -266,7 +266,6 @@ export function SortableTree<T extends TreeNode>({
   const nodes = optimistic && optimistic.base === nodesProp ? optimistic.list : nodesProp;
   // Keyboard pick-up: the previewed tree, valid only for the nodes it started from.
   const [carry, setCarry] = useState<{ id: string; base: T[]; list: T[] } | null>(null);
-  const carrying = carry && carry.base === nodes && enabled ? carry : null;
   const [drag, setDrag] = useState<PointerDrag | null>(null);
   const [message, setMessage] = useState('');
 
@@ -275,6 +274,16 @@ export function SortableTree<T extends TreeNode>({
     const node = byId.get(id);
     return node && nodeLabel ? nodeLabel(node) : id;
   };
+  // New nodes (a refresh) or switched-off handles end a keyboard carry: say so, never silently.
+  if (carry && (carry.base !== nodes || !enabled)) {
+    setCarry(null);
+    setMessage(
+      carry.base !== nodes
+        ? t('sortableTree.carryReset', { label: nameOf(carry.id) })
+        : t('dataTable.dragCancelled'),
+    );
+  }
+  const carrying = carry && carry.base === nodes && enabled ? carry : null;
   const commit = (move: TreeMove) => {
     const next = applyMove(nodes, move);
     if (sameTree(nodes, next)) return;

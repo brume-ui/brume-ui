@@ -92,6 +92,7 @@ export const zhTW = {
   'sortableTree.cannotDrop': '{label} 不能放在這裡',
   'sortableTree.noPrevSibling': '{label} 上方沒有同一層的項目，無法往內移',
   'sortableTree.atRoot': '{label} 已經在最上層',
+  'sortableTree.carryReset': '清單已更新，已取消移動 {label}',
   'sortableTree.maxDepth': '{label} 無法再往內移，最多 {max} 層',
   'sortableTree.instructions':
     '按空白鍵或 Enter 拿起，上下方向鍵移動位置，右方向鍵移到上一個項目底下，左方向鍵移出上一層，再按空白鍵或 Enter 放下，Esc 取消。',

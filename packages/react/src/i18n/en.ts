@@ -93,6 +93,7 @@ export const en: Record<MessageKey, string> = {
   'sortableTree.cannotDrop': '{label} cannot be dropped here',
   'sortableTree.noPrevSibling': '{label} has no item above it on the same level to move under',
   'sortableTree.atRoot': '{label} is already at the top level',
+  'sortableTree.carryReset': 'The list was updated; moving {label} was cancelled',
   'sortableTree.maxDepth': '{label} cannot move further in: at most {max} levels',
   'sortableTree.instructions':
     'Press Space or Enter to pick up. Use the up and down arrows to move, the right arrow to move under the item above, the left arrow to move out a level, then Space or Enter to drop. Escape cancels.',

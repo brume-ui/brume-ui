@@ -93,6 +93,7 @@ export const zhCN: Record<MessageKey, string> = {
   'sortableTree.cannotDrop': '{label} 不能放在这里',
   'sortableTree.noPrevSibling': '{label} 上方没有同一层的项目，无法往里移',
   'sortableTree.atRoot': '{label} 已经在最上层',
+  'sortableTree.carryReset': '列表已更新，已取消移动 {label}',
   'sortableTree.maxDepth': '{label} 无法再往里移，最多 {max} 层',
   'sortableTree.instructions':
     '按空格键或 Enter 拿起，上下方向键移动位置，右方向键移到上一个项目下面，左方向键移出上一层，再按空格键或 Enter 放下，Esc 取消。',

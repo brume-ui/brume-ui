@@ -153,6 +153,35 @@ describe('SortableTree', () => {
     expect(levels()).toEqual(['1', '2', '1', '2']);
   });
 
+  it('new nodes arriving mid-carry cancel the carry out loud', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    const ui = (nodes: Item[]) => (
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <SortableTree<Item>
+          nodes={nodes}
+          enabled
+          nodeLabel={(n) => n.name}
+          renderNode={(n) => <span>{n.name}</span>}
+          onMove={onMove}
+        />
+      </BrumeProvider>
+    );
+    const { rerender } = render(ui(NODES));
+    handle('家居').focus();
+    await user.keyboard(' {ArrowRight}');
+    expect(handle('家居').getAttribute('aria-pressed')).toBe('true');
+    rerender(ui([...NODES]));
+    expect(status().textContent).toContain('清單已更新，已取消移動 家居');
+    expect(handle('家居').getAttribute('aria-pressed')).toBeNull();
+    expect(items().map((r) => r.getAttribute('aria-level'))).toEqual(['1', '2', '1', '2']);
+    // The next Space picks the node up again instead of dropping a stale preview.
+    handle('家居').focus();
+    await user.keyboard(' ');
+    expect(onMove).not.toHaveBeenCalled();
+    expect(status().textContent).toContain('已拿起 家居');
+  });
+
   it('collapse hides children', async () => {
     const user = userEvent.setup();
     mount();
