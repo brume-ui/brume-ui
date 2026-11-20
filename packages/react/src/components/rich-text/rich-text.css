@@ -1,0 +1,154 @@
+/*
+ * RichTextEditor: Jodit's --jd-* variables mapped to Brume tokens. Jodit's own stylesheet is loaded
+ * by the lazy editor chunk only. The editor runs with `theme: 'brume'`, so the container, its popups
+ * (rendered in the popup root, outside .br-rich-text) and its dialogs carry these classes. The Brume
+ * tokens switch with the colour scheme (:root[data-theme] / prefers-color-scheme), so one mapping
+ * covers light and dark; the dark block below only adjusts what has no token (shadows).
+ */
+.br-rich-text,
+.jodit_theme_brume,
+.jodit-dialog_theme_brume {
+  --jd-font-default: var(--br-font-sans);
+  --jd-font-size-default: 14px;
+  --jd-color-text: var(--br-text);
+  --jd-color-default: var(--br-text);
+  --jd-color-label: var(--br-text-muted);
+  --jd-color-placeholder: var(--br-text-muted);
+  --jd-color-icon: var(--br-text-label);
+  --jd-color-text-icons: var(--br-text-label);
+  --jd-color-border: var(--br-border);
+  --jd-color-separator: var(--br-border);
+  --jd-color-border-dark: var(--br-border-strong);
+  --jd-color-border-active: var(--br-border-strong);
+  --jd-color-border-selected: var(--br-accent);
+  --jd-color-panel: var(--br-surface);
+  --jd-color-background-default: var(--br-surface);
+  --jd-color-background-light-gray: var(--br-surface-canvas);
+  --jd-color-background-gray: var(--br-border);
+  --jd-color-background-gray-hover: color-mix(in oklab, var(--br-text) 6%, var(--br-surface));
+  --jd-color-background-button-hover: color-mix(in oklab, var(--br-text) 8%, var(--br-surface));
+  --jd-color-button-background-hover: color-mix(in oklab, var(--br-text) 8%, var(--br-surface));
+  --jd-color-button-background-hover_opacity30: color-mix(
+    in oklab,
+    var(--br-text) 4%,
+    var(--br-surface)
+  );
+  --jd-color-background-active: var(--br-accent);
+  --jd-color-background-selection: var(--br-accent-tint);
+  --jd-color-text-selection: var(--br-text);
+  --jd-color-selection: var(--br-text);
+  --jd-color-error: var(--br-danger);
+  --jd-color-red: var(--br-danger);
+  --jd-color-white: var(--br-surface);
+  --jd-color-dark: var(--br-text);
+  --jd-color-gray: var(--br-border);
+  --jd-color-gray-dark: var(--br-text-muted);
+  --jd-color-resizer: var(--br-border-strong);
+  --jd-color-source-area: var(--br-surface-canvas);
+  --jd-border-radius-default: var(--br-radius-input);
+  --jd-focus-input-box-shadow: 0 0 0 2px var(--br-focus-ring);
+  --jd-popup-box-shadow: var(--br-shadow-overlay);
+  --jd-box-shadow-tabs: none;
+  --jd-tooltip-color: var(--br-surface);
+  --jd-tooltip-background-color: var(--br-text);
+  --jd-resizer-border-color: var(--br-accent);
+  --jd-resizer-handle-color: var(--br-accent);
+  --jd-resizer-handle-hover-color: var(--br-focus-ring);
+  --jd-anl-color-new-line: var(--br-accent);
+  --jd-color-table-cell-background-hover: var(--br-accent-tint);
+}
+
+/* The shell draws the border, radius and focus ring; Jodit's container fills it edge to edge. */
+.br-rich-text .jodit-container:not(.jodit_inline) {
+  border: 0;
+  border-radius: 0;
+  background-color: var(--br-surface);
+}
+.br-rich-text .jodit-container:not(.jodit_inline) .jodit-workplace {
+  border: 0;
+}
+.br-rich-text .jodit-toolbar__box:not(:empty) {
+  border-bottom: 1px solid var(--br-border);
+  background-color: var(--br-surface);
+}
+/* The editing iframe is the "paper" (white in both schemes); the toolbar follows the app. */
+.br-rich-text .jodit-wysiwyg_iframe {
+  background: #fff;
+}
+.br-rich-text .jodit_disabled {
+  background-color: var(--br-surface);
+}
+
+/* Popups and dialogs: Brume surface, border, radius and overlay shadow. */
+.jodit_theme_brume.jodit-popup .jodit-popup__content,
+.jodit-dialog_theme_brume .jodit-dialog__panel {
+  border: 1px solid var(--br-border);
+  border-radius: var(--br-radius-card);
+  background: var(--br-surface);
+  color: var(--br-text);
+}
+.jodit_theme_brume .jodit-ui-input,
+.jodit_theme_brume .jodit-ui-text-area,
+.jodit_theme_brume .jodit-ui-select,
+.jodit-dialog_theme_brume .jodit-ui-input {
+  border-color: var(--br-border-strong);
+  border-radius: var(--br-radius-input);
+  background: var(--br-surface);
+}
+.jodit_theme_brume .jodit-ui-input__input,
+.jodit_theme_brume .jodit-ui-text-area__input,
+.jodit-dialog_theme_brume .jodit-ui-input__input {
+  color: var(--br-text);
+  background: transparent;
+}
+.jodit_theme_brume .jodit-ui-button_variant_primary,
+.jodit-dialog_theme_brume .jodit-ui-button_variant_primary {
+  border-radius: var(--br-radius-input);
+  background-color: var(--br-accent);
+  color: var(--br-text-on-accent);
+}
+.jodit_theme_brume .jodit-ui-button_variant_primary svg,
+.jodit-dialog_theme_brume .jodit-ui-button_variant_primary svg {
+  fill: var(--br-text-on-accent);
+  stroke: var(--br-text-on-accent);
+}
+.jodit_theme_brume .jodit-ui-button_variant_primary:hover:not([disabled]),
+.jodit-dialog_theme_brume .jodit-ui-button_variant_primary:hover:not([disabled]) {
+  background-color: color-mix(in oklab, var(--br-accent) 88%, var(--br-text));
+}
+.jodit_theme_brume .jodit-ui-input__error,
+.jodit_theme_brume .jodit-ui-input_has-error_true .jodit-ui-input__label {
+  color: var(--br-danger);
+}
+
+/* Keyboard focus inside the toolbar and popups uses Brume's ring. */
+.jodit_theme_brume :is(button, input, select, textarea, [tabindex]):focus-visible,
+.jodit-dialog_theme_brume :is(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--br-focus-ring);
+  outline-offset: 1px;
+}
+
+:root[data-theme="dark"] :is(.br-rich-text, .jodit_theme_brume, .jodit-dialog_theme_brume) {
+  --jd-popup-box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])
+    :is(.br-rich-text, .jodit_theme_brume, .jodit-dialog_theme_brume) {
+    --jd-popup-box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/*
+ * Inside a Dialog, Jodit's popups render in the dialog (popupRoot) so Radix's focus trap and
+ * pointer blocking do not swallow them. The dialog is centred with the `translate` property, which
+ * makes it the containing block of fixed descendants, but Jodit only recognises `transform` /
+ * `will-change` when it corrects popup coordinates; declaring will-change lets it place them.
+ */
+[role="dialog"]:has(.br-rich-text) {
+  will-change: transform;
+}
+
+/* The placeholder sits over the white editing paper in both schemes. */
+.br-rich-text .jodit-placeholder {
+  color: #5b6776;
+}

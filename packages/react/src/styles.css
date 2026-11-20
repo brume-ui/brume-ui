@@ -3,6 +3,7 @@
 @import "@brume-ui/brume-tokens/motion-theme.css";
 @import "@brume-ui/brume-tokens/tokens.css";
 @import "./fonts.css";
+@import "./components/rich-text/rich-text.css";
 
 @source "./";
 /*

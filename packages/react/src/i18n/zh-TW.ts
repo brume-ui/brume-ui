@@ -208,4 +208,13 @@ export const zhTW = {
   'http.networkError': '連不上伺服器，請檢查網路後再試一次。',
   'http.expired': '頁面已過期，請重新整理後再試一次。',
   'http.unauthorized': '登入已逾時，請重新登入。',
+  'richText.loading': '編輯器載入中',
+  'richText.loadFailed': '編輯器載入失敗，請檢查網路後再試一次。',
+  'richText.retry': '重試',
+  'richText.imagesDisabled': '這個欄位不能貼上或拖放圖片檔。',
+  'richText.videoTitle': '插入 YouTube 影片',
+  'richText.videoUrl': 'YouTube 網址',
+  'richText.videoInsert': '插入',
+  'richText.youtubeOnly': '只支援 YouTube 網址',
+  'richText.empty': '沒有內容',
 } as const;

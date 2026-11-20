@@ -1,0 +1,46 @@
+/**
+ * What the light `RichTextEditor` shell hands the lazily loaded Jodit chunk. Types only: the shell
+ * must not import anything at runtime that would pull Jodit (or the Task 2 helpers it uses) into
+ * the main bundle.
+ */
+
+export type RichTextUploadResult = { ok: true; url: string } | { ok: false; message: string };
+
+export type JoditLanguage = 'zh_tw' | 'zh_cn' | 'en';
+
+export interface RichTextMessages {
+  uploading: string;
+  uploadFailed: string;
+  imagesDisabled: string;
+  videoTitle: string;
+  videoUrl: string;
+  videoInsert: string;
+  youtubeOnly: string;
+}
+
+export interface JoditEditorProps {
+  value: string | null;
+  onChange(html: string | null): void;
+  onBlur?(): void;
+  /** Outer height of the whole editor (toolbar included), inside the shell's border. */
+  height: number;
+  contentCss: string[];
+  placeholder?: string;
+  disabled: boolean;
+  language: JoditLanguage;
+  /** Accessible name of the editing area. */
+  label: string;
+  labelledBy?: string;
+  describedBy?: string;
+  invalid: boolean;
+  required: boolean;
+  /** Pasted/dropped image files are uploaded; otherwise they are ignored with `notify`. */
+  imagesEnabled: boolean;
+  /** Client-side type/size check: the message to show, or null when the file may be uploaded. */
+  validateImage(file: File): string | null;
+  /** Already checked by the shell: an `ok` result always carries a safe URL. */
+  upload(file: File, signal: AbortSignal): Promise<RichTextUploadResult>;
+  onUploadingChange(delta: 1 | -1): void;
+  notify(message: string): void;
+  messages: RichTextMessages;
+}

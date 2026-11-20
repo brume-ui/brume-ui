@@ -71,6 +71,12 @@ export { RangeInput, type RangeInputProps, type RangeValue } from './components/
 export { RelationPicker, type RelationPickerProps } from './components/relation-picker';
 export { ReorderDialog, type ReorderDialogProps } from './components/reorder-dialog';
 export { Repeater, type RepeaterProps } from './components/repeater';
+export {
+  RichTextEditor,
+  type RichTextEditorProps,
+  type RichTextUploadResult,
+} from './components/rich-text/rich-text-editor';
+export { RichTextView, type RichTextViewProps } from './components/rich-text/rich-text-view';
 export { RollingNumber, type RollingNumberProps } from './components/rolling-number';
 export { RowContextMenu, type RowContextMenuProps } from './components/row-context-menu';
 export { SearchInput, type SearchInputProps } from './components/search-input';

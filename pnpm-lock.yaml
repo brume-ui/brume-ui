@@ -187,6 +187,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      jodit:
+        specifier: ^4.20.5
+        version: 4.20.5
       lucide-react:
         specifier: ^1.61.0
         version: 1.61.0(@types/react@19.3.0)(react@19.3.1)
@@ -1874,6 +1877,9 @@ packages:
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
+
+  jodit@4.20.5:
+    resolution: {integrity: sha512-VH1VIpG0rp8TAaqmkhbAOzfXrrRF0DdVc637R7HFvCtqJ+dFCUJjZ7X7bEHD4jQmR4uAgrsj34YoEqirdoxCvw==}
 
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
@@ -3858,6 +3864,8 @@ snapshots:
   is-potential-custom-element-name@1.0.1: {}
 
   jiti@2.7.0: {}
+
+  jodit@4.20.5: {}
 
   joycon@3.1.1: {}
 

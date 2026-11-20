@@ -209,4 +209,13 @@ export const en: Record<MessageKey, string> = {
   'http.networkError': "Can't reach the server. Check your connection and try again.",
   'http.expired': 'This page has expired. Refresh and try again.',
   'http.unauthorized': 'Your session has timed out. Please sign in again.',
+  'richText.loading': 'Loading editor',
+  'richText.loadFailed': "The editor didn't load. Check your connection and try again.",
+  'richText.retry': 'Retry',
+  'richText.imagesDisabled': "Image files can't be pasted or dropped into this field.",
+  'richText.videoTitle': 'Insert YouTube video',
+  'richText.videoUrl': 'YouTube URL',
+  'richText.videoInsert': 'Insert',
+  'richText.youtubeOnly': 'Only YouTube URLs are supported',
+  'richText.empty': 'No content',
 };

@@ -1,0 +1,217 @@
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ComponentType } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryAdapter } from '../../memory-adapter';
+import { BrumeProvider } from '../../provider';
+import { clearToasts, getToasts } from '../toast-store';
+import type { JoditEditorProps } from './editor-contract';
+import { editorChunk, RichTextEditor, type RichTextEditorProps } from './rich-text-editor';
+
+// jsdom cannot run Jodit: the real chunk must never load in these tests.
+vi.mock('./jodit-editor', () => {
+  throw new Error('the Jodit chunk must not load in jsdom');
+});
+
+/** The last props the fake editor received. */
+let lastProps: JoditEditorProps | null = null;
+
+function FakeEditor(props: JoditEditorProps) {
+  lastProps = props;
+  return (
+    <textarea
+      data-testid="fake-editor"
+      aria-label={props.label}
+      value={props.value ?? ''}
+      disabled={props.disabled}
+      onChange={(e) => props.onChange(e.target.value === '' ? null : e.target.value)}
+      onBlur={() => props.onBlur?.()}
+    />
+  );
+}
+
+function resolvedChunk() {
+  return vi
+    .spyOn(editorChunk, 'load')
+    .mockImplementation(() =>
+      Promise.resolve({ default: FakeEditor as ComponentType<JoditEditorProps> }),
+    );
+}
+
+function renderEditor(props: Partial<RichTextEditorProps> = {}) {
+  const onChange = vi.fn();
+  const all: RichTextEditorProps = { label: '商品說明', value: null, onChange, ...props };
+  const utils = render(
+    <BrumeProvider adapter={createMemoryAdapter()}>
+      <RichTextEditor {...all} />
+    </BrumeProvider>,
+  );
+  const rerender = (next: Partial<RichTextEditorProps>) =>
+    utils.rerender(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <RichTextEditor {...all} {...next} />
+      </BrumeProvider>,
+    );
+  return { ...utils, onChange, rerender };
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  lastProps = null;
+  clearToasts();
+});
+
+describe('RichTextEditor', () => {
+  it('shows a skeleton of the final height, then the editor', async () => {
+    let resolve!: (m: { default: ComponentType<JoditEditorProps> }) => void;
+    vi.spyOn(editorChunk, 'load').mockImplementation(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
+    const { container } = renderEditor({ height: 320 });
+    const root = container.querySelector('.br-rich-text') as HTMLElement;
+    expect(root.style.height).toBe('320px');
+    expect(screen.getByRole('status', { name: '編輯器載入中' })).toBeTruthy();
+    expect(screen.queryByTestId('fake-editor')).toBeNull();
+    await act(async () => resolve({ default: FakeEditor }));
+    expect(await screen.findByTestId('fake-editor')).toBeTruthy();
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(lastProps?.height).toBe(320);
+  });
+
+  it('defaults to 500px', () => {
+    resolvedChunk();
+    const { container } = renderEditor();
+    expect((container.querySelector('.br-rich-text') as HTMLElement).style.height).toBe('500px');
+  });
+
+  it('readOnly renders the sandboxed view and never loads the chunk', () => {
+    const load = resolvedChunk();
+    renderEditor({ readOnly: true, value: '<p>唯讀內容</p>' });
+    const frame = screen.getByTitle('商品說明');
+    expect(frame.tagName).toBe('IFRAME');
+    expect(frame.getAttribute('srcdoc')).toContain('<p>唯讀內容</p>');
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it('passes value null as null and forwards html and null from the editor', async () => {
+    resolvedChunk();
+    const { onChange, rerender } = renderEditor({ value: null });
+    const box = (await screen.findByTestId('fake-editor')) as HTMLTextAreaElement;
+    expect(lastProps?.value).toBeNull();
+    expect(box.value).toBe('');
+    fireEvent.change(box, { target: { value: '<p>新內容</p>' } });
+    expect(onChange).toHaveBeenLastCalledWith('<p>新內容</p>');
+    act(() => lastProps?.onChange(null));
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    rerender({ value: '<p>外部更新</p>' });
+    expect(lastProps?.value).toBe('<p>外部更新</p>');
+  });
+
+  it('shows an inline error with retry when the chunk fails to load', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const load = vi
+      .spyOn(editorChunk, 'load')
+      .mockImplementationOnce(() => Promise.reject(new Error('chunk 404')))
+      .mockImplementation(() => Promise.resolve({ default: FakeEditor }));
+    renderEditor();
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('編輯器載入失敗');
+    fireEvent.click(screen.getByRole('button', { name: '重試' }));
+    expect(await screen.findByTestId('fake-editor')).toBeTruthy();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('maps the locale and Field props to the editor', async () => {
+    resolvedChunk();
+    const { container } = renderEditor({
+      id: 'desc',
+      'aria-labelledby': 'desc-label',
+      'aria-describedby': 'desc-error',
+      'aria-invalid': true,
+      'aria-required': true,
+      contentCss: ['/site.css'],
+      placeholder: '輸入說明',
+    });
+    await screen.findByTestId('fake-editor');
+    const root = container.querySelector('.br-rich-text') as HTMLElement;
+    expect(root.id).toBe('desc');
+    expect(root.className).toContain('br:border-danger');
+    expect(lastProps).toMatchObject({
+      language: 'zh_tw',
+      label: '商品說明',
+      labelledBy: 'desc-label',
+      describedBy: 'desc-error',
+      invalid: true,
+      required: true,
+      contentCss: ['/site.css'],
+      placeholder: '輸入說明',
+      disabled: false,
+    });
+  });
+
+  it('disabled is passed on and dims the box', async () => {
+    resolvedChunk();
+    const { container } = renderEditor({ disabled: true });
+    await screen.findByTestId('fake-editor');
+    const root = container.querySelector('.br-rich-text') as HTMLElement;
+    expect(root.getAttribute('data-disabled')).toBe('');
+    expect(root.className).toContain('br:opacity-50');
+    expect(lastProps?.disabled).toBe(true);
+  });
+
+  it('exposes data-uploading while uploads are in flight', async () => {
+    resolvedChunk();
+    const { container } = renderEditor();
+    await screen.findByTestId('fake-editor');
+    const root = container.querySelector('.br-rich-text') as HTMLElement;
+    expect(root.hasAttribute('data-uploading')).toBe(false);
+    act(() => lastProps?.onUploadingChange(1));
+    act(() => lastProps?.onUploadingChange(1));
+    expect(root.getAttribute('data-uploading')).toBe('2');
+    act(() => lastProps?.onUploadingChange(-1));
+    act(() => lastProps?.onUploadingChange(-1));
+    expect(root.hasAttribute('data-uploading')).toBe(false);
+  });
+
+  it('enables image upload only with images and upload; checks type and size', async () => {
+    resolvedChunk();
+    const upload = vi.fn(async () => ({ ok: true as const, url: '/storage/a.png' }));
+    const { rerender } = renderEditor({ images: { accept: ['image/png'], maxSize: 1024 } });
+    await screen.findByTestId('fake-editor');
+    expect(lastProps?.imagesEnabled).toBe(false);
+    rerender({ images: { accept: ['image/png', 'image/jpeg'], maxSize: 1024 }, upload });
+    expect(lastProps?.imagesEnabled).toBe(true);
+    const png = new File(['x'], 'a.png', { type: 'image/png' });
+    const gif = new File(['x'], 'a.gif', { type: 'image/gif' });
+    const big = new File([new Uint8Array(2048)], 'b.png', { type: 'image/png' });
+    expect(lastProps?.validateImage(png)).toBeNull();
+    expect(lastProps?.validateImage(gif)).toBe('不支援這種檔案格式，請上傳 PNG、JPG。');
+    expect(lastProps?.validateImage(big)).toBe('檔案超過 1 KB，請換一個較小的檔案。');
+  });
+
+  it('turns an unsafe upload url into a failure', async () => {
+    resolvedChunk();
+    const upload = vi.fn(async () => ({ ok: true as const, url: 'javascript:alert(1)' }));
+    renderEditor({ images: { accept: ['image/png'], maxSize: 1024 }, upload });
+    await screen.findByTestId('fake-editor');
+    const signal = new AbortController().signal;
+    const file = new File(['x'], 'a.png', { type: 'image/png' });
+    await expect(lastProps?.upload(file, signal)).resolves.toEqual({
+      ok: false,
+      message: '上傳失敗，請再試一次。',
+    });
+    expect(upload).toHaveBeenCalledWith(file, signal);
+  });
+
+  it('notify shows an error toast', async () => {
+    resolvedChunk();
+    renderEditor();
+    await screen.findByTestId('fake-editor');
+    act(() => lastProps?.notify('只支援 YouTube 網址'));
+    await waitFor(() =>
+      expect(getToasts().some((t) => t.message === '只支援 YouTube 網址')).toBe(true),
+    );
+  });
+});
