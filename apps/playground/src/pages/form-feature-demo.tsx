@@ -15,6 +15,7 @@ import { FORM_EXAMPLES } from './form-feature-data';
 import { buildFocusedFixture } from './form-feature-fixtures';
 import { createFocusedAdapter, type Reply, type Store } from './form-feature-memory';
 import { Page, Panel } from './page';
+import { RichTextDemoTools } from './rich-text-demo';
 
 export function FocusedFormRoute({
   route,
@@ -136,6 +137,7 @@ function FocusedContent({
   const api = useFormState(fixture.form, fixture.values);
   const view = useRef<FormViewHandle>(null);
   const [target, setTarget] = useState<AfterSave>('edit');
+  const [mount, setMount] = useState(0);
   const page: FormPage = {
     type: 'form',
     title: '聚焦表單',
@@ -264,6 +266,7 @@ function FocusedContent({
         </label>
         {exampleId.startsWith('upload.') ||
         exampleId === 'form.field.upload' ||
+        exampleId === 'form.field.richText' ||
         exampleId === 'form.rule.maxFiles' ? (
           <label>
             <input
@@ -328,7 +331,13 @@ function FocusedContent({
               void save('edit');
             }}
           >
-            <FormView ref={view} form={fixture.form} api={api} uploadUrl="/demo/focused/upload" />
+            <FormView
+              key={mount}
+              ref={view}
+              form={fixture.form}
+              api={api}
+              uploadUrl="/demo/focused/upload"
+            />
             <div className="pg-section">
               {(['edit', 'list', 'create', 'view'] as const).map((after) => (
                 <Button
@@ -352,6 +361,16 @@ function FocusedContent({
           >
             重設示範資料
           </Button>
+          {exampleId === 'form.field.richText' ? (
+            <RichTextDemoTools
+              onLoadFixture={(html) => {
+                confirmed.current = { ...structuredClone(confirmed.current), content: html };
+                api.reset(confirmed.current);
+                setMessage('已載入舊內容範例（重設，不算未儲存變更）');
+              }}
+              onRemount={() => setMount((n) => n + 1)}
+            />
+          ) : null}
           {exampleId.includes('condition') || exampleId === 'form.behavior.enable-when' ? (
             <Button
               onClick={() => {

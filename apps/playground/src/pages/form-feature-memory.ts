@@ -1,6 +1,10 @@
 import { createMemoryAdapter, type HttpRequest, type HttpResponse } from '@brume-ui/brume-react';
 import { collectValueFields, getAt, setAt } from '@brume-ui/brume-renderer';
-import type { FormSubmitRequest, PickerSearchResponse } from '@brume-ui/brume-schema';
+import type {
+  FormSubmitRequest,
+  PickerSearchResponse,
+  RichTextImageResponse,
+} from '@brume-ui/brume-schema';
 import type { buildFocusedFixture } from './form-feature-fixtures';
 export type Reply = 'success' | 'server422' | 'cancel' | 'network';
 export interface Store {
@@ -100,9 +104,26 @@ export function createFocusedAdapter(
           aborted();
           return { status: 0, data: { message: '已取消上傳。' } };
         }
+        const file = req.body.get('file');
+        if (exampleId === 'form.field.richText') {
+          // Rich text images: the server rejects with a field error (422) or answers RichTextImageResponse.
+          // A pasted/dropped file comes from the editing iframe's realm: `instanceof File` is false there.
+          if (current.uploadFailure || typeof file === 'string' || !file)
+            return {
+              status: 422,
+              data: {
+                message: '圖片未通過檢查。',
+                errors: { file: ['模擬伺服器拒絕：圖片未通過檢查，請換一張。'] },
+              },
+            };
+          const image: RichTextImageResponse = {
+            url: `/demo/rich-text/uploaded.svg?upload=${uploadSequence}`,
+            name: file.name,
+          };
+          return { status: 200, data: image };
+        }
         if (current.uploadFailure)
           return { status: 503, data: { message: '模擬上傳失敗，請移除後重選。' } };
-        const file = req.body.get('file');
         if (!(file instanceof File)) return { status: 422, data: { message: '缺少檔案。' } };
         return {
           status: 200,

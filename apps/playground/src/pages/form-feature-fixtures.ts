@@ -9,6 +9,7 @@ import {
   UPLOAD_PRESETS,
   upload,
 } from './form-feature-data';
+import { buildRichTextFixture } from './rich-text-demo-data';
 
 const eq = (path: string, value: string | boolean, scope: 'root' | 'row' = 'root'): Condition => ({
   op: 'eq',
@@ -52,6 +53,10 @@ export function buildFocusedFixture(id: string): {
     if (!preset) throw new Error('Missing upload preset');
     form.nodes = [node(preset.field)];
     values = { files: preset.field.multiple ? [] : null };
+  } else if (id === 'form.field.richText') {
+    const rich = buildRichTextFixture();
+    form.nodes = rich.form.nodes;
+    values = rich.values;
   } else if (example.kind === 'field') {
     const f = FIELD_EXAMPLES.find((x) => `form.field.${x.field.type}` === id);
     if (!f) throw new Error(`Missing focused field: ${id}`);

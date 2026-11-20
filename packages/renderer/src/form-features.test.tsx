@@ -45,7 +45,8 @@ describe('focused public Form examples', () => {
       await waitFor(() => expect(output('form-saved').value).toEqual({ start, end }));
     },
   );
-  it.each(FIELD_EXAMPLES)(
+  // richText has its own multi-editor demo (a required field starts empty); see the test below.
+  it.each(FIELD_EXAMPLES.filter((x) => x.field.type !== 'richText'))(
     'serializes the public $field.type field through a real save request',
     async ({ field, value }) => {
       renderWithBrume(<FocusedFormDemo exampleId={`form.field.${field.type}`} />);
@@ -56,6 +57,14 @@ describe('focused public Form examples', () => {
       if (field.type === 'hidden') expect(screen.queryByLabelText(field.label)).toBeNull();
     },
   );
+  it('blocks the richText demo save on its required, empty-looking summary (<p><br></p>)', async () => {
+    renderWithBrume(<FocusedFormDemo exampleId="form.field.richText" />);
+    expect(output('form-draft').summary).toBe('<p><br></p>');
+    expect(output('form-draft').content).toContain('class="rowOuter"');
+    save();
+    await waitFor(() => expect(screen.getAllByText('請填寫簡短說明。').length).toBeGreaterThan(0));
+    expect(output('form-wire')).toEqual({});
+  });
   it.each(UPLOAD_PRESETS)(
     'uploads and submits focused $id as its declared single/multiple shape',
     async ({ id, field }) => {

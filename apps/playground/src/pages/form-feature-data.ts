@@ -92,6 +92,12 @@ export const FIELD_EXAMPLES: { field: FieldDef; value: unknown; title: string }[
   { field: { type: 'switch', name: 'value', label: '啟用' }, value: true, title: '開關' },
   { field: upload, value: [], title: '附件上傳' },
   {
+    // The focused richText demo has several editors; see rich-text-demo-data.ts (value set there).
+    field: { type: 'richText', name: 'content', label: '商品介紹' },
+    value: null,
+    title: '富文字編輯器',
+  },
+  {
     field: address,
     value: { county: '臺北', zipcode: '100', district: '中正', address: '示範路1號' },
     title: '自訂地址',
@@ -169,17 +175,30 @@ const behaviorTitles: Record<string, string> = {
   'custom-display-only': '純顯示自訂地址',
   'client-rule-message': '前後端驗證訊息比對',
 };
+const RICH_TEXT_GUIDE = {
+  steps: [
+    '在「商品介紹」改字、套用粗體或標題，貼上或拖放圖片；勾選「模擬上傳失敗」或「慢速請求」可看失敗訊息，以及上傳中無法儲存。',
+    '用「載入舊內容範例」換成其他舊版型，按工具列「檢視原始碼」核對 HTML；「簡短說明」保持空白時按儲存會被必填擋下。',
+    '按「在彈窗中編輯」，在彈窗裡選取文字並插入連結。',
+  ],
+  expected:
+    '載入舊內容不改動 HTML，也不算未儲存變更；上傳成功插入 <img src>，失敗不留下圖片；唯讀欄位以隔離 iframe 顯示，連結開新分頁。',
+};
 export const FORM_EXAMPLES: FormExample[] = [
   ...FIELD_EXAMPLES.map(({ field, title }) => ({
     id: `form.field.${field.type}`,
     route: 'form-fields' as const,
     title,
     kind: 'field',
-    steps: [
-      '修改可編輯欄位，再按「儲存後繼續編輯」。',
-      '比較目前草稿、實際請求與記憶體儲存值；唯讀欄位只供查看。',
-    ],
-    expected: '值出現在實際請求；精確數值保持字串。隱藏值仍可由草稿與請求核對。',
+    ...(field.type === 'richText'
+      ? RICH_TEXT_GUIDE
+      : {
+          steps: [
+            '修改可編輯欄位，再按「儲存後繼續編輯」。',
+            '比較目前草稿、實際請求與記憶體儲存值；唯讀欄位只供查看。',
+          ],
+          expected: '值出現在實際請求；精確數值保持字串。隱藏值仍可由草稿與請求核對。',
+        }),
   })),
   ...UPLOAD_PRESETS.map(({ id, title, field }) => ({
     id,
