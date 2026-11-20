@@ -285,6 +285,32 @@ export default function JoditEditor(props: JoditEditorProps) {
           emit();
           latest.current.onBlur?.();
         });
+        // Keys typed in the editing iframe never reach the app's document, so its submit shortcut
+        // (Meta/Ctrl+Enter on a form page or in a dialog) would do nothing from inside the editor.
+        // Capture it before Jodit (which would insert a line break), report the current document,
+        // then replay it on the host element in the app's document so the app's handlers run.
+        // Escape is left to Jodit: it closes the editor's own popups with it.
+        const submitShortcut = (e: KeyboardEvent) => {
+          if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey) || e.isComposing) return;
+          e.preventDefault();
+          e.stopPropagation();
+          emit();
+          host.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              key: 'Enter',
+              code: 'Enter',
+              metaKey: e.metaKey,
+              ctrlKey: e.ctrlKey,
+              shiftKey: e.shiftKey,
+              altKey: e.altKey,
+              bubbles: true,
+              cancelable: true,
+            }),
+          );
+        };
+        // Capture phase on the editing document: before Jodit's own handlers on its body. The
+        // document goes away with the iframe when the editor is destructed.
+        editor.ed.addEventListener('keydown', submitShortcut, true);
         // Any file drag: never the browser default (which would open the file in place of the page).
         editor.e.on(editor.ed, 'dragover', (e: DragEvent) => {
           if (carriesFiles(e.dataTransfer)) e.preventDefault();
