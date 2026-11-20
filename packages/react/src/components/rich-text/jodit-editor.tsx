@@ -72,6 +72,8 @@ const I18N = {
   zh_cn: { URL: '网址', 'Alternative text': '替代文字' },
 };
 
+const HTML_LANG = { zh_tw: 'zh-TW', zh_cn: 'zh-CN', en: 'en' } as const;
+
 function toOutput(html: string): string | null {
   const value = html.replace(PLACEHOLDER_RE, '');
   return isEmptyHtml(value) ? null : value;
@@ -277,7 +279,12 @@ export default function JoditEditor(props: JoditEditorProps) {
           editor.synchronizeValues();
           return false;
         });
-        editor.e.on('blur', () => latest.current.onBlur?.());
+        // Jodit reports some edits (e.g. a link inserted from its popup) only after a short delay;
+        // leaving the editor (e.g. to click Save) reports the current document at once.
+        editor.e.on('blur', () => {
+          emit();
+          latest.current.onBlur?.();
+        });
         // Any file drag: never the browser default (which would open the file in place of the page).
         editor.e.on(editor.ed, 'dragover', (e: DragEvent) => {
           if (carriesFiles(e.dataTransfer)) e.preventDefault();
@@ -359,10 +366,15 @@ export default function JoditEditor(props: JoditEditorProps) {
     if (!ready || !j) return;
     const frame = j.iframe;
     if (frame) {
+      // Jodit gives the iframe tabindex="-1", yet its body is focusable (axe frame-focusable-content);
+      // without it the editing area is reached by Tab like any field.
+      frame.removeAttribute('tabindex');
       frame.setAttribute('title', label);
       setOrRemove(frame, 'aria-labelledby', labelledBy);
       setOrRemove(frame, 'aria-describedby', describedBy);
     }
+    // Jodit writes its language id (zh_tw) as <html lang>, which is not a valid BCP 47 tag.
+    j.ed.documentElement.setAttribute('lang', HTML_LANG[latest.current.language]);
     const body = j.editor;
     body.setAttribute('role', 'textbox');
     body.setAttribute('aria-multiline', 'true');

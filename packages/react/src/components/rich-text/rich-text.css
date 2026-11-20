@@ -96,6 +96,16 @@
   opacity: 0.5;
 }
 
+/*
+ * Phone widths: the toolbar wraps onto several rows; without the group separators it needs three rows
+ * instead of four at 390px, which leaves more of a short editor's height for the document.
+ */
+@media (max-width: 640px) {
+  .br-rich-text .jodit-toolbar__box .jodit-ui-separator {
+    display: none;
+  }
+}
+
 /* Popups and dialogs: Brume surface, border, radius and overlay shadow. */
 .jodit_theme_brume.jodit-popup {
   border-radius: var(--br-radius-card); /* the shadow follows the rounded content */
