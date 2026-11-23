@@ -304,7 +304,7 @@
                 "name": "body",
                 "label": "內文",
                 "height": 400,
-                "contentCss": ["/css/content.css"],
+                "contentCss": ["/demo/content.css"],
                 "images": { "accept": ["image/jpeg", "image/png"], "maxSize": 2097152 }
               }
             },
