@@ -32,7 +32,7 @@ import { Button } from 'jodit/esm/core/ui/button/index.js';
 import { UIBlock, UIForm, UIInput } from 'jodit/esm/core/ui/form/index.js';
 import linkPopupItems from 'jodit/esm/plugins/inline-popup/config/items/a.js';
 import { onTabInsideLi } from 'jodit/esm/plugins/tab/cases/on-tab-inside-li.js';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { JoditEditorProps } from './editor-contract';
 import { isEmptyHtml } from './empty';
 import { buildJoditConfig } from './jodit-config';
@@ -384,33 +384,50 @@ export default function JoditEditor(props: JoditEditorProps) {
     j.setDisabled(disabled);
   }, [disabled, ready]);
 
-  // Accessible name and state of the editing area. aria-labelledby/-describedby point at ids in this
-  // document, so they go on the iframe element; the body inside gets its own label and state.
+  // Accessible name and state of the editing area. The editable element is the iframe's <body>, which
+  // may carry no role (axe aria-allowed-role), no aria-label (aria-prohibited-attr on a generic
+  // element) and no aria-required / aria-multiline (aria-allowed-attr). So: the iframe is named
+  // (title, aria-labelledby → the field caption, plus a hidden "必填" when required) and described
+  // (aria-describedby → help and error); the contenteditable body is exposed by the browser as an
+  // editable, multiline document; aria-invalid / aria-disabled (global) stay on the body, and
+  // aria-invalid also on the iframe.
   const { label, labelledBy, describedBy, invalid, required } = props;
+  const requiredId = useId();
   useEffect(() => {
     const j = editorRef.current;
     if (!ready || !j) return;
+    const requiredText = latest.current.messages.required;
     const frame = j.iframe;
     if (frame) {
       // Jodit gives the iframe tabindex="-1", yet its body is focusable (axe frame-focusable-content);
       // without it the editing area is reached by Tab like any field.
       frame.removeAttribute('tabindex');
-      frame.setAttribute('title', label);
-      setOrRemove(frame, 'aria-labelledby', labelledBy);
+      frame.setAttribute('title', required && !labelledBy ? `${label}（${requiredText}）` : label);
+      setOrRemove(
+        frame,
+        'aria-labelledby',
+        labelledBy ? (required ? `${labelledBy} ${requiredId}` : labelledBy) : undefined,
+      );
       setOrRemove(frame, 'aria-describedby', describedBy);
+      setOrRemove(frame, 'aria-invalid', invalid ? 'true' : undefined);
     }
     // Jodit writes its language id (zh_tw) as <html lang>, which is not a valid BCP 47 tag.
     j.ed.documentElement.setAttribute('lang', HTML_LANG[latest.current.language]);
     const body = j.editor;
-    body.setAttribute('role', 'textbox');
-    body.setAttribute('aria-multiline', 'true');
-    body.setAttribute('aria-label', label);
     setOrRemove(body, 'aria-invalid', invalid ? 'true' : undefined);
-    setOrRemove(body, 'aria-required', required ? 'true' : undefined);
     setOrRemove(body, 'aria-disabled', disabled ? 'true' : undefined);
-  }, [ready, label, labelledBy, describedBy, invalid, required, disabled]);
+  }, [ready, label, labelledBy, describedBy, invalid, required, disabled, requiredId]);
 
-  return <div ref={hostRef} className="br:h-full" />;
+  return (
+    <>
+      <div ref={hostRef} className="br:h-full" />
+      {required ? (
+        <span id={requiredId} hidden>
+          {props.messages.required}
+        </span>
+      ) : null}
+    </>
+  );
 }
 
 function setOrRemove(el: Element, name: string, value: string | undefined) {

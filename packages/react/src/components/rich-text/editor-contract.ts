@@ -16,6 +16,8 @@ export interface RichTextMessages {
   videoUrl: string;
   videoInsert: string;
   youtubeOnly: string;
+  /** Added to the editing area's accessible name when the field is required. */
+  required: string;
 }
 
 export interface JoditEditorProps {
