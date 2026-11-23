@@ -74,15 +74,21 @@ const content = (page: Page) => editor(page, '商品介紹');
 const summary = (page: Page) => editor(page, '簡短說明');
 const section = (page: Page, n: number) => page.locator('.br-rich-text').nth(2 + n); // rows 1, 2
 
+/**
+ * The lazy chunk loaded, Jodit is ready and the component applied its accessibility pass (it sets a
+ * valid <html lang> in the editing document; Jodit's own value is "zh_tw").
+ */
 async function editorReady(root: Locator) {
   await expect(root.locator('iframe.jodit-wysiwyg_iframe')).toHaveCount(1);
   await expect
     .poll(() =>
       root
         .locator('iframe.jodit-wysiwyg_iframe')
-        .evaluate((f: HTMLIFrameElement) => f.contentDocument?.body?.getAttribute('role')),
+        .evaluate((f: HTMLIFrameElement) =>
+          f.contentDocument?.documentElement?.getAttribute('lang'),
+        ),
     )
-    .toBe('textbox');
+    .toBe('zh-TW');
 }
 
 async function frameOf(root: Locator): Promise<Frame> {
@@ -743,17 +749,22 @@ test.describe('rich-text keyboard, read-only view and dialog', () => {
     await expect(page.getByTestId('form-wire')).toContainText('https://shop.example/dialog');
   });
 
-  test('rich-text demo page has no serious or critical axe violations', async ({ page }) => {
+  test('rich-text demo page has no axe violations', async ({ page }) => {
     await openDemo(page);
     await animationsIdle(page);
     // The read-only view is a sandboxed iframe without allow-scripts: axe cannot run inside it (and
     // trying logs "Blocked script execution"), so its content is excluded; the iframe element itself
     // (title, describedby) is still checked. The editing iframes are analysed, content included.
     const { violations } = await new AxeBuilder({ page }).exclude('iframe[sandbox]').analyze();
-    const serious = violations
-      .filter((v) => v.impact === 'serious' || v.impact === 'critical')
-      .map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target.join(' ')) }));
-    expect(serious).toEqual([]);
+    // Every impact, as in a11y.spec.ts (a minor aria-allowed-role on the editing body once slipped
+    // through a serious/critical-only filter).
+    expect(
+      violations.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        nodes: v.nodes.map((n) => n.target.join(' ')),
+      })),
+    ).toEqual([]);
   });
 });
 
@@ -872,17 +883,26 @@ test.describe('rich-text disabled, aria and keyboard', () => {
           .map((id) => document.getElementById(id)?.textContent ?? '')
           .join(' '),
       );
+    // The editable <body> may carry no role/aria-label/aria-required (axe): the iframe is named by the
+    // field caption, plus 「必填」 when required, and the body is the browser's editable document.
     expect(await labelOf(content(page))).toContain('商品介紹');
-    expect(await labelOf(summary(page))).toContain('簡短說明');
-    const body = (await frameOf(summary(page))).locator('body');
-    await expect(body).toHaveAttribute('aria-required', 'true');
-    await expect(body).not.toHaveAttribute('aria-invalid', 'true');
-    await expect((await frameOf(content(page))).locator('body')).not.toHaveAttribute(
-      'aria-required',
-      'true',
+    expect(await labelOf(content(page))).not.toContain('必填');
+    expect(await labelOf(summary(page))).toMatch(/簡短說明[\s\S]*必填/);
+    const frameEl = summary(page).locator('iframe.jodit-wysiwyg_iframe');
+    await expect(frameEl).toHaveAccessibleName(/簡短說明.*必填/);
+    await expect(content(page).locator('iframe.jodit-wysiwyg_iframe')).toHaveAccessibleName(
+      '商品介紹',
     );
+    const body = (await frameOf(summary(page))).locator('body');
+    await expect(body).toHaveAttribute('contenteditable', 'true');
+    for (const attr of ['role', 'aria-label', 'aria-required', 'aria-multiline'])
+      await expect(body).not.toHaveAttribute(attr, /.*/);
+    await expect(body).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(frameEl).not.toHaveAttribute('aria-invalid', 'true');
     await save(page);
     await expect(body).toHaveAttribute('aria-invalid', 'true');
+    await expect(frameEl).toHaveAttribute('aria-invalid', 'true');
+    await expect(frameEl).toHaveAccessibleDescription(/請填寫簡短說明。/);
     const described = await summary(page)
       .locator('iframe.jodit-wysiwyg_iframe')
       .evaluate((f) =>
@@ -932,10 +952,10 @@ test.describe('rich-text disabled, aria and keyboard', () => {
     await page.keyboard.type('快捷鍵儲存');
     await page.keyboard.press('Meta+Enter');
     await expect(page.getByTestId('form-wire')).toContainText('快捷鍵儲存');
-    // The shortcut saved; it did not insert a line break into the document.
-    expect(
-      await (await frameOf(root)).evaluate(() => document.body.querySelectorAll('p').length),
-    ).toBe(2);
+    // The shortcut saved; it did not insert a line break into the document. (Read the saved content,
+    // not the iframe: saving may remount the form page.)
+    const wire = JSON.parse((await page.getByTestId('form-wire').textContent()) ?? '{}');
+    expect(String(wire.content).match(/<p[ >]/g)).toHaveLength(2);
   });
 
   test('rich-text Control+Enter inside the editor saves a form dialog with the typed text', async ({
