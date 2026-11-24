@@ -267,6 +267,25 @@ describe('RichTextEditor', () => {
     });
   });
 
+  it('has a dropped-images message in each locale', async () => {
+    resolvedChunk();
+    const expected = {
+      'zh-TW': '有 2 張圖片無法貼上，請改用工具列的圖片按鈕上傳。',
+      'zh-CN': '有 2 张图片无法粘贴，请改用工具栏的图片按钮上传。',
+      en: "2 images couldn't be pasted. Upload them with the image button in the toolbar.",
+    } as const;
+    for (const [locale, message] of Object.entries(expected)) {
+      const { unmount } = render(
+        <BrumeProvider adapter={createMemoryAdapter()} locale={locale as keyof typeof expected}>
+          <RichTextEditor label="x" value={null} onChange={() => {}} />
+        </BrumeProvider>,
+      );
+      await screen.findByTestId('fake-editor');
+      expect(lastProps?.messages.imagesDropped(2)).toBe(message);
+      unmount();
+    }
+  });
+
   it('notify shows an error toast', async () => {
     resolvedChunk();
     renderEditor();

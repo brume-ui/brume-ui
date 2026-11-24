@@ -213,6 +213,7 @@ export const zhCN: Record<MessageKey, string> = {
   'richText.loadFailed': '编辑器加载失败，请检查网络后再试一次。',
   'richText.retry': '重试',
   'richText.imagesDisabled': '这个字段不能粘贴或拖放图片文件。',
+  'richText.imagesDropped': '有 {count} 张图片无法粘贴，请改用工具栏的图片按钮上传。',
   'richText.videoTitle': '插入 YouTube 视频',
   'richText.videoUrl': 'YouTube 网址',
   'richText.videoInsert': '插入',

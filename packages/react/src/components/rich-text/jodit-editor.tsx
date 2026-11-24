@@ -37,7 +37,7 @@ import { whileApplying } from './applying';
 import type { JoditEditorProps } from './editor-contract';
 import { isEmptyHtml } from './empty';
 import { buildJoditConfig } from './jodit-config';
-import { cleanPastedHtml } from './paste-clean';
+import { processPastedHtml } from './paste-clean';
 import { altFromFileName, isSingleImageHtml } from './paste-image';
 import { youtubeEmbedUrl } from './youtube';
 
@@ -242,9 +242,9 @@ export default function JoditEditor(props: JoditEditorProps) {
         },
         events: {
           processPaste: (_e: unknown, html: unknown, types: unknown) =>
-            typeof html === 'string' && /text\/html/.test(String(types ?? ''))
-              ? cleanPastedHtml(html)
-              : undefined,
+            processPastedHtml(html, types, (count) =>
+              latest.current.notify(latest.current.messages.imagesDropped(count)),
+            ),
           beforePaste: (e: ClipboardEvent) => {
             const dt = e.clipboardData;
             const files = filesOf(dt);

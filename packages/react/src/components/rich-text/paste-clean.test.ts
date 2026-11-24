@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanPaste, cleanPastedHtml } from './paste-clean';
+import { cleanPaste, cleanPastedHtml, processPastedHtml } from './paste-clean';
 
 const WORD = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
 <head><style>p.MsoNormal{mso-style-name:x}</style><meta name=Generator content="Microsoft Word"></head>
@@ -180,5 +180,36 @@ describe('cleanPastedHtml', () => {
         '<p class="MsoListParagraph" style="mso-list:l0 level1 lfo1"><span style="mso-list:Ignore">2.<span>&nbsp;</span></span>Two</p>',
     );
     expect(out).toBe('<ol><li>One</li><li>Two</li></ol>');
+  });
+});
+
+describe('processPastedHtml', () => {
+  it('cleans text/html pastes and reports dropped images once', () => {
+    const dropped: number[] = [];
+    expect(
+      processPastedHtml(
+        '<p>a<img src="file:///C:/x/clip_image001.png"><img src="file:///C:/x/clip_image002.png"></p>',
+        'text/plain,text/html',
+        (n) => dropped.push(n),
+      ),
+    ).toBe('<p>a</p>');
+    expect(dropped).toEqual([2]);
+  });
+
+  it('reports nothing when no image was dropped', () => {
+    const dropped: number[] = [];
+    expect(processPastedHtml('<p style="x">a</p>', 'text/html', (n) => dropped.push(n))).toBe(
+      '<p>a</p>',
+    );
+    expect(dropped).toEqual([]);
+  });
+
+  it('leaves plain text pastes to Jodit', () => {
+    const dropped: number[] = [];
+    expect(processPastedHtml('https://e.com', 'text/plain', (n) => dropped.push(n))).toBe(
+      undefined,
+    );
+    expect(processPastedHtml(null, 'text/html', (n) => dropped.push(n))).toBe(undefined);
+    expect(dropped).toEqual([]);
   });
 });

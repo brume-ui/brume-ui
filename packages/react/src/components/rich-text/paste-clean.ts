@@ -190,3 +190,18 @@ export function cleanPaste(html: string): CleanedPaste {
   }
   return { html: body.innerHTML.trim(), droppedImages };
 }
+
+/**
+ * Jodit's `processPaste` hook: pasted `text/html` is cleaned (anything else is left to Jodit), and the
+ * number of images that could not be kept is reported once per paste.
+ */
+export function processPastedHtml(
+  html: unknown,
+  types: unknown,
+  onDroppedImages: (count: number) => void,
+): string | undefined {
+  if (typeof html !== 'string' || !/text\/html/.test(String(types ?? ''))) return undefined;
+  const cleaned = cleanPaste(html);
+  if (cleaned.droppedImages > 0) onDroppedImages(cleaned.droppedImages);
+  return cleaned.html;
+}

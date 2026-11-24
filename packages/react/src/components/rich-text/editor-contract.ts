@@ -19,6 +19,8 @@ export interface RichTextMessages {
   videoUrl: string;
   videoInsert: string;
   youtubeOnly: string;
+  /** Pasted HTML held images that cannot be kept (data:, file:): how to add them instead. */
+  imagesDropped(count: number): string;
   /** Added to the editing area's accessible name when the field is required. */
   required: string;
 }

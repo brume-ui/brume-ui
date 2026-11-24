@@ -213,6 +213,8 @@ export const en: Record<MessageKey, string> = {
   'richText.loadFailed': "The editor didn't load. Check your connection and try again.",
   'richText.retry': 'Retry',
   'richText.imagesDisabled': "Image files can't be pasted or dropped into this field.",
+  'richText.imagesDropped':
+    "{count} images couldn't be pasted. Upload them with the image button in the toolbar.",
   'richText.videoTitle': 'Insert YouTube video',
   'richText.videoUrl': 'YouTube URL',
   'richText.videoInsert': 'Insert',

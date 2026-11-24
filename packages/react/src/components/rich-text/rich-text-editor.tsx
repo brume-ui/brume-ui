@@ -163,6 +163,7 @@ export function RichTextEditor({
       videoUrl: t('richText.videoUrl'),
       videoInsert: t('richText.videoInsert'),
       youtubeOnly: t('richText.youtubeOnly'),
+      imagesDropped: (count: number) => t('richText.imagesDropped', { count }),
       required: t('field.required'),
     }),
     [t],
