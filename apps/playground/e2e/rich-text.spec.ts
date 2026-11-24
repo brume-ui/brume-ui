@@ -1087,7 +1087,7 @@ test.describe('rich-text disabled, aria and keyboard', () => {
     await editorReady(root);
     await caretAtFirstText(page, root, 'p');
     await page.keyboard.type('快捷鍵儲存');
-    await page.keyboard.press('Meta+Enter');
+    await page.keyboard.press('ControlOrMeta+Enter');
     await expect(page.getByTestId('form-wire')).toContainText('快捷鍵儲存');
     // The shortcut saved; it did not insert a line break into the document. (Read the saved content,
     // not the iframe: saving may remount the form page.)

@@ -113,7 +113,7 @@ function LoadedFormPage({ page }: { page: FormPage }) {
         event.isComposing ||
         event.keyCode === 229 ||
         event.key !== 'Enter' ||
-        !event.metaKey
+        !(event.metaKey || event.ctrlKey)
       )
         return;
       if (document.querySelector('[role="alertdialog"]')) return;

@@ -212,6 +212,18 @@ it('global shortcut saves once while the request is pending', async () => {
   expect(respond).toHaveBeenCalledTimes(1);
   await act(async () => finish({ status: 200, data: { cancelled: true } }));
 });
+it('global shortcut accepts Ctrl+Enter as well; plain Enter does not save', async () => {
+  const respond = vi.fn(() => ({ status: 200, data: { cancelled: true } }));
+  renderWithBrume(<FormPageView page={page} />, { respond });
+  act(() => {
+    fireEvent.keyDown(document, { key: 'Enter' });
+  });
+  expect(respond).not.toHaveBeenCalled();
+  await act(async () => {
+    fireEvent.keyDown(document, { key: 'Enter', ctrlKey: true });
+  });
+  expect(respond).toHaveBeenCalledTimes(1);
+});
 it.each(['list', 'create', 'view'] as const)(
   'redirects after %s, including listUrl fallback',
   async (after) => {
