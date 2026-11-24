@@ -653,6 +653,24 @@ test.describe('rich-text paste, drop and uploads', () => {
     await expect(page.getByTestId('request-count')).toContainText('上傳：0');
   });
 
+  test('rich-text images that cannot be pasted are reported once', async ({ page }) => {
+    await openDemo(page);
+    const root = content(page);
+    await caretAtFirstText(page, root, 'h2');
+    await paste(root, {
+      html:
+        '<html><body><!--StartFragment--><p class="MsoNormal">圖說<img width="120" src="file:///C:/Users/demo/AppData/Local/Temp/msohtmlclip1/01/clip_image001.png"></p>' +
+        '<p><img src="file:///C:/Users/demo/AppData/Local/Temp/msohtmlclip1/01/clip_image002.png"></p><!--EndFragment--></body></html>',
+      text: '圖說',
+    });
+    await expect.poll(() => draftOf(page, 'content')).toContain('圖說');
+    await expect(page.getByText('有 2 張圖片無法貼上，請改用工具列的圖片按鈕上傳。')).toHaveCount(
+      1,
+    );
+    expect(String(await draftOf(page, 'content'))).not.toContain('file:');
+    await expect(page.getByTestId('request-count')).toContainText('上傳：0');
+  });
+
   test('rich-text html with a PNG pastes the html and uploads nothing', async ({ page }) => {
     await openDemo(page);
     const root = section(page, 1);
