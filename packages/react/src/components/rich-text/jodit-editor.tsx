@@ -216,6 +216,7 @@ export default function JoditEditor(props: JoditEditorProps) {
         disabled: p.disabled,
         contentCss: p.contentCss,
         imagesEnabled: p.imagesEnabled,
+        blockLabels: p.messages.blockLabels,
       });
       const controls = base.controls as Record<string, { list?: unknown }>;
       const config = {

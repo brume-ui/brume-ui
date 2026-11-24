@@ -1,3 +1,5 @@
+import type { RichTextMessages } from './editor-contract';
+
 export interface JoditConfigOptions {
   height: number;
   language: 'zh_tw' | 'zh_cn' | 'en';
@@ -11,6 +13,8 @@ export interface JoditConfigOptions {
    * returned Jodit config: the `image` toolbar button is always present (insert by URL, ruling P-1).
    */
   imagesEnabled: boolean;
+  /** Labels of the paragraph menu, already translated (the component's messages). */
+  blockLabels: RichTextMessages['blockLabels'];
 }
 
 /**
@@ -69,7 +73,7 @@ export function buildJoditConfig(o: JoditConfigOptions): Record<string, unknown>
       'source',
     ],
     controls: {
-      paragraph: { list: { p: '內文段落', h1: '標題 1', h2: '標題 2', h3: '標題 3' } },
+      paragraph: { list: { ...o.blockLabels } },
       ul: { list: null }, // plain lists, no list-style-type picker
       ol: { list: null },
     },

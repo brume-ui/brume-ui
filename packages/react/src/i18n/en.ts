@@ -215,6 +215,8 @@ export const en: Record<MessageKey, string> = {
   'richText.imagesDisabled': "Image files can't be pasted or dropped into this field.",
   'richText.imagesDropped':
     "{count} images couldn't be pasted. Upload them with the image button in the toolbar.",
+  'richText.paragraph': 'Paragraph',
+  'richText.heading': 'Heading {level}',
   'richText.videoTitle': 'Insert YouTube video',
   'richText.videoUrl': 'YouTube URL',
   'richText.videoInsert': 'Insert',

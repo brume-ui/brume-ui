@@ -213,6 +213,8 @@ export const zhTW = {
   'richText.retry': '重試',
   'richText.imagesDisabled': '這個欄位不能貼上或拖放圖片檔。',
   'richText.imagesDropped': '有 {count} 張圖片無法貼上，請改用工具列的圖片按鈕上傳。',
+  'richText.paragraph': '內文段落',
+  'richText.heading': '標題 {level}',
   'richText.videoTitle': '插入 YouTube 影片',
   'richText.videoUrl': 'YouTube 網址',
   'richText.videoInsert': '插入',

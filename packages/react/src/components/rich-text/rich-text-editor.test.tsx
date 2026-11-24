@@ -286,6 +286,25 @@ describe('RichTextEditor', () => {
     }
   });
 
+  it('labels the paragraph menu in the locale', async () => {
+    resolvedChunk();
+    const expected = {
+      'zh-TW': { p: '內文段落', h1: '標題 1', h2: '標題 2', h3: '標題 3' },
+      'zh-CN': { p: '正文段落', h1: '标题 1', h2: '标题 2', h3: '标题 3' },
+      en: { p: 'Paragraph', h1: 'Heading 1', h2: 'Heading 2', h3: 'Heading 3' },
+    } as const;
+    for (const [locale, labels] of Object.entries(expected)) {
+      const { unmount } = render(
+        <BrumeProvider adapter={createMemoryAdapter()} locale={locale as keyof typeof expected}>
+          <RichTextEditor label="x" value={null} onChange={() => {}} />
+        </BrumeProvider>,
+      );
+      await screen.findByTestId('fake-editor');
+      expect(lastProps?.messages.blockLabels).toEqual(labels);
+      unmount();
+    }
+  });
+
   it('notify shows an error toast', async () => {
     resolvedChunk();
     renderEditor();

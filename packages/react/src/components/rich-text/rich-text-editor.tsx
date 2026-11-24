@@ -164,6 +164,12 @@ export function RichTextEditor({
       videoInsert: t('richText.videoInsert'),
       youtubeOnly: t('richText.youtubeOnly'),
       imagesDropped: (count: number) => t('richText.imagesDropped', { count }),
+      blockLabels: {
+        p: t('richText.paragraph'),
+        h1: t('richText.heading', { level: 1 }),
+        h2: t('richText.heading', { level: 2 }),
+        h3: t('richText.heading', { level: 3 }),
+      },
       required: t('field.required'),
     }),
     [t],

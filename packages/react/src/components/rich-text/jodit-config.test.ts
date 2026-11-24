@@ -9,6 +9,7 @@ const base: JoditConfigOptions = {
   disabled: false,
   contentCss: ['/a.css', '/b.css'],
   imagesEnabled: true,
+  blockLabels: { p: 'Paragraph', h1: 'Heading 1', h2: 'Heading 2', h3: 'Heading 3' },
 };
 const cfg = (o: Partial<JoditConfigOptions> = {}) => buildJoditConfig({ ...base, ...o });
 
@@ -143,6 +144,22 @@ describe('buildJoditConfig', () => {
       '|',
       'source',
     ]);
+  });
+
+  it('paragraph menu: p and h1-h3, labelled with the given (translated) labels', () => {
+    expect((cfg().controls as Record<string, { list?: unknown }>).paragraph?.list).toEqual({
+      p: 'Paragraph',
+      h1: 'Heading 1',
+      h2: 'Heading 2',
+      h3: 'Heading 3',
+    });
+    const zh = cfg({ blockLabels: { p: '内文', h1: '标题 1', h2: '标题 2', h3: '标题 3' } });
+    expect((zh.controls as Record<string, { list?: unknown }>).paragraph?.list).toEqual({
+      p: '内文',
+      h1: '标题 1',
+      h2: '标题 2',
+      h3: '标题 3',
+    });
   });
 
   it('link popup: no nofollow checkbox and no class name field (R-8)', () => {

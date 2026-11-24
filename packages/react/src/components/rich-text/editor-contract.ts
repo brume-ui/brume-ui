@@ -21,6 +21,8 @@ export interface RichTextMessages {
   youtubeOnly: string;
   /** Pasted HTML held images that cannot be kept (data:, file:): how to add them instead. */
   imagesDropped(count: number): string;
+  /** The paragraph menu: body text and headings 1-3. */
+  blockLabels: { p: string; h1: string; h2: string; h3: string };
   /** Added to the editing area's accessible name when the field is required. */
   required: string;
 }
