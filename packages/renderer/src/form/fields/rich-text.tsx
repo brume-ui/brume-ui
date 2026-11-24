@@ -32,7 +32,12 @@ export function RichTextField(props: FieldProps) {
   if (props.readOnly) {
     return (
       <Field {...caption} group>
-        <RichTextView html={html} contentCss={def.contentCss} label={def.label} />
+        <RichTextView
+          html={html}
+          contentCss={def.contentCss}
+          maxHeight={def.height}
+          label={def.label}
+        />
       </Field>
     );
   }

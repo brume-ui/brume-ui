@@ -72,6 +72,11 @@ describe('richText field', () => {
     expect(seen.view).toMatchObject({ html: '<p>x</p>', contentCss: ['/a.css'], label: '內文' });
   });
 
+  it('caps the read-only view at the field height', () => {
+    setup({ ...def, height: 320 } as FieldDef, { value: '<p>x</p>', readOnly: true });
+    expect(seen.view).toMatchObject({ maxHeight: 320 });
+  });
+
   it('does not pass upload or images without uploadUrl, without images, or with empty accept', () => {
     setup(withImages);
     expect(editor().upload).toBeUndefined();
