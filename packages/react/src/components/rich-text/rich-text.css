@@ -97,8 +97,8 @@
 }
 
 /*
- * Phone widths: the toolbar wraps onto several rows; without the group separators it needs three rows
- * instead of four at 390px, which leaves more of a short editor's height for the document.
+ * Phone widths: the adaptive toolbar (buttonsXS / buttonsSM + overflow) fits one row; without the group
+ * separators it still does in the narrowest editors (e.g. a repeater row at 360px).
  */
 @media (max-width: 640px) {
   .br-rich-text .jodit-toolbar__box .jodit-ui-separator {

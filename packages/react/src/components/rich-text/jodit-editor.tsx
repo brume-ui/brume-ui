@@ -25,6 +25,7 @@ import 'jodit/esm/plugins/drag-and-drop-element/drag-and-drop-element.js'; // mo
 import 'jodit/esm/plugins/add-new-line/add-new-line.js'; // a line after a table/embed at the end
 import 'jodit/esm/plugins/key-arrow-outside/key-arrow-outside.js'; // arrow out of inline formatting
 import 'jodit/esm/plugins/indent/indent.js'; // outdent / indent buttons
+import 'jodit/esm/plugins/mobile/mobile.js'; // adaptive toolbar: buttonsMD/SM/XS + the "dots" overflow
 import 'jodit/es2021/jodit.min.css';
 // The list-nesting helper of the `tab` plugin, without the plugin (which would capture the Tab key).
 import { Dom } from 'jodit/esm/core/dom/dom.js';
@@ -275,6 +276,42 @@ export default function JoditEditor(props: JoditEditorProps) {
           if (!onTabInsideLi(editor as never, command === 'outdent')) return;
           editor.synchronizeValues();
           return false;
+        });
+        // The toolbar overflow ("dots", narrow editors). Opened from the keyboard, its first command
+        // takes the focus, as Jodit does for its dropdowns (the mouse never focuses toolbar buttons,
+        // so a click leaves the focus where it was). Inside it ArrowLeft / ArrowRight / Home / End walk
+        // every command (Jodit's ArrowDown would open a command's own dropdown, e.g. the colours, and
+        // stop there); ArrowUp on the first one and Escape close it, back on the button (Jodit).
+        editor.e.on('afterDotsOpenPopup', (container: HTMLElement) => {
+          const commands = () =>
+            [
+              ...container.querySelectorAll<HTMLElement>(
+                '.jodit-toolbar-button__button:not([disabled])',
+              ),
+            ].filter((el) => el.offsetParent !== null);
+          container.addEventListener('keydown', (e) => {
+            if (e.altKey || e.ctrlKey || e.metaKey) return;
+            const list = commands();
+            const i = list.indexOf(e.target as HTMLElement);
+            if (i < 0) return;
+            const n = list.length;
+            const next =
+              e.key === 'ArrowRight'
+                ? list[(i + 1) % n]
+                : e.key === 'ArrowLeft'
+                  ? list[(i - 1 + n) % n]
+                  : e.key === 'Home'
+                    ? list[0]
+                    : e.key === 'End'
+                      ? list[n - 1]
+                      : undefined;
+            if (!next) return;
+            e.preventDefault();
+            e.stopPropagation();
+            next.focus();
+          });
+          if (host.ownerDocument.activeElement?.closest('.jodit-toolbar-button_dots'))
+            commands()[0]?.focus();
         });
         // Jodit reports some edits (e.g. a link inserted from its popup) only after a short delay;
         // leaving the editor (e.g. to click Save) reports the current document at once.

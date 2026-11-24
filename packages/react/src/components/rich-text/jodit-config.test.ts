@@ -170,6 +170,26 @@ describe('buildJoditConfig', () => {
     expect(video.parseUrlToVideoEmbed('https://vimeo.com/1')).toBe('https://vimeo.com/1');
   });
 
+  it('adapts the toolbar to narrow editors; the rest stays behind the overflow button', () => {
+    const c = cfg();
+    expect(c.toolbarAdaptive).toBe(true);
+    expect(c.sizeLG).toBe(920);
+    expect(c.sizeMD).toBe(660);
+    expect(c.sizeSM).toBe(400);
+    const all = (c.buttons as string[]).filter((b) => b !== '|');
+    const sets = [c.buttonsMD, c.buttonsSM, c.buttonsXS] as string[][];
+    for (const set of sets) {
+      // only buttons of the full list (Jodit would otherwise add its own), and the overflow last
+      for (const b of set) if (b !== '|' && b !== 'dots') expect(all).toContain(b);
+      expect(set.at(-1)).toBe('dots');
+    }
+    // each smaller set is a subset of the larger one
+    const [md, sm, xs] = sets.map((set) => set.filter((b) => b !== '|' && b !== 'dots'));
+    for (const b of sm ?? []) expect(md).toContain(b);
+    for (const b of xs ?? []) expect(sm).toContain(b);
+    expect(xs).toEqual(['paragraph', 'bold', 'italic', 'ul', 'ol', 'link']);
+  });
+
   it('link popup: no nofollow checkbox and no class name field (R-8)', () => {
     expect(cfg().link).toEqual({ noFollowCheckbox: false, modeClassName: false });
   });

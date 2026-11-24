@@ -112,6 +112,18 @@ const button = (root: Locator, name: string) =>
   root.locator(`.jodit-toolbar-button_${name} .jodit-toolbar-button__button`);
 const popup = (page: Page) => page.locator('.jodit-popup').last();
 
+/**
+ * A toolbar command, whether it is on the toolbar or (narrow editors, adaptive toolbar) behind the
+ * overflow button.
+ */
+async function command(page: Page, root: Locator, name: string) {
+  if (await button(root, name).count()) return button(root, name).click();
+  await button(root, 'dots').click();
+  await page
+    .locator(`.jodit-popup .jodit-toolbar-button_${name} .jodit-toolbar-button__button`)
+    .click();
+}
+
 /** Focus the editing body and put the caret at the end of its first non-empty text node. */
 async function caretAtFirstText(
   page: Page,
@@ -532,6 +544,78 @@ test.describe('rich-text toolbar', () => {
       .poll(() => draftOf(page, 'summary'))
       .toContain('href="https://www.youtube.com/embed/not-an-id"');
     expect(String(await draftOf(page, 'summary'))).not.toContain('<iframe');
+  });
+});
+
+test.describe('rich-text adaptive toolbar', () => {
+  /** Toolbar rows of each editor on the demo page (distinct button tops). */
+  const rows = (page: Page) =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('.br-rich-text .jodit-toolbar__box')].map((box) => ({
+        rows: new Set(
+          [...box.querySelectorAll('.jodit-toolbar-button')].map((b) =>
+            Math.round(b.getBoundingClientRect().top),
+          ),
+        ).size,
+        height: box.getBoundingClientRect().height,
+        button: box.querySelector('.jodit-toolbar-button')?.getBoundingClientRect().height ?? 0,
+      })),
+    );
+
+  test.describe('390px', () => {
+    test.use({ viewport: { width: 390, height: 900 } });
+    test('rich-text toolbar is at most two rows; overflow commands work by mouse and keyboard', async ({
+      page,
+    }) => {
+      await openDemo(page);
+      const toolbars = await rows(page);
+      expect(toolbars).toHaveLength(5);
+      for (const t of toolbars) {
+        expect(t.rows).toBeLessThanOrEqual(2);
+        expect(t.height).toBeLessThanOrEqual(2 * t.button + 8);
+      }
+      const root = summary(page);
+      await expect(button(root, 'hr')).toHaveCount(0);
+      await expect(button(root, 'dots')).toBeVisible();
+
+      // Mouse: a hidden command from the overflow.
+      await (await frameOf(root)).locator('body').click();
+      await page.keyboard.type('分隔');
+      await command(page, root, 'hr');
+      await expect.poll(() => draftOf(page, 'summary')).toContain('<hr>');
+
+      // Keyboard: Alt+F10 to the toolbar, End to the overflow button, Enter opens it with the focus
+      // on its first command; the arrows reach every command; Enter runs it.
+      await (await frameOf(root)).locator('body').focus();
+      await page.keyboard.press('Alt+F10');
+      await page.keyboard.press('End');
+      await expect(root.locator('.jodit-toolbar-button_dots button')).toBeFocused();
+      await page.keyboard.press('Enter');
+      const pop = popup(page);
+      await expect(pop.locator('.jodit-toolbar-button__button').first()).toBeFocused();
+      const source = pop.locator('.jodit-toolbar-button_source .jodit-toolbar-button__button');
+      for (let i = 0; i < 30; i++) {
+        if (await source.evaluate((el) => el === document.activeElement)) break;
+        await page.keyboard.press('ArrowRight');
+      }
+      await expect(source).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(root.locator('textarea.jodit-source__mirror')).toBeVisible();
+      // Escape closes the overflow and gives the focus back to its button.
+      await page.keyboard.press('Enter');
+      await expect(popup(page)).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(page.locator('.jodit-popup')).toHaveCount(0);
+      await expect(root.locator('.jodit-toolbar-button_dots button')).toBeFocused();
+    });
+  });
+
+  test.describe('768px', () => {
+    test.use({ viewport: { width: 768, height: 900 } });
+    test('rich-text toolbar is one or two rows', async ({ page }) => {
+      await openDemo(page);
+      for (const t of await rows(page)) expect(t.rows).toBeLessThanOrEqual(2);
+    });
   });
 });
 
@@ -1041,14 +1125,14 @@ for (const scheme of SCHEMES) {
         });
         await animationsIdle(page);
         await expect(root).toHaveScreenshot(`rich-text-editor-${scheme}-${width}.png`);
-        await button(root, 'source').click();
+        await command(page, root, 'source');
         await expect(root.locator('textarea.jodit-source__mirror')).toBeVisible();
         await root.locator('textarea.jodit-source__mirror').evaluate((t: HTMLTextAreaElement) => {
           t.blur();
           t.scrollTop = 0;
         });
         await expect(root).toHaveScreenshot(`rich-text-source-${scheme}-${width}.png`);
-        await button(root, 'source').click();
+        await command(page, root, 'source');
         const view = page.getByTitle('已發布內容（唯讀）');
         await view.scrollIntoViewIfNeeded();
         await expect(view).toHaveScreenshot(`rich-text-view-${scheme}-${width}.png`);
