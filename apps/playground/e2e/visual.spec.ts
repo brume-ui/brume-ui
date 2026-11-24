@@ -89,8 +89,11 @@ for (const viewport of VIEWPORTS) {
         test(`${name} ${scheme}`, async ({ page }) => {
           if (SLOW_PAGES.has(name)) test.setTimeout(90_000);
           await openPage(page, name, scheme);
-          if (['form', 'form-horizontal', 'form-page'].includes(name))
+          if (['form', 'form-horizontal', 'form-page'].includes(name)) {
+            // The editor is a lazy chunk: wait for it, or the shot can catch its skeleton.
+            await expect(page.locator('iframe.jodit-wysiwyg_iframe').first()).toBeVisible();
             await expectFormGeometry(page);
+          }
           await expect(page).toHaveScreenshot(`${name}-${scheme}-${viewport.name}.png`, {
             fullPage: true,
             timeout: SLOW_PAGES.has(name) ? 30_000 : undefined,
@@ -117,6 +120,7 @@ for (const viewport of VIEWPORTS) {
 
       test(`form page dirty save bar ${scheme}`, async ({ page }) => {
         await openPage(page, 'form-page', scheme);
+        await expect(page.locator('iframe.jodit-wysiwyg_iframe').first()).toBeVisible();
         await page.getByRole('textbox', { name: '標題', exact: true }).fill('夏季訂單');
         await expect(page.getByText('有未儲存的變更', { exact: true })).toBeVisible();
         expect(
