@@ -33,6 +33,7 @@ import { UIBlock, UIForm, UIInput } from 'jodit/esm/core/ui/form/index.js';
 import linkPopupItems from 'jodit/esm/plugins/inline-popup/config/items/a.js';
 import { onTabInsideLi } from 'jodit/esm/plugins/tab/cases/on-tab-inside-li.js';
 import { useEffect, useId, useRef, useState } from 'react';
+import { whileApplying } from './applying';
 import type { JoditEditorProps } from './editor-contract';
 import { isEmptyHtml } from './empty';
 import { buildJoditConfig } from './jodit-config';
@@ -261,11 +262,7 @@ export default function JoditEditor(props: JoditEditorProps) {
       editorRef.current = editor;
       editor.waitForReady().then(() => {
         if (!alive) return;
-        applying.current = true;
-        editor.value = latest.current.value ?? '';
-        applying.current = false;
-        editor.history.clear(); // undo starts at the loaded document, not at an empty editor
-        lastEmitted.current = toOutput(editor.value);
+        // `emit` ignores the change events of the value write below (`applying`).
         editor.e.on('change', emit);
         // Indent / outdent in a list item nest / un-nest it (as the `tab` plugin would), instead of
         // adding a margin to the <li>.
@@ -324,7 +321,17 @@ export default function JoditEditor(props: JoditEditorProps) {
           if (files.length) handleFiles(files, { x: e.clientX, y: e.clientY });
           return false;
         });
-        setReady(true);
+        // The loaded document. Should writing it throw, the editor still reports edits and follows
+        // external values (the error itself still surfaces).
+        try {
+          whileApplying(applying, () => {
+            editor.value = latest.current.value ?? '';
+          });
+        } finally {
+          editor.history.clear(); // undo starts at the loaded document, not at an empty editor
+          lastEmitted.current = toOutput(editor.value);
+          setReady(true);
+        }
       });
     };
 
@@ -367,12 +374,9 @@ export default function JoditEditor(props: JoditEditorProps) {
     if (isEmptyHtml(value) && toOutput(j.value) === null) return;
     const next = value ?? '';
     if (next !== j.value) {
-      applying.current = true;
-      try {
+      whileApplying(applying, () => {
         j.value = next;
-      } finally {
-        applying.current = false;
-      }
+      });
       j.history.clear(); // a reset or a new record is not undoable into the previous content
     }
     lastEmitted.current = toOutput(j.value);
