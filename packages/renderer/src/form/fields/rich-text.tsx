@@ -64,7 +64,12 @@ export function RichTextField(props: FieldProps) {
           body,
           signal,
         });
-        if (res.status === 200) return { ok: true, url: res.data.url };
+        if (res.status === 200)
+          return {
+            ok: true,
+            url: res.data.url,
+            ...(typeof res.data.name === 'string' ? { name: res.data.name } : {}),
+          };
         const message =
           res.status === 422
             ? (res.data as unknown as ErrorResponse)?.errors?.file?.[0]

@@ -37,7 +37,7 @@ import type { JoditEditorProps } from './editor-contract';
 import { isEmptyHtml } from './empty';
 import { buildJoditConfig } from './jodit-config';
 import { cleanPastedHtml } from './paste-clean';
-import { isSingleImageHtml } from './paste-image';
+import { altFromFileName, isSingleImageHtml } from './paste-image';
 import { youtubeEmbedUrl } from './youtube';
 
 /** Marks the upload placeholders; they never reach `onChange`. */
@@ -140,7 +140,7 @@ export default function JoditEditor(props: JoditEditorProps) {
         const controller = new AbortController();
         controllers.add(controller);
         cur.onUploadingChange(1);
-        const done = (url: string | null, message?: string) => {
+        const done = (url: string | null, message?: string, name?: string) => {
           controllers.delete(controller);
           active.delete(id);
           if (!alive || controller.signal.aborted) return;
@@ -150,7 +150,7 @@ export default function JoditEditor(props: JoditEditorProps) {
           if (url && current) {
             const img = editor.createInside.element('img');
             img.setAttribute('src', url);
-            img.setAttribute('alt', '');
+            img.setAttribute('alt', altFromFileName(name));
             current.replaceWith(img);
           } else if (!url) {
             current?.remove();
@@ -161,7 +161,8 @@ export default function JoditEditor(props: JoditEditorProps) {
           emit();
         };
         cur.upload(file, controller.signal).then(
-          (result) => (result.ok ? done(result.url) : done(null, result.message)),
+          (result) =>
+            result.ok ? done(result.url, undefined, result.name) : done(null, result.message),
           () => done(null),
         );
       }

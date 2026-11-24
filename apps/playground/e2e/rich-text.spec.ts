@@ -572,7 +572,7 @@ test.describe('rich-text paste, drop and uploads', () => {
     await expect(frame.locator('[data-br-upload]')).toHaveCount(0);
     expect(String(await draftOf(page, 'content'))).toMatch(
       new RegExp(
-        `<h2[^>]*>霧島選物｜冬季保養組<img src="${UPLOADED.replace(/[?.]/g, '\\$&')}1" alt="">`,
+        `<h2[^>]*>霧島選物｜冬季保養組<img src="${UPLOADED.replace(/[?.]/g, '\\$&')}1" alt="photo">`,
       ),
     );
 
@@ -635,7 +635,7 @@ test.describe('rich-text paste, drop and uploads', () => {
     await expect.poll(() => draftOf(page, 'sections.0.body')).toContain(`${UPLOADED}1`);
     const body = String(await draftOf(page, 'sections.0.body'));
     // Inside the paragraph that was dropped on, which is still the only block.
-    expect(body).toMatch(/^<p class="font_lv5">[\s\S]*<img src="[^"]+" alt="">[\s\S]*<\/p>$/);
+    expect(body).toMatch(/^<p class="font_lv5">[\s\S]*<img src="[^"]+" alt="drop">[\s\S]*<\/p>$/);
     expect(body.match(/<p/g)).toHaveLength(1);
   });
 

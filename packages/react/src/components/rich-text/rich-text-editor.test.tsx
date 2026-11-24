@@ -254,6 +254,19 @@ describe('RichTextEditor', () => {
     expect(upload).toHaveBeenCalledWith(file, signal);
   });
 
+  it('passes the uploaded file name on with a safe url', async () => {
+    resolvedChunk();
+    const upload = vi.fn(async () => ({ ok: true as const, url: '/s/a.png', name: '產品圖.png' }));
+    renderEditor({ images: { accept: ['image/png'], maxSize: 1024 }, upload });
+    await screen.findByTestId('fake-editor');
+    const file = new File(['x'], 'a.png', { type: 'image/png' });
+    await expect(lastProps?.upload(file, new AbortController().signal)).resolves.toEqual({
+      ok: true,
+      url: '/s/a.png',
+      name: '產品圖.png',
+    });
+  });
+
   it('notify shows an error toast', async () => {
     resolvedChunk();
     renderEditor();

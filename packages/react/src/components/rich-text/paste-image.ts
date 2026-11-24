@@ -19,3 +19,11 @@ export function isSingleImageHtml(html: string): boolean {
       .replace(/&nbsp;|&#160;|\s/gi, '') === ''
   );
 }
+
+/** The initial alt text of an uploaded image: its file name without the extension, else empty. */
+export function altFromFileName(name: string | undefined): string {
+  return (name ?? '')
+    .trim()
+    .replace(/\.[^.]*$/, '')
+    .trim();
+}

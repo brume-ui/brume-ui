@@ -152,6 +152,17 @@ describe('richText image upload', () => {
     expect(screen.getByTestId('pending').textContent).toBe('0');
   });
 
+  it('passes the response name on (initial alt text)', async () => {
+    renderWithBrume(<Harness />, {
+      respond: () => ({ status: 200, data: { url: '/img/a.png', name: '冬季組.png' } }),
+    });
+    let result: unknown;
+    await act(async () => {
+      result = await editor().upload?.(file, new AbortController().signal);
+    });
+    expect(result).toEqual({ ok: true, url: '/img/a.png', name: '冬季組.png' });
+  });
+
   it('surfaces a 422 message', async () => {
     renderWithBrume(<Harness />, {
       respond: () => ({ status: 422, data: { errors: { file: ['太大'] } } }),

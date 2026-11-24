@@ -4,7 +4,10 @@
  * the main bundle.
  */
 
-export type RichTextUploadResult = { ok: true; url: string } | { ok: false; message: string };
+/** `name`: the uploaded file's name; without its extension it becomes the image's initial alt text. */
+export type RichTextUploadResult =
+  | { ok: true; url: string; name?: string }
+  | { ok: false; message: string };
 
 export type JoditLanguage = 'zh_tw' | 'zh_cn' | 'en';
 
