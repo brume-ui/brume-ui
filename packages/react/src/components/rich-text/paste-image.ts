@@ -1,3 +1,8 @@
+/** Inside a tag: anything but `>`, or a quoted attribute value (which may contain `>`). */
+const IN_TAG = `(?:[^>"']|"[^"]*"|'[^']*')*`;
+const IMG_TAG = new RegExp(`<img\\b${IN_TAG}>`, 'gi');
+const ANY_TAG = new RegExp(`<${IN_TAG}>`, 'g');
+
 /**
  * Whether clipboard HTML is nothing but one image (what a browser or an image viewer puts next to the
  * file). Office apps put a whole HTML rendering (tables, text) next to a PNG preview: that HTML wins.
@@ -9,8 +14,8 @@ export function isSingleImageHtml(html: string): boolean {
   if ((s.match(/<img\b/gi) ?? []).length !== 1) return false;
   return (
     s
-      .replace(/<img\b[^>]*>/gi, '')
-      .replace(/<[^>]*>/g, '')
+      .replace(IMG_TAG, '')
+      .replace(ANY_TAG, '')
       .replace(/&nbsp;|&#160;|\s/gi, '') === ''
   );
 }

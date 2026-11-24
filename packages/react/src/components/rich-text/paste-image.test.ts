@@ -17,4 +17,10 @@ describe('isSingleImageHtml', () => {
     expect(isSingleImageHtml('<img src="a"><img src="b">')).toBe(false);
     expect(isSingleImageHtml('')).toBe(false);
   });
+
+  it('is not confused by ">" inside a quoted attribute', () => {
+    expect(isSingleImageHtml('<p data-x="a>b"><img alt="1 > 0" src="a.png"></p>')).toBe(true);
+    expect(isSingleImageHtml("<img alt='x>y' src=a.png>")).toBe(true);
+    expect(isSingleImageHtml('<img alt="x>y" src="a.png"> text')).toBe(false);
+  });
 });
