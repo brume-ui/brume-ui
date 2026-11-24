@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanPastedHtml } from './paste-clean';
+import { cleanPaste, cleanPastedHtml } from './paste-clean';
 
 const WORD = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
 <head><style>p.MsoNormal{mso-style-name:x}</style><meta name=Generator content="Microsoft Word"></head>
@@ -124,6 +124,54 @@ describe('cleanPastedHtml', () => {
     ).not.toMatch(/onerror/i);
     expect(cleanPastedHtml('<template><img src=x onerror=1></template>')).not.toMatch(/onerror/i);
     expect(cleanPastedHtml('<img src=x onerror=alert(1)>')).toBe('<img src="x">');
+  });
+
+  it('unwraps the Google Docs wrapper (font-weight normal) around paragraphs and lists', () => {
+    expect(
+      cleanPastedHtml(
+        '<meta charset="utf-8"><b style="font-weight:normal;" id="docs-internal-guid-1a2b3c"><p dir="ltr" style="line-height:1.38"><span style="font-size:11pt">第一段</span></p><ul style="margin-top:0"><li dir="ltr"><p dir="ltr"><span>項目</span></p></li></ul></b>',
+      ),
+    ).toBe('<p>第一段</p><ul><li><p>項目</p></li></ul>');
+  });
+
+  it('unwraps the Google Docs wrapper when the clipboard starts with a list', () => {
+    expect(
+      cleanPastedHtml(
+        '<b style="font-weight: 400" id="docs-internal-guid-9f"><ol><li>一</li><li>二</li></ol><p>後面</p></b>',
+      ),
+    ).toBe('<ol><li>一</li><li>二</li></ol><p>後面</p>');
+  });
+
+  it('unwraps an inline formatting element holding blocks', () => {
+    expect(cleanPastedHtml('<strong><table><tr><td>格</td></tr></table></strong>')).toBe(
+      '<table><tbody><tr><td>格</td></tr></tbody></table>',
+    );
+    expect(cleanPastedHtml('<i><u><blockquote>q</blockquote></u></i>')).toBe(
+      '<blockquote>q</blockquote>',
+    );
+    expect(cleanPastedHtml('<em><pre>a</pre></em>')).toBe('<pre>a</pre>');
+  });
+
+  it('keeps ordinary inline bold inside a paragraph', () => {
+    expect(cleanPastedHtml('<p>a <b>bold</b> b</p>')).toBe('<p>a <b>bold</b> b</p>');
+    expect(cleanPastedHtml('<p><b style="font-weight:700">x</b></p>')).toBe('<p><b>x</b></p>');
+  });
+
+  it('keeps whitespace inside pre exactly, collapses blank lines elsewhere', () => {
+    expect(cleanPastedHtml('<pre>a\n\n\nb\n  c</pre>')).toBe('<pre>a\n\n\nb\n  c</pre>');
+    expect(cleanPastedHtml('<pre><code>x\n\n\ny</code></pre>')).toBe(
+      '<pre><code>x\n\n\ny</code></pre>',
+    );
+    expect(cleanPastedHtml('<p>a</p>\n\n\n<p>b</p>')).toBe('<p>a</p>\n<p>b</p>');
+  });
+
+  it('reports how many images it dropped', () => {
+    expect(
+      cleanPaste(
+        '<p>t<img src="file:///C:/Users/x/clip_image001.png"><img src="data:image/png;base64,AA"><img src="https://e.com/a.png"></p>',
+      ),
+    ).toEqual({ html: '<p>t<img src="https://e.com/a.png"></p>', droppedImages: 2 });
+    expect(cleanPaste('<p>x</p>')).toEqual({ html: '<p>x</p>', droppedImages: 0 });
   });
 
   it('converts Word mso-list paragraphs into one list', () => {

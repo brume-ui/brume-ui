@@ -49,6 +49,7 @@ const KEEP_TAGS = new Set([
 const DROP_WITH_CONTENT =
   'style,script,meta,link,title,xml,head,template,noscript,object,embed,iframe,svg,button,input,select,textarea,form,colgroup';
 const BLOCKS = 'p,h1,h2,h3,h4,h5,h6,ul,ol,li,table,blockquote,div,hr,pre';
+const INLINE_FORMATTING = 'b,strong,i,em,u,s,sub,sup,strike,del';
 const TAG_MAP: Record<string, string> = { STRIKE: 's', DEL: 's' };
 const NBSP = /[\s ]/g;
 // browsers ignore tab/newline/control chars inside a scheme, so strip them before testing
@@ -60,7 +61,19 @@ function badUrl(value: string): boolean {
   return /^(javascript|vbscript|data|file):/i.test(v);
 }
 
+export interface CleanedPaste {
+  html: string;
+  /** Images removed because their source cannot be kept (data:, file:, javascript:, …). */
+  droppedImages: number;
+}
+
+/** The cleaned HTML only; see `cleanPaste`. */
 export function cleanPastedHtml(html: string): string {
+  return cleanPaste(html).html;
+}
+
+export function cleanPaste(html: string): CleanedPaste {
+  let droppedImages = 0;
   const doc = new DOMParser().parseFromString(
     html.replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, ''),
     'text/html',
@@ -97,6 +110,17 @@ export function cleanPastedHtml(html: string): string {
   const comments: Node[] = [];
   while (walker.nextNode()) comments.push(walker.currentNode);
   for (const c of comments) c.parentNode?.removeChild(c);
+
+  // Formatting that wraps blocks, before its attributes are gone: Google Docs wraps the whole clipboard
+  // in <b style="font-weight:normal" id="docs-internal-guid-…">, and any b/i/u/… around a list or a
+  // table would make everything bold/italic (and the server flattens lists/tables found inside them).
+  for (const el of [...body.querySelectorAll<HTMLElement>('b,strong')].reverse()) {
+    if (/(^|;)\s*font-weight\s*:\s*(normal|400)\s*(;|$)/i.test(el.getAttribute('style') || ''))
+      el.replaceWith(...el.childNodes);
+  }
+  for (const el of [...body.querySelectorAll<HTMLElement>(INLINE_FORMATTING)].reverse()) {
+    if (el.querySelector(BLOCKS)) el.replaceWith(...el.childNodes);
+  }
 
   const all = [...body.querySelectorAll<HTMLElement>('*')].reverse(); // children first
   for (const el of all) {
@@ -141,6 +165,7 @@ export function cleanPastedHtml(html: string): string {
       el.setAttribute('rel', 'noopener noreferrer');
     if (tag === 'IMG' && badUrl(el.getAttribute('src') || '')) {
       el.remove();
+      droppedImages++;
       continue;
     }
     // empty inline formatting
@@ -156,5 +181,12 @@ export function cleanPastedHtml(html: string): string {
   for (const p of body.querySelectorAll('p')) {
     if (!p.textContent?.replace(NBSP, '') && !p.querySelector('img,br')) p.remove();
   }
-  return body.innerHTML.replace(/\n{2,}/g, '\n').trim();
+  // Blank lines Word puts between elements; whitespace inside <pre> is content and stays as is.
+  const texts = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  while (texts.nextNode()) {
+    const t = texts.currentNode as Text;
+    if (t.data.includes('\n\n') && !t.parentElement?.closest('pre'))
+      t.data = t.data.replace(/\n{2,}/g, '\n');
+  }
+  return { html: body.innerHTML.trim(), droppedImages };
 }
