@@ -162,6 +162,14 @@ describe('buildJoditConfig', () => {
     });
   });
 
+  it('pasted video URLs: YouTube becomes the editor iframe, anything else stays a link', () => {
+    const video = cfg().video as { parseUrlToVideoEmbed(url: string): string };
+    expect(video.parseUrlToVideoEmbed('https://youtu.be/dQw4w9WgXcQ?t=5')).toBe(
+      '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?start=5" width="560" height="315" allowfullscreen></iframe>',
+    );
+    expect(video.parseUrlToVideoEmbed('https://vimeo.com/1')).toBe('https://vimeo.com/1');
+  });
+
   it('link popup: no nofollow checkbox and no class name field (R-8)', () => {
     expect(cfg().link).toEqual({ noFollowCheckbox: false, modeClassName: false });
   });

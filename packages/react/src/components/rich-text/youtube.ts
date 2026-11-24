@@ -31,3 +31,28 @@ export function youtubeEmbedUrl(input: string): string | null {
   );
   return `https://${embedHost}/embed/${id}${start ? `?start=${start[1]}` : ''}`;
 }
+
+function escapeAttr(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/** The embed the editor inserts for a YouTube URL (video popup and pasted URL alike), or null. */
+export function youtubeIframeHtml(input: string): string | null {
+  const src = youtubeEmbedUrl(input);
+  return src
+    ? `<iframe src="${escapeAttr(src)}" width="560" height="315" allowfullscreen></iframe>`
+    : null;
+}
+
+/**
+ * Jodit's `video.parseUrlToVideoEmbed`, which its link plugin calls for a pasted URL: YouTube becomes
+ * our iframe; anything else is returned unchanged, which Jodit then inserts as an ordinary link
+ * (its own converter would embed Vimeo and any youtube.com/embed/… path, which the server deletes).
+ */
+export function youtubeVideoEmbed(url: string): string {
+  return youtubeIframeHtml(url) ?? url;
+}

@@ -39,7 +39,7 @@ import { isEmptyHtml } from './empty';
 import { buildJoditConfig } from './jodit-config';
 import { processPastedHtml } from './paste-clean';
 import { altFromFileName, isSingleImageHtml } from './paste-image';
-import { youtubeEmbedUrl } from './youtube';
+import { youtubeIframeHtml } from './youtube';
 
 /** Marks the upload placeholders; they never reach `onChange`. */
 const UPLOAD_ATTR = 'data-br-upload';
@@ -189,15 +189,13 @@ export default function JoditEditor(props: JoditEditorProps) {
         ]);
         editor.s.save();
         form.onSubmit((data: Record<string, string>) => {
-          const src = youtubeEmbedUrl(data.url ?? '');
-          if (!src) {
+          const iframe = youtubeIframeHtml(data.url ?? '');
+          if (!iframe) {
             input.error = latest.current.messages.youtubeOnly;
             return;
           }
           editor.s.restore();
-          editor.s.insertHTML(
-            `<iframe src="${escapeHtml(src)}" width="560" height="315" allowfullscreen></iframe>`,
-          );
+          editor.s.insertHTML(iframe);
           close();
         });
         return form.container;

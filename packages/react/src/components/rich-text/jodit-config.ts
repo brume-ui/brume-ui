@@ -1,4 +1,5 @@
 import type { RichTextMessages } from './editor-contract';
+import { youtubeVideoEmbed } from './youtube';
 
 export interface JoditConfigOptions {
   height: number;
@@ -114,6 +115,9 @@ export function buildJoditConfig(o: JoditConfigOptions): Record<string, unknown>
     processPasteFromWord: false,
     defaultActionOnPaste: 'insert_as_html',
     link: { noFollowCheckbox: false, modeClassName: false }, // no free-form class name field
+    // A pasted URL (link plugin, processVideoLink): YouTube → the same iframe as the video popup,
+    // anything else → an ordinary link.
+    video: { parseUrlToVideoEmbed: youtubeVideoEmbed },
     image: { editSrc: true, useImageEditor: false },
     uploader: { url: '' }, // no Jodit uploader; images go through the component's own upload
   };

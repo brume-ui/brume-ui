@@ -498,6 +498,41 @@ test.describe('rich-text toolbar', () => {
       .poll(() => draftOf(page, 'summary'))
       .toContain('src="https://www.youtube.com/embed/demoVideo02?start=42"');
   });
+
+  test('rich-text pasted YouTube URL becomes the same embed as the video popup', async ({
+    page,
+  }) => {
+    await openDemo(page);
+    const root = summary(page);
+    const url = 'https://www.youtube.com/watch?v=demoVideo03&t=42s';
+    await (await frameOf(root)).locator('body').click();
+    await paste(root, { text: url });
+    const embed =
+      '<iframe src="https://www.youtube.com/embed/demoVideo03?start=42" width="560" height="315" allowfullscreen=""></iframe>';
+    await expect.poll(() => draftOf(page, 'summary')).toContain(embed);
+    // The popup inserts exactly the same markup.
+    await selectAllIn(page, root);
+    await page.keyboard.press('Delete');
+    await expect.poll(async () => String(await draftOf(page, 'summary'))).not.toContain('<iframe');
+    await button(root, 'video').click();
+    await popup(page).locator('input').first().fill(url);
+    await popup(page).getByRole('button', { name: '插入' }).click();
+    await expect.poll(() => draftOf(page, 'summary')).toContain(embed);
+  });
+
+  test('rich-text pasted Vimeo URL stays a link, never an iframe', async ({ page }) => {
+    await openDemo(page);
+    const root = summary(page);
+    await (await frameOf(root)).locator('body').click();
+    await paste(root, { text: 'https://vimeo.com/123456' });
+    await expect.poll(() => draftOf(page, 'summary')).toContain('href="https://vimeo.com/123456"');
+    expect(String(await draftOf(page, 'summary'))).not.toContain('<iframe');
+    await paste(root, { text: 'https://www.youtube.com/embed/not-an-id' });
+    await expect
+      .poll(() => draftOf(page, 'summary'))
+      .toContain('href="https://www.youtube.com/embed/not-an-id"');
+    expect(String(await draftOf(page, 'summary'))).not.toContain('<iframe');
+  });
 });
 
 test.describe('rich-text paste, drop and uploads', () => {
