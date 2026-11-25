@@ -69,6 +69,8 @@ export const en: Record<MessageKey, string> = {
   'upload.down': 'Move down {name}',
   'upload.sort': 'Reorder {name}',
   'tags.placeholder': 'Type and press Enter to add',
+  'color.open': '{label}: open colour picker',
+  'color.swatches': 'Preset colours',
   'range.start': '{label} (from)',
   'range.end': '{label} (to)',
   'dataTable.scrollRegion': 'Data table (scrolls horizontally)',
@@ -221,9 +223,5 @@ export const en: Record<MessageKey, string> = {
   'richText.videoUrl': 'YouTube URL',
   'richText.videoInsert': 'Insert',
   'richText.youtubeOnly': 'Only YouTube URLs are supported',
-  'color.open': '{label}: open colour picker',
-  'color.swatches': 'Preset colours',
-  'color.alpha': 'Opacity',
-  'color.clear': 'Clear',
   'richText.empty': 'No content',
 };

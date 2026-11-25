@@ -69,6 +69,8 @@ export const zhCN: Record<MessageKey, string> = {
   'upload.down': '下移 {name}',
   'upload.sort': '排序 {name}',
   'tags.placeholder': '输入后按 Enter 添加',
+  'color.open': '{label}：打开色盘',
+  'color.swatches': '预设色板',
   'range.start': '{label}（起）',
   'range.end': '{label}（止）',
   'dataTable.scrollRegion': '数据表格（可左右滚动）',
@@ -220,9 +222,5 @@ export const zhCN: Record<MessageKey, string> = {
   'richText.videoUrl': 'YouTube 网址',
   'richText.videoInsert': '插入',
   'richText.youtubeOnly': '只支持 YouTube 网址',
-  'color.open': '{label}：打开色盘',
-  'color.swatches': '预设色板',
-  'color.alpha': '透明度',
-  'color.clear': '清除',
   'richText.empty': '没有内容',
 };

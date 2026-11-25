@@ -68,6 +68,8 @@ export const zhTW = {
   'upload.down': '下移 {name}',
   'upload.sort': '排序 {name}',
   'tags.placeholder': '輸入後按 Enter 新增',
+  'color.open': '{label}：開啟色盤',
+  'color.swatches': '預設色票',
   'range.start': '{label}（起）',
   'range.end': '{label}（迄）',
   'dataTable.scrollRegion': '資料表格（可左右捲動）',
@@ -219,9 +221,5 @@ export const zhTW = {
   'richText.videoUrl': 'YouTube 網址',
   'richText.videoInsert': '插入',
   'richText.youtubeOnly': '只支援 YouTube 網址',
-  'color.open': '{label}：開啟色盤',
-  'color.swatches': '預設色票',
-  'color.alpha': '透明度',
-  'color.clear': '清除',
   'richText.empty': '沒有內容',
 } as const;

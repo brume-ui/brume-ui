@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HexAlphaColorPicker, HexColorPicker } from 'react-colorful';
 import { cn } from '../cn';
 import { useBrume } from '../provider';
@@ -58,13 +58,19 @@ export function ColorInput({
 }: ColorInputProps) {
   const { t } = useBrume();
   const [open, setOpen] = useState(false);
+  // A disabled field never keeps a panel open, and re-enabling must not bring it back.
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
   const text = value ?? '';
   const current = normalizeHex(text, alpha);
   const Picker = alpha ? HexAlphaColorPicker : HexColorPicker;
-  const presets = (swatches ?? [])
-    .map((s) => normalizeHex(s, alpha))
-    .filter((s): s is string => s !== null);
+  const presets = [
+    ...new Set(
+      (swatches ?? []).map((s) => normalizeHex(s, alpha)).filter((s): s is string => s !== null),
+    ),
+  ];
 
   const emit = (hex: string) => onChange(normalizeHex(hex, alpha) ?? hex);
 
@@ -116,8 +122,9 @@ export function ColorInput({
           FOCUS_RING,
         )}
       />
-      <Popover trigger={chip} title={label} open={disabled ? false : open} onOpenChange={setOpen}>
+      <Popover trigger={chip} title={label} open={open && !disabled} onOpenChange={setOpen}>
         <div className="br-color-picker">
+          {/* react-colorful 5.6.1 hard-codes English aria-labels ("Hue", "Color", "Alpha") on its sliders; known limit. */}
           <Picker color={current ?? (alpha ? '#000000ff' : '#000000')} onChange={emit} />
         </div>
         {presets.length > 0 ? (
