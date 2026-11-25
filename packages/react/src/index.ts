@@ -53,6 +53,7 @@ export {
   type FieldProps,
 } from './components/field';
 export { FormControls } from './components/form-controls';
+export { FormHtml } from './components/form-html';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
 export { NumberInput, type NumberInputProps } from './components/number-input';
