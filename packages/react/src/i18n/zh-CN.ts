@@ -220,5 +220,9 @@ export const zhCN: Record<MessageKey, string> = {
   'richText.videoUrl': 'YouTube 网址',
   'richText.videoInsert': '插入',
   'richText.youtubeOnly': '只支持 YouTube 网址',
+  'color.open': '{label}：打开色盘',
+  'color.swatches': '预设色板',
+  'color.alpha': '透明度',
+  'color.clear': '清除',
   'richText.empty': '没有内容',
 };

@@ -219,5 +219,9 @@ export const zhTW = {
   'richText.videoUrl': 'YouTube 網址',
   'richText.videoInsert': '插入',
   'richText.youtubeOnly': '只支援 YouTube 網址',
+  'color.open': '{label}：開啟色盤',
+  'color.swatches': '預設色票',
+  'color.alpha': '透明度',
+  'color.clear': '清除',
   'richText.empty': '沒有內容',
 } as const;

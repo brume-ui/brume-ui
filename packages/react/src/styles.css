@@ -4,6 +4,7 @@
 @import "@brume-ui/brume-tokens/tokens.css";
 @import "./fonts.css";
 @import "./components/rich-text/rich-text.css";
+@import "./components/color-input.css";
 
 @source "./";
 /*

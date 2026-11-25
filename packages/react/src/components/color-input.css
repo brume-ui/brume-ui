@@ -1,0 +1,18 @@
+/*
+ * ColorInput: react-colorful injects its own base CSS at runtime. Only width, radius and pointer
+ * size are overridden here; the selector is one class heavier so load order does not matter.
+ */
+.br-color-picker .react-colorful {
+  width: 100%;
+  height: 180px;
+}
+.br-color-picker .react-colorful__saturation {
+  border-radius: var(--br-radius-input) var(--br-radius-input) 0 0;
+}
+.br-color-picker .react-colorful__last-control {
+  border-radius: 0 0 var(--br-radius-input) var(--br-radius-input);
+}
+.br-color-picker .react-colorful__pointer {
+  width: 20px;
+  height: 20px;
+}
