@@ -48,6 +48,8 @@
 | `upload`（單檔）                                       | `UploadValue \| null`                                         |
 | `upload`（多檔）                                       | `UploadValue[]`，陣列順序就是排序                             |
 | `richText`                                             | HTML 字串或 `null`（空文件一律是 `null`）                     |
+| `color`                                                | 小寫 `#rrggbb`（`alpha: true` 時也可是 `#rrggbbaa`）或 `null` |
+| `tel`                                                  | 去除前後空白的字串或 `null`，依輸入原樣保存                   |
 | `embeds`                                               | 物件                                                          |
 | `password`                                             | 載入時一律是 `''`；送出 `''` 表示不修改                       |
 
@@ -56,7 +58,10 @@
 `page.submit.method` 為 `post`（新增）或 `put`（更新），對 `page.submit.url` 送出 `FormSubmitRequest`：
 
 ```json
-{ "values": { "title": "春季特賣", "meta": { "color": "#ff0000" } }, "after": "edit" }
+{
+  "values": { "title": "春季特賣", "meta": { "color": "#ff0000" } },
+  "after": "edit"
+}
 ```
 
 `after` 是使用者在「儲存後」選單選的去向，取自 `page.after.options`。
@@ -170,6 +175,13 @@
 - 圖片上傳打 `page.uploadUrl`（參數同 `UPLOAD_PARAMS`，`field` 為這個欄位的值路徑），成功回 `RichTextImageResponse`（`{ url, name? }`），`url` 直接寫進 `<img src>`。非圖片、SVG、超過 `maxSize`，或 `field` 不是宣告過 `images` 的 richText 欄位，回 422，不寫入任何檔案。
 - richText 不是 `PlainFieldDef`，所以不能出現在 Action 輸入欄位、快速新增或 `upload.extra`。
 
+## 色彩、電話欄位與 `html` 節點
+
+- `{ type: 'color', alpha?, swatches? }`：`swatches` 最多 24 個，每個須符合 `^#[0-9a-f]{6}(?:[0-9a-f]{2})?$`（小寫，不接受縮寫）。
+- `{ type: 'tel' }`：沒有額外屬性；格式由 `rules` 或伺服器的 pattern 決定。
+- `color` 與 `tel` 是 `PlainFieldDef`，可用於 Action 輸入欄位、快速新增與 `upload.extra`。
+- `{ type: 'html', html, label? }` 是版型節點，沒有值，也沒有 `children`。`html` 由前端以白名單淨化後顯示。它不是欄位節點，所以不能放進 `row`。
+
 ## 前端驗證（`ClientRule`）
 
 伺服器是唯一的權威。前端只先檢查 `FieldDef.rules` 裡的子集，`message` 由伺服器以與 422 同一套翻譯產生。
@@ -267,7 +279,11 @@ custom 的完整形狀例如：
   "type": "custom",
   "name": "total",
   "label": "Total",
-  "component": { "type": "component", "name": "Calculator", "props": { "rate": 2 } },
+  "component": {
+    "type": "component",
+    "name": "Calculator",
+    "props": { "rate": 2 }
+  },
   "displayOnly": true
 }
 ```
@@ -287,8 +303,18 @@ FieldBase 的 `showWhen?:Condition` 與 `enableWhen?:Condition` 是 JSON AST，�
 {
   "op": "all",
   "conditions": [
-    { "op": "eq", "field": { "scope": "root", "path": "active" }, "value": true },
-    { "op": "not", "condition": { "op": "empty", "field": { "scope": "row", "path": "code" } } }
+    {
+      "op": "eq",
+      "field": { "scope": "root", "path": "active" },
+      "value": true
+    },
+    {
+      "op": "not",
+      "condition": {
+        "op": "empty",
+        "field": { "scope": "row", "path": "code" }
+      }
+    }
   ]
 }
 ```
@@ -400,7 +426,6 @@ trailing whitespace/newlines and overprecision remain invalid. The standalone `c
 rounding utility retains its wider input contract. Server-emitted pattern rules carry the translated
 format message; condition evaluation keeps invalid controllers conservative.
 
-
 ### Options、nested uploads 與來源實例
 
 搜尋／hydration 的公開參數為 `q`, `page`, `per_page`, `value[]`, `section`, JSON `depends`,
@@ -427,7 +452,6 @@ Playground `/#/form-composition` 組合 JSON→JSON、model-owned relation→rel
 延遲、取消、paging、reorder、source failure/retry 案例。Grid filters 儲存 scalar ID／ID[]，不是
 relation selection objects。Laravel 的 `/admin/compositions` 則以公開 DSL 與真實 Resource 端點
 驗證同一組合，不需 workbench AJAX 或 relation-saving hook。
-
 
 `FieldBase.defaultValue?: unknown` carries the normalized server value for a genuinely new owner.
 A newly added repeater row (relation or JSON, at any depth) starts with its template's defaults;

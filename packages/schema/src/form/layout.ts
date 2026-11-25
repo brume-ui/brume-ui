@@ -14,6 +14,8 @@ export type FormNode =
   /** 卡片 */
   | { type: 'block'; title?: string; children: FormNode[] }
   | { type: 'divider'; label?: string }
+  /** 唯讀的說明區塊；`html` 由前端以白名單淨化後顯示 */
+  | { type: 'html'; html: string; label?: string }
   /** 值是 `name` 底下的物件 */
   | { type: 'embeds'; name: string; label: string; children: FormNode[] };
 
@@ -42,6 +44,11 @@ export const FormNodeRaw = Type.Recursive(
         children: Type.Array(This),
       }),
       Type.Object({ type: Type.Literal('divider'), label: Type.Optional(Type.String()) }),
+      Type.Object({
+        type: Type.Literal('html'),
+        html: Type.String(),
+        label: Type.Optional(Type.String()),
+      }),
       Type.Object({
         type: Type.Literal('embeds'),
         name: Type.String(),

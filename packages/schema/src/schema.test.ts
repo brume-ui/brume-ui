@@ -168,6 +168,74 @@ describe('schema 0.4', () => {
     }
   });
 
+  it('accepts color and tel in an action form and quick create, rejects bad swatches and an html node in a row', () => {
+    const base = fixture('fixtures/valid', 'grid-full.json') as GridFull;
+    const extras = [
+      { type: 'color', name: 'tint', label: '色彩', alpha: true, swatches: ['#ff0000'] },
+      { type: 'tel', name: 'phone', label: '電話' },
+    ];
+    const inAction = structuredClone(base);
+    inAction.page.actions.tools.find((a) => a.form)?.form?.fields.push(...extras);
+    const inQuickCreate = structuredClone(base);
+    inQuickCreate.page.quickCreate?.fields.push(...extras);
+    for (const [name, copy] of [
+      ['action form', inAction],
+      ['quick create', inQuickCreate],
+    ] as const) {
+      expect(validateEnvelope(copy).ok, name).toBe(true);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(true);
+    }
+
+    const form = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: unknown[] } };
+    };
+    const withField = (field: Record<string, unknown>) => {
+      const copy = structuredClone(form);
+      copy.page.form.nodes.push({ type: 'field', field });
+      return copy;
+    };
+    const color = { type: 'color', name: 'c', label: 'C' };
+    const bad: [string, unknown][] = [
+      ['swatch name', withField({ ...color, swatches: ['red'] })],
+      ['swatch shorthand', withField({ ...color, swatches: ['#abc'] })],
+      ['swatch uppercase', withField({ ...color, swatches: ['#FF0000'] })],
+      ['swatch 7 digits', withField({ ...color, swatches: ['#ff00000'] })],
+      ['25 swatches', withField({ ...color, swatches: Array(25).fill('#ff0000') })],
+      ['alpha not boolean', withField({ ...color, alpha: 'yes' })],
+      ['tel with options', withField({ type: 'tel', name: 't', label: 'T', pattern: 'x' })],
+    ];
+    for (const [name, copy] of bad) {
+      expect(validateEnvelope(copy).ok, name).toBe(false);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(false);
+    }
+    const ok = withField({ ...color, swatches: Array(24).fill('#ff000080') });
+    expect(validateEnvelope(ok).ok).toBe(true);
+    expect(checkEnvelope(ok)).toBe(true);
+  });
+
+  it('rejects an html node without html or inside a row on both validators', () => {
+    const form = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: unknown[] } };
+    };
+    const withNode = (node: unknown) => {
+      const copy = structuredClone(form);
+      copy.page.form.nodes.push(node);
+      return copy;
+    };
+    const bad: [string, unknown][] = [
+      ['no html', withNode({ type: 'html' })],
+      ['html not string', withNode({ type: 'html', html: 1 })],
+      ['in row', withNode({ type: 'row', children: [{ type: 'html', html: '<p>x</p>' }] })],
+    ];
+    for (const [name, copy] of bad) {
+      expect(validateEnvelope(copy).ok, name).toBe(false);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(false);
+    }
+    const ok = withNode({ type: 'html', html: '<p>x</p>' });
+    expect(validateEnvelope(ok).ok).toBe(true);
+    expect(checkEnvelope(ok)).toBe(true);
+  });
+
   it('rejects a column width outside 1–12 on both validators', () => {
     const base = fixture('fixtures/valid', 'form-full.json') as {
       page: { form: { nodes: { children: { columns?: { width: number }[] }[] }[] } };

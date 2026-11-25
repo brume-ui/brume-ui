@@ -56,6 +56,15 @@ type WrongRichTextImages =
 // @ts-expect-error images 少了 maxSize，與 schema 不同
 const wrongRichTextImages = (x: WrongRichTextImages): FieldDefInferred => x;
 
+type WrongColorSwatches =
+  | Exclude<FieldDef, { type: 'color' }>
+  | (Omit<Extract<FieldDef, { type: 'color' }>, 'swatches'> & { swatches?: number[] });
+// @ts-expect-error swatches 是 string[]，與 schema 不同
+const wrongColorSwatches = (x: WrongColorSwatches): FieldDefInferred => x;
+type HtmlWithoutHtml = Exclude<FormNode, { type: 'html' }> | { type: 'html'; label?: string };
+// @ts-expect-error html 節點的 html 必填
+const htmlWithoutHtml = (x: HtmlWithoutHtml): FormNodeInferred => x;
+
 describe('form types agree with their schemas', () => {
   // 真正的檢查是 tsc（pnpm typecheck）；這裡只讓 vitest 載入本檔，通過不代表型別一致。
   it('is a compile-time guard: pnpm typecheck fails on drift, not this test', () => {
@@ -72,7 +81,9 @@ describe('form types agree with their schemas', () => {
       richTextInExtra,
       wrongRichTextImages,
       nestedUpload,
-    ]).toHaveLength(12);
+      wrongColorSwatches,
+      htmlWithoutHtml,
+    ]).toHaveLength(14);
   });
 });
 

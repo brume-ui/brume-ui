@@ -97,6 +97,7 @@ export function collectFields(
         assertSafePath(node.field.name);
         return [{ path: joinPath(base, node.field.name), def: node.field }];
       case 'divider':
+      case 'html':
         return [];
       case 'columns':
         return node.columns.flatMap((column) => collectFields(column.children, base));

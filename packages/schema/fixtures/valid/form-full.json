@@ -85,6 +85,20 @@
                     },
                     {
                       "type": "field",
+                      "field": { "type": "tel", "name": "phone", "label": "市話" }
+                    },
+                    {
+                      "type": "field",
+                      "field": {
+                        "type": "color",
+                        "name": "brand_color",
+                        "label": "品牌色",
+                        "alpha": true,
+                        "swatches": ["#ff0000", "#00ff0080"]
+                      }
+                    },
+                    {
+                      "type": "field",
                       "field": {
                         "type": "password",
                         "name": "password",
@@ -115,6 +129,7 @@
               ]
             },
             { "type": "divider", "label": "金額" },
+            { "type": "html", "label": "提醒", "html": "<p>請確認<strong>金額</strong>。</p>" },
             {
               "type": "block",
               "title": "金額",

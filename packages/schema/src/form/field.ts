@@ -76,6 +76,8 @@ export type PlainFieldDef = FieldBase & { remote?: never; excludeSelectedIn?: ne
     | { type: 'radio' | 'checkbox'; options: Option[]; orientation?: 'horizontal' | 'vertical' }
     | { type: 'switch'; onLabel?: string; offLabel?: string }
     | { type: 'tags'; options?: Option[]; max?: number; maxLength?: number }
+    | { type: 'color'; alpha?: boolean; swatches?: string[] }
+    | { type: 'tel' }
   );
 
 /** Form-only choices resolve through the adapter and a declared endpoint. */
@@ -175,6 +177,9 @@ const staticVariant = <T extends TSchema, P extends TProperties = Record<never, 
     { additionalProperties: false },
   );
 
+/** Canonical lowercase hex: `#rrggbb`, or `#rrggbbaa`. */
+const HEX_COLOR_PATTERN = '^#[0-9a-f]{6}(?:[0-9a-f]{2})?$';
+
 const count = () => Type.Optional(Type.Integer({ minimum: 0 }));
 
 /** 明列靜態扁平欄位，供 Action、quick-create 與 upload.extra 使用。 */
@@ -224,6 +229,14 @@ const plainFields = [
     max: Type.Optional(Type.Integer({ minimum: 1 })),
     maxLength: count(),
   }),
+  // Appended last: entries 11, 12, 13 and 15 are referenced by index in FieldDefRaw.
+  staticVariant(literals('color'), {
+    alpha: Type.Optional(Type.Boolean()),
+    swatches: Type.Optional(
+      Type.Array(Type.String({ pattern: HEX_COLOR_PATTERN }), { maxItems: 24 }),
+    ),
+  }),
+  staticVariant(literals('tel')),
 ] as const;
 
 /**

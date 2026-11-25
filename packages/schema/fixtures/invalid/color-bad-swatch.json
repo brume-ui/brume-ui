@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "0.3.0",
+  "page": {
+    "type": "form",
+    "title": "新增訂單",
+    "formId": "orders",
+    "name": "訂單",
+    "mode": "create",
+    "form": {
+      "layout": "horizontal",
+      "nodes": [
+        {
+          "type": "field",
+          "field": { "type": "color", "name": "brand", "label": "品牌色", "swatches": ["red"] }
+        }
+      ]
+    },
+    "values": { "brand": null },
+    "submit": { "method": "post", "url": "/admin/orders" }
+  }
+}
