@@ -1,8 +1,11 @@
 import type { Condition, FieldDef, FormDef, FormNode } from '@brume-ui/brume-schema';
 import {
   address,
+  COLOR_PATTERN,
+  colorField,
   FIELD_EXAMPLES,
   FORM_EXAMPLES,
+  HTML_DEMO,
   node,
   opts,
   text,
@@ -57,6 +60,18 @@ export function buildFocusedFixture(id: string): {
     const rich = buildRichTextFixture();
     form.nodes = rich.form.nodes;
     values = rich.values;
+  } else if (id === 'form.field.color') {
+    form.nodes = [
+      node(colorField),
+      node({
+        type: 'color',
+        name: 'plain',
+        label: '不透明顏色',
+        swatches: ['#e5484d', '#30a46c'],
+        rules: [{ rule: 'pattern', pattern: COLOR_PATTERN, message: '顏色格式不正確' }],
+      }),
+    ];
+    values = { value: '#0091ff', plain: '#30a46c' };
   } else if (example.kind === 'field') {
     const f = FIELD_EXAMPLES.find((x) => `form.field.${x.field.type}` === id);
     if (!f) throw new Error(`Missing focused field: ${id}`);
@@ -94,6 +109,7 @@ export function buildFocusedFixture(id: string): {
           },
         ],
       },
+      ...(id === 'form.layout.html' ? [HTML_DEMO] : []),
       { type: 'divider', label: '地址資料' },
       embed,
     ];

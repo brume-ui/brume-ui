@@ -8,6 +8,7 @@ import {
 } from '@brume-ui/brume-renderer';
 import type { AfterSave, FormPage } from '@brume-ui/brume-schema';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { ColorDemoTools } from './color-demo';
 import { addressRegistry } from './custom-address';
 import { DemoGuide, useDemoExample } from './demo-guide';
 import { keepFormActionStable } from './form-action-focus';
@@ -371,6 +372,7 @@ function FocusedContent({
               onRemount={() => setMount((n) => n + 1)}
             />
           ) : null}
+          {exampleId === 'form.field.color' ? <ColorDemoTools /> : null}
           {exampleId.includes('condition') || exampleId === 'form.behavior.enable-when' ? (
             <Button
               onClick={() => {

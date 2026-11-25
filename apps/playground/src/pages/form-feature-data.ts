@@ -25,6 +25,31 @@ export const upload: FieldDef = {
   sortable: true,
   extra: [{ type: 'text', name: 'note', label: '附件備註' }],
 };
+/** The phone pattern the real product applies server-side by default; the playground carries it client-side so it can be exercised. */
+export const TEL_PATTERN =
+  '^(?:\\+886[- ]?|\\(?0)\\d{1,3}\\)?[- ]?\\d{2,4}[- ]?\\d{3,4}(?:(?:#| ?ext\\.? ?| ?分機 ?| ?轉 ?)\\d{1,6})?$';
+/** `#rgb`, `#rgba`, `#rrggbb` or `#rrggbbaa`: the colour field below allows alpha. */
+export const COLOR_PATTERN = '^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$';
+export const COLOR_SWATCHES = ['#e5484d', '#f5a524', '#30a46c', '#0091ff', '#8e4ec6', '#1f2933'];
+export const colorField: FieldDef = {
+  type: 'color',
+  name: 'value',
+  label: '品牌顏色',
+  alpha: true,
+  swatches: COLOR_SWATCHES,
+  rules: [{ rule: 'pattern', pattern: COLOR_PATTERN, message: '顏色格式不正確' }],
+};
+export const telField: FieldDef = {
+  type: 'tel',
+  name: 'value',
+  label: '客服電話',
+  rules: [{ rule: 'pattern', pattern: TEL_PATTERN, message: '電話格式不正確' }],
+};
+/** The `html` layout node of the focused layout demo: one in-app link, one external link. */
+export const HTML_DEMO: FormNode = {
+  type: 'html',
+  html: '<p><strong>填寫前請先閱讀</strong>：地址用於寄送發票，修改後會立即套用。</p><ul><li>需要協助時，請先查看<a href="/admin/help">站內說明</a>。</li><li>行政規定見<a href="https://example.com/policy" target="_blank">外部公告（另開新分頁）</a>。</li></ul>',
+};
 export const FIELD_EXAMPLES: { field: FieldDef; value: unknown; title: string }[] = [
   ...(['text', 'textarea', 'email', 'url', 'mobile', 'password', 'hidden', 'display'] as const).map(
     (type) => ({
@@ -97,6 +122,8 @@ export const FIELD_EXAMPLES: { field: FieldDef; value: unknown; title: string }[
     value: null,
     title: '富文字編輯器',
   },
+  { field: colorField, value: '#0091ff', title: '顏色' },
+  { field: telField, value: '02-2345-6789', title: '市話與分機' },
   {
     field: address,
     value: { county: '臺北', zipcode: '100', district: '中正', address: '示範路1號' },
@@ -184,21 +211,43 @@ const RICH_TEXT_GUIDE = {
   expected:
     '載入舊內容不改動 HTML，也不算未儲存變更；上傳成功插入 <img src>，失敗不留下圖片；唯讀欄位以隔離 iframe 顯示，連結開新分頁。',
 };
+const COLOR_GUIDE = {
+  steps: [
+    '在「品牌顏色」輸入 #ABC 後按 Tab，欄位會改成小寫的 #aabbcc；輸入 #12345 再儲存會顯示「顏色格式不正確」。',
+    '按色塊開啟色盤，拖曳色相與透明度，或點預設色票；按 Esc 關閉後焦點回到色塊。',
+    '「不透明顏色」不開放透明度；按「在彈窗中編輯」確認色盤在彈窗內也能使用。',
+  ],
+  expected:
+    '儲存值只會是小寫 #rrggbb（開放透明度時可為 #rrggbbaa）或 null；無效文字原樣留在欄位並顯示錯誤。',
+};
+const TEL_GUIDE = {
+  steps: [
+    '在「客服電話」輸入 02-2345-6789#123、(04)2345678 或 +886 2 2345 6789，按「儲存後繼續編輯」。',
+    '改輸入 abc 再儲存，會顯示「電話格式不正確」且不送出請求。',
+  ],
+  expected: '合法電話照輸入內容（去除前後空白）儲存，不改寫格式；不合法的文字不會送出。',
+};
+const guideOf = (type: string) =>
+  type === 'richText'
+    ? RICH_TEXT_GUIDE
+    : type === 'color'
+      ? COLOR_GUIDE
+      : type === 'tel'
+        ? TEL_GUIDE
+        : {
+            steps: [
+              '修改可編輯欄位，再按「儲存後繼續編輯」。',
+              '比較目前草稿、實際請求與記憶體儲存值；唯讀欄位只供查看。',
+            ],
+            expected: '值出現在實際請求；精確數值保持字串。隱藏值仍可由草稿與請求核對。',
+          };
 export const FORM_EXAMPLES: FormExample[] = [
   ...FIELD_EXAMPLES.map(({ field, title }) => ({
     id: `form.field.${field.type}`,
     route: 'form-fields' as const,
     title,
     kind: 'field',
-    ...(field.type === 'richText'
-      ? RICH_TEXT_GUIDE
-      : {
-          steps: [
-            '修改可編輯欄位，再按「儲存後繼續編輯」。',
-            '比較目前草稿、實際請求與記憶體儲存值；唯讀欄位只供查看。',
-          ],
-          expected: '值出現在實際請求；精確數值保持字串。隱藏值仍可由草稿與請求核對。',
-        }),
+    ...guideOf(field.type),
   })),
   ...UPLOAD_PRESETS.map(({ id, title, field }) => ({
     id,
@@ -222,14 +271,29 @@ export const FORM_EXAMPLES: FormExample[] = [
     columns: '分欄',
     block: '卡片區塊',
     divider: '分隔線',
+    html: 'HTML 說明區塊',
     embeds: '巢狀物件',
   }).map(([id, title]) => ({
     id: `form.layout.${id}`,
     route: 'form-layouts' as const,
     title,
     kind: 'layout',
-    steps: ['先儲存空白城市，觀察錯誤與焦點。', '若使用頁籤，切換「地址分段」，輸入城市再儲存。'],
-    expected: '錯誤可導向對應分段；儲存值的 address.city 保持巢狀結構。',
+    ...(id === 'html'
+      ? {
+          steps: [
+            '切到「地址分段」，閱讀分隔線上方的說明區塊。',
+            '點「站內說明」連結（站內路徑）與「外部公告」連結（另開新分頁）。',
+          ],
+          expected:
+            '說明區塊只保留白名單標籤；站內連結留在本頁，外部連結帶 rel=noopener noreferrer 並另開新分頁；儲存值不含此區塊。',
+        }
+      : {
+          steps: [
+            '先儲存空白城市，觀察錯誤與焦點。',
+            '若使用頁籤，切換「地址分段」，輸入城市再儲存。',
+          ],
+          expected: '錯誤可導向對應分段；儲存值的 address.city 保持巢狀結構。',
+        }),
   })),
   ...Object.entries(behaviorTitles).map(([id, title]) => ({
     id: `form.behavior.${id}`,
