@@ -1,10 +1,7 @@
 import { useContext } from 'react';
 import { cn } from '../cn';
-import { FieldLayoutContext } from './field';
+import { CAPTION, FieldLayoutContext } from './field';
 import { safeHtmlToReact } from './safe-html';
-
-/** Same caption as a Field label, so a labelled block lines up with real fields. */
-const CAPTION = 'br:text-[13px] br:leading-5 br:font-medium br:text-text-label';
 
 /** Help-text typography; the rebuilt elements carry no classes of their own, so lists and code are styled from here. */
 const CONTENT = [

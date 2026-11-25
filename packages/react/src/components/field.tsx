@@ -5,7 +5,7 @@ import { useFieldRequiredText } from '../provider';
 export const FieldLayoutContext = createContext<'stacked' | 'horizontal'>('stacked');
 
 /** Labels are 13px medium in text-label: a label, not a heading (design rules: no bold labels). */
-const CAPTION = 'br:text-[13px] br:leading-5 br:font-medium br:text-text-label';
+export const CAPTION = 'br:text-[13px] br:leading-5 br:font-medium br:text-text-label';
 
 const DROP_IN = 'br:animate-[br-drop-in_var(--br-duration-base)_var(--br-ease-out)]';
 

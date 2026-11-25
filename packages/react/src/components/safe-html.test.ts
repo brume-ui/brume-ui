@@ -27,6 +27,7 @@ describe('safeHtmlToReact', () => {
     expect(out).not.toMatch(/\son[a-z]+=/i);
     expect(out).not.toMatch(/javascript:/i);
     expect(out).not.toMatch(/\s(style|id|src)=/i);
+    expect(out).not.toContain('class="c"');
   });
 
   it('drops dropped elements together with their content', () => {
@@ -61,6 +62,9 @@ describe('safeHtmlToReact', () => {
   it('keeps the anchor without href when the href is rejected', () => {
     expect(render('<a href="//evil.example">x</a>')).toMatch(/^<a [^>]*>x<\/a>$/);
     expect(render('<a href="data:x">x</a>')).not.toContain('href');
+    const out = render('<a href="data:x" target="_blank">x</a>');
+    expect(out).not.toContain('target');
+    expect(out).not.toContain('rel=');
   });
 
   it('keeps href and target on a link and adds rel', () => {
@@ -137,5 +141,17 @@ describe('safeHtmlToReact', () => {
     const out = render(html);
     expect(out).not.toContain('LEAK');
     expect(out).not.toContain('javascript');
+  });
+
+  it('stays bounded for a huge flat input instead of vanishing', () => {
+    const out = render('<b>x</b>'.repeat(200000));
+    expect(out).not.toBe('');
+    expect((out.match(/<b>/g) ?? []).length).toBeLessThanOrEqual(2000);
+    expect(out.endsWith('x')).toBe(true);
+  });
+
+  it('truncates input longer than 100,000 characters before parsing', () => {
+    const out = render(`${'a'.repeat(100000)}<b>late</b>`);
+    expect(out).toBe('a'.repeat(100000));
   });
 });

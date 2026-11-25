@@ -12,6 +12,7 @@ import { createElement, Fragment, type ReactNode } from 'react';
 
 const MAX_DEPTH = 20;
 const MAX_NODES = 2000;
+const MAX_INPUT = 100_000;
 
 const HTML_NS = 'http://www.w3.org/1999/xhtml';
 
@@ -93,7 +94,16 @@ interface Budget {
 
 function convertChildren(parent: Node, depth: number, budget: Budget): ReactNode[] {
   const out: ReactNode[] = [];
-  for (const child of Array.from(parent.childNodes)) {
+  const kids = Array.from(parent.childNodes);
+  for (let i = 0; i < kids.length; i++) {
+    const child = kids[i] as Node;
+    if (budget.nodes >= MAX_NODES) {
+      // Budget spent: the rest of this sibling list becomes ONE string, so output stays bounded.
+      let rest = '';
+      for (let j = i; j < kids.length; j++) rest += plainText(kids[j] as Node);
+      if (rest !== '') out.push(rest);
+      break;
+    }
     const converted = convertNode(child, depth, budget);
     if (converted === null || converted === '') continue;
     if (Array.isArray(converted)) out.push(...converted);
@@ -122,21 +132,24 @@ function convertNode(node: Node, depth: number, budget: Budget): ReactNode | Rea
   if (spec.className) props.className = spec.className;
   if (spec.tag === 'a') {
     const href = safeHref(el.getAttribute('href') ?? '');
-    if (href !== undefined) props.href = href;
-    if ((el.getAttribute('target') ?? '').trim().toLowerCase() === '_blank') {
-      props.target = '_blank';
+    if (href !== undefined) {
+      props.href = href;
+      props.rel = 'noopener noreferrer';
+      if ((el.getAttribute('target') ?? '').trim().toLowerCase() === '_blank') {
+        props.target = '_blank';
+      }
     }
-    props.rel = 'noopener noreferrer';
   }
   return spec.tag === 'br'
     ? createElement(spec.tag, props)
     : createElement(spec.tag, props, ...children);
 }
 
+/** Client-only: returns null where there is no DOMParser (server rendering). */
 export function safeHtmlToReact(html: string): ReactNode {
   if (typeof DOMParser === 'undefined' || html === '') return null;
   try {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const doc = new DOMParser().parseFromString(html.slice(0, MAX_INPUT), 'text/html');
     return createElement(Fragment, null, ...convertChildren(doc.body, 0, { nodes: 0 }));
   } catch {
     return null;
