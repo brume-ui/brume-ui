@@ -15,6 +15,7 @@ export function TextField(props: FieldProps) {
     placeholder: def.placeholder,
     'aria-describedby': describedBy,
   };
+  const phone = def.type === 'mobile' || def.type === 'tel';
   let control: ReactElement<Record<string, unknown>>;
   if (def.type === 'number' || def.type === 'decimal' || def.type === 'currency') {
     control = (
@@ -53,9 +54,9 @@ export function TextField(props: FieldProps) {
         <TextInput
           {...textProps}
           maxLength={def.type === 'text' ? def.maxLength : undefined}
-          type={def.type === 'mobile' ? 'tel' : def.type}
-          inputMode={def.type === 'mobile' ? 'tel' : def.type === 'url' ? 'url' : undefined}
-          autoComplete={def.type === 'email' ? 'email' : def.type === 'mobile' ? 'tel' : undefined}
+          type={phone ? 'tel' : def.type}
+          inputMode={phone ? 'tel' : def.type === 'url' ? 'url' : undefined}
+          autoComplete={def.type === 'email' ? 'email' : phone ? 'tel' : undefined}
         />
       );
   }

@@ -38,7 +38,7 @@ export {
 export { Checkbox, type CheckboxProps } from './components/checkbox';
 export { CheckboxGroup, type CheckboxGroupProps } from './components/checkbox-group';
 export { Chip, type ChipProps } from './components/chip';
-export { ColorInput, type ColorInputProps } from './components/color-input';
+export { ColorChip, ColorInput, type ColorInputProps } from './components/color-input';
 export { Combobox, type ComboboxLoader, type ComboboxProps } from './components/combobox';
 export { CompactTable, type CompactTableProps, formatCell } from './components/compact-table';
 export { ConfirmHost, type ConfirmOptions, useConfirm } from './components/confirm';

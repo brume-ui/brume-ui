@@ -1,4 +1,11 @@
-import { Alert, FormBlock, FormDivider, FormFieldset, FormSection } from '@brume-ui/brume-react';
+import {
+  Alert,
+  FormBlock,
+  FormDivider,
+  FormFieldset,
+  FormHtml,
+  FormSection,
+} from '@brume-ui/brume-react';
 import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
 import type { CSSProperties, ReactNode } from 'react';
 import { MissingComponent } from '../../missing-component';
@@ -187,6 +194,9 @@ export function Nodes(props: NodesProps) {
               break;
             case 'divider':
               content = <FormDivider label={node.label} />;
+              break;
+            case 'html':
+              content = <FormHtml html={node.html} label={node.label} />;
               break;
             case 'embeds':
               content = (

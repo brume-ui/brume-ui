@@ -9,6 +9,7 @@ describe('static and switch fields', () => {
     'email',
     'url',
     'mobile',
+    'tel',
     'password',
     'number',
     'decimal',

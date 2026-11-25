@@ -38,8 +38,11 @@ Values are a nested JSON object. Paths are relative to that root, without a
 properties only. Empty paths address the root. Prototype-related path segments
 (`__proto__`, `constructor`, `prototype`) are rejected for writes and unreadable.
 
-- Text, textarea, email, URL, mobile, hidden and password use strings. Password
-  values always load as `''`; an empty edit password means leave it unchanged.
+- Text, textarea, email, URL, mobile, tel, color, hidden and password use strings. Password
+  values always load as `''`; an empty edit password means leave it unchanged. `color` is
+  canonical lowercase `#rrggbb` (`#rrggbbaa` with `alpha`) or null; `tel` is trimmed text as typed.
+- The `html` layout node is display-only content: it holds no value and takes no part in
+  validation, row defaults or relation summaries (like `divider`).
 - `date` is `YYYY-MM-DD`; `datetime` is `YYYY-MM-DDTHH:mm`.
 - `dateRange` and `datetimeRange` are `{ start?, end? }` using the corresponding formats.
 - `number` is a JSON number or null. `decimal` and `currency` are fixed-scale

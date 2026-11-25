@@ -69,6 +69,8 @@ export function canonicalizeFieldValue(
       'email',
       'url',
       'mobile',
+      'tel',
+      'color',
       'password',
       'select',
       'radio',

@@ -36,6 +36,23 @@ const EMPTY: React.CSSProperties = {
 };
 
 /**
+ * A read-only colour swatch (decorative: the hex text next to it carries the meaning). Anything
+ * that is not a valid hex, including non-strings from corrupt data, shows the empty slash.
+ */
+export function ColorChip({ value }: { value: unknown }) {
+  const hex = typeof value === 'string' ? normalizeHex(value, true) : null;
+  return (
+    <span
+      aria-hidden="true"
+      className="br:mr-2 br:inline-block br:size-5 br:shrink-0 br:overflow-hidden br:rounded-input br:border br:border-border-strong"
+      style={hex ? CHECKERBOARD : EMPTY}
+    >
+      {hex ? <span className="br:block br:size-full" style={{ backgroundColor: hex }} /> : null}
+    </span>
+  );
+}
+
+/**
  * Hex colour field: a text input with a colour chip that opens a picker (react-colorful) and
  * optional swatches. Typing reports the raw text so validation can speak about it; blur replaces a
  * valid value by its canonical form and an empty box by null.

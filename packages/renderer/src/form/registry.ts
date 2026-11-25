@@ -1,6 +1,7 @@
 import type { FieldDef } from '@brume-ui/brume-schema';
 import type { FieldComponent } from './contract';
 import { ChoiceField } from './fields/choice';
+import { ColorField } from './fields/color';
 import { DateField } from './fields/date';
 import { HiddenField, ReadOnlyField, SwitchField } from './fields/misc';
 import { RelationField } from './fields/relation';
@@ -27,6 +28,7 @@ for (const type of [
   'email',
   'url',
   'mobile',
+  'tel',
   'password',
   'number',
   'decimal',
@@ -45,6 +47,7 @@ for (const type of ['select', 'multipleSelect', 'radio', 'checkbox', 'tags'] as 
 
 registerBuiltInField('upload', UploadField);
 registerBuiltInField('richText', RichTextField);
+registerBuiltInField('color', ColorField);
 
 registerBuiltInField('relation', RelationField);
 

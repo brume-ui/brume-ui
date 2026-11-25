@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { setup } from './test-utils';
 
 describe('text and number fields', () => {
-  it.each(['text', 'textarea', 'email', 'url', 'mobile', 'password'] as const)(
+  it.each(['text', 'textarea', 'email', 'url', 'mobile', 'tel', 'password'] as const)(
     '%s labels its control and emits strings',
     (type) => {
       const { onChange, onBlur } = setup({
@@ -29,7 +29,7 @@ describe('text and number fields', () => {
         expect(control.getAttribute('type')).toBe('url');
         expect(control.getAttribute('inputmode')).toBe('url');
       }
-      if (type === 'mobile') {
+      if (type === 'mobile' || type === 'tel') {
         expect(control.getAttribute('type')).toBe('tel');
         expect(control.getAttribute('inputmode')).toBe('tel');
         expect(control.getAttribute('autocomplete')).toBe('tel');

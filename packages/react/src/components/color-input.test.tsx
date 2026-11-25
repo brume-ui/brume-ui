@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
-import { ColorInput, type ColorInputProps } from './color-input';
+import { ColorChip, ColorInput, type ColorInputProps } from './color-input';
 
 function Harness(props: Partial<ColorInputProps> & { initial?: string | null }) {
   const { initial = null, onChange, ...rest } = props;
@@ -161,5 +161,21 @@ describe('ColorInput', () => {
     fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
     await waitFor(() => expect(document.querySelector('.react-colorful')).toBeNull());
     expect(document.activeElement).toBe(chip);
+  });
+});
+
+describe('ColorChip', () => {
+  it('paints a valid colour and hides itself from assistive tech', () => {
+    const { container } = render(<ColorChip value="#ff0000" />);
+    const chip = container.firstElementChild as HTMLElement;
+    expect(chip.getAttribute('aria-hidden')).toBe('true');
+    expect((chip.firstElementChild as HTMLElement).style.backgroundColor).toBe('rgb(255, 0, 0)');
+  });
+  it('shows the empty slash for null, non-strings and invalid text', () => {
+    for (const value of [null, 7, 'red', '#12345']) {
+      const { container, unmount } = render(<ColorChip value={value} />);
+      expect((container.firstElementChild as HTMLElement).children).toHaveLength(0);
+      unmount();
+    }
   });
 });
