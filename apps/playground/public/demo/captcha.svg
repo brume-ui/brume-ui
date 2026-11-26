@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="36" viewBox="0 0 120 36" role="img" aria-label="驗證碼示意圖">
+  <rect width="120" height="36" fill="#eef2f6"/>
+  <path d="M0 10 C30 0 50 30 80 14 S110 24 120 8" stroke="#8a97a6" stroke-width="1.2" fill="none"/>
+  <path d="M0 28 C20 36 60 6 120 30" stroke="#b4bfcc" stroke-width="1" fill="none"/>
+  <text x="60" y="25" text-anchor="middle" font-family="monospace" font-size="20" font-weight="700" letter-spacing="4" fill="#1f2933">A7K9</text>
+</svg>

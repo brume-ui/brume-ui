@@ -6,6 +6,7 @@ import type {
   RichTextImageResponse,
 } from '@brume-ui/brume-schema';
 import type { buildFocusedFixture } from './form-feature-fixtures';
+import { CAPTCHA_ANSWER } from './small-fields-data';
 export type Reply = 'success' | 'server422' | 'cancel' | 'network';
 export interface Store {
   saved: Record<string, unknown>;
@@ -155,6 +156,11 @@ export function createFocusedAdapter(
             },
           };
         }
+        if (
+          exampleId === 'form.field.captcha' &&
+          (values as Record<string, unknown>).code !== CAPTCHA_ANSWER
+        )
+          return { status: 422, data: { errors: { code: ['驗證碼不正確。'] } } };
         if (current.reply === 'server422')
           return {
             status: 422,
@@ -180,6 +186,8 @@ export function createFocusedAdapter(
             values,
             Object.keys(store.current.saved).length ? store.current.saved : fixture.values,
           );
+        // The captcha answer is checked and dropped; it is never part of the saved attributes.
+        if (exampleId === 'form.field.captcha') delete accepted.code;
         if (typeof accepted.name === 'string') accepted.name = accepted.name.trim();
         if (exampleId === 'form.behavior.readonly-disabled')
           for (const key of ['readonly', 'disabled', 'display'])

@@ -17,6 +17,7 @@ import { buildFocusedFixture } from './form-feature-fixtures';
 import { createFocusedAdapter, type Reply, type Store } from './form-feature-memory';
 import { Page, Panel } from './page';
 import { RichTextDemoTools } from './rich-text-demo';
+import { IconDemoTools } from './small-fields-demo';
 
 export function FocusedFormRoute({
   route,
@@ -373,6 +374,7 @@ function FocusedContent({
             />
           ) : null}
           {exampleId === 'form.field.color' ? <ColorDemoTools /> : null}
+          {exampleId === 'form.field.icon' ? <IconDemoTools /> : null}
           {exampleId.includes('condition') || exampleId === 'form.behavior.enable-when' ? (
             <Button
               onClick={() => {

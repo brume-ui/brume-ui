@@ -13,6 +13,7 @@ import {
   upload,
 } from './form-feature-data';
 import { buildRichTextFixture } from './rich-text-demo-data';
+import { BUTTON_DEMO, SMALL_FIELD_FIXTURES } from './small-fields-data';
 
 const eq = (path: string, value: string | boolean, scope: 'root' | 'row' = 'root'): Condition => ({
   op: 'eq',
@@ -72,6 +73,9 @@ export function buildFocusedFixture(id: string): {
       }),
     ];
     values = { value: '#0091ff', plain: '#30a46c' };
+  } else if (SMALL_FIELD_FIXTURES[id]) {
+    form.nodes = structuredClone(SMALL_FIELD_FIXTURES[id].nodes);
+    values = structuredClone(SMALL_FIELD_FIXTURES[id].values);
   } else if (example.kind === 'field') {
     const f = FIELD_EXAMPLES.find((x) => `form.field.${x.field.type}` === id);
     if (!f) throw new Error(`Missing focused field: ${id}`);
@@ -110,6 +114,7 @@ export function buildFocusedFixture(id: string): {
         ],
       },
       ...(id === 'form.layout.html' ? [HTML_DEMO] : []),
+      ...(id === 'form.layout.button' ? structuredClone(BUTTON_DEMO) : []),
       { type: 'divider', label: '地址資料' },
       embed,
     ];
