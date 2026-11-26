@@ -1,4 +1,4 @@
-import { icons } from 'lucide-react';
+import { Circle, icons } from 'lucide-react';
 import { type KeyboardEvent, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../cn';
 import { resolveIcon } from '../layout/menu-utils';
@@ -34,7 +34,11 @@ function toKebab(pascal: string): string {
 }
 
 /** Every lucide icon name in kebab-case (the same naming the menu resolves), computed once. */
-export const ALL_ICON_NAMES: string[] = [...new Set(Object.keys(icons).map(toKebab))].sort();
+let iconNames: string[] | null = null;
+export function getIconNames(): string[] {
+  iconNames ??= [...new Set(Object.keys(icons).map(toKebab))].sort();
+  return iconNames;
+}
 
 /** An icon by its kebab-case lucide name; unknown names show the menu's fallback glyph. */
 export function IconGlyph({ name, className }: { name: string; className?: string }) {
@@ -67,6 +71,7 @@ export function IconInput({
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const deferred = useDeferredValue(query);
+  const searchRef = useRef<HTMLInputElement>(null);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   // A disabled field never keeps a panel open, and re-enabling must not bring it back.
   useEffect(() => {
@@ -74,13 +79,16 @@ export function IconInput({
   }, [disabled]);
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
 
-  const pool = useMemo(() => allowed ?? ALL_ICON_NAMES, [allowed]);
+  const pool = useMemo(() => allowed ?? getIconNames(), [allowed]);
   const matches = useMemo(() => {
     const needle = deferred.trim().toLowerCase();
     return needle === '' ? pool : pool.filter((name) => name.includes(needle));
   }, [pool, deferred]);
   const shown = matches.slice(0, MAX_ICON_RESULTS);
   const capped = matches.length > shown.length;
+  const valueIcon = resolveIcon(value.trim());
+  // Unknown names fall back to Circle, which must not match every other unknown name.
+  const valueKnown = valueIcon !== Circle || value.trim() === 'circle';
   const current = Math.min(active, Math.max(shown.length - 1, 0));
 
   const changeOpen = (next: boolean) => {
@@ -106,7 +114,10 @@ export function IconInput({
       ArrowDown: COLUMNS,
       ArrowUp: -COLUMNS,
     };
-    if (event.key in step) {
+    if (event.key === 'ArrowUp' && index < COLUMNS) {
+      event.preventDefault();
+      searchRef.current?.focus();
+    } else if (event.key in step) {
       event.preventDefault();
       moveTo(index + (step[event.key] ?? 0));
     } else if (event.key === 'Home') {
@@ -162,6 +173,7 @@ export function IconInput({
       />
       <Popover trigger={trigger} title={label} open={open && !disabled} onOpenChange={changeOpen}>
         <input
+          ref={searchRef}
           type="search"
           value={query}
           aria-label={t('icon.search')}
@@ -197,7 +209,7 @@ export function IconInput({
                 aria-label={name}
                 title={name}
                 tabIndex={index === current ? 0 : -1}
-                aria-pressed={name === value}
+                aria-pressed={valueKnown && resolveIcon(name) === valueIcon}
                 onClick={() => pick(name)}
                 onKeyDown={(e) => onGridKey(e, index, name)}
                 className={cn(

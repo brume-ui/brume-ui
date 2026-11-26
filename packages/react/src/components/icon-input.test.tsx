@@ -5,7 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { resolveIcon } from '../layout/menu-utils';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
-import { ALL_ICON_NAMES, IconGlyph, IconInput, type IconInputProps } from './icon-input';
+import { Dialog } from './dialog';
+import { getIconNames, IconGlyph, IconInput, type IconInputProps } from './icon-input';
 
 function Harness(props: Partial<IconInputProps> & { initial?: string }) {
   const { initial = '', onChange, ...rest } = props;
@@ -33,10 +34,11 @@ const search = () => screen.getByRole('searchbox', { name: '搜尋圖示' });
 const flush = () => act(async () => {});
 
 describe('icon names', () => {
+  const NAMES = getIconNames();
   it('every generated name is a valid name that resolves to a real icon, not the fallback', () => {
-    expect(ALL_ICON_NAMES.length).toBeGreaterThan(1000);
-    expect(new Set(ALL_ICON_NAMES).size).toBe(ALL_ICON_NAMES.length);
-    const bad = ALL_ICON_NAMES.filter(
+    expect(NAMES.length).toBeGreaterThan(1000);
+    expect(new Set(NAMES).size).toBe(NAMES.length);
+    const bad = NAMES.filter(
       (n) => !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(n) || n.length > 64 || resolveIcon(n) === Circle,
     );
     // `circle` itself is a real icon that happens to be the fallback component.
@@ -44,8 +46,8 @@ describe('icon names', () => {
   });
 
   it('round-trips names with digits', () => {
-    expect(ALL_ICON_NAMES).toContain('grid-3x3');
-    expect(ALL_ICON_NAMES).toContain('grid-2x2-check');
+    expect(NAMES).toContain('grid-3x3');
+    expect(NAMES).toContain('grid-2x2-check');
   });
 });
 
@@ -189,5 +191,82 @@ describe('IconGlyph', () => {
     known.unmount();
     const unknown = render(<IconGlyph name="definitely-not-an-icon" />);
     expect(unknown.container.querySelector('svg')).not.toBeNull();
+  });
+});
+
+describe('IconInput selection and keyboard', () => {
+  const pressed = () => iconButtons().filter((b) => b.getAttribute('aria-pressed') === 'true');
+
+  it('marks the button whose icon equals the value, even under another spelling', async () => {
+    render(<Harness initial="arrow-down-0-1" icons={['arrow-down-01', 'home']} />);
+    open();
+    await flush();
+    expect(pressed().map((b) => b.getAttribute('aria-label'))).toEqual(['arrow-down-01']);
+  });
+
+  it('marks nothing for an unknown or empty value', async () => {
+    const { unmount } = render(<Harness initial="no-such" icons={['home', 'circle']} />);
+    open();
+    await flush();
+    expect(pressed()).toHaveLength(0);
+    unmount();
+    render(<Harness initial="" icons={['home', 'circle']} />);
+    open();
+    await flush();
+    expect(pressed()).toHaveLength(0);
+  });
+
+  it('ArrowUp from the first row returns to the search box', async () => {
+    render(<Harness icons={['a', 'b']} />);
+    open();
+    await flush();
+    fireEvent.keyDown(iconButtons()[1] as Element, { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(search());
+  });
+
+  it('keeps exactly one tabbable button when the filter changes or shrinks below the active index', async () => {
+    render(<Harness icons={['aa', 'ab', 'ac', 'bb']} />);
+    open();
+    await flush();
+    fireEvent.keyDown(iconButtons()[0] as Element, { key: 'End' });
+    expect(iconButtons().map((b) => b.tabIndex)).toEqual([-1, -1, -1, 0]);
+    fireEvent.change(search(), { target: { value: 'a' } });
+    await waitFor(() => expect(iconButtons()).toHaveLength(3));
+    expect(iconButtons().filter((b) => b.tabIndex === 0)).toHaveLength(1);
+    expect(iconButtons()[0]?.tabIndex).toBe(0);
+    fireEvent.keyDown(iconButtons()[0] as Element, { key: 'End' });
+    fireEvent.change(search(), { target: { value: 'bb' } });
+    await waitFor(() => expect(iconButtons()).toHaveLength(1));
+    expect(iconButtons()[0]?.tabIndex).toBe(0);
+  });
+
+  it('works inside a modal Dialog: pick keeps the dialog open; Escape closes only the picker', async () => {
+    const onOpenChange = vi.fn();
+    const onChange = vi.fn();
+    render(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <Dialog open onOpenChange={onOpenChange} title="表單">
+          <IconInput label="圖示" value="" onChange={onChange} icons={['a', 'b', 'c']} />
+        </Dialog>
+      </BrumeProvider>,
+    );
+    fireEvent.click(trigger());
+    await flush();
+    fireEvent.keyDown(search(), { key: 'ArrowDown' });
+    fireEvent.keyDown(document.activeElement as Element, { key: 'ArrowRight' });
+    fireEvent.keyDown(document.activeElement as Element, { key: 'Enter' });
+    expect(onChange).toHaveBeenLastCalledWith('b');
+    await waitFor(() => expect(screen.queryByRole('group', { name: '圖示清單' })).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(trigger()));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    fireEvent.click(trigger());
+    await flush();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('group', { name: '圖示清單' })).toBeNull());
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger());
   });
 });

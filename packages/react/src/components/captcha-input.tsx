@@ -66,7 +66,10 @@ export function CaptchaInput({
       <img
         src={withCounter(src, counter)}
         alt={t('captcha.image')}
-        className="br:h-9 br:rounded-input br:border br:border-border-strong br:bg-surface"
+        width={120}
+        height={36}
+        draggable={false}
+        className="br:h-9 br:w-[120px] br:shrink-0 br:object-contain br:rounded-input br:border br:border-border-strong br:bg-surface"
       />
       <input
         id={id}

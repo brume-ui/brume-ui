@@ -37,6 +37,14 @@ describe('CaptchaInput', () => {
     expect(box.getAttribute('spellcheck')).toBe('false');
   });
 
+  it('reserves a fixed box so the row does not shift while loading', () => {
+    render(<Harness />);
+    expect(img().getAttribute('width')).toBe('120');
+    expect(img().getAttribute('height')).toBe('36');
+    expect(img().draggable).toBe(false);
+    expect(img().className).toContain('br:object-contain');
+  });
+
   it('appends with & when src already has a query string, and keeps the hash last', () => {
     const { unmount } = render(<Harness src="/c?config=flat" />);
     expect(img().getAttribute('src')).toBe('/c?config=flat&r=0');
