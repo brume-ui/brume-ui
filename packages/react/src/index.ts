@@ -29,6 +29,7 @@ export {
   type ButtonVariant,
   buttonClasses,
 } from './components/button';
+export { CaptchaInput, type CaptchaInputProps } from './components/captcha-input';
 export {
   CellEditButton,
   type CellEditButtonProps,
@@ -55,6 +56,7 @@ export {
 export { FormControls } from './components/form-controls';
 export { FormHtml } from './components/form-html';
 export { IconButton, type IconButtonProps } from './components/icon-button';
+export { IconGlyph, IconInput, type IconInputProps } from './components/icon-input';
 export { isIp } from './components/ip';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
 export { NumberInput, type NumberInputProps } from './components/number-input';
