@@ -195,9 +195,12 @@ export function IconInput({
         {shown.length === 0 ? (
           <p className="br:m-0 br:text-text-muted">{t('icon.empty')}</p>
         ) : (
-          <fieldset
+          // A div, not a fieldset: Chromium does not scroll an overflowing fieldset with the mouse wheel.
+          // biome-ignore lint/a11y/useSemanticElements: see above; the group role gives the same name and semantics.
+          <div
+            role="group"
             aria-label={t('icon.grid')}
-            className="br:m-0 br:grid br:max-h-60 br:min-w-0 br:grid-cols-8 br:gap-1 br:overflow-y-auto br:border-0 br:p-0"
+            className="br:grid br:max-h-60 br:min-w-0 br:grid-cols-8 br:gap-1 br:overflow-y-auto"
           >
             {shown.map((name, index) => (
               <button
@@ -220,7 +223,7 @@ export function IconInput({
                 <IconGlyph name={name} className="br:size-5" />
               </button>
             ))}
-          </fieldset>
+          </div>
         )}
         {capped ? (
           <p className="br:m-0 br:mt-2 br:text-xs br:text-text-muted">
