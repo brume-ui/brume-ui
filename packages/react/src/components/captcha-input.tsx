@@ -89,7 +89,9 @@ export function CaptchaInput({
         onBlur={() => onBlur?.()}
         className={cn(
           CONTROL_BASE,
-          'br:min-w-0 br:flex-1',
+          // w-0 + flex-1: the box's intrinsic width must not count toward the row's min-content
+          // (it made the row wider than a narrow form column and pushed the refresh button out).
+          'br:w-0 br:min-w-0 br:flex-1',
           isInvalid ? 'br:border-danger' : CONTROL_BORDER,
           FOCUS_RING,
         )}
