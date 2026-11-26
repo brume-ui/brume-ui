@@ -80,7 +80,7 @@ test.describe('ip field', () => {
 });
 
 test.describe('rate field', () => {
-  test('shows a % suffix, stores a decimal string and rejects out-of-range and extra digits', async ({
+  test('shows a % suffix, stores a decimal string and rejects out-of-range and non-numeric text', async ({
     page,
   }) => {
     await openField(page, 'rate');
@@ -92,6 +92,10 @@ test.describe('rate field', () => {
     await save(page);
     await expect(fieldError(page, '不可大於 100。')).toBeVisible();
     await expect(box).toHaveAttribute('aria-invalid', 'true');
+    await box.fill('abc');
+    await save(page);
+    await expect(box).toHaveAttribute('aria-invalid', 'true');
+    await expect(requests(page)).toContainText('儲存請求：1');
     expect((await wire(page)).value).toBe('12.5');
   });
 });
@@ -134,17 +138,30 @@ test.describe('slider', () => {
     await expect(slider(page, '必填等級')).toHaveValue('10');
     await expect(page.getByTestId('form-dirty')).toHaveText('無未儲存變更');
     expect((await draft(page)).level).toBe(10);
-    // A hash change is not blocked by a leave prompt when nothing was edited.
-    let prompted = false;
-    page.on('dialog', async (dialog) => {
-      prompted = true;
-      await dialog.dismiss();
-    });
     await save(page);
     await expect.poll(async () => (await wire(page)).level).toBe(10);
     expect(await wire(page)).toEqual({ value: 30, ratio: 0.3, level: 10 });
     await expect(page.getByTestId('form-dirty')).toHaveText('無未儲存變更');
-    expect(prompted).toBe(false);
+  });
+
+  test('leaving an untouched form with a required empty slider raises no prompt', async ({
+    page,
+  }) => {
+    await openField(page, 'slider');
+    await expect(page.getByTestId('form-dirty')).toHaveText('無未儲存變更');
+    const dialogs: string[] = [];
+    page.on('dialog', async (dialog) => {
+      dialogs.push(dialog.type());
+      await dialog.dismiss();
+    });
+    // A real in-app navigation: the router moves on and nothing asks to confirm.
+    await page.evaluate(() => {
+      window.location.hash = '/button';
+    });
+    await expect(page.getByTestId('pg-button')).toBeVisible();
+    await expect(page.getByTestId('pg-form-fields')).toHaveCount(0);
+    expect(dialogs).toEqual([]);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('moving the required slider is a change', async ({ page }) => {
@@ -213,9 +230,11 @@ test.describe('captcha', () => {
   }) => {
     await openField(page, 'captcha');
     await expect(image(page)).toBeVisible();
-    expect(await image(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(
-      0,
-    );
+    await expect
+      .poll(() =>
+        image(page).evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0),
+      )
+      .toBe(true);
     const first = await srcOf(page);
     expect(first).toMatch(/^\/demo\/captcha\.svg/);
     const refresh = page.getByRole('button', { name: '重新取得驗證圖片' });
@@ -224,7 +243,7 @@ test.describe('captcha', () => {
     expect(second).not.toBe(first);
     expect(second).toMatch(/captcha\.svg\?r=\d+/);
     await refresh.click();
-    expect(await srcOf(page)).not.toBe(second);
+    await expect.poll(() => srcOf(page)).not.toBe(second);
     // The refreshed URL still loads (the static file ignores the query).
     await expect
       .poll(() =>
@@ -243,7 +262,7 @@ test.describe('captcha', () => {
     await expect(fieldError(page, '驗證碼不正確。')).toBeVisible();
     await expect(requests(page)).toContainText('儲存請求：1');
     expect((await wire(page)).code).toBe('WRONG');
-    expect(await srcOf(page)).not.toBe(before);
+    await expect.poll(() => srcOf(page)).not.toBe(before);
     await expect(answer(page)).toHaveValue('');
     expect((await draft(page)).code).toBeNull();
     // The other field's draft survives the failed submit.
@@ -292,7 +311,9 @@ const grid = (page: Page) => page.getByRole('group', { name: '圖示清單' });
 const scrollTop = (loc: Locator) => loc.evaluate((el) => el.scrollTop);
 
 test.describe('icon field', () => {
-  test('page: keyboard search and pick, Escape returns focus to the trigger', async ({ page }) => {
+  test('page: keyboard search, arrow to a result and Enter picks it; focus returns to the trigger', async ({
+    page,
+  }) => {
     await openField(page, 'icon');
     await iconTrigger(page).focus();
     await page.keyboard.press('Enter');
@@ -313,6 +334,20 @@ test.describe('icon field', () => {
     await expect.poll(async () => (await wire(page)).value).toBe(name);
   });
 
+  test('page: Escape closes the picker, focus returns to the trigger and the value is unchanged', async ({
+    page,
+  }) => {
+    await openField(page, 'icon');
+    await iconTrigger(page).click();
+    await expect(picker(page)).toBeVisible();
+    await picker(page).getByRole('searchbox', { name: '搜尋圖示' }).fill('user');
+    await page.keyboard.press('Escape');
+    await expect(picker(page)).toBeHidden();
+    await expect(iconTrigger(page)).toBeFocused();
+    await expect(iconBox(page)).toHaveValue('settings');
+    expect((await draft(page)).value).toBe('settings');
+  });
+
   test('page: the unfiltered list is capped and the wheel scrolls the grid', async ({ page }) => {
     await openField(page, 'icon');
     await iconTrigger(page).click();
@@ -320,9 +355,12 @@ test.describe('icon field', () => {
     await expect(grid(page).getByRole('button')).toHaveCount(120);
     await expect(picker(page).getByText('僅顯示前 120 個圖示')).toBeVisible();
     const g = grid(page);
+    const pageBefore = await page.evaluate(() => window.scrollY);
     await g.hover();
     await page.mouse.wheel(0, 300);
     await expect.poll(() => scrollTop(g)).toBeGreaterThan(0);
+    // The wheel moved the grid, not the page behind the popover.
+    expect(await page.evaluate(() => window.scrollY)).toBe(pageBefore);
   });
 
   test('a stored name lucide no longer has still shows the fallback glyph and saves', async ({
@@ -395,7 +433,16 @@ test.describe('icon field', () => {
       await g.hover();
       await page.mouse.wheel(0, 300);
       await expect.poll(() => scrollTop(g)).toBeGreaterThan(0);
-      const afterOne = await scrollTop(g);
+      // Wait for the smooth/async scroll to settle before reading the position.
+      let afterOne = -1;
+      await expect
+        .poll(async () => {
+          const now = await scrollTop(g);
+          const settled = now === afterOne;
+          afterOne = now;
+          return settled;
+        })
+        .toBe(true);
       // And back up again: the wheel works in both directions inside the dialog.
       await page.mouse.wheel(0, -150);
       await expect.poll(() => scrollTop(g)).toBeLessThan(afterOne);
@@ -441,7 +488,7 @@ for (const scheme of SCHEMES) {
   for (const width of [1440, 390]) {
     test.describe(`fields-4 screenshots ${scheme} ${width}px`, () => {
       test.use({ viewport: { width, height: 900 } });
-      for (const type of ['slider', 'range', 'captcha']) {
+      for (const type of ['slider', 'range', 'captcha', 'ip', 'rate', 'time', 'timeRange']) {
         test(`${type} demo (${scheme}, ${width})`, async ({ page }) => {
           await openField(page, type, scheme);
           await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);

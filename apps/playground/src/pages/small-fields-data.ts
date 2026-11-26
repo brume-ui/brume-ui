@@ -36,6 +36,7 @@ export const rangeField: FieldDef = {
 export const iconField: FieldDef = { type: 'icon', name: 'value', label: '選單圖示' };
 export const timeField: FieldDef = { type: 'time', name: 'value', label: '營業開始' };
 export const timeRangeField: FieldDef = { type: 'timeRange', name: 'value', label: '營業時段' };
+// The server emits both `required: true` and the `required` rule (the client only enforces the rule).
 export const captchaField: FieldDef = {
   type: 'captcha',
   name: 'code',
