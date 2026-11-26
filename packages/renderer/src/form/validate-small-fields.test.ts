@@ -69,7 +69,7 @@ describe('slider', () => {
 });
 
 describe('rate', () => {
-  it('checks decimals shape and honours rule bounds', () => {
+  it('accepts a decimal string and honours rule bounds', () => {
     const d = def('rate', {
       decimals: 2,
       rules: [{ rule: 'max', value: 100, message: 'big' }],

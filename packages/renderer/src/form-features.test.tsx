@@ -45,8 +45,8 @@ describe('focused public Form examples', () => {
       await waitFor(() => expect(output('form-saved').value).toEqual({ start, end }));
     },
   );
-  // richText has its own multi-editor demo (a required field starts empty); see the test below.
-  it.each(FIELD_EXAMPLES.filter((x) => x.field.type !== 'richText'))(
+  // richText and captcha have their own tests below (a required field that starts empty).
+  it.each(FIELD_EXAMPLES.filter((x) => x.field.type !== 'richText' && x.field.type !== 'captcha'))(
     'serializes the public $field.type field through a real save request',
     async ({ field, value }) => {
       renderWithBrume(<FocusedFormDemo exampleId={`form.field.${field.type}`} />);
@@ -57,6 +57,19 @@ describe('focused public Form examples', () => {
       if (field.type === 'hidden') expect(screen.queryByLabelText(field.label)).toBeNull();
     },
   );
+  it('blocks the captcha demo save until an answer is typed, then sends it but never stores it', async () => {
+    renderWithBrume(<FocusedFormDemo exampleId="form.field.captcha" />);
+    save();
+    await waitFor(() => expect(screen.getAllByText('請輸入驗證碼。').length).toBeGreaterThan(0));
+    expect(output('form-wire')).toEqual({});
+    change('驗證碼', 'A7K9');
+    save();
+    await waitFor(() => expect(output('form-wire').code).toBe('A7K9'));
+    await waitFor(() => expect(output('form-saved').name).toBe('示範訪客'));
+    expect(output('form-saved')).not.toHaveProperty('code');
+    // The answer is for one submit only: the form reset leaves it empty.
+    await waitFor(() => expect(output('form-draft').code ?? null).toBeNull());
+  });
   it('blocks the richText demo save on its required, empty-looking summary (<p><br></p>)', async () => {
     renderWithBrume(<FocusedFormDemo exampleId="form.field.richText" />);
     expect(output('form-draft').summary).toBe('<p><br></p>');
