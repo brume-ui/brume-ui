@@ -42,6 +42,8 @@ export interface NumberInputProps
   prefix?: string;
   /** Include the visual prefix in the accessible name (default true). */
   announcePrefix?: boolean;
+  /** Visual suffix such as '%'. Hidden from screen readers; it is added to the field's name after the prefix. */
+  suffix?: string;
   /**
    * A minus sign is accepted only when `min` < 0 (or the value is already negative). Nothing is
    * clamped: range checks are the validator's job (`ClientRule` min / max), so there is no `max`.
@@ -88,6 +90,7 @@ export function NumberInput({
   decimals,
   prefix,
   announcePrefix = true,
+  suffix,
   min,
   grouping,
   invalid,
@@ -105,6 +108,7 @@ export function NumberInput({
   const autoId = useId();
   const inputId = id ?? autoId;
   const prefixId = `${inputId}-prefix`;
+  const suffixId = `${inputId}-suffix`;
   const [focused, setFocused] = useState(false);
   const [draft, setDraft] = useState('');
   const edited = useRef(false);
@@ -169,14 +173,24 @@ export function NumberInput({
   };
 
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
+  const announced = [
+    prefix && announcePrefix ? { text: prefix, id: prefixId } : null,
+    suffix ? { text: suffix, id: suffixId } : null,
+  ].filter((a): a is { text: string; id: string } => a !== null);
   const name =
-    prefix && announcePrefix
+    announced.length > 0
       ? {
-          'aria-label': ariaLabel ? `${ariaLabel} ${prefix}` : undefined,
-          'aria-labelledby': labelledBy && !ariaLabel ? `${labelledBy} ${prefixId}` : undefined,
+          'aria-label': ariaLabel
+            ? [ariaLabel, ...announced.map((a) => a.text)].join(' ')
+            : undefined,
+          'aria-labelledby':
+            labelledBy && !ariaLabel
+              ? [labelledBy, ...announced.map((a) => a.id)].join(' ')
+              : undefined,
         }
       : { 'aria-label': ariaLabel, 'aria-labelledby': labelledBy };
 
+  const framed = Boolean(prefix) || Boolean(suffix);
   const input = (
     <TextInput
       {...rest}
@@ -220,19 +234,23 @@ export function NumberInput({
       }}
       className={cn(
         'br:tabular-nums',
-        prefix &&
-          'br:h-auto br:min-w-0 br:flex-1 br:border-0 br:bg-transparent br:pl-1.5 br:focus-visible:animate-none br:focus-visible:outline-none br:aria-invalid:focus-visible:outline-none',
-        prefix ? undefined : className,
+        framed &&
+          'br:h-auto br:min-w-0 br:flex-1 br:border-0 br:bg-transparent br:focus-visible:animate-none br:focus-visible:outline-none br:aria-invalid:focus-visible:outline-none',
+        prefix && 'br:pl-1.5',
+        suffix && 'br:pr-1.5',
+        framed ? undefined : className,
       )}
     />
   );
-  if (!prefix) return input;
+  if (!framed) return input;
 
   return (
     <div
       className={cn(
         CONTROL_SKIN,
-        'br:flex br:w-full br:items-stretch br:rounded-input br:pl-3',
+        'br:flex br:w-full br:items-stretch br:rounded-input',
+        prefix && 'br:pl-3',
+        suffix && 'br:pr-3',
         isInvalid ? 'br:border-danger' : CONTROL_BORDER,
         !isInvalid && !disabled && 'br:hover:border-text-muted',
         'br:has-[input:focus-visible]:outline-solid br:has-[input:focus-visible]:outline-2 br:has-[input:focus-visible]:outline-offset-2 br:has-[input:focus-visible]:outline-focus-ring br:has-[input[aria-invalid=true]:focus-visible]:outline-danger br:has-[input[aria-invalid=true]:focus-visible]:outline-offset-0',
@@ -240,20 +258,36 @@ export function NumberInput({
         className,
       )}
     >
-      <span
-        id={prefixId}
-        aria-hidden="true"
-        className="br:flex br:shrink-0 br:items-center br:text-sm br:text-text-muted"
-      >
-        {prefix}
-      </span>
-      {/* Under a <label for>, a second label adds the prefix after the caption in the name. */}
-      {announcePrefix && !ariaLabel && !labelledBy ? (
+      {prefix ? (
+        <span
+          id={prefixId}
+          aria-hidden="true"
+          className="br:flex br:shrink-0 br:items-center br:text-sm br:text-text-muted"
+        >
+          {prefix}
+        </span>
+      ) : null}
+      {/* Under a <label for>, extra labels add the prefix and suffix after the caption in the name. */}
+      {prefix && announcePrefix && !ariaLabel && !labelledBy ? (
         <label htmlFor={inputId} className="br:sr-only">
           {prefix}
         </label>
       ) : null}
+      {suffix && !ariaLabel && !labelledBy ? (
+        <label htmlFor={inputId} className="br:sr-only">
+          {suffix}
+        </label>
+      ) : null}
       {input}
+      {suffix ? (
+        <span
+          id={suffixId}
+          aria-hidden="true"
+          className="br:flex br:shrink-0 br:items-center br:text-sm br:text-text-muted"
+        >
+          {suffix}
+        </span>
+      ) : null}
     </div>
   );
 }

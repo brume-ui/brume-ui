@@ -255,6 +255,35 @@ describe('NumberInput', () => {
     expect(screen.getByRole('textbox', { name: '金額 NT$' })).toBeTruthy();
   });
 
+  it('shows a suffix, hides it from screen readers and adds it to the accessible name', () => {
+    const { container } = render(
+      <Field label="稅率">
+        <NumberInput value="5" onChange={() => {}} decimals={2} suffix="%" />
+      </Field>,
+    );
+    expect(screen.getByRole('textbox', { name: '稅率 %' })).toBeTruthy();
+    const visible = [...container.querySelectorAll('[aria-hidden="true"]')].find(
+      (el) => el.textContent === '%',
+    );
+    expect(visible).toBeTruthy();
+  });
+
+  it('appends the suffix to an aria-label, after the prefix', () => {
+    render(<NumberInput aria-label="金額" value="" onChange={() => {}} prefix="NT$" suffix="%" />);
+    expect(screen.getByRole('textbox', { name: '金額 NT$ %' })).toBeTruthy();
+  });
+
+  it('keeps the wire value ungrouped with a suffix', () => {
+    const spy = vi.fn();
+    render(<Harness decimals={2} grouping suffix="%" initial="1234.5" spy={spy} />);
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    expect(input.value).toBe('1,234.50');
+    fireEvent.focus(input);
+    expect(input.value).toBe('1234.50');
+    fireEvent.change(input, { target: { value: '12.5' } });
+    expect(spy).toHaveBeenLastCalledWith('12.5');
+  });
+
   it('takes Field’s description, error and required state', () => {
     render(
       <Field label="數量" description="最多 99" error="請輸入數量" required>

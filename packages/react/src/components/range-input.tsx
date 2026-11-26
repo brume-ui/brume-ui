@@ -3,6 +3,7 @@ import { cn } from '../cn';
 import { useBrume } from '../provider';
 import { ariaOn, type FieldControlProps } from './field';
 import { CONTROL_BASE, CONTROL_BORDER, FOCUS_RING } from './focus';
+import { NumberInput } from './number-input';
 
 export interface RangeValue {
   start?: string;
@@ -14,7 +15,9 @@ export interface RangeInputProps extends FieldControlProps {
   onBlur?(): void;
   /** Per-bound messages are rendered and linked to only that bound. */
   errors?: Partial<Record<'start' | 'end', string>>;
-  of: 'text' | 'number' | 'date' | 'datetime';
+  of: 'text' | 'number' | 'date' | 'datetime' | 'time';
+  /** With `of="number"`: fraction digits of both bounds (typing more is refused, blur pads). */
+  decimals?: number;
   value: RangeValue;
   /** Only the filled bounds are present: `{ start }` when just the start is set. */
   onChange(value: RangeValue): void;
@@ -27,6 +30,7 @@ const INPUT_TYPE = {
   number: 'number',
   date: 'date',
   datetime: 'datetime-local',
+  time: 'time',
 } as const;
 
 /**
@@ -36,6 +40,7 @@ const INPUT_TYPE = {
  */
 export function RangeInput({
   of,
+  decimals,
   value,
   onChange,
   label,
@@ -55,44 +60,64 @@ export function RangeInput({
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
   const type = INPUT_TYPE[of];
   const temporal = of === 'date' || of === 'datetime';
-  const field = (bound: 'start' | 'end') => (
-    <div className="br:flex br:min-w-0 br:flex-1 br:flex-col br:gap-1.5">
-      <input
-        id={`${baseId}-${bound}`}
-        disabled={disabled}
-        onBlur={onBlur}
-        aria-describedby={
-          [describedBy, errors?.[bound] ? `${baseId}-${bound}-error` : undefined]
-            .filter(Boolean)
-            .join(' ') || undefined
-        }
-        type={type}
-        inputMode={of === 'number' ? 'decimal' : undefined}
-        aria-label={t(bound === 'start' ? 'range.start' : 'range.end', { label })}
-        aria-invalid={isInvalid || Boolean(errors?.[bound]) || undefined}
-        aria-required={ariaOn(ariaRequired) || undefined}
-        value={value[bound] ?? ''}
-        onChange={(e) => {
-          const next: RangeValue = { ...value, [bound]: e.target.value };
-          const out: RangeValue = {};
-          if (next.start) out.start = next.start;
-          if (next.end) out.end = next.end;
-          onChange(out);
-        }}
-        className={cn(
-          CONTROL_BASE,
-          isInvalid || errors?.[bound] ? 'br:border-danger' : CONTROL_BORDER,
-          FOCUS_RING,
-          'br:w-full br:min-w-0',
+  const change = (bound: 'start' | 'end', text: string) => {
+    const next: RangeValue = { ...value, [bound]: text };
+    const out: RangeValue = {};
+    if (next.start) out.start = next.start;
+    if (next.end) out.end = next.end;
+    onChange(out);
+  };
+  const field = (bound: 'start' | 'end') => {
+    const boundLabel = t(bound === 'start' ? 'range.start' : 'range.end', { label });
+    const errorDescribedBy =
+      [describedBy, errors?.[bound] ? `${baseId}-${bound}-error` : undefined]
+        .filter(Boolean)
+        .join(' ') || undefined;
+    return (
+      <div className="br:flex br:min-w-0 br:flex-1 br:flex-col br:gap-1.5">
+        {of === 'number' && decimals !== undefined ? (
+          <NumberInput
+            id={`${baseId}-${bound}`}
+            disabled={disabled}
+            onBlur={onBlur}
+            aria-describedby={errorDescribedBy}
+            aria-label={boundLabel}
+            invalid={isInvalid || Boolean(errors?.[bound])}
+            aria-required={ariaOn(ariaRequired) || undefined}
+            decimals={decimals}
+            min={Number.NEGATIVE_INFINITY}
+            value={value[bound] ?? ''}
+            onChange={(text) => change(bound, text)}
+          />
+        ) : (
+          <input
+            id={`${baseId}-${bound}`}
+            disabled={disabled}
+            onBlur={onBlur}
+            aria-describedby={errorDescribedBy}
+            type={type}
+            inputMode={of === 'number' ? 'decimal' : undefined}
+            aria-label={boundLabel}
+            aria-invalid={isInvalid || Boolean(errors?.[bound]) || undefined}
+            aria-required={ariaOn(ariaRequired) || undefined}
+            value={value[bound] ?? ''}
+            onChange={(e) => change(bound, e.target.value)}
+            className={cn(
+              CONTROL_BASE,
+              isInvalid || errors?.[bound] ? 'br:border-danger' : CONTROL_BORDER,
+              FOCUS_RING,
+              'br:w-full br:min-w-0',
+            )}
+          />
         )}
-      />
-      {errors?.[bound] ? (
-        <p id={`${baseId}-${bound}-error`} className="br:text-sm br:text-danger">
-          {errors[bound]}
-        </p>
-      ) : null}
-    </div>
-  );
+        {errors?.[bound] ? (
+          <p id={`${baseId}-${bound}-error`} className="br:text-sm br:text-danger">
+            {errors[bound]}
+          </p>
+        ) : null}
+      </div>
+    );
+  };
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset would need a visible legend; the group is named by aria-label.
     <div

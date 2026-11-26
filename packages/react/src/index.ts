@@ -55,6 +55,7 @@ export {
 export { FormControls } from './components/form-controls';
 export { FormHtml } from './components/form-html';
 export { IconButton, type IconButtonProps } from './components/icon-button';
+export { isIp } from './components/ip';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
 export { NumberInput, type NumberInputProps } from './components/number-input';
 export { Pagination, type PaginationProps } from './components/pagination';
@@ -85,6 +86,7 @@ export { RowContextMenu, type RowContextMenuProps } from './components/row-conte
 export { SearchInput, type SearchInputProps } from './components/search-input';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { Skeleton } from './components/skeleton';
+export { Slider, type SliderProps } from './components/slider';
 export {
   SortableTree,
   type SortableTreeProps,
@@ -98,6 +100,7 @@ export { TagsInput, type TagsInputProps } from './components/tags-input';
 export { TextInput, type TextInputProps } from './components/text-input';
 export { Textarea, type TextareaProps } from './components/textarea';
 export { Thumbnail, type ThumbnailProps } from './components/thumbnail';
+export { TimeInput, type TimeInputProps } from './components/time-input';
 export { type ToastAction, Toaster, type ToastOptions, toast } from './components/toast';
 export { TreeLabel, type TreeLabelProps } from './components/tree-label';
 export { TreeNodeContent, type TreeNodeContentProps } from './components/tree-node-content';

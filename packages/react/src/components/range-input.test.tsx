@@ -33,4 +33,24 @@ describe('RangeInput', () => {
     setup({ of: 'datetime' });
     expect((screen.getByLabelText('價格（迄）') as HTMLInputElement).type).toBe('datetime-local');
   });
+
+  it('supports time bounds', () => {
+    const onChange = setup({ of: 'time', value: { start: '22:00' } });
+    expect((screen.getByLabelText('價格（起）') as HTMLInputElement).type).toBe('time');
+    fireEvent.change(screen.getByLabelText('價格（迄）'), { target: { value: '06:00' } });
+    expect(onChange).toHaveBeenCalledWith({ start: '22:00', end: '06:00' });
+  });
+
+  it('forwards decimals to both number bounds', () => {
+    const onChange = setup({ decimals: 2, value: { start: '1', end: '2.5' } });
+    const start = screen.getByLabelText('價格（起）') as HTMLInputElement;
+    const end = screen.getByLabelText('價格（迄）') as HTMLInputElement;
+    expect(start.type).toBe('text');
+    expect(start.value).toBe('1.00');
+    expect(end.value).toBe('2.50');
+    fireEvent.change(end, { target: { value: '2.555' } });
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.change(end, { target: { value: '2.55' } });
+    expect(onChange).toHaveBeenCalledWith({ start: '1', end: '2.55' });
+  });
 });
