@@ -78,6 +78,13 @@ export type PlainFieldDef = FieldBase & { remote?: never; excludeSelectedIn?: ne
     | { type: 'tags'; options?: Option[]; max?: number; maxLength?: number }
     | { type: 'color'; alpha?: boolean; swatches?: string[] }
     | { type: 'tel' }
+    | { type: 'ip'; version?: 4 | 6 }
+    | { type: 'rate'; decimals: number; min?: number; max?: number }
+    | { type: 'slider'; min: number; max: number; step: number }
+    | { type: 'icon'; icons?: string[] }
+    | { type: 'time'; seconds?: boolean }
+    | { type: 'range'; decimals: number }
+    | { type: 'timeRange'; seconds?: boolean }
   );
 
 /** Form-only choices resolve through the adapter and a declared endpoint. */
@@ -122,6 +129,8 @@ export type CustomFieldDef = FieldBase & {
   component: ComponentRef;
   displayOnly?: boolean;
 };
+/** Form-page only: the typed answer is validated server-side and never saved. */
+export type CaptchaFieldDef = FieldBase & { type: 'captcha'; src: string };
 export type FieldDef =
   | Exclude<PlainFieldDef, { type: 'select' | 'multipleSelect' | 'tags' | 'radio' | 'checkbox' }>
   | RemoteChoiceFieldDef
@@ -129,6 +138,7 @@ export type FieldDef =
   | RelationFieldDef
   | RepeaterFieldDef
   | CustomFieldDef
+  | CaptchaFieldDef
   | (FieldBase & {
       type: 'richText';
       /** px，整數 120–2000；省略時由 renderer 決定（預設 500） */
@@ -179,6 +189,9 @@ const staticVariant = <T extends TSchema, P extends TProperties = Record<never, 
 
 /** Canonical lowercase hex: `#rrggbb`, or `#rrggbbaa`. */
 const HEX_COLOR_PATTERN = '^#[0-9a-f]{6}(?:[0-9a-f]{2})?$';
+
+/** Lucide icon name in kebab-case. */
+const ICON_NAME_PATTERN = '^[a-z0-9]+(?:-[a-z0-9]+)*$';
 
 const count = () => Type.Optional(Type.Integer({ minimum: 0 }));
 
@@ -237,6 +250,27 @@ const plainFields = [
     ),
   }),
   staticVariant(literals('tel')),
+  staticVariant(literals('ip'), {
+    version: Type.Optional(Type.Union([Type.Literal(4), Type.Literal(6)])),
+  }),
+  staticVariant(literals('rate'), {
+    decimals: Type.Integer({ minimum: 0 }),
+    min: Type.Optional(Type.Number()),
+    max: Type.Optional(Type.Number()),
+  }),
+  staticVariant(literals('slider'), {
+    min: Type.Number(),
+    max: Type.Number(),
+    step: Type.Number({ exclusiveMinimum: 0 }),
+  }),
+  staticVariant(literals('icon'), {
+    icons: Type.Optional(
+      Type.Array(Type.String({ pattern: ICON_NAME_PATTERN, maxLength: 64 }), { maxItems: 200 }),
+    ),
+  }),
+  staticVariant(literals('time'), { seconds: Type.Optional(Type.Boolean()) }),
+  staticVariant(literals('range'), { decimals: Type.Integer({ minimum: 0 }) }),
+  staticVariant(literals('timeRange'), { seconds: Type.Optional(Type.Boolean()) }),
 ] as const;
 
 /**
@@ -311,6 +345,7 @@ export const FieldDefRaw = Type.Union(
       component: ComponentRefSchema,
       displayOnly: Type.Optional(Type.Boolean()),
     }),
+    variant(literals('captcha'), { src: Type.String() }),
     variant(literals('richText'), {
       height: Type.Optional(Type.Integer({ minimum: 120, maximum: 2000 })),
       contentCss: Type.Optional(Type.Array(Type.String())),

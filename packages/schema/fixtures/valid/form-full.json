@@ -89,6 +89,62 @@
                     },
                     {
                       "type": "field",
+                      "field": { "type": "ip", "name": "ip_address", "label": "IP", "version": 4 }
+                    },
+                    {
+                      "type": "field",
+                      "field": {
+                        "type": "rate",
+                        "name": "tax_rate",
+                        "label": "稅率",
+                        "decimals": 2,
+                        "min": 0,
+                        "max": 100
+                      }
+                    },
+                    {
+                      "type": "field",
+                      "field": {
+                        "type": "slider",
+                        "name": "priority",
+                        "label": "優先度",
+                        "min": 0,
+                        "max": 10,
+                        "step": 1
+                      }
+                    },
+                    {
+                      "type": "field",
+                      "field": {
+                        "type": "icon",
+                        "name": "menu_icon",
+                        "label": "圖示",
+                        "icons": ["star", "heart"]
+                      }
+                    },
+                    {
+                      "type": "field",
+                      "field": { "type": "time", "name": "open_at", "label": "開始", "seconds": true }
+                    },
+                    {
+                      "type": "field",
+                      "field": { "type": "range", "name": "price", "label": "價格區間", "decimals": 2 }
+                    },
+                    {
+                      "type": "field",
+                      "field": { "type": "timeRange", "name": "hours", "label": "營業時間" }
+                    },
+                    {
+                      "type": "field",
+                      "field": {
+                        "type": "captcha",
+                        "name": "captcha",
+                        "label": "驗證碼",
+                        "src": "/captcha/default"
+                      }
+                    },
+                    {
+                      "type": "field",
                       "field": {
                         "type": "color",
                         "name": "brand_color",
@@ -130,6 +186,13 @@
             },
             { "type": "divider", "label": "金額" },
             { "type": "html", "label": "提醒", "html": "<p>請確認<strong>金額</strong>。</p>" },
+            {
+              "type": "button",
+              "label": "查看說明",
+              "href": "/docs/orders",
+              "newTab": true,
+              "variant": "secondary"
+            },
             {
               "type": "block",
               "title": "金額",

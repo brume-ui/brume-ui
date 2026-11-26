@@ -50,6 +50,14 @@
 | `richText`                                             | HTML 字串或 `null`（空文件一律是 `null`）                     |
 | `color`                                                | 小寫 `#rrggbb`（`alpha: true` 時也可是 `#rrggbbaa`）或 `null` |
 | `tel`                                                  | 去除前後空白的字串或 `null`，依輸入原樣保存                   |
+| `ip`                                                   | 去除前後空白的 IPv4 或 IPv6 字串，或 `null`                   |
+| `rate`                                                 | 與 `decimal` 相同的未分組小數字串，或 `null`                  |
+| `slider`                                               | 數字，落在 `min + k·step`                                     |
+| `icon`                                                 | kebab-case 的 lucide 圖示名稱，或 `null`                      |
+| `time`                                                 | `HH:mm`（`seconds: true` 時為 `HH:mm:ss`）或 `null`           |
+| `range`                                                | `{ start?, end? }`，各為未分組小數字串，對應兩欄              |
+| `timeRange`                                            | `{ start?, end? }`，各為 `time` 值，對應兩欄                  |
+| `captcha`                                              | 使用者輸入的字串；不屬於儲存的屬性，只由伺服器驗證            |
 | `embeds`                                               | 物件                                                          |
 | `password`                                             | 載入時一律是 `''`；送出 `''` 表示不修改                       |
 
@@ -180,6 +188,9 @@
 - `{ type: 'color', alpha?, swatches? }`：`swatches` 最多 24 個，每個須符合 `^#[0-9a-f]{6}(?:[0-9a-f]{2})?$`（小寫，不接受縮寫）。
 - `{ type: 'tel' }`：沒有額外屬性；格式由 `rules` 或伺服器的 pattern 決定。
 - `color` 與 `tel` 是 `PlainFieldDef`，可用於 Action 輸入欄位、快速新增與 `upload.extra`。
+- `{ type: 'ip', version?: 4 | 6 }`、`{ type: 'rate', decimals, min?, max? }`、`{ type: 'slider', min, max, step }`（`step > 0`）、`{ type: 'icon', icons? }`（最多 200 個 kebab-case 名稱）、`{ type: 'time', seconds? }`、`{ type: 'range', decimals }`、`{ type: 'timeRange', seconds? }` 都是 `PlainFieldDef`，可用於 Action 輸入欄位、快速新增與 `upload.extra`。
+- `{ type: 'captcha', src }` 只能用在表單頁（不是 `PlainFieldDef`）：`src` 是驗證碼圖片網址，每次重新載入會附上防快取參數。
+- `{ type: 'button', label, href, newTab?, variant? }`（`variant` 為 `primary` 或 `secondary`）是沒有值也沒有 `children` 的版型節點，與 `html` 同樣不能放進 `row`。
 - `{ type: 'html', html, label? }` 是版型節點，沒有值，也沒有 `children`。`html` 由前端以白名單淨化後顯示。它不是欄位節點，所以不能放進 `row`。
 
 ## 前端驗證（`ClientRule`）

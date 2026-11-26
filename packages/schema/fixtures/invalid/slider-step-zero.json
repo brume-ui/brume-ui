@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "0.3.0",
+  "page": {
+    "type": "form",
+    "title": "新增訂單",
+    "formId": "orders",
+    "name": "訂單",
+    "mode": "create",
+    "form": {
+      "layout": "horizontal",
+      "nodes": [
+        {
+          "type": "field",
+          "field": {
+            "type": "slider",
+            "name": "s",
+            "label": "S",
+            "min": 0,
+            "max": 10,
+            "step": 0
+          }
+        }
+      ]
+    },
+    "values": {},
+    "submit": {
+      "method": "post",
+      "url": "/admin/orders"
+    }
+  }
+}

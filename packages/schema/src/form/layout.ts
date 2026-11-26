@@ -16,6 +16,14 @@ export type FormNode =
   | { type: 'divider'; label?: string }
   /** 唯讀的說明區塊；`html` 由前端以白名單淨化後顯示 */
   | { type: 'html'; html: string; label?: string }
+  /** 沒有值的連結按鈕 */
+  | {
+      type: 'button';
+      label: string;
+      href: string;
+      newTab?: boolean;
+      variant?: 'primary' | 'secondary';
+    }
   /** 值是 `name` 底下的物件 */
   | { type: 'embeds'; name: string; label: string; children: FormNode[] };
 
@@ -48,6 +56,13 @@ export const FormNodeRaw = Type.Recursive(
         type: Type.Literal('html'),
         html: Type.String(),
         label: Type.Optional(Type.String()),
+      }),
+      Type.Object({
+        type: Type.Literal('button'),
+        label: Type.String(),
+        href: Type.String(),
+        newTab: Type.Optional(Type.Boolean()),
+        variant: Type.Optional(Type.Union([Type.Literal('primary'), Type.Literal('secondary')])),
       }),
       Type.Object({
         type: Type.Literal('embeds'),

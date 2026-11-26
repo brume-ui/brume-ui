@@ -349,7 +349,9 @@ function describeSelection(
         );
       } else if (node.type === 'columns') {
         for (const column of node.columns) walk(column.children, scope, path);
-      } else if (node.type !== 'divider' && node.type !== 'html') walk(node.children, scope, path);
+      } else if (node.type !== 'divider' && node.type !== 'html' && node.type !== 'button') {
+        walk(node.children, scope, path);
+      }
     }
   };
   walk(nodes, item, prefix);

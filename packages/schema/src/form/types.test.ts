@@ -65,6 +65,15 @@ type HtmlWithoutHtml = Exclude<FormNode, { type: 'html' }> | { type: 'html'; lab
 // @ts-expect-error html 節點的 html 必填
 const htmlWithoutHtml = (x: HtmlWithoutHtml): FormNodeInferred => x;
 
+type WrongSliderStep =
+  | Exclude<FieldDef, { type: 'slider' }>
+  | (Omit<Extract<FieldDef, { type: 'slider' }>, 'step'> & { step?: number });
+// @ts-expect-error slider 的 step 必填，與 schema 不同
+const wrongSliderStep = (x: WrongSliderStep): FieldDefInferred => x;
+type ButtonWithoutHref = Exclude<FormNode, { type: 'button' }> | { type: 'button'; label: string };
+// @ts-expect-error button 節點的 href 必填
+const buttonWithoutHref = (x: ButtonWithoutHref): FormNodeInferred => x;
+
 describe('form types agree with their schemas', () => {
   // 真正的檢查是 tsc（pnpm typecheck）；這裡只讓 vitest 載入本檔，通過不代表型別一致。
   it('is a compile-time guard: pnpm typecheck fails on drift, not this test', () => {
@@ -83,7 +92,9 @@ describe('form types agree with their schemas', () => {
       nestedUpload,
       wrongColorSwatches,
       htmlWithoutHtml,
-    ]).toHaveLength(14);
+      wrongSliderStep,
+      buttonWithoutHref,
+    ]).toHaveLength(16);
   });
 });
 

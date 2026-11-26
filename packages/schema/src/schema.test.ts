@@ -236,6 +236,84 @@ describe('schema 0.4', () => {
     expect(checkEnvelope(ok)).toBe(true);
   });
 
+  it('accepts ip, rate, slider, icon, time, range and timeRange in action forms and quick create, rejects captcha and a button node there', () => {
+    const base = fixture('fixtures/valid', 'grid-full.json') as GridFull;
+    const plain = [
+      { type: 'ip', name: 'addr', label: 'IP', version: 6 },
+      { type: 'rate', name: 'tax', label: '稅率', decimals: 2, min: 0 },
+      { type: 'slider', name: 'level', label: '等級', min: 0, max: 1, step: 0.1 },
+      { type: 'icon', name: 'glyph', label: '圖示', icons: ['star'] },
+      { type: 'time', name: 'at', label: '時間', seconds: true },
+      { type: 'range', name: 'span', label: '區間', decimals: 1 },
+      { type: 'timeRange', name: 'hours', label: '時段' },
+    ];
+    const captcha = { type: 'captcha', name: 'code', label: '驗證碼', src: '/captcha' };
+    const button = { type: 'button', label: '說明', href: '/help' };
+    const make = (fields: unknown[]) => {
+      const inAction = structuredClone(base);
+      inAction.page.actions.tools.find((a) => a.form)?.form?.fields.push(...fields);
+      const inQuickCreate = structuredClone(base);
+      inQuickCreate.page.quickCreate?.fields.push(...fields);
+      return [
+        ['action form', inAction],
+        ['quick create', inQuickCreate],
+      ] as const;
+    };
+    for (const [name, copy] of make(plain)) {
+      expect(validateEnvelope(copy).ok, name).toBe(true);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(true);
+    }
+    for (const [name, copy] of [...make([captcha]), ...make([button])]) {
+      expect(validateEnvelope(copy).ok, name).toBe(false);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(false);
+    }
+  });
+
+  it('rejects malformed slider, icon, captcha and button definitions on both validators', () => {
+    const form = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: unknown[] } };
+    };
+    const withNode = (node: unknown) => {
+      const copy = structuredClone(form);
+      copy.page.form.nodes.push(node);
+      return copy;
+    };
+    const withField = (field: Record<string, unknown>) => withNode({ type: 'field', field });
+    const slider = { type: 'slider', name: 's', label: 'S', min: 0, max: 1, step: 0.1 };
+    const icon = { type: 'icon', name: 'i', label: 'I' };
+    const bad: [string, unknown][] = [
+      ['slider step 0', withField({ ...slider, step: 0 })],
+      ['slider no max', withField({ type: 'slider', name: 's', label: 'S', min: 0, step: 1 })],
+      ['icon not kebab', withField({ ...icon, icons: ['Not Kebab'] })],
+      ['icon underscore', withField({ ...icon, icons: ['a_b'] })],
+      ['icon 201 entries', withField({ ...icon, icons: Array(201).fill('star') })],
+      ['icon name 65 chars', withField({ ...icon, icons: ['a'.repeat(65)] })],
+      ['ip version 5', withField({ type: 'ip', name: 'a', label: 'A', version: 5 })],
+      ['rate no decimals', withField({ type: 'rate', name: 'r', label: 'R' })],
+      ['range no decimals', withField({ type: 'range', name: 'r', label: 'R' })],
+      ['captcha no src', withField({ type: 'captcha', name: 'c', label: 'C' })],
+      ['button no href', withNode({ type: 'button', label: 'B' })],
+      ['button no label', withNode({ type: 'button', href: '/x' })],
+      ['button bad variant', withNode({ type: 'button', label: 'B', href: '/x', variant: 'x' })],
+      [
+        'button in row',
+        withNode({ type: 'row', children: [{ type: 'button', label: 'B', href: '/x' }] }),
+      ],
+    ];
+    for (const [name, copy] of bad) {
+      expect(validateEnvelope(copy).ok, name).toBe(false);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(false);
+    }
+    const ok = [
+      withField({ ...icon, icons: Array(200).fill('star') }),
+      withNode({ type: 'button', label: 'B', href: '/x' }),
+    ];
+    for (const copy of ok) {
+      expect(validateEnvelope(copy).ok).toBe(true);
+      expect(checkEnvelope(copy)).toBe(true);
+    }
+  });
+
   it('rejects a column width outside 1–12 on both validators', () => {
     const base = fixture('fixtures/valid', 'form-full.json') as {
       page: { form: { nodes: { children: { columns?: { width: number }[] }[] }[] } };

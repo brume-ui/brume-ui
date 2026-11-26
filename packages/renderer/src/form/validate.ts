@@ -98,6 +98,7 @@ export function collectFields(
         return [{ path: joinPath(base, node.field.name), def: node.field }];
       case 'divider':
       case 'html':
+      case 'button':
         return [];
       case 'columns':
         return node.columns.flatMap((column) => collectFields(column.children, base));
