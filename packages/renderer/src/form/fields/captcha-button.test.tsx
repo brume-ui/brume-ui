@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { renderWithBrume } from '../../test-utils';
 import { FormView, type FormViewHandle } from '../form-view';
-import { Nodes } from '../layout/nodes';
+import { isButtonHref, Nodes } from '../layout/nodes';
 import { type FormApi, useFormState } from '../use-form-state';
 import { useFormSubmit } from '../use-form-submit';
 import { collectFields } from '../validate';
@@ -113,15 +113,21 @@ describe('captcha field', () => {
     expect(screen.queryByRole('textbox')).toBeNull();
   });
   it('a failed submit clears the answer and reloads the image, keeping its error', async () => {
-    const h = submitHarness(() => ({
-      status: 422,
-      data: { message: 'bad', errors: { code: ['驗證碼錯誤'] } },
-    }));
+    const bodies: unknown[] = [];
+    const h = submitHarness((req) => {
+      bodies.push(req.body);
+      return { status: 422, data: { message: 'bad', errors: { code: ['驗證碼錯誤'] } } };
+    });
     fireEvent.change(screen.getByRole('textbox', { name: '驗證碼' }), {
       target: { value: 'zzzz' },
     });
     await act(async () => {
       await h.submit();
+    });
+    expect(bodies).toHaveLength(1);
+    expect((bodies[0] as { values: { code: string; name: string } }).values).toMatchObject({
+      code: 'zzzz',
+      name: 'a',
     });
     expect((screen.getByRole('textbox', { name: '驗證碼' }) as HTMLInputElement).value).toBe('');
     expect(src()).toBe('/captcha/default?r=1');
@@ -210,6 +216,26 @@ describe('button node', () => {
     renderWithBrume(<NodesHarness form={buttonForm} />);
     expect(screen.queryByText('壞連結')).toBeNull();
   });
+  it.each(['/help', '/a/b?x=1#y', 'https://example.com/x', 'http://example.com'])(
+    'accepts %s',
+    (href) => expect(isButtonHref(href)).toBe(true),
+  );
+  it.each([
+    '//host/x',
+    '/\\host',
+    'help',
+    './help',
+    '',
+    'mailto:a@example.com',
+    'tel:+886000',
+    'javascript:alert(1)',
+    'ftp://example.com',
+    'https://',
+    'https:///x',
+    ' /help',
+    '/he lp',
+    'data:text/html,x',
+  ])('rejects %j', (href) => expect(isButtonHref(href)).toBe(false));
   it('a plain click visits through the adapter', () => {
     const { adapter } = renderWithBrume(<NodesHarness form={buttonForm} />);
     fireEvent.click(screen.getByRole('link', { name: '說明文件' }));

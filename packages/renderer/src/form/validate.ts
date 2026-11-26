@@ -110,7 +110,9 @@ function compareDecimal(a: string, b: string): number {
   const sign = (p: ReturnType<typeof parts>) => (zero(p) ? 0 : p.negative ? -1 : 1);
   if (sign(x) !== sign(y)) return sign(x) < sign(y) ? -1 : 1;
   const length = Math.max(x.frac.length, y.frac.length);
-  const key = (p: ReturnType<typeof parts>) => p.int.padStart(32, '0') + p.frac.padEnd(length, '0');
+  const width = Math.max(x.int.length, y.int.length);
+  const key = (p: ReturnType<typeof parts>) =>
+    p.int.padStart(width, '0') + p.frac.padEnd(length, '0');
   const ka = key(x);
   const kb = key(y);
   const magnitude = ka < kb ? -1 : ka > kb ? 1 : 0;

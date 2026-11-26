@@ -103,6 +103,12 @@ describe('range', () => {
     expect(long({ start: '0.30000000000000001', end: '0.3' })?.bound).toBe('end');
     expect(long({ start: '0.3', end: '0.30000000000000001' })).toBeNull();
     expect(long({ start: '9007199254740993', end: '9007199254740992' })?.bound).toBe('end');
+    expect(long({ start: '0010', end: '9' })?.bound).toBe('end');
+    expect(long({ start: '9', end: '0010' })).toBeNull();
+    const big = (tail: string) => `1${'0'.repeat(39)}${tail}`;
+    expect(long({ start: big('1'), end: big('0') })?.bound).toBe('end');
+    expect(long({ start: big('0'), end: big('1') })).toBeNull();
+    expect(long({ start: `-${big('1')}`, end: `-${big('2')}` })?.bound).toBe('end');
   });
   it('reports malformed and over-precise bounds on that bound', () => {
     const d2 = def('range', { decimals: 1 });

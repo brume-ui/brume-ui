@@ -79,6 +79,7 @@ export function useFormSubmit(
         return null;
       }
       if (res.status < 200 || res.status >= 300) {
+        api.refreshCaptchas?.();
         toast.error(failureMessage(res, t));
         return null;
       }
@@ -93,10 +94,17 @@ export function useFormSubmit(
       }
       // A programmatic write during the request must not be erased by its response.
       if (current.current.api.values !== values) return null;
-      flushSync(() => api.reset(values));
+      flushSync(() => {
+        api.reset(values);
+        // A success that stays on this form must not offer the used answer again.
+        api.refreshCaptchas?.();
+      });
       return data;
     } catch {
-      if (relevant()) toast.error(t('http.networkError'));
+      if (relevant()) {
+        api.refreshCaptchas?.();
+        toast.error(t('http.networkError'));
+      }
       return null;
     } finally {
       locked.current = false;

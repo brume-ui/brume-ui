@@ -126,19 +126,9 @@ describe('slider field', () => {
     expect((screen.getByRole('slider') as HTMLInputElement).value).toBe('0');
     expect(onChange).not.toHaveBeenCalled();
   });
-  it('a required empty slider adopts min', () => {
-    const { onChange } = setup(
-      { ...def, required: true, min: 2, max: 10, step: 2 },
-      { value: null },
-    );
-    expect(onChange).toHaveBeenCalledWith(2);
-  });
-  it('a required slider that is read only or disabled writes nothing', () => {
-    const a = setup({ ...def, required: true }, { value: null, disabled: true });
-    expect(a.onChange).not.toHaveBeenCalled();
-    a.unmount();
-    const b = setup({ ...def, required: true }, { value: null, readOnly: true });
-    expect(b.onChange).not.toHaveBeenCalled();
+  it('a required empty slider writes nothing itself (the form state fills min)', () => {
+    const { onChange } = setup({ ...def, required: true }, { value: null });
+    expect(onChange).not.toHaveBeenCalled();
   });
   it('read only shows the number', () => {
     setup(def, { readOnly: true, value: 0.3 });

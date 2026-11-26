@@ -15,9 +15,7 @@
             "type": "icon",
             "name": "i",
             "label": "I",
-            "icons": [
-              "Not Kebab"
-            ]
+            "icons": ["Not Kebab"]
           }
         }
       ]

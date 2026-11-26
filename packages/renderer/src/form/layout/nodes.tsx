@@ -5,7 +5,6 @@ import {
   FormFieldset,
   FormHtml,
   FormSection,
-  isSafeHref,
   Link,
 } from '@brume-ui/brume-react';
 import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
@@ -19,6 +18,19 @@ import { resolveField } from '../registry';
 import type { FormApi } from '../use-form-state';
 import { Horizontal } from './horizontal';
 import { Stacked } from './stacked';
+/** The server's rule for a button link: an absolute http(s) URL, or a path with a single leading "/". */
+export function isButtonHref(href: string): boolean {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what is rejected.
+  if (/[\u0000-\u0020\u007f\\]/.test(href)) return false;
+  if (/^\/(?![/\\])/.test(href)) return true;
+  if (!/^https?:\/\/[^/?#]/i.test(href)) return false;
+  try {
+    return new URL(href).hostname !== '';
+  } catch {
+    return false;
+  }
+}
+
 export function isLongField(def: FieldDef): boolean {
   return (
     def.span === 'full' ||
@@ -32,6 +44,8 @@ export function isLongField(def: FieldDef): boolean {
       'checkbox',
       'dateRange',
       'datetimeRange',
+      'range',
+      'timeRange',
       'embeds',
       'relation',
       'repeater',
@@ -40,7 +54,9 @@ export function isLongField(def: FieldDef): boolean {
 }
 /** Fields whose values are a few characters wide: one stacked track instead of two. */
 export function isShortField(def: FieldDef): boolean {
-  return ['number', 'decimal', 'currency', 'date', 'datetime', 'switch'].includes(def.type);
+  return ['number', 'decimal', 'currency', 'rate', 'date', 'datetime', 'time', 'switch'].includes(
+    def.type,
+  );
 }
 /** A field cell's span in the stacked grid (see Stacked). */
 function cellClass(def: FieldDef, layout: 'stacked' | 'horizontal'): string {
@@ -204,7 +220,7 @@ export function Nodes(props: NodesProps) {
               break;
             case 'button':
               // Never a javascript: link; an unsafe href renders nothing rather than a dead button.
-              content = isSafeHref(node.href) ? (
+              content = isButtonHref(node.href) ? (
                 <Link
                   href={node.href}
                   variant="button"

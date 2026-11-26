@@ -11,6 +11,7 @@ import {
 import { resolveConditionPath } from './conditions';
 import { type FieldErrors, isPathWithin } from './errors';
 import { assertSafePath, getAt, setAt } from './paths';
+import { withRequiredSliderMinimums } from './row-defaults';
 import { bindRowLifetimes, createRowLifetimes, syncRowLifetimes } from './row-lifetime';
 import { findValueFieldOwner } from './traversal';
 import { collectValueFields, type ValueField } from './validate';
@@ -31,6 +32,8 @@ export interface FormApi {
    * so draft wrappers that never host a captcha need not implement it.
    */
   readonly captchaVersion?: number;
+  /** Discards typed captcha answers and reloads their images (the answer is single-use). */
+  refreshCaptchas?(): void;
   errors: FieldErrors;
   getValue(path: string): unknown;
   getEffectiveValue(path: string): unknown;
@@ -78,15 +81,17 @@ export function useFormState(
   t: Translate = defaultTranslate,
 ): FormApi {
   const [, refresh] = useState(0);
+  // A required slider starts at its minimum in both values and baseline, so it is never dirty.
+  const [start] = useState(() => withRequiredSliderMinimums(form.nodes, initial));
   // Refs make writes immediately observable by validateAll, including within one event.
   const state = useRef({
     stateId: Symbol('form-state'),
     rowLifetimes: createRowLifetimes(),
-    values: initial,
-    baseline: initial,
+    values: start,
+    baseline: start,
     authorityRows: [] as AuthorityRow[],
     authorityVersion: 0,
-    baselineKey: stable(initial),
+    baselineKey: stable(start),
     touched: new Set<string>(),
     server: {} as FieldErrors,
     submitting: false,
@@ -215,6 +220,17 @@ export function useFormState(
     current.authorityVersion++;
     notify();
   };
+  /** The answer is single-use: after any submit that leaves the form open it is dropped and reloaded. */
+  const discardCaptchas = () => {
+    current.captchaVersion += 1;
+    const stale = fields().filter(
+      (field) => field.def.type === 'captcha' && getAt(current.values, field.path) != null,
+    );
+    if (stale.length > 0) {
+      current.values = stale.reduce((all, field) => setAt(all, field.path, null), current.values);
+      current.authorityVersion++;
+    }
+  };
   const api: FormApi = {
     get definition() {
       return {
@@ -247,6 +263,10 @@ export function useFormState(
     },
     get captchaVersion() {
       return current.captchaVersion;
+    },
+    refreshCaptchas() {
+      discardCaptchas();
+      notify();
     },
     get submitting() {
       return current.submitting;
@@ -369,26 +389,14 @@ export function useFormState(
       return valid;
     },
     setServerErrors(server) {
-      if (Object.keys(server).length > 0) {
-        // The answer is single-use: a failed submit discards it and reloads the image.
-        current.captchaVersion += 1;
-        const stale = fields().filter(
-          (field) => field.def.type === 'captcha' && getAt(current.values, field.path) != null,
-        );
-        if (stale.length > 0) {
-          current.values = stale.reduce(
-            (all, field) => setAt(all, field.path, null),
-            current.values,
-          );
-          current.authorityVersion++;
-        }
-      }
+      if (Object.keys(server).length > 0) discardCaptchas();
       current.server = Object.fromEntries(
         Object.entries(server).map(([path, messages]) => [path, [...messages]]),
       );
       notify();
     },
-    reset(values = current.baseline) {
+    reset(next = current.baseline) {
+      const values = withRequiredSliderMinimums(form.nodes, next);
       current.resetVersion += 1;
       current.authorityRows = [];
       current.authorityVersion++;

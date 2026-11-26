@@ -124,11 +124,21 @@
                     },
                     {
                       "type": "field",
-                      "field": { "type": "time", "name": "open_at", "label": "開始", "seconds": true }
+                      "field": {
+                        "type": "time",
+                        "name": "open_at",
+                        "label": "開始",
+                        "seconds": true
+                      }
                     },
                     {
                       "type": "field",
-                      "field": { "type": "range", "name": "price", "label": "價格區間", "decimals": 2 }
+                      "field": {
+                        "type": "range",
+                        "name": "price",
+                        "label": "價格區間",
+                        "decimals": 2
+                      }
                     },
                     {
                       "type": "field",

@@ -1,18 +1,9 @@
 import { Field, RangeInput, type RangeValue, Slider } from '@brume-ui/brume-react';
-import { useEffect } from 'react';
 import type { FieldProps } from '../contract';
 import { ReadOnlyField } from './misc';
 
 export function SliderField(props: FieldProps) {
   const { def, value, id, errors, describedBy, invalid, disabled, onChange, onBlur } = props;
-  const editable = !props.readOnly && !disabled;
-  const required = def.type === 'slider' && def.required === true;
-  // The thumb of an empty slider rests on `min`, and the browser cannot "move" it there. A required
-  // slider therefore adopts `min` as its value, so the answer shown is the answer stored.
-  useEffect(() => {
-    if (required && editable && def.type === 'slider' && (value == null || value === ''))
-      onChange(def.min);
-  }, [required, editable, def, value, onChange]);
   if (props.readOnly) return <ReadOnlyField {...props} />;
   if (def.type !== 'slider') return null;
   return (
