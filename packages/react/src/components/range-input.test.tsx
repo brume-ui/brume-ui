@@ -41,6 +41,17 @@ describe('RangeInput', () => {
     expect(onChange).toHaveBeenCalledWith({ start: '22:00', end: '06:00' });
   });
 
+  it('offers seconds on both time bounds only when asked', () => {
+    setup({ of: 'time', seconds: true });
+    expect((screen.getByLabelText('價格（起）') as HTMLInputElement).step).toBe('1');
+    expect((screen.getByLabelText('價格（迄）') as HTMLInputElement).step).toBe('1');
+  });
+
+  it('keeps whole-minute time bounds by default and ignores seconds for other kinds', () => {
+    setup({ of: 'time' });
+    expect((screen.getByLabelText('價格（起）') as HTMLInputElement).step).toBe('');
+  });
+
   it('forwards decimals to both number bounds', () => {
     const onChange = setup({ decimals: 2, value: { start: '1', end: '2.5' } });
     const start = screen.getByLabelText('價格（起）') as HTMLInputElement;

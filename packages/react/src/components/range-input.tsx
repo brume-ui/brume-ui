@@ -16,6 +16,8 @@ export interface RangeInputProps extends FieldControlProps {
   /** Per-bound messages are rendered and linked to only that bound. */
   errors?: Partial<Record<'start' | 'end', string>>;
   of: 'text' | 'number' | 'date' | 'datetime' | 'time';
+  /** With `of="time"`: offer seconds on both bounds (native `step` 1) instead of whole minutes. */
+  seconds?: boolean;
   /** With `of="number"`: fraction digits of both bounds (typing more is refused, blur pads). */
   decimals?: number;
   value: RangeValue;
@@ -40,6 +42,7 @@ const INPUT_TYPE = {
  */
 export function RangeInput({
   of,
+  seconds,
   decimals,
   value,
   onChange,
@@ -85,6 +88,7 @@ export function RangeInput({
             invalid={isInvalid || Boolean(errors?.[bound])}
             aria-required={ariaOn(ariaRequired) || undefined}
             decimals={decimals}
+            // NumberInput only accepts a minus sign when min < 0; range checks live in the validator.
             min={Number.NEGATIVE_INFINITY}
             value={value[bound] ?? ''}
             onChange={(text) => change(bound, text)}
@@ -96,6 +100,7 @@ export function RangeInput({
             onBlur={onBlur}
             aria-describedby={errorDescribedBy}
             type={type}
+            step={of === 'time' && seconds ? 1 : undefined}
             inputMode={of === 'number' ? 'decimal' : undefined}
             aria-label={boundLabel}
             aria-invalid={isInvalid || Boolean(errors?.[bound]) || undefined}

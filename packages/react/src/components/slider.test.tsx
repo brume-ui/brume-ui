@@ -25,6 +25,14 @@ describe('snapSlider', () => {
 });
 
 describe('Slider', () => {
+  it('shows and announces the snapped value for an off-grid record value', () => {
+    render(<Slider label="等級" value={0.35} onChange={() => {}} min={0} max={1} step={0.1} />);
+    const input = screen.getByRole('slider', { name: '等級' }) as HTMLInputElement;
+    expect(input.getAttribute('aria-valuetext')).toBe('0.4');
+    expect(input.value).toBe('0.4');
+    expect(screen.getByText('0.4')).toBeTruthy();
+  });
+
   it('is a native range with bounds, step, name and value text', () => {
     render(<Slider label="音量" value={30} onChange={() => {}} min={0} max={100} step={10} />);
     const input = screen.getByRole('slider', { name: '音量' }) as HTMLInputElement;

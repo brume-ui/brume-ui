@@ -64,7 +64,8 @@ export function Slider({
 }: SliderProps) {
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
   const digits = gridDigits(min, step);
-  const shown = value ?? min;
+  // An off-grid record value shows (and is announced) as the nearest grid point, as the browser draws it.
+  const shown = snapSlider(value ?? min, min, max, step);
   const text = shown.toFixed(digits);
   return (
     <div className="br:flex br:w-full br:items-center br:gap-3">
