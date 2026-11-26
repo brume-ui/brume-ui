@@ -231,4 +231,13 @@ export const en: Record<MessageKey, string> = {
   'richText.videoInsert': 'Insert',
   'richText.youtubeOnly': 'Only YouTube URLs are supported',
   'richText.empty': 'No content',
+  'validation.ip': 'Enter a valid IP address',
+  'validation.ip4': 'Enter a valid IPv4 address',
+  'validation.ip6': 'Enter a valid IPv6 address',
+  'validation.range.order': 'The end must not be before the start',
+  'validation.icon': 'Enter a valid icon name',
+  'validation.time': 'Enter a valid 24-hour time',
+  'validation.min': 'Must not be less than {min}',
+  'validation.max': 'Must not be greater than {max}',
+  'validation.step': 'Must be a multiple of {step} from {min}',
 };

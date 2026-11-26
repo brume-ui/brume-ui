@@ -26,6 +26,11 @@ export interface FormApi {
   dirty: boolean;
   submitting: boolean;
   pendingUploads: number;
+  /**
+   * Bumps whenever the server answers with field errors; a captcha image reloads on it. Optional
+   * so draft wrappers that never host a captcha need not implement it.
+   */
+  readonly captchaVersion?: number;
   errors: FieldErrors;
   getValue(path: string): unknown;
   getEffectiveValue(path: string): unknown;
@@ -87,6 +92,7 @@ export function useFormState(
     submitting: false,
     pendingUploads: 0,
     resetVersion: 0,
+    captchaVersion: 0,
     fieldCache: undefined as
       | undefined
       | {
@@ -132,6 +138,7 @@ export function useFormState(
               all.findIndex((other) => rowKey(other.row) === rowKey(entry.row)) === index,
           ),
           (field) => authoritativeValue(current.baseline, field, activeAuthorityRows()),
+          t,
         ),
       };
     }
@@ -143,9 +150,9 @@ export function useFormState(
   const errors = (): FieldErrors => {
     const walked = fields();
     const client = Object.fromEntries(
-      walked.flatMap(({ path, active, validationError }) =>
+      walked.flatMap(({ path, active, validationError, validationBound }) =>
         active && current.touched.has(path) && validationError !== null
-          ? [[path, [validationError]]]
+          ? [[validationBound ? `${path}.${validationBound}` : path, [validationError]]]
           : [],
       ),
     );
@@ -229,7 +236,17 @@ export function useFormState(
       return current.resetVersion;
     },
     get dirty() {
-      return stable(current.values) !== current.baselineKey;
+      // A captcha answer is typed for one submit and never saved, so it never makes the form dirty.
+      const captchas = fields()
+        .filter((field) => field.def.type === 'captcha')
+        .map((field) => field.path);
+      if (captchas.length === 0) return stable(current.values) !== current.baselineKey;
+      const without = (values: Record<string, unknown>) =>
+        stable(captchas.reduce((all, path) => setAt(all, path, null), values));
+      return without(current.values) !== without(current.baseline);
+    },
+    get captchaVersion() {
+      return current.captchaVersion;
     },
     get submitting() {
       return current.submitting;
@@ -352,6 +369,20 @@ export function useFormState(
       return valid;
     },
     setServerErrors(server) {
+      if (Object.keys(server).length > 0) {
+        // The answer is single-use: a failed submit discards it and reloads the image.
+        current.captchaVersion += 1;
+        const stale = fields().filter(
+          (field) => field.def.type === 'captcha' && getAt(current.values, field.path) != null,
+        );
+        if (stale.length > 0) {
+          current.values = stale.reduce(
+            (all, field) => setAt(all, field.path, null),
+            current.values,
+          );
+          current.authorityVersion++;
+        }
+      }
       current.server = Object.fromEntries(
         Object.entries(server).map(([path, messages]) => [path, [...messages]]),
       );

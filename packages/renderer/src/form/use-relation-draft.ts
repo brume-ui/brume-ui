@@ -153,7 +153,9 @@ export function useRelationDraft(config: Config): FormApi {
       if (isPathWithin(field.path, prefix)) {
         const key = field.path.slice(prefix.length).replace(/^\./, '');
         if (field.active && local.touched.has(key) && field.validationError)
-          result[field.path] = [field.validationError];
+          result[field.validationBound ? `${field.path}.${field.validationBound}` : field.path] = [
+            field.validationError,
+          ];
       }
     for (const [key, messages] of Object.entries(local.server)) {
       const path = key ? `${prefix}.${key}` : prefix;

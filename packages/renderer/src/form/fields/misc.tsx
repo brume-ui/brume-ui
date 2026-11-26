@@ -1,15 +1,16 @@
-import { ColorChip, Field, StaticValue, Switch } from '@brume-ui/brume-react';
+import { ColorChip, Field, IconGlyph, StaticValue, Switch } from '@brume-ui/brume-react';
 import type { FieldProps } from '../contract';
 
 export function ReadOnlyField({ def, value, id, errors, describedBy }: FieldProps) {
   let text = value === null || value === undefined || value === '' ? '—' : String(value);
   // Corrupt (non-string) colour data reads as empty rather than "[object Object]".
-  if (def.type === 'color' && typeof value !== 'string') text = '—';
+  if ((def.type === 'color' || def.type === 'icon') && typeof value !== 'string') text = '—';
   if (def.type === 'switch' && typeof value === 'boolean') {
     text = value ? (def.onLabel ?? '開啟') : (def.offLabel ?? '關閉');
   }
   if (def.type === 'password' && text !== '—') text = '••••••••';
   if (def.type === 'currency' && text !== '—') text = `${def.symbol ?? 'NT$'} ${text}`;
+  if (def.type === 'rate' && text !== '—') text = `${text}%`;
   return (
     <Field
       label={def.label}
@@ -20,6 +21,12 @@ export function ReadOnlyField({ def, value, id, errors, describedBy }: FieldProp
     >
       <StaticValue id={id} aria-describedby={describedBy}>
         {def.type === 'color' && text !== '—' ? <ColorChip value={value} /> : null}
+        {def.type === 'icon' && text !== '—' ? (
+          // The renderer may not pass className to brume-react parts, so the glyph is sized from a wrapper.
+          <span className="br:mr-1.5 br:inline-flex br:size-4 br:[&_svg]:size-4">
+            <IconGlyph name={text} />
+          </span>
+        ) : null}
         {text}
       </StaticValue>
     </Field>

@@ -43,6 +43,15 @@ properties only. Empty paths address the root. Prototype-related path segments
   canonical lowercase `#rrggbb` (`#rrggbbaa` with `alpha`) or null; `tel` is trimmed text as typed.
 - The `html` layout node is display-only content: it holds no value and takes no part in
   validation, row defaults or relation summaries (like `divider`).
+- `ip` is trimmed text (blank stores null); `icon` is a kebab-case lucide name (unknown names are kept);
+  `time` is `HH:mm` or `HH:mm:ss` (a field without `seconds` shows a loaded `HH:mm:ss` as `HH:mm`
+  and stores nothing new until edited); `slider` is a number on the `min + k*step` grid (a required
+  empty slider adopts `min`); `rate` is a decimal string shown with `%`; `range` and `timeRange` are
+  `{ start?, end? }` of decimal strings / times (a range needs `start <= end`, a time range may wrap
+  midnight). The `captcha` answer is a string that is never dirty, is dropped and refreshed after any
+  422, and is not shown read-only.
+- The `button` layout node is a link (`href`, `newTab`, `variant`): no value, no validation, ignored by
+  row walkers like `html`.
 - `date` is `YYYY-MM-DD`; `datetime` is `YYYY-MM-DDTHH:mm`.
 - `dateRange` and `datetimeRange` are `{ start?, end? }` using the corresponding formats.
 - `number` is a JSON number or null. `decimal` and `currency` are fixed-scale

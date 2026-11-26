@@ -23,7 +23,7 @@ export function canonicalizeFieldValue(
   value: unknown,
 ): CanonicalFieldValue {
   if (value == null || value === '') return { valid: true, value };
-  if (def?.type === 'decimal' || def?.type === 'currency') {
+  if (def?.type === 'decimal' || def?.type === 'currency' || def?.type === 'rate') {
     // Field validity is checked on the raw value, before display/paste rounding. This matches
     // the server's declared decimal scale; canonicalDecimal itself remains a rounding utility.
     const withinScale =
@@ -33,7 +33,7 @@ export function canonicalizeFieldValue(
     const canonical = withinScale ? canonicalDecimal(value.replace(/^\+/, ''), def.decimals) : null;
     return { valid: canonical !== null, value: canonical };
   }
-  if (def?.type === 'number') {
+  if (def?.type === 'number' || def?.type === 'slider') {
     const valid =
       typeof value === 'number'
         ? Number.isFinite(value)
@@ -42,6 +42,15 @@ export function canonicalizeFieldValue(
           Number.isFinite(Number(value));
     return { valid, value: valid ? Number(value) : value };
   }
+  if (def?.type === 'range' || def?.type === 'timeRange')
+    return {
+      valid:
+        value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        Object.values(value).every((bound) => bound == null || typeof bound === 'string'),
+      value,
+    };
   if (def?.type === 'switch') return { valid: typeof value === 'boolean', value };
   const record = (item: unknown): item is Record<string, unknown> =>
     item !== null && typeof item === 'object' && !Array.isArray(item);
@@ -71,6 +80,10 @@ export function canonicalizeFieldValue(
       'mobile',
       'tel',
       'color',
+      'ip',
+      'icon',
+      'time',
+      'captcha',
       'password',
       'select',
       'radio',

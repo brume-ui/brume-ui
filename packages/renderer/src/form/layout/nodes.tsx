@@ -5,6 +5,8 @@ import {
   FormFieldset,
   FormHtml,
   FormSection,
+  isSafeHref,
+  Link,
 } from '@brume-ui/brume-react';
 import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
 import type { CSSProperties, ReactNode } from 'react';
@@ -137,6 +139,8 @@ export function Nodes(props: NodesProps) {
               <Alert tone="warning">Unknown field type: {def.type}</Alert>
             );
             if (def.type === 'hidden') return control;
+            // A captcha answer is never shown back, so a read-only form has no cell for it.
+            if (def.type === 'captcha' && (activity?.readOnly || def.readOnly)) return null;
             return (
               <div
                 key={ownership}
@@ -197,6 +201,20 @@ export function Nodes(props: NodesProps) {
               break;
             case 'html':
               content = <FormHtml html={node.html} label={node.label} />;
+              break;
+            case 'button':
+              // Never a javascript: link; an unsafe href renders nothing rather than a dead button.
+              content = isSafeHref(node.href) ? (
+                <Link
+                  href={node.href}
+                  variant="button"
+                  size="md"
+                  buttonVariant={node.variant ?? 'primary'}
+                  external={node.newTab}
+                >
+                  {node.label}
+                </Link>
+              ) : null;
               break;
             case 'embeds':
               content = (

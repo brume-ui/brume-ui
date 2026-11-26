@@ -77,7 +77,13 @@ export const FormView = forwardRef<
           : fieldId(prefix, field.path)
         : undefined;
       let target = base;
-      if (field && (field.def.type === 'dateRange' || field.def.type === 'datetimeRange')) {
+      if (
+        field &&
+        (field.def.type === 'dateRange' ||
+          field.def.type === 'datetimeRange' ||
+          field.def.type === 'range' ||
+          field.def.type === 'timeRange')
+      ) {
         const bound = path.slice(field.path.length + 1);
         if (bound === 'start' || bound === 'end') target = `${base}-${bound}`;
       }

@@ -229,4 +229,13 @@ export const zhTW = {
   'richText.videoInsert': '插入',
   'richText.youtubeOnly': '只支援 YouTube 網址',
   'richText.empty': '沒有內容',
+  'validation.ip': '請輸入有效的 IP 位址',
+  'validation.ip4': '請輸入有效的 IPv4 位址',
+  'validation.ip6': '請輸入有效的 IPv6 位址',
+  'validation.range.order': '結束值不可小於起始值',
+  'validation.icon': '請輸入有效的圖示名稱',
+  'validation.time': '請輸入有效的時間（24 小時制）',
+  'validation.min': '不可小於 {min}',
+  'validation.max': '不可大於 {max}',
+  'validation.step': '必須是 {step} 的倍數（自 {min} 起算）',
 } as const;

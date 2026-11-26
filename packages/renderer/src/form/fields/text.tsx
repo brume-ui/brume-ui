@@ -17,12 +17,18 @@ export function TextField(props: FieldProps) {
   };
   const phone = def.type === 'mobile' || def.type === 'tel';
   let control: ReactElement<Record<string, unknown>>;
-  if (def.type === 'number' || def.type === 'decimal' || def.type === 'currency') {
+  if (
+    def.type === 'number' ||
+    def.type === 'decimal' ||
+    def.type === 'currency' ||
+    def.type === 'rate'
+  ) {
     control = (
       <NumberInput
         {...common}
         announcePrefix={false}
         min={def.min}
+        suffix={def.type === 'rate' ? '%' : undefined}
         step={def.type === 'number' ? def.step : undefined}
         decimals={
           def.type === 'number'
@@ -37,6 +43,22 @@ export function TextField(props: FieldProps) {
         onChange={(next) =>
           onChange(next === '' ? null : def.type === 'number' ? Number(next) : next)
         }
+      />
+    );
+  } else if (def.type === 'ip') {
+    control = (
+      <TextInput
+        {...common}
+        type="text"
+        inputMode="text"
+        autoComplete="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        onChange={(event) => {
+          // The wire value is trimmed, and a blank box stores nothing.
+          const text = event.target.value.trim();
+          onChange(text === '' ? null : text);
+        }}
       />
     );
   } else {

@@ -1,9 +1,12 @@
 import type { FieldDef } from '@brume-ui/brume-schema';
 import type { FieldComponent } from './contract';
+import { CaptchaField } from './fields/captcha';
 import { ChoiceField } from './fields/choice';
 import { ColorField } from './fields/color';
 import { DateField } from './fields/date';
+import { IconField } from './fields/icon';
 import { HiddenField, ReadOnlyField, SwitchField } from './fields/misc';
+import { RangeField, SliderField } from './fields/number-like';
 import { RelationField } from './fields/relation';
 import { RepeaterField } from './fields/repeater';
 import { RichTextField } from './fields/rich-text';
@@ -29,10 +32,12 @@ for (const type of [
   'url',
   'mobile',
   'tel',
+  'ip',
   'password',
   'number',
   'decimal',
   'currency',
+  'rate',
 ] as const) {
   registerBuiltInField(type, TextField);
 }
@@ -40,7 +45,7 @@ registerBuiltInField('hidden', HiddenField);
 registerBuiltInField('display', ReadOnlyField);
 registerBuiltInField('switch', SwitchField);
 
-for (const type of ['date', 'datetime', 'dateRange', 'datetimeRange'] as const)
+for (const type of ['date', 'datetime', 'dateRange', 'datetimeRange', 'time', 'timeRange'] as const)
   registerBuiltInField(type, DateField);
 for (const type of ['select', 'multipleSelect', 'radio', 'checkbox', 'tags'] as const)
   registerBuiltInField(type, ChoiceField);
@@ -48,6 +53,10 @@ for (const type of ['select', 'multipleSelect', 'radio', 'checkbox', 'tags'] as 
 registerBuiltInField('upload', UploadField);
 registerBuiltInField('richText', RichTextField);
 registerBuiltInField('color', ColorField);
+registerBuiltInField('slider', SliderField);
+registerBuiltInField('range', RangeField);
+registerBuiltInField('icon', IconField);
+registerBuiltInField('captcha', CaptchaField);
 
 registerBuiltInField('relation', RelationField);
 

@@ -12,7 +12,7 @@ import { canonicalizeFieldValue, conditionPaths, evaluateCondition } from './con
 import { isPathWithin } from './errors';
 import { assertSafePath, getAt, joinPath, setAt } from './paths';
 import { repeaterIdentities } from './row-identity';
-import { collectFields, validateValue } from './validate';
+import { collectFields, validateField } from './validate';
 
 type RowContainer = { path: string; row: string; kind: 'repeater' | 'relation' };
 interface Declaration {
@@ -152,6 +152,8 @@ export interface ValueField {
   /** Editable activity, including inherited parent state; literal hidden retains its old semantics. */
   active: boolean;
   validationError: string | null;
+  /** For two-bound fields: the bound `validationError` belongs to (its error path is `path.bound`). */
+  validationBound?: 'start' | 'end';
   /** Effective controller value uses stored/default authority while inactive. */
   authorityRequired: boolean;
   effectiveValue: unknown;
@@ -172,8 +174,8 @@ function expand(template: string, values: Record<string, unknown>): string[] {
   return paths;
 }
 
-const defaultError = (def: FieldDef) =>
-  `${def.label}${createTranslator('zh-TW')('common.hasError')}`;
+const defaultTranslate = createTranslator('zh-TW');
+const defaultError = (def: FieldDef) => `${def.label}${defaultTranslate('common.hasError')}`;
 
 /** One current-value walker for renderer, validation, async row consumers and error ownership. */
 export function collectValueFields(
@@ -182,6 +184,7 @@ export function collectValueFields(
   invalidMessage: (def: FieldDef) => string = defaultError,
   rowFields: FormDef['rowFields'] = [],
   authority?: (field: ValueField) => AuthorityValue,
+  t: ReturnType<typeof createTranslator> = defaultTranslate,
 ): ValueField[] {
   const entries = declarations(nodes);
   checkDeclarations(entries);
@@ -243,8 +246,9 @@ export function collectValueFields(
       const countInvalid =
         def.type === 'repeater' &&
         ((def.min !== undefined && count < def.min) || (def.max !== undefined && count > def.max));
+      const builtIn = validateField(def, value, t);
       const validationError =
-        validateValue(def, value) ??
+        builtIn?.message ??
         (!noneditable && countInvalid ? invalidMessage(def) : null) ??
         (!noneditable && def.type === 'repeater' && !repeaterIdentities(value, def.mode)
           ? invalidMessage(def)
@@ -262,6 +266,7 @@ export function collectValueFields(
         readOnly: !!def.readOnly,
         active: true,
         validationError,
+        validationBound: builtIn?.bound,
         authorityRequired: entry.parents.some((path) => {
           const parent = entries.find((entry) => entry.path === path)?.def;
           return parent?.type === 'relation' && parent.hydrateAuthority === true;

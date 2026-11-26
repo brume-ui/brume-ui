@@ -230,4 +230,13 @@ export const zhCN: Record<MessageKey, string> = {
   'richText.videoInsert': '插入',
   'richText.youtubeOnly': '只支持 YouTube 网址',
   'richText.empty': '没有内容',
+  'validation.ip': '请输入有效的 IP 地址',
+  'validation.ip4': '请输入有效的 IPv4 地址',
+  'validation.ip6': '请输入有效的 IPv6 地址',
+  'validation.range.order': '结束值不可小于起始值',
+  'validation.icon': '请输入有效的图标名称',
+  'validation.time': '请输入有效的时间（24 小时制）',
+  'validation.min': '不可小于 {min}',
+  'validation.max': '不可大于 {max}',
+  'validation.step': '必须是 {step} 的倍数（自 {min} 起算）',
 };
