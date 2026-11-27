@@ -79,10 +79,15 @@ const warned = new Set<string>();
 export function resolveIcon(name: string | undefined): LucideIcon {
   if (!name) return Circle;
   const pascal = toPascalCase(name);
-  const found = (icons as Record<string, LucideIcon | undefined>)[pascal];
-  if (found) return found;
-  const alias = (lucide as Record<string, unknown>)[pascal];
-  if (iconComponents.has(alias)) return alias as LucideIcon;
+  // Own properties only: names such as `__proto__` or `constructor` must never reach the prototype.
+  if (Object.hasOwn(icons, pascal)) {
+    const found = (icons as Record<string, LucideIcon | undefined>)[pascal];
+    if (found) return found;
+  }
+  if (Object.hasOwn(lucide, pascal)) {
+    const alias = (lucide as Record<string, unknown>)[pascal];
+    if (iconComponents.has(alias)) return alias as LucideIcon;
+  }
   if (isDev() && !warned.has(name)) {
     warned.add(name);
     console.warn(`[brume] Unknown lucide icon "${name}"; showing a circle instead.`);

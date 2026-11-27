@@ -29,4 +29,17 @@ describe('resolveIcon', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(resolveIcon('icon')).toBe(Circle);
   });
+
+  it.each([
+    '__proto__',
+    'constructor',
+    'toString',
+    'hasOwnProperty',
+    'prototype',
+    'valueOf',
+    '__defineGetter__',
+  ])('treats inherited or reserved name %s as unknown', (name) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(resolveIcon(name)).toBe(Circle);
+  });
 });
