@@ -250,6 +250,12 @@ describe('repeater table layout', () => {
     expect(cells[1]?.querySelector('input')).toBeNull();
     expect(screen.getAllByLabelText('NOTE')).toHaveLength(1);
   });
+  it('does not wrap a cell in the 12-column grid (its gaps alone are wider than a narrow cell)', () => {
+    setup(table, { rows });
+    const cell = document.querySelector('tbody td') as HTMLElement;
+    expect(cell.querySelector('[class*="grid-cols-12"]')).toBeNull();
+    expect((cell.querySelector('[data-field-path]') as HTMLElement).style.gridColumn).toBe('');
+  });
   it('shows errors inline in the cell', () => {
     const s = setup(table, { rows });
     validate(s.api());

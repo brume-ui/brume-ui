@@ -77,6 +77,7 @@ export function RepeaterField(props: FieldProps) {
                     uploadUrl={props.uploadUrl}
                     rowContext={props.rowContext}
                     row
+                    cell
                   />
                 </HideFieldLabels>
               ) : null;

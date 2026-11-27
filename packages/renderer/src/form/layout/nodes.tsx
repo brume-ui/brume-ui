@@ -84,6 +84,8 @@ export interface NodesProps {
   prefix?: string;
   uploadUrl?: string;
   row?: boolean;
+  /** A single table cell: no 12-column grid (its gaps alone would be wider than a narrow cell). */
+  cell?: boolean;
   sectionIdPrefix?: string;
   rowContext?: RowContext;
   /** The concrete path of the enclosing repeater row / relation item: where row-scoped conditions resolve. */
@@ -118,15 +120,21 @@ function Fieldset(props: {
   );
 }
 export function Nodes(props: NodesProps) {
-  const { nodes, api, idPrefix, layout, prefix = '', uploadUrl, row } = props;
+  const { nodes, api, idPrefix, layout, prefix = '', uploadUrl, row, cell } = props;
   const registry = useRegistry();
   const Grid = row ? 'div' : layout === 'horizontal' ? Horizontal : Stacked;
   const children = (items: FormNode[], childPrefix = prefix) => (
-    <Nodes {...props} nodes={items} prefix={childPrefix} row={false} />
+    <Nodes {...props} nodes={items} prefix={childPrefix} row={false} cell={false} />
   );
   return (
     <FieldIdPrefixContext.Provider value={idPrefix}>
-      <Grid {...(row ? { className: 'br:grid br:grid-cols-12 br:gap-4' } : {})}>
+      <Grid
+        {...(cell
+          ? { className: 'br:min-w-0' }
+          : row
+            ? { className: 'br:grid br:grid-cols-12 br:gap-4' }
+            : {})}
+      >
         {nodes.map((node, index) => {
           if (node.type === 'field') {
             const path = prefix ? `${prefix}.${node.field.name}` : node.field.name;
@@ -201,7 +209,7 @@ export function Nodes(props: NodesProps) {
                 data-field-path={path}
                 className={row ? 'br:min-w-0' : cellClass(def, layout)}
                 style={
-                  row
+                  row && !cell
                     ? { gridColumn: `span ${isLongField(def) ? 12 : (def.width ?? 12)}` }
                     : undefined
                 }
