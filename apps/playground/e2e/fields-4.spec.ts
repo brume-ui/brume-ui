@@ -322,6 +322,8 @@ test.describe('icon field', () => {
     const search = pop.getByRole('searchbox', { name: '搜尋圖示' });
     await expect(search).toBeFocused();
     await search.fill('user');
+    // The result list filters a moment after typing: wait for it before leaving the search box.
+    await expect(grid(page).getByRole('button').first()).toHaveAttribute('aria-label', /user/);
     await page.keyboard.press('ArrowDown');
     const focused = page.locator(':focus');
     const name = (await focused.getAttribute('aria-label')) ?? '';
