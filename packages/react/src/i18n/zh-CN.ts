@@ -256,4 +256,12 @@ export const zhCN: Record<MessageKey, string> = {
   'validation.min': '不可小于 {min}',
   'validation.max': '不可大于 {max}',
   'validation.step': '必须是 {step} 的倍数（自 {min} 起算）',
+  'validation.keyValue.keyRequired': '请输入键',
+  'validation.keyValue.keyDuplicate': '键不可重复',
+  'validation.keyValue.keyLength': '键不可超过 {max} 个字',
+  'validation.keyValue.valueLength': '值不可超过 {max} 个字',
+  'validation.keyValue.max': '最多 {max} 组',
+  'validation.list.min': '至少需要 {min} 项',
+  'validation.list.max': '最多 {max} 项',
+  'validation.list.itemLength': '每项不可超过 {max} 个字',
 };

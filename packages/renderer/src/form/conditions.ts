@@ -1,6 +1,7 @@
 import { canonicalDecimal } from '@brume-ui/brume-react';
 import type { Condition, ConditionPath, FieldDef } from '@brume-ui/brume-schema';
 import { assertSafePath, getAt, joinPath } from './paths';
+import { hasStructuralShape, isStructural, normalizeStructural } from './structural';
 
 export function conditionPaths(condition: Condition): ConditionPath[] {
   if ('conditions' in condition) return condition.conditions.flatMap(conditionPaths);
@@ -51,6 +52,10 @@ export function canonicalizeFieldValue(
         Object.values(value).every((bound) => bound == null || typeof bound === 'string'),
       value,
     };
+  if (isStructural(def))
+    return hasStructuralShape(def, value)
+      ? { valid: true, value: normalizeStructural(def, value) }
+      : { valid: false, value };
   if (def?.type === 'switch') return { valid: typeof value === 'boolean', value };
   const record = (item: unknown): item is Record<string, unknown> =>
     item !== null && typeof item === 'object' && !Array.isArray(item);
@@ -85,6 +90,7 @@ export function canonicalizeFieldValue(
       'time',
       'captcha',
       'password',
+      'autocomplete',
       'select',
       'radio',
       'date',
@@ -131,8 +137,14 @@ export function evaluateCondition(
     const path = resolveConditionPath(node.field, rowPath);
     const def = options.getField?.(path);
     const raw = options.getValue ? options.getValue(path) : getAt(values, path);
-    if (node.op === 'empty')
-      return raw == null || raw === '' || (Array.isArray(raw) && raw.length === 0);
+    if (node.op === 'empty') {
+      // keyValue/list/tree are judged as submitted: blank rows and items are not there.
+      const seen = isStructural(def)
+        ? canonicalizeFieldValue(def, raw)
+        : { valid: false, value: raw };
+      const shown = seen.valid ? seen.value : raw;
+      return shown == null || shown === '' || (Array.isArray(shown) && shown.length === 0);
+    }
     const value = canonicalizeFieldValue(def, raw).value;
     const operand = (expected: unknown) =>
       (def?.type === 'decimal' || def?.type === 'currency' || def?.type === 'rate') &&

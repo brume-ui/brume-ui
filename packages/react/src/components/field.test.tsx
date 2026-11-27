@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
 import { CheckboxGroup } from './checkbox-group';
-import { Field } from './field';
+import { Field, HideFieldLabels } from './field';
 import { RadioGroup } from './radio-group';
 import { RangeInput } from './range-input';
 import { Switch } from './switch';
@@ -237,4 +237,20 @@ describe('Field', () => {
       expect(screen.queryByText(`(${text})`)).toBeNull();
     },
   );
+
+  it('HideFieldLabels keeps the label as the control name but draws it as screen-reader text', () => {
+    render(
+      <HideFieldLabels>
+        <Field label="帳號" error="必填">
+          <TextInput />
+        </Field>
+      </HideFieldLabels>,
+    );
+    const input = screen.getByLabelText('帳號');
+    expect(input.tagName).toBe('INPUT');
+    expect(document.querySelector('label')?.className).toContain('sr-only');
+    // the error stays visible next to the cell
+    expect(screen.getByText('必填').className).not.toContain('sr-only');
+    expect(describedBy(input)).toContain(screen.getByText('必填').id);
+  });
 });

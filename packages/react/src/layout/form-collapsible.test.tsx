@@ -55,40 +55,36 @@ it('is open by default; defaultCollapsed only sets the initial state', () => {
   expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe('false');
 });
 
-it('forceOpen opens, stays open when it goes false, and re-opens on a new rising edge', () => {
-  const { rerender } = render(
-    <FormCollapsible id="f" title="T" defaultCollapsed>
+it('every change of openSignal opens it again, however often the user collapsed it', () => {
+  const view = (openSignal: number) => (
+    <FormCollapsible id="f" title="T" defaultCollapsed openSignal={openSignal}>
       {body}
-    </FormCollapsible>,
+    </FormCollapsible>
   );
+  const { rerender } = render(view(0));
   const button = screen.getByRole('button');
-  rerender(
-    <FormCollapsible id="f" title="T" defaultCollapsed forceOpen>
-      {body}
-    </FormCollapsible>,
-  );
-  expect(button.getAttribute('aria-expanded')).toBe('true');
-  rerender(
-    <FormCollapsible id="f" title="T" defaultCollapsed forceOpen={false}>
-      {body}
-    </FormCollapsible>,
-  );
+  // the initial value opens nothing
+  expect(button.getAttribute('aria-expanded')).toBe('false');
+  rerender(view(1));
   expect(button.getAttribute('aria-expanded')).toBe('true');
   fireEvent.click(button);
   expect(button.getAttribute('aria-expanded')).toBe('false');
-  rerender(
-    <FormCollapsible id="f" title="T" defaultCollapsed forceOpen>
-      {body}
-    </FormCollapsible>,
-  );
+  // an unchanged signal leaves the user in control
+  rerender(view(1));
+  expect(button.getAttribute('aria-expanded')).toBe('false');
+  // a new value reopens it, and so does the next one
+  rerender(view(2));
+  expect(button.getAttribute('aria-expanded')).toBe('true');
+  fireEvent.click(button);
+  rerender(view(3));
   expect(button.getAttribute('aria-expanded')).toBe('true');
 });
 
-it('starts open when forceOpen is true on mount even if defaultCollapsed', () => {
+it('a non-zero openSignal on mount does not override defaultCollapsed', () => {
   render(
-    <FormCollapsible id="m" title="T" defaultCollapsed forceOpen>
+    <FormCollapsible id="m" title="T" defaultCollapsed openSignal={4}>
       {body}
     </FormCollapsible>,
   );
-  expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe('true');
+  expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe('false');
 });

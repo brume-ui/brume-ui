@@ -13,7 +13,7 @@ import { type FieldErrors, isPathWithin } from './errors';
 import { assertSafePath, getAt, setAt } from './paths';
 import { withRequiredSliderMinimums } from './row-defaults';
 import { bindRowLifetimes, createRowLifetimes, syncRowLifetimes } from './row-lifetime';
-import { findValueFieldOwner } from './traversal';
+import { fieldClientErrors, findValueFieldOwner } from './traversal';
 import { collectValueFields, type ValueField } from './validate';
 
 export interface FormApi {
@@ -155,10 +155,8 @@ export function useFormState(
   const errors = (): FieldErrors => {
     const walked = fields();
     const client = Object.fromEntries(
-      walked.flatMap(({ path, active, validationError, validationBound }) =>
-        active && current.touched.has(path) && validationError !== null
-          ? [[validationBound ? `${path}.${validationBound}` : path, [validationError]]]
-          : [],
+      walked.flatMap((field) =>
+        field.active && current.touched.has(field.path) ? fieldClientErrors(field) : [],
       ),
     );
     const server = Object.fromEntries(

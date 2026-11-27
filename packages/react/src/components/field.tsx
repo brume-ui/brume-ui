@@ -1,8 +1,25 @@
-import { cloneElement, createContext, type ReactElement, useContext, useId, useRef } from 'react';
+import {
+  cloneElement,
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useId,
+  useRef,
+} from 'react';
 import { cn } from '../cn';
 import { useFieldRequiredText } from '../provider';
 
 export const FieldLayoutContext = createContext<'stacked' | 'horizontal'>('stacked');
+
+const LabelsHidden = createContext(false);
+/**
+ * Inside, every Field keeps its label for assistive technology but draws it nowhere (and drops the
+ * horizontal label column). For cells whose column header or card caption already names the field.
+ */
+export function HideFieldLabels({ children }: { children: ReactNode }) {
+  return <LabelsHidden.Provider value={true}>{children}</LabelsHidden.Provider>;
+}
 
 /** Labels are 13px medium in text-label: a label, not a heading (design rules: no bold labels). */
 export const CAPTION = 'br:text-[13px] br:leading-5 br:font-medium br:text-text-label';
@@ -44,6 +61,8 @@ export interface FieldProps {
 
 export function Field({ label, description, error, required, group, children }: FieldProps) {
   const layout = useContext(FieldLayoutContext);
+  const labelHidden = useContext(LabelsHidden);
+  const captionClass = cn(CAPTION, labelHidden && 'br:sr-only');
   const requiredText = useFieldRequiredText();
   // A native fieldset is a group, not an input widget: aria-required is not supported.
   const nativeFieldset = children.type === 'fieldset';
@@ -83,15 +102,16 @@ export function Field({ label, description, error, required, group, children }: 
       className={cn(
         'br:grid br:grid-cols-1 br:gap-x-4 br:gap-y-1.5 br:scroll-m-2 br:scroll-mb-[var(--br-form-footer-clearance,8px)]',
         layout === 'horizontal' &&
+          !labelHidden &&
           'br:@min-[480px]:grid-cols-[8rem_1fr] br:@min-[480px]:[&>label]:text-right br:@min-[480px]:[&>span]:text-right',
       )}
     >
       {group ? (
-        <span id={labelId} className={CAPTION}>
+        <span id={labelId} className={captionClass}>
           {caption}
         </span>
       ) : (
-        <label htmlFor={id} className={CAPTION}>
+        <label htmlFor={id} className={captionClass}>
           {caption}
         </label>
       )}

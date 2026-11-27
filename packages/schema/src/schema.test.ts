@@ -40,6 +40,12 @@ function variantTypes(union: unknown, key = 'type'): string[] {
 
 const fixture = (dir: string, name: string): unknown => load(dir).find(([n]) => n === name)?.[1];
 
+const formEnvelope = (nodes: unknown[]) => ({ page: { type: 'form', form: { nodes } } });
+const treeNode = (options: readonly unknown[]) => ({
+  type: 'field',
+  field: { type: 'tree', name: 't', label: 'T', mode: 'leaves', options },
+});
+
 type AnyNode = {
   type: string;
   field?: AnyField;
@@ -438,27 +444,69 @@ describe('schema 0.4', () => {
       ],
     ] as const;
     for (const [name, options, message] of rows) {
-      const errors = findTreeOptionErrors({ type: 'tree', options });
+      const errors = findTreeOptionErrors(formEnvelope([treeNode(options)]));
       expect(errors.join(), name).toMatch(message);
     }
     expect(
-      findTreeOptionErrors({
-        type: 'tree',
-        options: [
-          { value: 'a', label: 'A', depth: 0 },
-          { value: 'b', label: 'B', depth: 1 },
-          { value: 'c', label: 'C', depth: 2 },
-          { value: 'd', label: 'D', depth: 0 },
-        ],
-      }),
+      findTreeOptionErrors(
+        formEnvelope([
+          treeNode([
+            { value: 'a', label: 'A', depth: 0 },
+            { value: 'b', label: 'B', depth: 1 },
+            { value: 'c', label: 'C', depth: 2 },
+            { value: 'd', label: 'D', depth: 0 },
+          ]),
+        ]),
+      ),
     ).toEqual([]);
-    // trees inside repeater rows are covered too
-    expect(
-      findTreeOptionErrors({
-        type: 'repeater',
-        nodes: [{ type: 'field', field: { type: 'tree', options: [{ value: 'a', depth: 3 }] } }],
-      }),
-    ).toHaveLength(1);
+    const bad = [{ value: 'a', label: 'A', depth: 3 }];
+    const field = { type: 'field', field: { type: 'tree', name: 't', label: 'T', options: bad } };
+    // declaration positions: nested layout nodes, repeater nodes, relation fields, upload extra
+    const wrapped = {
+      'nested layout': [
+        { type: 'section', key: 's', title: 'S', children: [{ type: 'group', children: [field] }] },
+      ],
+      columns: [{ type: 'columns', columns: [{ width: 6, children: [field] }] }],
+      embeds: [{ type: 'embeds', name: 'e', label: 'E', children: [field] }],
+      'repeater nodes': [{ type: 'field', field: { type: 'repeater', name: 'r', nodes: [field] } }],
+      'relation fields': [
+        { type: 'field', field: { type: 'relation', name: 'r', fields: [field] } },
+      ],
+      'upload extra': [
+        { type: 'field', field: { type: 'upload', name: 'u', extra: [field.field] } },
+      ],
+    };
+    for (const [name, nodes] of Object.entries(wrapped))
+      expect(findTreeOptionErrors(formEnvelope(nodes)), name).toHaveLength(1);
+    // action forms and quick create are declaration positions too
+    const list = {
+      page: {
+        type: 'list',
+        actions: { row: [], batch: [], tools: [{ form: { fields: [field.field] } }] },
+        quickCreate: { fields: [field.field] },
+      },
+    };
+    expect(findTreeOptionErrors(list)).toHaveLength(2);
+  });
+
+  it('does not treat data rows or form values that look like a tree field as declarations', () => {
+    const lookalike = {
+      type: 'tree',
+      name: 't',
+      options: [
+        { value: 'a', depth: 0 },
+        { value: 'a', depth: 0 },
+      ],
+    };
+    const form = structuredClone(fixture('fixtures/valid', 'form-full.json')) as {
+      page: { values: Record<string, unknown> };
+    };
+    form.page.values.sneaky = lookalike;
+    form.page.values.nested = [{ rows: [lookalike] }];
+    expect(validateEnvelope(form).ok).toBe(true);
+    const grid = structuredClone(fixture('fixtures/valid', 'grid-full.json')) as GridFull;
+    (grid.page.rows[0] as unknown as Record<string, unknown>).extra = lookalike;
+    expect(validateEnvelope(grid).ok).toBe(true);
   });
 
   it('rejects a column width outside 1–12 on both validators', () => {

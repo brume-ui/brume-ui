@@ -11,7 +11,7 @@ import {
   rowLifetime,
   syncRowLifetimes,
 } from './row-lifetime';
-import { collectValueFields } from './traversal';
+import { collectValueFields, fieldClientErrors } from './traversal';
 import type { FormApi } from './use-form-state';
 
 interface Config {
@@ -152,10 +152,8 @@ export function useRelationDraft(config: Config): FormApi {
     for (const field of fields())
       if (isPathWithin(field.path, prefix)) {
         const key = field.path.slice(prefix.length).replace(/^\./, '');
-        if (field.active && local.touched.has(key) && field.validationError)
-          result[field.validationBound ? `${field.path}.${field.validationBound}` : field.path] = [
-            field.validationError,
-          ];
+        if (field.active && local.touched.has(key))
+          for (const [path, messages] of fieldClientErrors(field)) result[path] = messages;
       }
     for (const [key, messages] of Object.entries(local.server)) {
       const path = key ? `${prefix}.${key}` : prefix;

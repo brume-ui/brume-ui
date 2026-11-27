@@ -1,6 +1,7 @@
 import { createTranslator, isEmptyHtml, isIp } from '@brume-ui/brume-react';
 import type { ClientRule, FieldDef, FormNode } from '@brume-ui/brume-schema';
 import { assertSafePath, joinPath } from './paths';
+import { isStructural, normalizeStructural, structuralErrors } from './structural';
 
 function isEmpty(value: unknown): boolean {
   return (
@@ -77,6 +78,11 @@ export interface FieldValidationError {
   message: string;
   /** Set for two-bound fields (`range`, `timeRange`): the error belongs to that bound's input. */
   bound?: 'start' | 'end';
+  /**
+   * Set for `keyValue` and `list`: every error with its path relative to the field ('' is the
+   * field itself, `2` an item, `1.key` a cell), in the submitted index space; `message` is the first.
+   */
+  items?: Array<{ suffix: string; message: string }>;
 }
 
 const isBoundsField = (def: FieldDef) => def.type === 'range' || def.type === 'timeRange';
@@ -215,6 +221,19 @@ export function validateField(
     (def.type === 'custom' && def.displayOnly)
   )
     return null;
+  if (isStructural(def)) {
+    // Rules are judged on the normalised value; only "required" is meaningful for these shapes.
+    const normalized = normalizeStructural(def, value);
+    if (
+      (def.rules ?? []).some((rule) => rule.rule === 'required') &&
+      Array.isArray(normalized) &&
+      normalized.length === 0
+    )
+      return { message: (def.rules ?? []).find((rule) => rule.rule === 'required')?.message ?? '' };
+    const items = structuralErrors(def, value, t);
+    const [first] = items;
+    return first ? { message: first.message, items } : null;
+  }
   const empty = isEmptyFor(def, value);
   for (const rule of def.rules ?? []) {
     if (rule.rule !== 'required' && empty) continue;

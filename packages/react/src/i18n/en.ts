@@ -257,4 +257,12 @@ export const en: Record<MessageKey, string> = {
   'validation.min': 'Must not be less than {min}',
   'validation.max': 'Must not be greater than {max}',
   'validation.step': 'Must be a multiple of {step} from {min}',
+  'validation.keyValue.keyRequired': 'Enter a key',
+  'validation.keyValue.keyDuplicate': 'Keys must be unique',
+  'validation.keyValue.keyLength': 'A key must not exceed {max} characters',
+  'validation.keyValue.valueLength': 'A value must not exceed {max} characters',
+  'validation.keyValue.max': 'At most {max} pairs',
+  'validation.list.min': 'At least {min} items are required',
+  'validation.list.max': 'At most {max} items',
+  'validation.list.itemLength': 'Each item must not exceed {max} characters',
 };

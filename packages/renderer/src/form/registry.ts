@@ -10,7 +10,8 @@ import { RangeField, SliderField } from './fields/number-like';
 import { RelationField } from './fields/relation';
 import { RepeaterField } from './fields/repeater';
 import { RichTextField } from './fields/rich-text';
-import { TextField } from './fields/text';
+import { KeyValueField, ListField, TreeField } from './fields/structural';
+import { AutocompleteField, TextField } from './fields/text';
 import { UploadField } from './fields/upload';
 
 const builtIns = new Map<string, FieldComponent>();
@@ -61,3 +62,8 @@ registerBuiltInField('captcha', CaptchaField);
 registerBuiltInField('relation', RelationField);
 
 registerBuiltInField('repeater', RepeaterField);
+
+registerBuiltInField('keyValue', KeyValueField);
+registerBuiltInField('list', ListField);
+registerBuiltInField('tree', TreeField);
+registerBuiltInField('autocomplete', AutocompleteField);

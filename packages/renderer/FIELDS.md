@@ -64,6 +64,45 @@ properties only. Empty paths address the root. Prototype-related path segments
   save and on read. Images upload through `uploadUrl` like `upload`, but the field value stays HTML.
 - `embeds` is an object. Display fields render their supplied JSON value.
 
+## Structural fields and layout nodes
+
+- `keyValue` (`{ key, value }[]`), `list` (`string[]`) and `tree` (`string[]` of node ids) render with
+  `KeyValueInput`, `ListInput` and `CheckboxTree`; `autocomplete` is text with suggestions
+  (`AutocompleteInput`; static `options`, or `remote` through the same `useRemoteOptions` loader and
+  `dependsOn` scoping as a remote select; the suggestion text is the option `label`; blank is `null`);
+  `multipleSelect` with `appearance: 'listbox'` renders `DualListbox` (static options only).
+  `keyValue`, `list`, `tree` and listbox are long (full width) fields.
+- **Normalisation, shared by validation, conditions and submit** (`form/structural.ts`; the server
+  mirrors it, see `packages/schema/docs/forms.md`). `keyValue`: keys are trimmed (Unicode
+  `White_Space` only), and a row whose trimmed key AND value are both empty is dropped silently, so a
+  trailing blank row never blocks saving. `list`: items are not trimmed, whitespace-only items are
+  dropped. `tree`: canonical for its mode (`canonicalTreeValue`). Error paths are in the
+  normalised index space (`name.N.key`, `name.N.value`, `name.N`; `name` for count errors); the
+  controls get them mapped back onto the visible rows. `required` means at least one kept pair /
+  item / id. `form.validateAll()` validates the normalised value; submit sends it
+  (`submitValues`, active fields only; hidden, disabled and read-only drafts are sent untouched) and
+  resets the baseline to what was sent.
+- A `tree` value is canonicalised when the form loads or resets, in both draft and baseline, so a
+  legacy value never makes the form dirty by itself.
+- Conditions: a target of type `keyValue`/`list`/`tree` only supports `empty` (declaration error
+  otherwise, also inside `all`/`any`/`not`, for `showWhen`, `enableWhen` and `group` conditions).
+  `autocomplete` is text. A `list` with `min > max` is a declaration error.
+- `repeater` with `layout: 'table'`: one column per direct field node (label, required); each cell
+  is the ordinary field pipeline for that one node with its label visually hidden (`HideFieldLabels`;
+  the input keeps its accessible name), errors inline, and a field hidden by `showWhen` leaves an
+  empty cell so columns stay aligned. Every direct child must be a field that is not
+  `repeater`/`relation`/`upload`/`richText`/`keyValue`/`list`/`tree`/`custom` and not a listbox
+  `multipleSelect`; otherwise declaration check throws a message naming the field.
+- `fieldset` is `FormCollapsible`: children stay mounted while collapsed (values and validation
+  untouched). It reopens (re-trigger `openSignal`) on every `FormView` focus request whose target
+  field is inside it: a submit that leaves an error inside, and an error-summary jump.
+- `group` renders its children only while `showWhen` holds, evaluated by `groupVisible`
+  (`use-field-conditions.ts`) with the same evaluator and scope as a field there: row-scoped paths
+  resolve against the enclosing repeater row / relation item (`Nodes` `rowPath`). The fields inside
+  carry their own `showWhen`, so hiding a group keeps every draft and adds no validation rule. Group
+  conditions take part in declaration checks (unknown paths, operand rule). `fieldset` and `group`
+  are walked like `block` by every row/field walker.
+
 ## Nested components
 
 The renderer Repeater recursively uses the same Nodes pipeline as root fields, including

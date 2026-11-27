@@ -1,6 +1,7 @@
 import {
   Alert,
   FormBlock,
+  FormCollapsible,
   FormDivider,
   FormFieldset,
   FormHtml,
@@ -8,14 +9,16 @@ import {
   Link,
 } from '@brume-ui/brume-react';
 import type { FieldDef, FormNode, RowContext } from '@brume-ui/brume-schema';
-import type { CSSProperties, ReactNode } from 'react';
+import { type CSSProperties, type ReactNode, useContext, useState } from 'react';
 import { MissingComponent } from '../../missing-component';
 import { useRegistry } from '../../registry-context';
-import { scopeErrors } from '../errors';
-import { FieldIdPrefixContext } from '../field-navigation';
+import { isPathWithin, scopeErrors } from '../errors';
+import { FieldIdPrefixContext, FieldsetRevealContext } from '../field-navigation';
 import { fieldOwnershipKey } from '../field-ownership';
 import { resolveField } from '../registry';
+import { groupVisible } from '../use-field-conditions';
 import type { FormApi } from '../use-form-state';
+import { collectFields } from '../validate';
 import { Horizontal } from './horizontal';
 import { Stacked } from './stacked';
 /** The server's rule for a button link: an absolute http(s) URL, or a path with a single leading "/". */
@@ -49,7 +52,12 @@ export function isLongField(def: FieldDef): boolean {
       'embeds',
       'relation',
       'repeater',
-    ].includes(def.type)
+      'keyValue',
+      'list',
+      'tree',
+    ].includes(def.type) ||
+    // The dual listbox needs the whole row for its two panes.
+    (def.type === 'multipleSelect' && 'appearance' in def && def.appearance === 'listbox')
   );
 }
 /** Fields whose values are a few characters wide: one stacked track instead of two. */
@@ -78,6 +86,36 @@ export interface NodesProps {
   row?: boolean;
   sectionIdPrefix?: string;
   rowContext?: RowContext;
+  /** The concrete path of the enclosing repeater row / relation item: where row-scoped conditions resolve. */
+  rowPath?: string;
+}
+
+/** A collapsible group that reopens whenever a failed submit or a jump targets a field inside. */
+function Fieldset(props: {
+  node: Extract<FormNode, { type: 'fieldset' }>;
+  prefix: string;
+  id: string;
+  children: ReactNode;
+}) {
+  const { node, prefix } = props;
+  const reveal = useContext(FieldsetRevealContext);
+  const [state, setState] = useState({ seen: reveal?.n ?? 0, signal: 0 });
+  if (reveal && reveal.n !== state.seen) {
+    const inside = collectFields(node.children, prefix).some((field) =>
+      isPathWithin(reveal.path, field.path),
+    );
+    setState({ seen: reveal.n, signal: state.signal + (inside ? 1 : 0) });
+  }
+  return (
+    <FormCollapsible
+      id={props.id}
+      title={node.title}
+      defaultCollapsed={node.collapsed}
+      openSignal={state.signal}
+    >
+      {props.children}
+    </FormCollapsible>
+  );
 }
 export function Nodes(props: NodesProps) {
   const { nodes, api, idPrefix, layout, prefix = '', uploadUrl, row } = props;
@@ -212,9 +250,21 @@ export function Nodes(props: NodesProps) {
             case 'block':
               content = <FormBlock title={node.title}>{children(node.children)}</FormBlock>;
               break;
-            // Compile-only pass-through; the real collapsible/conditional rendering lands later.
             case 'fieldset':
+              content = (
+                <Fieldset
+                  node={node}
+                  prefix={prefix}
+                  id={`${idPrefix}-fieldset-${encodeURIComponent(prefix ? `${prefix}.${node.key}` : node.key)}`}
+                >
+                  {children(node.children)}
+                </Fieldset>
+              );
+              break;
             case 'group':
+              // Only presentation: the fields inside carry their own showWhen, so a hidden group
+              // keeps every draft value and validation needs no rule of its own.
+              if (!groupVisible(node.showWhen, api, props.rowPath)) return null;
               content = children(node.children);
               break;
             case 'divider':

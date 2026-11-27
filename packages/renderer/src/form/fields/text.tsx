@@ -1,6 +1,15 @@
-import { Field, NumberInput, PasswordInput, Textarea, TextInput } from '@brume-ui/brume-react';
-import type { ReactElement } from 'react';
+import {
+  AutocompleteInput,
+  type AutocompleteSuggestion,
+  Field,
+  NumberInput,
+  PasswordInput,
+  Textarea,
+  TextInput,
+} from '@brume-ui/brume-react';
+import { type ReactElement, useCallback } from 'react';
 import type { FieldProps } from '../contract';
+import { useRemoteOptions } from '../use-remote-options';
 import { ReadOnlyField } from './misc';
 
 export function TextField(props: FieldProps) {
@@ -85,6 +94,49 @@ export function TextField(props: FieldProps) {
   return (
     <Field label={def.label} description={def.help} error={errors['']?.[0]} required={def.required}>
       {control}
+    </Field>
+  );
+}
+
+/** A text value with suggestions: static `options`, or the remote loader of a remote select. */
+export function AutocompleteField(props: FieldProps) {
+  const { def, value, id, errors, describedBy, invalid, disabled, onChange, onBlur } = props;
+  const remote = def.type === 'autocomplete' ? def.remote : undefined;
+  const source = useRemoteOptions({
+    remote,
+    form: props.form,
+    path: props.path,
+    rowContext: props.rowContext,
+  });
+  const { enabled, load: loadOptions, cancel } = source;
+  const load = useCallback(
+    async (q: string, signal: AbortSignal): Promise<AutocompleteSuggestion[]> => {
+      // Dependencies that are not ready (or a row that is gone) offer nothing, as a remote select does.
+      if (!enabled) return [];
+      signal.addEventListener('abort', () => cancel('search'), { once: true });
+      const { options } = await loadOptions({ q, page: 1 });
+      return options.map((option) => ({ label: option.label, group: option.group }));
+    },
+    [enabled, loadOptions, cancel],
+  );
+  if (props.readOnly) return <ReadOnlyField {...props} />;
+  if (def.type !== 'autocomplete') return null;
+  return (
+    <Field label={def.label} description={def.help} error={errors['']?.[0]} required={def.required}>
+      <AutocompleteInput
+        id={id}
+        label={def.label}
+        value={typeof value === 'string' ? value : ''}
+        options={remote ? undefined : def.options}
+        load={remote ? load : undefined}
+        maxLength={def.maxLength}
+        placeholder={def.placeholder}
+        disabled={disabled}
+        invalid={invalid}
+        onBlur={onBlur}
+        aria-describedby={describedBy}
+        onChange={(next) => onChange(next === '' ? null : next)}
+      />
     </Field>
   );
 }

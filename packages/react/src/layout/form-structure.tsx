@@ -254,26 +254,28 @@ export function CompositeField({
 /**
  * A quiet disclosure group between a block and a fieldset. Children stay mounted while collapsed
  * (hidden, so they keep their values and stay findable, but are neither focusable nor announced).
- * `forceOpen` opens it on each false-to-true transition; afterwards the user is in control again.
+ * `openSignal` is a re-trigger: every change of its value opens the group (a failed submit, a jump
+ * to a field inside), however often the user collapsed it in between; the value itself means
+ * nothing and the initial one opens nothing.
  */
 export function FormCollapsible({
   id,
   title,
   defaultCollapsed = false,
-  forceOpen = false,
+  openSignal = 0,
   children,
 }: {
   id: string;
   title: string;
   defaultCollapsed?: boolean;
-  forceOpen?: boolean;
+  openSignal?: number;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(forceOpen || !defaultCollapsed);
-  const [seenForce, setSeenForce] = useState(forceOpen);
-  if (forceOpen !== seenForce) {
-    setSeenForce(forceOpen);
-    if (forceOpen) setOpen(true);
+  const [open, setOpen] = useState(!defaultCollapsed);
+  const [seenSignal, setSeenSignal] = useState(openSignal);
+  if (openSignal !== seenSignal) {
+    setSeenSignal(openSignal);
+    setOpen(true);
   }
   const regionId = `${id}-region`;
   const Chevron = open ? ChevronDown : ChevronRight;

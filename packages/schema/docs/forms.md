@@ -211,6 +211,18 @@
 - `keyValue`、`list`、`tree` 與 listbox 外觀的 `multipleSelect` 都不是 `PlainFieldDef`，不能出現在 Action 輸入欄位、快速新增或 `upload.extra`。
 - 作為條件運算元（`showWhen`／`enableWhen` 的目標）：`autocomplete` 的行為與 `text` 相同；`keyValue`、`list`、`tree` **只支援 `empty`**，對它們使用其他運算子是宣告錯誤（伺服器與 renderer 都會拒絕）。
 
+### 結構欄位的正規化與驗證（瀏覽器與伺服器必須完全一致）
+
+送出前先正規化、再驗證；錯誤路徑用**正規化之後**的索引（伺服器看到的也是這份）。
+
+- 「空白」一律指 Unicode `White_Space` 屬性：U+0009–000D、0020、0085、00A0、1680、2000–200A、2028、2029、202F、205F、3000。U+FEFF 等格式字元**不是**空白。字元長度以 Unicode code point 計。
+- `keyValue`：每列的 key 先去除前後空白；key 與 value 都是空字串的列**靜默丟棄**（不是錯誤，所以結尾多一列空白不會擋住儲存）。之後依序檢查：`required` 規則（丟棄後至少要有一組）→ 組數超過 `min(max ?? 200, 200)`（欄位本身的錯誤，路徑 `name`）→ 逐列：key 為空（`name.N.key`）、key 超過 255 字（`name.N.key`）、key 與前面某列相同（逐字比較、區分大小寫；錯誤在**第二個及之後**出現的那列，`name.N.key`；同一格只報第一個錯）→ value 超過 65,535 字（`name.N.value`）。value 不 trim，空字串保留。
+- `list`：項目**不** trim，但只含空白的項目在 `min`／`max`／送出前丟棄。依序：`required` 規則（至少一項）→ 項目數少於 `min`（欄位錯誤，路徑 `name`；`min` 對空清單也成立）→ 項目數超過 `min(max ?? 500, 500)`（欄位錯誤）→ 逐項超過 `maxLength`（預設 255）（`name.N`）。非字串項目是形狀錯誤（欄位錯誤）。
+- `tree`：以欄位的 `mode` 正規化（寫入時未知 id 在瀏覽器端直接丟棄，伺服器則拒絕直接 POST 的未知 id）；`required` 指正規化後至少一個 id。
+- `autocomplete`：等同 `text`（`''` 存為 `null`；`minLength`／`maxLength`／規則同 `text`）。
+- 條件：`empty` 套用在 `keyValue`／`list` 時，看的是正規化後的值（只有空白列／項目 = 空）；`tree` 看的是正規化後的 id 陣列。
+- 隱藏、停用或唯讀的欄位不正規化也不驗證，草稿原樣保留（與既有的隱藏欄位語意相同）。
+
 ### 哪一層拒絕什麼
 
 | 規則                                                                                                                                                                                                                                                                   | 拒絕的層                                                                             |

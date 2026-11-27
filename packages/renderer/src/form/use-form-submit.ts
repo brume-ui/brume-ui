@@ -11,6 +11,7 @@ import { flushSync } from 'react-dom';
 import { triggerDownload } from '../grid/actions/feedback';
 import { formIdentity } from './form-identity';
 import type { FormViewHandle } from './form-view';
+import { submitValues } from './structural';
 import type { FormApi } from './use-form-state';
 
 /** Returns only saved records; hook cancellation never resets the form or invokes success flows. */
@@ -51,6 +52,8 @@ export function useFormSubmit(
     locked.current = true;
     const version = api.resetVersion;
     const values = api.values;
+    // keyValue/list/tree go out as validated: trimmed keys, blank rows and items dropped, canonical trees.
+    const body = submitValues(api.fields, values);
     const identity = formIdentity(page);
     // Cleanup owns the state generation even when a changed page invalidates its response.
     const ownsState = () =>
@@ -66,7 +69,7 @@ export function useFormSubmit(
       const res = await adapter.request<FormSubmitResponse | ErrorResponse>({
         method: page.submit.method,
         url: page.submit.url,
-        body: { values, after },
+        body: { values: body, after },
       });
       if (!relevant()) return null;
       if (res.status === 422) {
@@ -95,7 +98,7 @@ export function useFormSubmit(
       // A programmatic write during the request must not be erased by its response.
       if (current.current.api.values !== values) return null;
       flushSync(() => {
-        api.reset(values);
+        api.reset(body);
         // A success that stays on this form must not offer the used answer again.
         api.refreshCaptchas?.();
       });

@@ -39,42 +39,84 @@ function flatten(errors: Iterable<SchemaError>): SchemaError[] {
   return out;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+
+/** The tree rules for one `tree` field declaration. */
+function treeOptionErrors(field: Record<string, unknown>, path: string): string[] {
+  if (field.type !== 'tree' || !Array.isArray(field.options)) return [];
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  let previous = -1;
+  field.options.forEach((raw, i) => {
+    const option = raw as { value?: unknown; depth?: unknown };
+    const at = `${path}/options/${i}`;
+    if (typeof option?.depth === 'number') {
+      if (option.depth > previous + 1) {
+        errors.push(
+          `${at}/depth: must be 0 for the first option and at most 1 deeper than the previous option`,
+        );
+      }
+      previous = option.depth;
+    }
+    if (typeof option?.value === 'string') {
+      if (seen.has(option.value)) errors.push(`${at}/value: duplicate tree option value`);
+      seen.add(option.value);
+    }
+  });
+  return errors;
+}
+
+function fieldErrors(field: unknown, path: string): string[] {
+  if (!isRecord(field)) return [];
+  return [
+    ...treeOptionErrors(field, path),
+    // repeater rows, relation row fields and upload extras hold nested declarations
+    ...nodeErrors(field.nodes, `${path}/nodes`),
+    ...nodeErrors(field.fields, `${path}/fields`),
+    ...list(field.extra).flatMap((item, i) => fieldErrors(item, `${path}/extra/${i}`)),
+  ];
+}
+
+function nodeErrors(nodes: unknown, path: string): string[] {
+  return list(nodes).flatMap((raw, i) => {
+    if (!isRecord(raw)) return [];
+    const at = `${path}/${i}`;
+    return [
+      ...(raw.type === 'field' ? fieldErrors(raw.field, `${at}/field`) : []),
+      ...nodeErrors(raw.children, `${at}/children`),
+      ...list(raw.columns).flatMap((column, c) =>
+        isRecord(column) ? nodeErrors(column.children, `${at}/columns/${c}/children`) : [],
+      ),
+    ];
+  });
+}
+
 /**
  * Rules JSON Schema cannot express, so only this hand-written layer enforces them (v0.json does
  * not): a `tree` field's flat options must start at depth 0, never jump more than +1 below the
- * previous option, and have unique values. Walks every object, so trees nested in repeater
- * rows or relation fields are covered.
+ * previous option, and have unique values. Only declaration positions are walked (form nodes with
+ * nested layout nodes, repeater `nodes`, relation `fields`, upload `extra`, action form fields and
+ * quick create fields); data rows and form values are never inspected.
  */
-export function findTreeOptionErrors(value: unknown, path = ''): string[] {
-  if (Array.isArray(value)) {
-    return value.flatMap((item, i) => findTreeOptionErrors(item, `${path}/${i}`));
-  }
-  if (value === null || typeof value !== 'object') return [];
-  const node = value as Record<string, unknown>;
+export function findTreeOptionErrors(envelope: unknown): string[] {
+  const page = isRecord(envelope) ? envelope.page : undefined;
+  if (!isRecord(page)) return [];
+  if (page.type === 'form')
+    return isRecord(page.form) ? nodeErrors(page.form.nodes, '/page/form/nodes') : [];
   const errors: string[] = [];
-  if (node.type === 'tree' && Array.isArray(node.options)) {
-    const seen = new Set<string>();
-    let previous = -1;
-    node.options.forEach((raw, i) => {
-      const option = raw as { value?: unknown; depth?: unknown };
-      const at = `${path}/options/${i}`;
-      if (typeof option?.depth === 'number') {
-        if (option.depth > previous + 1) {
-          errors.push(
-            `${at}/depth: must be 0 for the first option and at most 1 deeper than the previous option`,
-          );
-        }
-        previous = option.depth;
-      }
-      if (typeof option?.value === 'string') {
-        if (seen.has(option.value)) errors.push(`${at}/value: duplicate tree option value`);
-        seen.add(option.value);
-      }
+  const fields = (items: unknown, path: string) =>
+    list(items).forEach((item, i) => {
+      errors.push(...fieldErrors(item, `${path}/${i}`));
     });
-  }
-  for (const [key, child] of Object.entries(node)) {
-    errors.push(...findTreeOptionErrors(child, `${path}/${key}`));
-  }
+  if (isRecord(page.quickCreate)) fields(page.quickCreate.fields, '/page/quickCreate/fields');
+  if (isRecord(page.actions))
+    for (const group of ['row', 'batch', 'tools'])
+      list(page.actions[group]).forEach((action, i) => {
+        if (isRecord(action) && isRecord(action.form))
+          fields(action.form.fields, `/page/actions/${group}/${i}/form/fields`);
+      });
   return errors;
 }
 

@@ -283,6 +283,7 @@ function SelectionFields(
         api={api}
         idPrefix={idPrefix}
         prefix={prefix}
+        rowPath={prefix}
         layout="stacked"
         uploadUrl={props.uploadUrl}
       />
@@ -298,6 +299,8 @@ const UNDESCRIBED = new Set([
   'relation',
   'repeater',
   'custom',
+  'keyValue',
+  'tree',
 ]);
 
 function describeValue(

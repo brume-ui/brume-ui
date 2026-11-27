@@ -12,6 +12,7 @@ import { canonicalizeFieldValue, conditionPaths, evaluateCondition } from './con
 import { isPathWithin } from './errors';
 import { assertSafePath, getAt, joinPath, setAt } from './paths';
 import { repeaterIdentities } from './row-identity';
+import { isStructural } from './structural';
 import { collectFields, validateField } from './validate';
 
 type RowContainer = { path: string; row: string; kind: 'repeater' | 'relation' };
@@ -79,6 +80,49 @@ function declarations(
   });
 }
 
+/** A `group` node's condition and the row template the node sits in (like a field at that position). */
+interface GroupDeclaration {
+  condition: Condition;
+  rowTemplate?: string;
+  where: string;
+}
+
+/** Mirrors `collectFields`' path rules so each group resolves its paths where a field there would. */
+function groupDeclarations(nodes: FormNode[], base = '', rowTemplate?: string): GroupDeclaration[] {
+  return nodes.flatMap((node): GroupDeclaration[] => {
+    switch (node.type) {
+      case 'field': {
+        const { field } = node;
+        if (field.type !== 'repeater' && field.type !== 'relation') return [];
+        const path = joinPath(base, field.name);
+        const row = field.type === 'repeater' || field.multiple ? `${path}.*` : path;
+        return groupDeclarations(
+          field.type === 'repeater' ? field.nodes : (field.fields ?? []),
+          row,
+          row,
+        );
+      }
+      case 'columns':
+        return node.columns.flatMap((column) =>
+          groupDeclarations(column.children, base, rowTemplate),
+        );
+      case 'embeds':
+        return groupDeclarations(node.children, joinPath(base, node.name), rowTemplate);
+      case 'divider':
+      case 'html':
+      case 'button':
+        return [];
+      case 'group':
+        return [
+          { condition: node.showWhen, rowTemplate, where: `group in ${base || 'the form'}` },
+          ...groupDeclarations(node.children, base, rowTemplate),
+        ];
+      default:
+        return groupDeclarations(node.children, base, rowTemplate);
+    }
+  });
+}
+
 function matches(template: string, path: string): boolean {
   const actual = path.split('.');
   const expected = template.split('.');
@@ -98,19 +142,89 @@ function declarationPath(field: ConditionPath, declaration: Declaration, wildcar
   return joinPath(declaration.rowTemplate, field.path);
 }
 
-function checkDeclarations(entries: Declaration[]): void {
+/** Direct children of a `table` repeater must be plain field columns. */
+function checkTableLayout(entry: Declaration): void {
+  const { def } = entry;
+  if (def.type !== 'repeater' || def.layout !== 'table') return;
+  const where = `Repeater "${entry.path}" has layout "table"`;
+  for (const node of def.nodes) {
+    if (node.type !== 'field')
+      throw new Error(`${where}: every direct child must be a field, found a ${node.type} node`);
+    const { field } = node;
+    if (
+      ['repeater', 'relation', 'upload', 'richText', 'keyValue', 'list', 'tree', 'custom'].includes(
+        field.type,
+      )
+    )
+      throw new Error(
+        `${where}: field "${field.name}" (type ${field.type}) cannot be a table column`,
+      );
+    if (field.type === 'multipleSelect' && 'appearance' in field && field.appearance === 'listbox')
+      throw new Error(
+        `${where}: field "${field.name}" (multipleSelect with appearance listbox) cannot be a table column`,
+      );
+  }
+}
+
+/** The comparison leaves of a condition (all/any/not are descended). */
+function conditionLeaves(
+  condition: Condition,
+): Array<Exclude<Condition, { conditions: unknown } | { op: 'not' }>> {
+  if ('conditions' in condition) return condition.conditions.flatMap(conditionLeaves);
+  if (condition.op === 'not') return conditionLeaves(condition.condition);
+  return [condition];
+}
+
+function checkDeclarations(entries: Declaration[], groups: GroupDeclaration[] = []): void {
   const edges = new Map<string, Set<string>>();
   const resolve = (field: ConditionPath, entry: Declaration, wildcard = false) => {
     const path = declarationPath(field, entry, wildcard);
     const target = entries.find((candidate) => matches(candidate.path, path));
     if (!target) throw new Error(`Unknown declaration path: ${path} (from ${entry.path})`);
-    return target.path;
+    return target;
   };
+  // A group's condition is declared like a field's at that position: its paths must exist and
+  // keyValue/list/tree targets only take `empty`.
+  // keyValue, list and tree values have no scalar to compare: only `empty` is meaningful.
+  const checkOperands = (condition: Condition, entry: Declaration) => {
+    for (const leaf of conditionLeaves(condition)) {
+      if (leaf.op === 'empty') continue;
+      const target = resolve(leaf.field, entry);
+      if (isStructural(target.def))
+        throw new Error(
+          `Condition on ${target.def.type} "${target.path}" only supports "empty", not "${leaf.op}" (from ${entry.path})`,
+        );
+    }
+  };
+  for (const entry of entries) checkTableLayout(entry);
+  for (const group of groups) {
+    const at: Declaration = {
+      path: group.where,
+      def: { type: 'hidden', name: group.where, label: group.where },
+      rowTemplate: group.rowTemplate,
+      rows: [],
+      parents: [],
+      uploads: [],
+      order: [],
+    };
+    for (const path of conditionPaths(group.condition)) resolve(path, at);
+    checkOperands(group.condition, at);
+  }
   for (const entry of entries) {
+    if (
+      entry.def.type === 'list' &&
+      entry.def.min !== undefined &&
+      entry.def.max !== undefined &&
+      entry.def.min > entry.def.max
+    )
+      throw new Error(
+        `List "${entry.path}": min (${entry.def.min}) must not exceed max (${entry.def.max})`,
+      );
     const dependencies = new Set(entry.parents);
     for (const condition of [entry.def.showWhen, entry.def.enableWhen]) {
-      if (condition)
-        for (const path of conditionPaths(condition)) dependencies.add(resolve(path, entry));
+      if (!condition) continue;
+      for (const path of conditionPaths(condition)) dependencies.add(resolve(path, entry).path);
+      checkOperands(condition, entry);
     }
     edges.set(entry.path, dependencies);
     if ('remote' in entry.def)
@@ -133,7 +247,7 @@ function checkDeclarations(entries: Declaration[]): void {
 
 /** Throws for unsafe/unknown dependency paths and activity cycles, independent of current values. */
 export function validateConditionDeclarations(nodes: FormNode[]): void {
-  checkDeclarations(declarations(nodes));
+  checkDeclarations(declarations(nodes), groupDeclarations(nodes));
 }
 
 export interface ValueField {
@@ -154,6 +268,8 @@ export interface ValueField {
   validationError: string | null;
   /** For two-bound fields: the bound `validationError` belongs to (its error path is `path.bound`). */
   validationBound?: 'start' | 'end';
+  /** For keyValue/list: every error with its path relative to the field; see FieldValidationError. */
+  validationItems?: Array<{ suffix: string; message: string }>;
   /** Effective controller value uses stored/default authority while inactive. */
   authorityRequired: boolean;
   effectiveValue: unknown;
@@ -187,7 +303,7 @@ export function collectValueFields(
   t: ReturnType<typeof createTranslator> = defaultTranslate,
 ): ValueField[] {
   const entries = declarations(nodes);
-  checkDeclarations(entries);
+  checkDeclarations(entries, groupDeclarations(nodes));
   const rowKey = (row: RowContext) =>
     JSON.stringify(row.map(({ path, key, id }) => [path, key, id ?? null]));
   const resolved = new Map<string, NonNullable<FormDef['rowFields']>[number]['fields']>();
@@ -267,6 +383,7 @@ export function collectValueFields(
         active: true,
         validationError,
         validationBound: builtIn?.bound,
+        validationItems: builtIn?.items,
         authorityRequired: entry.parents.some((path) => {
           const parent = entries.find((entry) => entry.path === path)?.def;
           return parent?.type === 'relation' && parent.hydrateAuthority === true;
@@ -414,6 +531,22 @@ export function collectValueFields(
   // A controller's raw failure always makes direct dependents conservative; hidden invalid fields
   // keep their draft and do not independently block until they become editable again.
   return pending.map(({ field }) => field);
+}
+
+/** The client errors of one field as `[path, messages]` pairs, relative to nothing (absolute). */
+export function fieldClientErrors(field: ValueField): Array<[string, string[]]> {
+  if (field.validationError === null) return [];
+  if (field.validationItems)
+    return field.validationItems.map(({ suffix, message }) => [
+      suffix === '' ? field.path : `${field.path}.${suffix}`,
+      [message],
+    ]);
+  return [
+    [
+      field.validationBound ? `${field.path}.${field.validationBound}` : field.path,
+      [field.validationError],
+    ],
+  ];
 }
 
 /** Error ownership stops at undeclared/missing row boundaries instead of claiming every prefix.

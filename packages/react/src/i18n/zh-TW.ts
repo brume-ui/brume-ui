@@ -255,4 +255,12 @@ export const zhTW = {
   'validation.min': '不可小於 {min}',
   'validation.max': '不可大於 {max}',
   'validation.step': '必須是 {step} 的倍數（自 {min} 起算）',
+  'validation.keyValue.keyRequired': '請輸入鍵',
+  'validation.keyValue.keyDuplicate': '鍵不可重複',
+  'validation.keyValue.keyLength': '鍵不可超過 {max} 個字',
+  'validation.keyValue.valueLength': '值不可超過 {max} 個字',
+  'validation.keyValue.max': '最多 {max} 組',
+  'validation.list.min': '至少需要 {min} 項',
+  'validation.list.max': '最多 {max} 項',
+  'validation.list.itemLength': '每項不可超過 {max} 個字',
 } as const;

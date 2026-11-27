@@ -1,6 +1,7 @@
 import {
   CheckboxGroup,
   Combobox,
+  DualListbox,
   Field,
   RadioGroup,
   Select,
@@ -98,6 +99,19 @@ export function ChoiceField(props: FieldProps) {
         );
       break;
     case 'multipleSelect':
+      if ('appearance' in def && def.appearance === 'listbox') {
+        // Static options only (the schema forbids `remote` here); a long field, full width.
+        control = (
+          <DualListbox
+            {...common}
+            options={options}
+            max={def.max}
+            value={values}
+            onChange={onChange}
+          />
+        );
+        break;
+      }
       control = (
         <Combobox
           {...common}
@@ -164,7 +178,11 @@ export function ChoiceField(props: FieldProps) {
       description={def.help}
       error={errors['']?.[0]}
       required={def.required}
-      group={def.type === 'radio' || def.type === 'checkbox'}
+      group={
+        def.type === 'radio' ||
+        def.type === 'checkbox' ||
+        (def.type === 'multipleSelect' && 'appearance' in def && def.appearance === 'listbox')
+      }
     >
       {control}
     </Field>

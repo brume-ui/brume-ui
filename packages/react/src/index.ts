@@ -73,6 +73,7 @@ export {
   type FieldControlProps,
   FieldLayoutContext,
   type FieldProps,
+  HideFieldLabels,
 } from './components/field';
 export { FormControls } from './components/form-controls';
 export { FormHtml } from './components/form-html';

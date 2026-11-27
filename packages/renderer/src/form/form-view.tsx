@@ -4,7 +4,7 @@ import { forwardRef, useId, useImperativeHandle, useMemo, useRef, useState } fro
 import { flushSync } from 'react-dom';
 import { ErrorSummary } from './error-summary';
 import { type FieldErrors, isPathWithin } from './errors';
-import { FieldRevealContext } from './field-navigation';
+import { FieldRevealContext, FieldsetRevealContext } from './field-navigation';
 import { fieldId, Nodes } from './layout/nodes';
 import { FormTabs } from './layout/tabs';
 import { findValueFieldOwner } from './traversal';
@@ -58,6 +58,7 @@ export const FormView = forwardRef<
   const sections = form.nodes.filter((node) => node.type === 'section');
   const firstSection = form.nodes.findIndex((node) => node.type === 'section');
   const [active, setActive] = useState(sections[0]?.key ?? '');
+  const [reveal, setReveal] = useState<{ path: string; n: number } | null>(null);
   const tabs = (sectionsAs ?? form.sections) === 'tabs';
   const fields = api.fields;
   const entries = Object.entries(api.errors)
@@ -99,6 +100,11 @@ export const FormView = forwardRef<
         ),
       );
       if (section && section.key !== active) flushSync(() => setActive(section.key));
+    }
+    // Collapsed fieldsets around the target reopen, however often the user closed them.
+    if (error.field) {
+      const target = error.field.path;
+      flushSync(() => setReveal((previous) => ({ path: target, n: (previous?.n ?? 0) + 1 })));
     }
     // Open outer composites first; their layout effects register any nested revealers.
     for (const field of fields) {
@@ -173,31 +179,35 @@ export const FormView = forwardRef<
   );
   return (
     <FieldRevealContext.Provider value={navigation}>
-      <FieldLayoutContext.Provider value={form.layout}>
-        <div ref={root} className="br:@container br:grid br:gap-6">
-          <ErrorSummary id={`${prefix}-summary`} errors={entries} onFocus={focus} />
-          {tabs && sections.length ? (
-            <>
-              {render(form.nodes.slice(0, firstSection))}
-              <FormTabs
-                sections={sections}
-                errors={sectionErrorKeys(form, api.errors)}
-                value={
-                  sections.some((section) => section.key === active)
-                    ? active
-                    : (sections[0]?.key ?? '')
-                }
-                onChange={setActive}
-              >
-                {(section) => render([section])}
-              </FormTabs>
-              {render(form.nodes.slice(firstSection + 1).filter((node) => node.type !== 'section'))}
-            </>
-          ) : (
-            render(form.nodes)
-          )}
-        </div>
-      </FieldLayoutContext.Provider>
+      <FieldsetRevealContext.Provider value={reveal}>
+        <FieldLayoutContext.Provider value={form.layout}>
+          <div ref={root} className="br:@container br:grid br:gap-6">
+            <ErrorSummary id={`${prefix}-summary`} errors={entries} onFocus={focus} />
+            {tabs && sections.length ? (
+              <>
+                {render(form.nodes.slice(0, firstSection))}
+                <FormTabs
+                  sections={sections}
+                  errors={sectionErrorKeys(form, api.errors)}
+                  value={
+                    sections.some((section) => section.key === active)
+                      ? active
+                      : (sections[0]?.key ?? '')
+                  }
+                  onChange={setActive}
+                >
+                  {(section) => render([section])}
+                </FormTabs>
+                {render(
+                  form.nodes.slice(firstSection + 1).filter((node) => node.type !== 'section'),
+                )}
+              </>
+            ) : (
+              render(form.nodes)
+            )}
+          </div>
+        </FieldLayoutContext.Provider>
+      </FieldsetRevealContext.Provider>
     </FieldRevealContext.Provider>
   );
 });
