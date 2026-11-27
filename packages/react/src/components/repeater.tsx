@@ -43,6 +43,7 @@ export interface RepeaterProps extends RepeaterBaseProps {
 export interface RepeaterTableProps extends RepeaterBaseProps {
   layout: 'table';
   columns: readonly RepeaterColumn[];
+  /** Return `null` for a cell with nothing in it: its td stays (alignment) but draws no caption. */
   renderCell(row: RowIdentity, index: number, columnKey: string): ReactNode;
   renderRow?: never;
 }
@@ -231,23 +232,29 @@ export function Repeater(props: RepeaterAnyProps) {
                   {...rowHandlers(index)}
                 >
                   <RepeaterDepth.Provider value={depth + 1}>
-                    {props.columns.map((column) => (
-                      <td
-                        key={column.key}
-                        {...explicit('cell')}
-                        className="br:min-w-0 br:px-3 br:py-3 br:@max-[640px]:block br:@max-[640px]:p-0"
-                      >
-                        {/* Visual aid only: the cell's own field already labels its input. */}
-                        <span
-                          aria-hidden="true"
-                          data-repeater-cell-label=""
-                          className="br:mb-1 br:hidden br:text-[13px] br:font-medium br:text-text-label br:@max-[640px]:block"
+                    {props.columns.map((column) => {
+                      const cell = props.renderCell(row, index, column.key);
+                      return (
+                        <td
+                          key={column.key}
+                          {...explicit('cell')}
+                          className="br:min-w-0 br:px-3 br:py-3 br:@max-[640px]:block br:@max-[640px]:p-0"
                         >
-                          {column.label}
-                        </span>
-                        {props.renderCell(row, index, column.key)}
-                      </td>
-                    ))}
+                          {/* Visual aid only: the cell's own field already labels its input. */}
+                          {/* A cell with nothing in it (null) keeps its td for alignment but no caption. */}
+                          {cell === null ? null : (
+                            <span
+                              aria-hidden="true"
+                              data-repeater-cell-label=""
+                              className="br:mb-1 br:hidden br:text-[13px] br:font-medium br:text-text-label br:@max-[640px]:block"
+                            >
+                              {column.label}
+                            </span>
+                          )}
+                          {cell}
+                        </td>
+                      );
+                    })}
                   </RepeaterDepth.Provider>
                   <td
                     {...explicit('cell')}

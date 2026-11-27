@@ -256,6 +256,11 @@ describe('repeater table layout', () => {
     expect(cell.querySelector('[class*="grid-cols-12"]')).toBeNull();
     expect((cell.querySelector('[data-field-path]') as HTMLElement).style.gridColumn).toBe('');
   });
+  it('draws no card caption above a hidden cell', () => {
+    setup(table, { rows });
+    // row 1: name, note, kind captions; row 2 hides note
+    expect(document.querySelectorAll('[data-repeater-cell-label]')).toHaveLength(5);
+  });
   it('shows errors inline in the cell', () => {
     const s = setup(table, { rows });
     validate(s.api());

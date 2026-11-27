@@ -219,8 +219,37 @@ describe('submitValues', () => {
 });
 
 describe('trimText', () => {
-  it('trims exactly Unicode White_Space, not U+FEFF', () => {
-    expect(trimText('　  a b \t\n')).toBe('a b');
-    expect(trimText('﻿a')).toBe('﻿a');
+  it('is JS trim(): U+FEFF is whitespace, U+0085 is not', () => {
+    expect(trimText('\u3000\u00a0 a b \t\n')).toBe('a b');
+    expect(trimText('\ufeffa\ufeff')).toBe('a');
+    expect(trimText('\u0085a')).toBe('\u0085a');
+  });
+  it('a U+FEFF-only key or item is blank, a U+0085-only one is not', () => {
+    expect(normalizeStructural(kv() as StructuralDef, [pair('\ufeff', '')])).toEqual([]);
+    expect(normalizeStructural(kv() as StructuralDef, [pair('\u0085', '')])).toEqual([
+      pair('\u0085', ''),
+    ]);
+    expect(normalizeStructural(list() as StructuralDef, ['\ufeff', '\u0085'])).toEqual(['\u0085']);
+  });
+});
+
+describe('required on structural fields and listbox', () => {
+  const tree = def('tree', {
+    mode: 'leaves',
+    options: [{ value: 'a', label: 'A', depth: 0 }],
+    ...required,
+  });
+  const listbox = def('multipleSelect', { appearance: 'listbox', options: [], ...required });
+  it.each([
+    ['keyValue', kv(required), [pair('', ''), pair('\ufeff', '')]],
+    ['list', list(required), [' ', '\ufeff']],
+    ['tree', tree, ['gone']],
+  ])('%s fails for null, undefined, [] and a value that normalises to empty', (_n, d, empty) => {
+    for (const value of [null, undefined, [], empty])
+      expect(validateField(d, value, t)?.message, JSON.stringify(value)).toBe('必填');
+  });
+  it('listbox fails for null, undefined and []', () => {
+    for (const value of [null, undefined, []])
+      expect(validateField(listbox, value, t)?.message).toBe('必填');
   });
 });

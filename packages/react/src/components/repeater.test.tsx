@@ -212,6 +212,27 @@ describe('Repeater layout="table"', () => {
     expect(table.className).toContain('@max-[640px]');
     expect(table.parentElement?.className).toContain('@container');
   });
+  it('draws no card caption for a cell that renders null, and keeps its td', () => {
+    render(
+      <BrumeProvider adapter={createMemoryAdapter()} locale="en">
+        <Repeater
+          layout="table"
+          label="Rows"
+          rows={[{ key: 'k1' }]}
+          columns={[
+            { key: 'a', label: 'A' },
+            { key: 'b', label: 'B' },
+          ]}
+          renderCell={(_row, _i, key) => (key === 'a' ? <input aria-label="a" /> : null)}
+          onAdd={() => {}}
+          onRemove={() => {}}
+          onMove={() => {}}
+        />
+      </BrumeProvider>,
+    );
+    expect(document.querySelectorAll('[data-repeater-cell-label]')).toHaveLength(1);
+    expect(document.querySelectorAll('tbody tr:first-child td')).toHaveLength(3);
+  });
   it('leaves the stack layout untouched (no table)', () => {
     render(<Harness />);
     expect(screen.queryByRole('table')).toBeNull();

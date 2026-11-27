@@ -15,14 +15,12 @@ export const LIST_MAX_ITEMS = 500;
 export const LIST_ITEM_MAX_LENGTH = 255;
 
 /**
- * Whitespace is exactly the Unicode White_Space property (U+0009-000D, 0020, 0085, 00A0, 1680,
- * 2000-200A, 2028, 2029, 202F, 205F, 3000), never U+FEFF or any other format character.
+ * One whitespace definition for the whole project: JS `String.prototype.trim()` (Unicode
+ * White_Space plus U+FEFF, without U+0085), as in `validate.ts` and the text fields. The PHP side
+ * mirrors it as `Field::jsTrim`.
  */
-const EDGE_SPACE = /^\p{White_Space}+|\p{White_Space}+$/gu;
-const BLANK = /^\p{White_Space}*$/u;
-
-export const trimText = (text: string): string => text.replace(EDGE_SPACE, '');
-const isBlankText = (text: string): boolean => BLANK.test(text);
+export const trimText = (text: string): string => text.trim();
+const isBlankText = (text: string): boolean => text.trim() === '';
 const length = (text: string): number => [...text].length;
 
 export type StructuralDef = Extract<FieldDef, { type: 'keyValue' | 'list' | 'tree' }>;

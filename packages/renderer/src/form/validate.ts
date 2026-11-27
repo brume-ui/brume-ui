@@ -226,8 +226,7 @@ export function validateField(
     const normalized = normalizeStructural(def, value);
     if (
       (def.rules ?? []).some((rule) => rule.rule === 'required') &&
-      Array.isArray(normalized) &&
-      normalized.length === 0
+      (normalized == null || (Array.isArray(normalized) && normalized.length === 0))
     )
       return { message: (def.rules ?? []).find((rule) => rule.rule === 'required')?.message ?? '' };
     const items = structuralErrors(def, value, t);

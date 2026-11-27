@@ -73,13 +73,18 @@ properties only. Empty paths address the root. Prototype-related path segments
   `multipleSelect` with `appearance: 'listbox'` renders `DualListbox` (static options only).
   `keyValue`, `list`, `tree` and listbox are long (full width) fields.
 - **Normalisation, shared by validation, conditions and submit** (`form/structural.ts`; the server
-  mirrors it, see `packages/schema/docs/forms.md`). `keyValue`: keys are trimmed (Unicode
-  `White_Space` only), and a row whose trimmed key AND value are both empty is dropped silently, so a
+  mirrors it, see `packages/schema/docs/forms.md`). `keyValue`: keys are trimmed (JS `trim()`, the one
+  whitespace definition of the project; PHP mirrors it as `Field::jsTrim`), and a row whose trimmed key AND value are both empty is dropped silently, so a
   trailing blank row never blocks saving. `list`: items are not trimmed, whitespace-only items are
   dropped. `tree`: canonical for its mode (`canonicalTreeValue`). Error paths are in the
   normalised index space (`name.N.key`, `name.N.value`, `name.N`; `name` for count errors); the
   controls get them mapped back onto the visible rows. `required` means at least one kept pair /
-  item / id. `form.validateAll()` validates the normalised value; submit sends it
+  item / id (`null`, `undefined`, `[]` and a value that normalises to empty all fail; when it fails
+  that single field-level error is returned and the other checks are skipped). A duplicate key is an
+  exact, case-sensitive match after trim; the error is on the second and later occurrences, and a
+  key that already failed for length still counts as seen. The error-summary jump for a
+  keyValue/list row error focuses the field's first control, not the offending row.
+  `form.validateAll()` validates the normalised value; submit sends it
   (`submitValues`, active fields only; hidden, disabled and read-only drafts are sent untouched) and
   resets the baseline to what was sent.
 - A `tree` value is canonicalised when the form loads or resets, in both draft and baseline, so a

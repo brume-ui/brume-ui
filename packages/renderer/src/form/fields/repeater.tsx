@@ -49,23 +49,26 @@ export function RepeaterField(props: FieldProps) {
       ? [{ key: node.field.name, label: node.field.label, required: node.field.required }]
       : [],
   );
-  if (def.layout === 'table')
-    return (
-      <fieldset id={props.id} className="br:min-w-0">
-        <Field
-          label={def.label}
-          description={def.help}
-          error={props.errors['']?.[0]}
-          required={def.required}
-          group
-        >
+  const table = def.layout === 'table';
+  return (
+    <fieldset id={props.id} className="br:min-w-0">
+      <Field
+        label={def.label}
+        description={def.help}
+        error={props.errors['']?.[0]}
+        required={def.required}
+        group
+      >
+        {table ? (
           <Repeater
             {...shared}
             layout="table"
             columns={columns}
             renderCell={(_row, index, key) => {
               const node = def.nodes.find((n) => n.type === 'field' && n.field.name === key);
-              return node ? (
+              // A hidden cell keeps its td (alignment) but is null, so card mode draws no caption.
+              if (!node || form.getField(`${path}.${index}.${key}`)?.visible === false) return null;
+              return (
                 <HideFieldLabels>
                   <Nodes
                     nodes={[node]}
@@ -80,36 +83,26 @@ export function RepeaterField(props: FieldProps) {
                     cell
                   />
                 </HideFieldLabels>
-              ) : null;
+              );
             }}
           />
-        </Field>
-      </fieldset>
-    );
-  return (
-    <fieldset id={props.id} className="br:min-w-0">
-      <Field
-        label={def.label}
-        description={def.help}
-        error={props.errors['']?.[0]}
-        required={def.required}
-        group
-      >
-        <Repeater
-          {...shared}
-          renderRow={(_row, index) => (
-            <Nodes
-              nodes={def.nodes}
-              api={form}
-              idPrefix={namespace ?? props.id}
-              layout="stacked"
-              prefix={`${path}.${index}`}
-              rowPath={`${path}.${index}`}
-              uploadUrl={props.uploadUrl}
-              rowContext={props.rowContext}
-            />
-          )}
-        />
+        ) : (
+          <Repeater
+            {...shared}
+            renderRow={(_row, index) => (
+              <Nodes
+                nodes={def.nodes}
+                api={form}
+                idPrefix={namespace ?? props.id}
+                layout="stacked"
+                prefix={`${path}.${index}`}
+                rowPath={`${path}.${index}`}
+                uploadUrl={props.uploadUrl}
+                rowContext={props.rowContext}
+              />
+            )}
+          />
+        )}
       </Field>
     </fieldset>
   );
