@@ -36,6 +36,16 @@ const type = (input: HTMLElement, text: string) => {
 };
 const optionNames = () => screen.queryAllByRole('option').map((o) => o.textContent);
 
+describe('AutocompleteInput popup landmark', () => {
+  it('the portalled list sits in a named region (axe `region`), not a dialog', () => {
+    const input = setup({ options: ['Taipei', 'Taichung'] });
+    type(input, 'Tai');
+    const region = screen.getByRole('region', { name: '城市' });
+    expect(region.contains(screen.getByRole('listbox', { name: '城市' }))).toBe(true);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
 describe('AutocompleteInput static options', () => {
   const options = ['Taipei', 'Taichung', 'Tainan', 'Kaohsiung'];
 

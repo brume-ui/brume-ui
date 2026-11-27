@@ -278,9 +278,10 @@ export function AutocompleteInput({
       ) : null}
       {hasSuggestions ? (
         <RadixPopover.Portal>
-          {/* biome-ignore lint/a11y/useValidAriaRole: clears Radix's role="dialog"; the listbox inside carries the semantics and focus stays in the input. */}
+          {/* A region (not Radix's default dialog, the combobox owns the popup semantics) keeps the portalled list inside a landmark for axe's `region` rule. */}
           <RadixPopover.Content
-            role={undefined}
+            role="region"
+            aria-label={label}
             align="start"
             sideOffset={4}
             collisionPadding={8}

@@ -43,6 +43,16 @@ const names = (box: HTMLElement) =>
     .queryAllByRole('option')
     .map((o) => o.textContent);
 
+describe('DualListbox empty pane (axe aria-required-children)', () => {
+  it('an empty listbox owns a disabled note option instead of bare text', () => {
+    setup();
+    const option = within(chosen()).getByRole('option');
+    expect(option.textContent).toBe('沒有項目');
+    expect(option.getAttribute('aria-disabled')).toBe('true');
+    expect(option.getAttribute('aria-selected')).toBe('false');
+  });
+});
+
 describe('DualListbox', () => {
   it('renders two multiselectable listboxes with labelled filters and group headings', () => {
     setup();

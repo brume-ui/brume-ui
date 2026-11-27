@@ -400,7 +400,15 @@ function Pane({
   const body = () => {
     if (list.length === 0) {
       return (
-        <p className="br:m-0 br:px-2 br:py-1.5 br:text-sm br:text-text-muted">{t('dual.empty')}</p>
+        // A listbox must own options (axe aria-required-children): the empty note is a disabled one.
+        <div
+          role="option"
+          aria-selected={false}
+          aria-disabled="true"
+          className="br:px-2 br:py-1.5 br:text-sm br:text-text-muted"
+        >
+          {t('dual.empty')}
+        </div>
       );
     }
     if (!grouped || !list.some((o) => o.group)) return list.map(renderOption);
