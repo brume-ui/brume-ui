@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
@@ -123,4 +123,56 @@ describe('KeyValueInput', () => {
     expect((screen.getByLabelText('鍵 1') as HTMLInputElement).readOnly).toBe(true);
     expect(screen.queryByRole('button')).toBeNull();
   });
+
+  it('focuses the neighbour key after a remove, then add when none is left', () => {
+    setup({ value: pairs });
+    fireEvent.click(screen.getByRole('button', { name: '移除 標頭 1' }));
+    expect(document.activeElement).toBe(screen.getByLabelText('鍵 1'));
+    fireEvent.click(screen.getByRole('button', { name: '移除 標頭 1' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '新增 標頭' }));
+  });
+
+  it('keeps rows and focus when the parent replaces value with an equal-length array', () => {
+    const view = controlled(pairs);
+    const first = screen.getByLabelText('鍵 1') as HTMLInputElement;
+    first.focus();
+    view.set([
+      { key: 'x', value: 'y' },
+      { key: 'z', value: 'w' },
+    ]);
+    expect(screen.getByLabelText('鍵 1')).toBe(first);
+    expect(first.value).toBe('x');
+    expect(document.activeElement).toBe(first);
+  });
+
+  it('renders a replacement of different length without crashing', () => {
+    const view = controlled(pairs);
+    view.set([{ key: 'p', value: 'q' }]);
+    expect((screen.getByLabelText('鍵 1') as HTMLInputElement).value).toBe('p');
+    expect(screen.queryByLabelText('鍵 2')).toBeNull();
+    view.set([...pairs, { key: 'c', value: '3' }, { key: 'd', value: '4' }]);
+    expect((screen.getByLabelText('值 4') as HTMLInputElement).value).toBe('4');
+  });
 });
+
+function Parent({
+  initial,
+  setter,
+}: {
+  initial: KeyValuePair[];
+  setter: { current(v: KeyValuePair[]): void };
+}) {
+  const [v, setV] = useState(initial);
+  setter.current = setV;
+  return <KeyValueInput label="標頭" value={v} onChange={setV} />;
+}
+
+function controlled(initial: KeyValuePair[]) {
+  const setter = { current: (_: KeyValuePair[]) => {} };
+  render(
+    <BrumeProvider adapter={createMemoryAdapter()}>
+      <Parent initial={initial} setter={setter} />
+    </BrumeProvider>,
+  );
+  return { set: (v: KeyValuePair[]) => act(() => setter.current(v)) };
+}

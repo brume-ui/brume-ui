@@ -59,7 +59,7 @@ describe('AutocompleteInput static options', () => {
     expect(input.getAttribute('aria-activedescendant')).toBe(
       screen.getByRole('option', { name: 'Taichung' }).id,
     );
-    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(fireEvent.keyDown(input, { key: 'Enter' })).toBe(false);
     expect(spy).toHaveBeenLastCalledWith('Taichung');
     expect(input.value).toBe('Taichung');
     expect(input.getAttribute('aria-expanded')).toBe('false');
@@ -209,5 +209,43 @@ describe('AutocompleteInput remote load', () => {
     fireEvent.compositionEnd(input);
     await act(() => vi.advanceTimersByTimeAsync(260));
     expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops an aborted request that resolves late', async () => {
+    const resolvers: ((v: { label: string }[]) => void)[] = [];
+    const load = vi.fn(
+      (_q: string, _s: AbortSignal) =>
+        new Promise<{ label: string }[]>((res) => {
+          resolvers.push(res);
+        }),
+    );
+    const input = setup({ load });
+    type(input, 'a');
+    await act(() => vi.advanceTimersByTimeAsync(260));
+    type(input, 'ab');
+    await act(() => vi.advanceTimersByTimeAsync(260));
+    await act(async () => resolvers[0]?.([{ label: 'stale' }]));
+    expect(optionNames()).toEqual([]);
+    await act(async () => resolvers[1]?.([{ label: 'fresh' }]));
+    expect(optionNames()).toEqual(['fresh']);
+  });
+
+  it('treats a synchronous throw or a non-promise return as a failure', async () => {
+    const load = vi.fn((): Promise<{ label: string }[]> => {
+      throw new Error('sync');
+    });
+    const input = setup({ load });
+    type(input, 'x');
+    await act(() => vi.advanceTimersByTimeAsync(260));
+    expect(screen.getAllByText('選項載入失敗，請再試一次。').length).toBeGreaterThan(0);
+    expect(input.value).toBe('x');
+  });
+
+  it('treats a non-promise return as a failure', async () => {
+    const load = vi.fn(() => undefined as unknown as Promise<{ label: string }[]>);
+    const input = setup({ load });
+    type(input, 'x');
+    await act(() => vi.advanceTimersByTimeAsync(260));
+    expect(screen.getAllByText('選項載入失敗，請再試一次。').length).toBeGreaterThan(0);
   });
 });

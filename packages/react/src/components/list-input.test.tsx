@@ -1,4 +1,4 @@
-import { createEvent, fireEvent, render, screen } from '@testing-library/react';
+import { act, createEvent, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
@@ -114,4 +114,62 @@ describe('ListInput', () => {
     expect((screen.getByLabelText('網域 1') as HTMLInputElement).readOnly).toBe(true);
     expect(screen.queryByRole('button')).toBeNull();
   });
+
+  it('ignores a drop whose dragged row no longer exists', () => {
+    setup({ value: ['a', 'b', 'c'] });
+    const dataTransfer = { setData: () => {}, effectAllowed: '' };
+    fireEvent.dragStart(screen.getByRole('button', { name: '排序 網域 3' }), { dataTransfer });
+    fireEvent.click(screen.getByRole('button', { name: '移除 網域 3' }));
+    const row = screen.getByLabelText('網域 1').closest('li') as HTMLElement;
+    fireEvent.drop(row, { dataTransfer });
+    expect(inputs()).toEqual(['a', 'b']);
+  });
+
+  it('focuses the neighbour after a remove, then the add button when none is left', () => {
+    setup({ value: ['a', 'b'] });
+    fireEvent.click(screen.getByRole('button', { name: '移除 網域 1' }));
+    expect(document.activeElement).toBe(screen.getByLabelText('網域 1'));
+    fireEvent.click(screen.getByRole('button', { name: '移除 網域 1' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '新增 網域' }));
+  });
+
+  it('keeps rows and focus when the parent replaces value with an equal-length array', () => {
+    const view = renderControlled(['a', 'b']);
+    const first = screen.getByLabelText('網域 1') as HTMLInputElement;
+    first.focus();
+    view.set(['x', 'y']);
+    expect(screen.getByLabelText('網域 1')).toBe(first);
+    expect(first.value).toBe('x');
+    expect(document.activeElement).toBe(first);
+  });
+
+  it('renders a replacement of different length without crashing', () => {
+    const view = renderControlled(['a', 'b']);
+    view.set(['p', 'q', 'r', 's']);
+    expect(inputs()).toEqual(['p', 'q', 'r', 's']);
+    view.set(['z']);
+    expect(inputs()).toEqual(['z']);
+  });
 });
+
+function Parent({
+  initial,
+  setter,
+}: {
+  initial: string[];
+  setter: { current(v: string[]): void };
+}) {
+  const [v, setV] = useState(initial);
+  setter.current = setV;
+  return <ListInput label="網域" value={v} onChange={setV} />;
+}
+
+function renderControlled(initial: string[]) {
+  const setter = { current: (_: string[]) => {} };
+  render(
+    <BrumeProvider adapter={createMemoryAdapter()}>
+      <Parent initial={initial} setter={setter} />
+    </BrumeProvider>,
+  );
+  return { set: (v: string[]) => act(() => setter.current(v)) };
+}

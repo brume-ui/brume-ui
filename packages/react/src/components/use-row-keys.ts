@@ -2,7 +2,9 @@ import { useRef } from 'react';
 
 /**
  * Client-side identity for rows of a plain value array, so editing or moving a row never remounts
- * it. The array is kept in step with `length`; the caller mirrors every add, remove and move
+ * it. Contract: the key list is synced to `length` on every render (extended at the end or
+ * truncated at the end), so when a parent replaces `value` with a new array the retained leading
+ * rows keep their identity; only the caller's own add/remove/move reorder it. The array is kept in step with `length`; the caller mirrors every add, remove and move
  * before it calls `onChange`.
  */
 export function useRowKeys(length: number) {

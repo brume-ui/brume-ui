@@ -95,7 +95,7 @@ export function ListInput({
     onChange(value.filter((_, i) => i !== index));
   };
   const move = (from: number, to: number, act: Act) => {
-    if (locked || !canSort || from === to || to < 0 || to >= value.length) return;
+    if (locked || !canSort || from < 0 || from === to || to < 0 || to >= value.length) return;
     focus.current = { key: rows.keys[from] ?? '', act };
     rows.move(from, to);
     const next = [...value];

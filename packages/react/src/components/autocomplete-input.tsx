@@ -83,18 +83,25 @@ export function AutocompleteInput({
     setLoading(true);
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      loadRef.current?.(value, controller.signal).then(
-        (items) => {
-          if (controller.signal.aborted) return;
-          setRemote(items);
-          setLoading(false);
-        },
-        () => {
-          if (controller.signal.aborted) return;
-          setFailed(true);
-          setLoading(false);
-        },
-      );
+      // A synchronous throw or a non-promise return takes the same path as a rejection.
+      Promise.resolve()
+        .then(() => loadRef.current?.(value, controller.signal))
+        .then((items) => {
+          if (!Array.isArray(items)) throw new Error('load must resolve to an array');
+          return items;
+        })
+        .then(
+          (items) => {
+            if (controller.signal.aborted) return;
+            setRemote(items);
+            setLoading(false);
+          },
+          () => {
+            if (controller.signal.aborted) return;
+            setFailed(true);
+            setLoading(false);
+          },
+        );
     }, 250);
     return () => {
       clearTimeout(timer);
