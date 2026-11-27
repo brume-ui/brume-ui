@@ -401,6 +401,7 @@ function Pane({
     if (list.length === 0) {
       return (
         // A listbox must own options (axe aria-required-children): the empty note is a disabled one.
+        // biome-ignore lint/a11y/useFocusableInteractive: like every option here it is never focused (the listbox keeps focus).
         <div
           role="option"
           aria-selected={false}
