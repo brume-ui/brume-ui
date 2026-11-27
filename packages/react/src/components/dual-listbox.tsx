@@ -282,6 +282,7 @@ function Pane({
   const anchor = useRef<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const positions = useMemo(() => new Map(list.map((o, k) => [o.value, k])), [list]);
+  const emptyId = `${baseId}-${name}-empty`;
   const optionId = (v: string) => `${baseId}-${name}-${positions.get(v) ?? -1}`;
   const activeValue =
     state.active !== null && positions.has(state.active) ? state.active : (list[0]?.value ?? null);
@@ -398,20 +399,7 @@ function Pane({
   };
 
   const body = () => {
-    if (list.length === 0) {
-      return (
-        // A listbox must own options (axe aria-required-children): the empty note is a disabled one.
-        // biome-ignore lint/a11y/useFocusableInteractive: like every option here it is never focused (the listbox keeps focus).
-        <div
-          role="option"
-          aria-selected={false}
-          aria-disabled="true"
-          className="br:px-2 br:py-1.5 br:text-sm br:text-text-muted"
-        >
-          {t('dual.empty')}
-        </div>
-      );
-    }
+    if (list.length === 0) return null;
     if (!grouped || !list.some((o) => o.group)) return list.map(renderOption);
     const groups: { group: string; items: DualListboxOption[] }[] = [];
     for (const o of list) {
@@ -455,27 +443,40 @@ function Pane({
         onChange={(e) => onPatch({ filter: e.target.value })}
         className={cn(CONTROL_BASE, CONTROL_BORDER, FOCUS_RING, 'br:w-full br:min-w-0')}
       />
-      <div
-        ref={root}
-        role="listbox"
-        data-pane={name}
-        tabIndex={disabled ? -1 : 0}
-        aria-label={`${label} ${title}`}
-        aria-multiselectable="true"
-        aria-disabled={disabled || undefined}
-        aria-invalid={invalid || undefined}
-        aria-required={required || undefined}
-        aria-describedby={describedBy}
-        aria-activedescendant={activeValue !== null ? optionId(activeValue) : undefined}
-        onKeyDown={onKeyDown}
-        className={cn(
-          'br:h-56 br:overflow-y-auto br:rounded-input br:border br:bg-surface br:p-1',
-          invalid ? 'br:border-danger' : 'br:border-border-strong',
-          disabled && 'br:opacity-50',
-          FOCUS_RING,
-        )}
-      >
-        {body()}
+      <div className="br:relative">
+        <div
+          ref={root}
+          role="listbox"
+          data-pane={name}
+          tabIndex={disabled ? -1 : 0}
+          aria-label={`${label} ${title}`}
+          aria-multiselectable="true"
+          aria-disabled={disabled || undefined}
+          aria-invalid={invalid || undefined}
+          aria-required={required || undefined}
+          aria-describedby={
+            [describedBy, list.length === 0 ? emptyId : undefined].filter(Boolean).join(' ') ||
+            undefined
+          }
+          aria-activedescendant={activeValue !== null ? optionId(activeValue) : undefined}
+          onKeyDown={onKeyDown}
+          className={cn(
+            'br:h-56 br:overflow-y-auto br:rounded-input br:border br:bg-surface br:p-1',
+            invalid ? 'br:border-danger' : 'br:border-border-strong',
+            disabled && 'br:opacity-50',
+            FOCUS_RING,
+          )}
+        >
+          {body()}
+        </div>
+        {list.length === 0 ? (
+          <p
+            id={emptyId}
+            className="br:pointer-events-none br:absolute br:inset-x-0 br:top-0 br:m-0 br:px-3 br:py-2 br:text-sm br:text-text-muted"
+          >
+            {t('dual.empty')}
+          </p>
+        ) : null}
       </div>
     </div>
   );

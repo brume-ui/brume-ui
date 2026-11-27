@@ -51,6 +51,7 @@ export const en: Record<MessageKey, string> = {
   'chip.removeFilter': 'Remove filter: {label}',
   'search.clear': 'Clear search',
   'combobox.loadMore': 'Load more',
+  'combobox.suggestions': '{label} suggestions',
   'combobox.empty': 'No matching options',
   'combobox.loadFailed': 'Couldn’t load the options. Try again.',
   'combobox.unavailable': 'Unavailable: {value}',

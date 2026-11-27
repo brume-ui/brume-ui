@@ -294,11 +294,11 @@ export const STRUCTURAL_FIXTURES: Record<
     values: {
       kind: 'physical',
       weight: '250',
-      download: '',
-      duration: '',
+      download: 'https://old.example/file',
+      duration: '3',
       items: [
-        { _brume: { key: 'a' }, kind: 'physical', sku: 'TS-001', hours: '' },
-        { _brume: { key: 'b' }, kind: 'service', sku: '', hours: '2' },
+        { _brume: { key: 'a' }, kind: 'physical', sku: 'TS-001', hours: '9' },
+        { _brume: { key: 'b' }, kind: 'service', sku: 'OLD-7', hours: '2' },
       ],
     },
   },

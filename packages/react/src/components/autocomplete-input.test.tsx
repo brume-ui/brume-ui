@@ -40,7 +40,7 @@ describe('AutocompleteInput popup landmark', () => {
   it('the portalled list sits in a named region (axe `region`), not a dialog', () => {
     const input = setup({ options: ['Taipei', 'Taichung'] });
     type(input, 'Tai');
-    const region = screen.getByRole('region', { name: '城市' });
+    const region = screen.getByRole('region', { name: '城市：建議' });
     expect(region.contains(screen.getByRole('listbox', { name: '城市' }))).toBe(true);
     expect(screen.queryByRole('dialog')).toBeNull();
   });

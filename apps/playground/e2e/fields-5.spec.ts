@@ -62,7 +62,6 @@ test.describe('keyValue', () => {
     await group(page).getByRole('button', { name: '新增 商品規格', exact: true }).click();
     await expect(key(page, 5)).toBeVisible();
     // The trailing row stays blank: silently dropped.
-    await page.getByRole('button', { name: '移除 必填規格 1' }).count();
     await group(page, '必填規格').getByRole('button', { name: '新增 必填規格' }).click();
     await key(page, 1, '必填規格').fill('尺寸');
     await val(page, 1, '必填規格').fill('M');
@@ -119,15 +118,13 @@ test.describe('keyValue', () => {
     await page.setViewportSize({ width: 390, height: 900 });
     await openField(page, 'keyValue');
     expect(await noPageScroll(page)).toBe(true);
-    const box = await group(page).boundingBox();
-    expect(box).toBeTruthy();
-    for (const button of await group(page).getByRole('button').all()) {
-      const b = await button.boundingBox();
-      if (b) expect(b.x + b.width).toBeLessThanOrEqual(390);
-    }
-    for (const input of await group(page).getByRole('textbox').all()) {
-      const b = await input.boundingBox();
-      if (b) expect(b.x + b.width).toBeLessThanOrEqual(390);
+    const controls = group(page).locator('button, input');
+    expect(await controls.count()).toBeGreaterThan(0);
+    for (const control of await controls.all()) {
+      await expect(control).toBeVisible();
+      const b = await control.boundingBox();
+      expect(b).not.toBeNull();
+      expect((b?.x ?? 0) + (b?.width ?? 0)).toBeLessThanOrEqual(390);
     }
   });
 });
@@ -224,11 +221,7 @@ test.describe('autocomplete', () => {
     await page.keyboard.press('Tab');
     await page.getByRole('combobox', { name: '必填門市' }).fill('隨便寫');
     await save(page);
-    await expect.poll(async () => (await wire(page)).branch).toBeTruthy();
-    expect((await wire(page)).branch).toBe(
-      '  完全沒有的門市  '.trim() === '' ? null : (await wire(page)).branch,
-    );
-    expect(String((await wire(page)).branch).trim()).toBe('完全沒有的門市');
+    await expect.poll(async () => (await wire(page)).branch).toBe('  完全沒有的門市  ');
     expect((await wire(page)).required).toBe('隨便寫');
     await input(page).fill('');
     await save(page);
@@ -269,6 +262,12 @@ test.describe('autocomplete', () => {
   test('real IME events through CDP do not submit the form on Enter', async ({ page }) => {
     await openField(page, 'autocomplete');
     await input(page).click();
+    await input(page).pressSequentially('示範');
+    await expect(options(page).first()).toBeVisible();
+    await page.keyboard.press('ArrowDown');
+    const highlighted = await input(page).getAttribute('aria-activedescendant');
+    expect(highlighted).toBeTruthy();
+    const typed = await input(page).inputValue();
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Input.imeSetComposition', {
       text: 'ㄊㄞˊ',
@@ -276,9 +275,11 @@ test.describe('autocomplete', () => {
       selectionEnd: 3,
     });
     await page.keyboard.press('Enter');
+    // The highlighted suggestion was not picked and nothing was submitted.
+    await expect(input(page)).toHaveValue(`${typed}ㄊㄞˊ`);
     await expect(requests(page)).toContainText('儲存請求：0');
     await cdp.send('Input.insertText', { text: '臺' });
-    await expect(input(page)).toHaveValue('臺');
+    await expect(input(page)).toHaveValue(`${typed}臺`);
     await expect(requests(page)).toContainText('儲存請求：0');
   });
 
@@ -446,9 +447,13 @@ test.describe('fieldset and table', () => {
     await expect(page.getByRole('table', { name: '尺寸表' })).toBeVisible();
     expect(await page.getByRole('row').count()).toBeGreaterThanOrEqual(3);
     // Every cell input stays inside the viewport.
-    for (const input of await page.locator('tbody input').all()) {
+    const inputs = page.locator('tbody input');
+    expect(await inputs.count()).toBe(12);
+    for (const input of await inputs.all()) {
+      await expect(input).toBeVisible();
       const b = await input.boundingBox();
-      if (b) expect(b.x + b.width).toBeLessThanOrEqual(390);
+      expect(b).not.toBeNull();
+      expect((b?.x ?? 0) + (b?.width ?? 0)).toBeLessThanOrEqual(390);
     }
     // 出貨地 (collapsed) is the first error and takes the focus; fill it so the table error is first.
     await page.getByRole('button', { name: '出貨設定（預設收合）', exact: true }).click();
@@ -460,30 +465,52 @@ test.describe('fieldset and table', () => {
     await expect(sizeInput(page, 1, '尺碼')).toBeFocused();
   });
 
-  test('add, remove and reorder keep focus on a sensible control', async ({ page }) => {
-    await openLayout(page, 'fieldset');
-    await page.getByRole('button', { name: '新增 尺寸表', exact: true }).click();
-    expect(await page.locator('tbody tr').count()).toBe(3);
-    await page.getByRole('button', { name: '下移 尺寸表 1', exact: true }).focus();
-    await page.keyboard.press('Enter');
-    await expect
-      .poll(async () => ((await draft(page)).sizes as { size: string }[])[0]?.size)
-      .toBe('M');
-    const inRow = await page.evaluate(() => document.activeElement?.closest('tr') !== null);
-    expect(inRow).toBe(true);
-    await page.getByRole('button', { name: '移除 尺寸表 3', exact: true }).focus();
-    await page.keyboard.press('Enter');
-    expect(await page.locator('tbody tr').count()).toBe(2);
-    const stillInTable = await page.evaluate(
-      () => document.activeElement?.closest('table') !== null,
-    );
-    expect(
-      stillInTable ||
-        (await page
-          .getByRole('button', { name: '新增 尺寸表' })
-          .evaluate((el) => el === document.activeElement)),
-    ).toBe(true);
-  });
+  for (const width of [1440, 390]) {
+    // Add leaves focus on the add button (same as the stack layout); remove focuses the row that
+    // takes its place (next, else previous, else the add button); a move focuses the moved row.
+    test(`add, remove and reorder focus exact targets (${width}px)`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await openLayout(page, 'fieldset');
+      const active = () =>
+        page.evaluate(() => {
+          const el = document.activeElement as HTMLElement | null;
+          const row = el?.closest('tr');
+          return {
+            tag: el?.tagName,
+            key: el?.dataset.repeaterKey ?? null,
+            label: el?.getAttribute('aria-label') ?? null,
+            rowIndex: row ? [...(row.parentElement?.children ?? [])].indexOf(row) : -1,
+          };
+        });
+      const addButton = page.getByRole('button', { name: '新增 尺寸表', exact: true });
+      await addButton.click();
+      expect(await page.locator('tbody tr').count()).toBe(3);
+      expect(await active()).toMatchObject({ tag: 'BUTTON' });
+      await expect(addButton).toBeFocused();
+      // Move row 1 (S) down: the moved row itself holds the focus, now at position 2.
+      await page.getByRole('button', { name: '下移 尺寸表 1', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect.poll(async () => (await active()).key).toBe('s1');
+      expect(await active()).toMatchObject({ tag: 'TR', rowIndex: 1 });
+      expect(((await draft(page)).sizes as { size: string }[]).map((r) => r.size ?? '')).toEqual([
+        'M',
+        'S',
+        '',
+      ]);
+      // Remove the last row: focus goes to the previous row (S, s1).
+      await page.getByRole('button', { name: '移除 尺寸表 3', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      expect(await page.locator('tbody tr').count()).toBe(2);
+      await expect.poll(async () => (await active()).key).toBe('s1');
+      expect(await active()).toMatchObject({ tag: 'TR', rowIndex: 1 });
+      // Remove the first row: the next row (S) takes its place and gets the focus.
+      await page.getByRole('button', { name: '移除 尺寸表 1', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      expect(await page.locator('tbody tr').count()).toBe(1);
+      await expect.poll(async () => (await active()).key).toBe('s1');
+      expect(await active()).toMatchObject({ tag: 'TR', rowIndex: 0 });
+    });
+  }
 
   test('the dual listbox moves focus to the receiving pane and stacks under 640 px', async ({
     page,
@@ -524,7 +551,8 @@ test.describe('group (when)', () => {
     await page.getByRole('option', { name: label, exact: true }).click();
   };
 
-  test('root: only the chosen branch shows; a hidden required field does not block and is not accepted', async ({
+  /** Hidden fields keep their draft and are sent untouched (renderer rule); the server ignores them. */
+  test('root: only the chosen branch shows; hidden branches neither block nor change the stored value', async ({
     page,
   }) => {
     await openLayout(page, 'group');
@@ -533,23 +561,35 @@ test.describe('group (when)', () => {
     await choose(page, '數位商品');
     await expect(page.getByRole('textbox', { name: '重量（公克）' })).toHaveCount(0);
     await expect(page.getByRole('textbox', { name: '下載連結' })).toBeVisible();
-    // The hidden branch's required fields (重量, 服務時數) are empty or stale and do not block.
     await page.getByRole('textbox', { name: '下載連結' }).fill('https://example.test/file');
     await save(page);
     await expect.poll(async () => (await saved(page)).kind).toBe('digital');
-    const accepted = await saved(page);
-    expect(accepted.download).toBe('https://example.test/file');
-    // The old stored value of the hidden branch is left untouched.
-    expect(accepted.weight).toBe('250');
+    // Wire: the hidden branches' drafts (non-empty stored values) are sent as drafted, unvalidated.
+    expect(await wire(page)).toMatchObject({
+      kind: 'digital',
+      download: 'https://example.test/file',
+      weight: '250',
+      duration: '3',
+    });
+    // Saved (the mock server only accepts active fields): hidden values keep their old stored value.
+    expect(await saved(page)).toMatchObject({
+      kind: 'digital',
+      download: 'https://example.test/file',
+      weight: '250',
+      duration: '3',
+    });
   });
 
-  test('a draft typed into a field before it was hidden is never accepted', async ({ page }) => {
+  test('a draft typed into a field before it was hidden is sent but never accepted', async ({
+    page,
+  }) => {
     await openLayout(page, 'group');
     await page.getByRole('textbox', { name: '重量（公克）' }).fill('999');
     await choose(page, '數位商品');
     await page.getByRole('textbox', { name: '下載連結' }).fill('https://example.test/f');
     await save(page);
     await expect.poll(async () => (await saved(page)).kind).toBe('digital');
+    expect((await wire(page)).weight).toBe('999');
     expect((await saved(page)).weight).toBe('250');
     expect(JSON.stringify(await saved(page))).not.toContain('999');
   });
@@ -570,11 +610,15 @@ test.describe('group (when)', () => {
     await expect(page.getByRole('textbox', { name: '時數' })).toHaveCount(1);
     await save(page);
     await expect.poll(async () => (await saved(page)).items).toBeTruthy();
-    const items = (await saved(page)).items as Record<string, unknown>[];
-    expect(items[0]).toMatchObject({ kind: 'physical', sku: 'TS-001' });
-    // The other branch's field keeps its stored value; nothing the user could not see is written.
-    expect(items[0]).toMatchObject({ hours: '' });
-    expect(items[1]).toMatchObject({ kind: 'service', hours: '2', sku: '' });
+    type Row = Record<string, unknown>;
+    // Wire: every row keeps both branches' drafts, including the hidden ones.
+    const sent = (await wire(page)).items as Row[];
+    expect(sent[0]).toMatchObject({ kind: 'physical', sku: 'TS-001', hours: '9' });
+    expect(sent[1]).toMatchObject({ kind: 'service', sku: 'OLD-7', hours: '2' });
+    // Saved: the hidden branch's non-empty stored value survives in each row.
+    const items = (await saved(page)).items as Row[];
+    expect(items[0]).toMatchObject({ kind: 'physical', sku: 'TS-001', hours: '9' });
+    expect(items[1]).toMatchObject({ kind: 'service', sku: 'OLD-7', hours: '2' });
     // Row 2 is missing a required value of ITS branch only.
     await page.getByRole('textbox', { name: '時數' }).fill('');
     await save(page);

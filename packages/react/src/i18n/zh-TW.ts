@@ -50,6 +50,7 @@ export const zhTW = {
   'chip.removeFilter': '移除篩選：{label}',
   'search.clear': '清除搜尋',
   'combobox.loadMore': '載入更多',
+  'combobox.suggestions': '{label}：建議',
   'combobox.empty': '沒有符合的選項',
   'combobox.loadFailed': '選項載入失敗，請再試一次。',
   'combobox.unavailable': '無法使用：{value}',

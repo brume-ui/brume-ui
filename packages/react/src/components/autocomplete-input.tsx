@@ -281,7 +281,7 @@ export function AutocompleteInput({
           {/* A region (not Radix's default dialog, the combobox owns the popup semantics) keeps the portalled list inside a landmark for axe's `region` rule. */}
           <RadixPopover.Content
             role="region"
-            aria-label={label}
+            aria-label={t('combobox.suggestions', { label })}
             align="start"
             sideOffset={4}
             collisionPadding={8}

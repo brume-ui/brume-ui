@@ -51,6 +51,7 @@ export const zhCN: Record<MessageKey, string> = {
   'chip.removeFilter': '移除筛选：{label}',
   'search.clear': '清除搜索',
   'combobox.loadMore': '加载更多',
+  'combobox.suggestions': '{label}：建议',
   'combobox.empty': '没有符合的选项',
   'combobox.loadFailed': '选项加载失败，请再试一次。',
   'combobox.unavailable': '无法使用：{value}',

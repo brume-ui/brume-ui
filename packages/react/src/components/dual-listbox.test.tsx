@@ -44,12 +44,14 @@ const names = (box: HTMLElement) =>
     .map((o) => o.textContent);
 
 describe('DualListbox empty pane (axe aria-required-children)', () => {
-  it('an empty listbox owns a disabled note option instead of bare text', () => {
+  it('an empty listbox owns nothing; its note is a sibling linked by aria-describedby', () => {
     setup();
-    const option = within(chosen()).getByRole('option');
-    expect(option.textContent).toBe('沒有項目');
-    expect(option.getAttribute('aria-disabled')).toBe('true');
-    expect(option.getAttribute('aria-selected')).toBe('false');
+    const box = chosen();
+    expect(box.children).toHaveLength(0);
+    expect(within(box).queryAllByRole('option')).toHaveLength(0);
+    const note = document.getElementById(box.getAttribute('aria-describedby') ?? '');
+    expect(note?.textContent).toBe('沒有項目');
+    expect(box.contains(note)).toBe(false);
   });
 });
 
