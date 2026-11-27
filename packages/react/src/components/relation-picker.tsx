@@ -44,6 +44,8 @@ export interface RelationPickerProps {
     getDraft: () => readonly RelationItem[],
     getDraftIdentity?: (id: string) => number | undefined,
   ): ReactNode;
+  /** Seeds a newly selected row (for example required-field minimums); defaults to `{ id }`. */
+  createItem?(id: string): RelationItem;
   /** Committed selections' settings, listed under the trigger so they stay visible after Apply. */
   describeSelection?(item: RelationItem): readonly { label: string; value: string }[];
 }
@@ -339,9 +341,10 @@ export function RelationPicker(props: RelationPickerProps) {
                                     }
                                     if (!props.multiple) owners.current.clear();
                                     owners.current.set(option.value, createOwner(option.value));
-                                    return props.multiple
-                                      ? [...current, { id: option.value }]
-                                      : [{ id: option.value }];
+                                    const created = props.createItem?.(option.value) ?? {
+                                      id: option.value,
+                                    };
+                                    return props.multiple ? [...current, created] : [created];
                                   })
                                 }
                               />

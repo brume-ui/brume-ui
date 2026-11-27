@@ -1,8 +1,10 @@
 import type { FormDef } from '@brume-ui/brume-schema';
-import { act, renderHook } from '@testing-library/react';
+import { act, fireEvent, renderHook, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { renderWithBrume } from '../test-utils';
+import { FormView } from './form-view';
 import { rowDefaults, withRequiredSliderMinimums } from './row-defaults';
-import { useFormState } from './use-form-state';
+import { type FormApi, useFormState } from './use-form-state';
 
 const slider = (name: string, extra: Record<string, unknown> = {}) =>
   ({
@@ -88,5 +90,57 @@ describe('required slider baseline', () => {
     };
     const out = withRequiredSliderMinimums(relation.nodes, { items: [{ id: 'a' }] });
     expect(out.items).toEqual([{ id: 'a', lvl: 2 }]);
+  });
+});
+
+const picker: FormDef = {
+  layout: 'stacked',
+  nodes: [
+    {
+      type: 'field',
+      field: {
+        type: 'relation',
+        name: 'items',
+        label: 'Items',
+        multiple: true,
+        remote: { url: '/items' },
+        fields: [slider('lvl', { required: true, min: 10, max: 50 })],
+      },
+    },
+  ],
+};
+function Harness({ onApi }: { onApi(api: FormApi): void }) {
+  const api = useFormState(picker, {});
+  onApi(api);
+  return <FormView form={picker} api={api} />;
+}
+
+describe('required slider in a newly added relation row', () => {
+  it('adopts the minimum when the row is added, without an extra dirty edit', async () => {
+    let api!: FormApi;
+    renderWithBrume(
+      <Harness
+        onApi={(next) => {
+          api = next;
+        }}
+      />,
+      {
+        locale: 'en',
+        respond: () => ({
+          status: 200,
+          data: {
+            data: [{ value: 'a', label: 'Alpha' }],
+            pagination: { page: 1, perPage: 20, hasMore: false },
+          },
+        }),
+      },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Items/ }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Alpha/ }));
+    const slider = screen.getByRole('slider');
+    expect(slider.getAttribute('aria-valuenow') ?? (slider as HTMLInputElement).value).toBe('10');
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(api.values.items).toEqual([{ id: 'a', lvl: 10 }]);
+    expect(api.validateAll()).toBe(true);
   });
 });

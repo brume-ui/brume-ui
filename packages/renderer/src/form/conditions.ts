@@ -135,7 +135,8 @@ export function evaluateCondition(
       return raw == null || raw === '' || (Array.isArray(raw) && raw.length === 0);
     const value = canonicalizeFieldValue(def, raw).value;
     const operand = (expected: unknown) =>
-      (def?.type === 'decimal' || def?.type === 'currency') && typeof expected === 'string'
+      (def?.type === 'decimal' || def?.type === 'currency' || def?.type === 'rate') &&
+      typeof expected === 'string'
         ? (canonicalizeFieldValue(def, expected).value ?? expected)
         : expected;
     if (node.op === 'in') return node.values.some((expected) => value === operand(expected));

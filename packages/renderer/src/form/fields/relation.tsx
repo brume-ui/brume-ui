@@ -14,6 +14,7 @@ import { excludedChoiceValues } from '../exclusions';
 import { FieldIdPrefixContext, FieldRevealContext } from '../field-navigation';
 import { Nodes } from '../layout/nodes';
 import { RemoteRelationPicker } from '../relation-source';
+import { withRequiredSliderMinimums } from '../row-defaults';
 import { useRelationDraft } from '../use-relation-draft';
 import { useRemoteOptions } from '../use-remote-options';
 
@@ -105,6 +106,11 @@ export function RelationField(props: FieldProps<unknown, RelationFieldDef>) {
               }
             }
           }}
+          createItem={(id) =>
+            props.def.fields?.length
+              ? (withRequiredSliderMinimums(props.def.fields, { id }) as RelationItem)
+              : { id }
+          }
           disabled={props.disabled || props.readOnly}
           commitDisabled={pending.size > 0 || authorityPending.size > 0}
           onChange={(next) => {

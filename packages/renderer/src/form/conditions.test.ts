@@ -126,3 +126,35 @@ it('validates strict raw decimal grammar before canonical condition comparison',
     publicApi.evaluateCondition(condition, { amount: '+1.' }, undefined, { getField: () => def }),
   ).toBe(false);
 });
+
+it('canonicalizes condition operands for rate fields like decimal and currency', () => {
+  const def: FieldDef = { type: 'rate', name: 'discount', label: 'Discount', decimals: 2 };
+  for (const operand of ['5', '5.0', '5.00']) {
+    const condition: Condition = {
+      op: 'eq',
+      field: { scope: 'root', path: 'discount' },
+      value: operand,
+    };
+    const evaluate = (c: Condition) =>
+      publicApi.evaluateCondition(c, { discount: '5.00' }, undefined, { getField: () => def });
+    expect(evaluate(condition)).toBe(true);
+    expect(evaluate({ ...condition, op: 'ne' })).toBe(false);
+    expect(evaluate({ op: 'in', field: condition.field, values: [operand] } as Condition)).toBe(
+      true,
+    );
+  }
+  const nodes = (key: 'showWhen' | 'enableWhen'): FormNode[] => [
+    { type: 'field', field: def },
+    {
+      type: 'field',
+      field: {
+        type: 'text',
+        name: 'why',
+        label: 'Why',
+        [key]: { op: 'eq', field: { scope: 'root', path: 'discount' }, value: '5' },
+      },
+    },
+  ];
+  expect(() => publicApi.validateConditionDeclarations(nodes('showWhen'))).not.toThrow();
+  expect(() => publicApi.validateConditionDeclarations(nodes('enableWhen'))).not.toThrow();
+});
