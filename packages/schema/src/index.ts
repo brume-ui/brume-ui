@@ -26,11 +26,14 @@ export {
   type FieldBase,
   type FieldDef,
   FieldDefSchema,
+  type ListboxFieldDef,
   type PlainFieldDef,
   PlainFieldDefSchema,
   type RelationFieldDef,
+  type RemoteAutocompleteFieldDef,
   type RemoteChoiceFieldDef,
   type RepeaterFieldDef,
+  type TreeOption,
 } from './form/field';
 export { type AfterSave, AfterSaveSchema, type FormPage, FormPageSchema } from './form/form-page';
 export {
@@ -64,6 +67,7 @@ export {
 export {
   type BrumePage,
   BrumePageSchema,
+  findTreeOptionErrors,
   type PageEnvelope,
   PageEnvelopeSchema,
   type ValidationResult,

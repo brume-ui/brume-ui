@@ -26,7 +26,13 @@ export function rowDefaults(nodes: FormNode[]): Record<string, unknown> {
         for (const column of node.columns) walk(column.children, prefix);
       } else if (node.type === 'embeds') {
         walk(node.children, `${prefix}${node.name}.`);
-      } else if (node.type === 'section' || node.type === 'block' || node.type === 'row') {
+      } else if (
+        node.type === 'section' ||
+        node.type === 'block' ||
+        node.type === 'fieldset' ||
+        node.type === 'group' ||
+        node.type === 'row'
+      ) {
         walk(node.children, prefix);
       }
     }
@@ -70,7 +76,13 @@ export function withRequiredSliderMinimums(
         for (const column of node.columns) walk(column.children, prefix);
       } else if (node.type === 'embeds') {
         walk(node.children, `${prefix}${node.name}.`);
-      } else if (node.type === 'section' || node.type === 'block' || node.type === 'row') {
+      } else if (
+        node.type === 'section' ||
+        node.type === 'block' ||
+        node.type === 'fieldset' ||
+        node.type === 'group' ||
+        node.type === 'row'
+      ) {
         walk(node.children, prefix);
       }
     }

@@ -1,4 +1,5 @@
 import { type Static, type TSchema, Type } from '@sinclair/typebox';
+import { type Condition, ConditionSchema } from './conditions';
 import { type FieldDef, FieldDefSchema, GridWidthSchema } from './field';
 import { RowFieldsSchema } from './relations';
 
@@ -25,7 +26,13 @@ export type FormNode =
       variant?: 'primary' | 'secondary';
     }
   /** 值是 `name` 底下的物件 */
-  | { type: 'embeds'; name: string; label: string; children: FormNode[] };
+  | { type: 'embeds'; name: string; label: string; children: FormNode[] }
+  /** 可收合的欄位群組；只是版型，值路徑不變。`collapsed` 只是初始狀態 */
+  | { type: 'fieldset'; key: string; title: string; collapsed?: boolean; children: FormNode[] }
+  /**
+   * 只做呈現：裡面每個欄位也必須帶同一個 `showWhen`，不可只靠 `group` 判斷是否啟用。
+   */
+  | { type: 'group'; showWhen: Condition; children: FormNode[] };
 
 const FieldNodeSchema = Type.Object({ type: Type.Literal('field'), field: FieldDefSchema });
 
@@ -68,6 +75,18 @@ export const FormNodeRaw = Type.Recursive(
         type: Type.Literal('embeds'),
         name: Type.String(),
         label: Type.String(),
+        children: Type.Array(This),
+      }),
+      Type.Object({
+        type: Type.Literal('fieldset'),
+        key: Type.String(),
+        title: Type.String(),
+        collapsed: Type.Optional(Type.Boolean()),
+        children: Type.Array(This),
+      }),
+      Type.Object({
+        type: Type.Literal('group'),
+        showWhen: ConditionSchema,
         children: Type.Array(This),
       }),
     ]),

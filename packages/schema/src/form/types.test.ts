@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type {
   Condition,
   CustomFieldDef,
+  ListboxFieldDef,
   RelationFieldDef,
   RelationItem,
   RelationValue,
@@ -74,6 +75,25 @@ type ButtonWithoutHref = Exclude<FormNode, { type: 'button' }> | { type: 'button
 // @ts-expect-error button 節點的 href 必填
 const buttonWithoutHref = (x: ButtonWithoutHref): FormNodeInferred => x;
 
+type TreeWithoutMode =
+  | Exclude<FieldDef, { type: 'tree' }>
+  | (Omit<Extract<FieldDef, { type: 'tree' }>, 'mode'> & { mode?: string });
+// @ts-expect-error tree 的 mode 必填且只能是三種之一，與 schema 不同
+const treeWithoutMode = (x: TreeWithoutMode): FieldDefInferred => x;
+type GroupWithoutShowWhen =
+  | Exclude<FormNode, { type: 'group' }>
+  | { type: 'group'; children: FormNode[] };
+// @ts-expect-error group 節點的 showWhen 必填
+const groupWithoutShowWhen = (x: GroupWithoutShowWhen): FormNodeInferred => x;
+type ListboxWithRemote = Omit<ListboxFieldDef, 'remote'> & {
+  remote?: { url: string };
+};
+// @ts-expect-error listbox 外觀不可搭配 remote
+const listboxWithRemote = (x: ListboxWithRemote): FieldDefInferred => x;
+type KeyValueInPlain = Extract<FieldDef, { type: 'keyValue' }>;
+// @ts-expect-error keyValue 不是 PlainFieldDef
+const keyValueInPlain = (x: KeyValueInPlain): PlainFieldDefInferred => x;
+
 describe('form types agree with their schemas', () => {
   // 真正的檢查是 tsc（pnpm typecheck）；這裡只讓 vitest 載入本檔，通過不代表型別一致。
   it('is a compile-time guard: pnpm typecheck fails on drift, not this test', () => {
@@ -94,7 +114,11 @@ describe('form types agree with their schemas', () => {
       htmlWithoutHtml,
       wrongSliderStep,
       buttonWithoutHref,
-    ]).toHaveLength(16);
+      treeWithoutMode,
+      groupWithoutShowWhen,
+      listboxWithRemote,
+      keyValueInPlain,
+    ]).toHaveLength(20);
   });
 });
 

@@ -306,7 +306,13 @@ function describeValue(
   t: (key: 'common.yes' | 'common.no') => string,
 ) {
   if (value === null || value === undefined || value === '') return undefined;
-  const options = 'options' in def && Array.isArray(def.options) ? def.options : undefined;
+  const options =
+    'options' in def &&
+    def.type !== 'autocomplete' &&
+    def.type !== 'tree' &&
+    Array.isArray(def.options)
+      ? def.options
+      : undefined;
   const one = (entry: unknown) => {
     if (typeof entry === 'boolean') return t(entry ? 'common.yes' : 'common.no');
     if (typeof entry !== 'string' && typeof entry !== 'number') return undefined;

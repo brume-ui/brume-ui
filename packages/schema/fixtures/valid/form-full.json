@@ -409,6 +409,130 @@
               }
             }
           ]
+        },
+        {
+          "type": "section",
+          "key": "structure",
+          "title": "結構欄位",
+          "children": [
+            {
+              "type": "field",
+              "field": {
+                "type": "select",
+                "name": "mode",
+                "label": "模式",
+                "options": [
+                  { "value": "standard", "label": "標準" },
+                  { "value": "custom", "label": "自訂" }
+                ]
+              }
+            },
+            {
+              "type": "fieldset",
+              "key": "advanced",
+              "title": "進階設定",
+              "collapsed": true,
+              "children": [
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "keyValue",
+                    "name": "headers",
+                    "label": "標頭",
+                    "keyLabel": "名稱",
+                    "valueLabel": "內容",
+                    "max": 20
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "list",
+                    "name": "aliases",
+                    "label": "別名",
+                    "min": 0,
+                    "max": 10,
+                    "maxLength": 60,
+                    "sortable": true
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "autocomplete",
+                    "name": "city",
+                    "label": "城市",
+                    "options": ["台北", "台中", "高雄"],
+                    "minLength": 1,
+                    "maxLength": 40
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "autocomplete",
+                    "name": "street",
+                    "label": "街道",
+                    "remote": { "url": "/admin/orders/options/street" }
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "tree",
+                    "name": "regions",
+                    "label": "區域",
+                    "mode": "leaves",
+                    "expanded": true,
+                    "options": [
+                      { "value": "north", "label": "北部", "depth": 0 },
+                      { "value": "taipei", "label": "台北", "depth": 1 },
+                      { "value": "keelung", "label": "基隆", "depth": 1, "disabled": true },
+                      { "value": "south", "label": "南部", "depth": 0 }
+                    ]
+                  }
+                },
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "multipleSelect",
+                    "name": "channels",
+                    "label": "通路",
+                    "appearance": "listbox",
+                    "max": 2,
+                    "options": [
+                      { "value": "web", "label": "網站" },
+                      { "value": "shop", "label": "門市" },
+                      { "value": "phone", "label": "電話" }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "showWhen": {
+                "op": "eq",
+                "field": { "scope": "root", "path": "mode" },
+                "value": "custom"
+              },
+              "children": [
+                {
+                  "type": "field",
+                  "field": {
+                    "type": "text",
+                    "name": "custom_note",
+                    "label": "自訂備註",
+                    "showWhen": {
+                      "op": "eq",
+                      "field": { "scope": "root", "path": "mode" },
+                      "value": "custom"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },

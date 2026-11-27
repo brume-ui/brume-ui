@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "0.3.0",
+  "page": {
+    "type": "form",
+    "title": "編輯訂單",
+    "description": "修改訂單內容後按儲存。",
+    "formId": "orders",
+    "name": "訂單",
+    "mode": "edit",
+    "record": {
+      "id": 42,
+      "label": "#A1042"
+    },
+    "form": {
+      "layout": "stacked",
+      "sections": "tabs",
+      "nodes": [
+        {
+          "type": "field",
+          "field": {
+            "type": "tree",
+            "name": "t",
+            "label": "T",
+            "mode": "leaves",
+            "options": [
+              {
+                "value": "0",
+                "label": "0",
+                "depth": 0
+              },
+              {
+                "value": "1",
+                "label": "1",
+                "depth": 1
+              },
+              {
+                "value": "2",
+                "label": "2",
+                "depth": 2
+              },
+              {
+                "value": "3",
+                "label": "3",
+                "depth": 3
+              },
+              {
+                "value": "4",
+                "label": "4",
+                "depth": 4
+              },
+              {
+                "value": "5",
+                "label": "5",
+                "depth": 5
+              },
+              {
+                "value": "6",
+                "label": "6",
+                "depth": 6
+              },
+              {
+                "value": "7",
+                "label": "7",
+                "depth": 7
+              },
+              {
+                "value": "8",
+                "label": "8",
+                "depth": 8
+              },
+              {
+                "value": "9",
+                "label": "9",
+                "depth": 9
+              },
+              {
+                "value": "10",
+                "label": "10",
+                "depth": 10
+              },
+              {
+                "value": "11",
+                "label": "11",
+                "depth": 11
+              },
+              {
+                "value": "12",
+                "label": "12",
+                "depth": 12
+              },
+              {
+                "value": "13",
+                "label": "13",
+                "depth": 13
+              },
+              {
+                "value": "14",
+                "label": "14",
+                "depth": 14
+              },
+              {
+                "value": "15",
+                "label": "15",
+                "depth": 15
+              },
+              {
+                "value": "16",
+                "label": "16",
+                "depth": 16
+              },
+              {
+                "value": "17",
+                "label": "17",
+                "depth": 17
+              },
+              {
+                "value": "18",
+                "label": "18",
+                "depth": 18
+              },
+              {
+                "value": "19",
+                "label": "19",
+                "depth": 19
+              },
+              {
+                "value": "20",
+                "label": "20",
+                "depth": 20
+              },
+              {
+                "value": "21",
+                "label": "21",
+                "depth": 21
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "values": {},
+    "submit": {
+      "method": "put",
+      "url": "/admin/orders/42",
+      "label": "儲存"
+    },
+    "after": {
+      "options": ["list", "edit", "create", "view"],
+      "default": "list"
+    },
+    "presentation": "page",
+    "size": "lg",
+    "listUrl": "/admin/orders",
+    "uploadUrl": "/admin/orders/upload"
+  }
+}

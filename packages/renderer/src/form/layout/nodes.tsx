@@ -212,6 +212,11 @@ export function Nodes(props: NodesProps) {
             case 'block':
               content = <FormBlock title={node.title}>{children(node.children)}</FormBlock>;
               break;
+            // Compile-only pass-through; the real collapsible/conditional rendering lands later.
+            case 'fieldset':
+            case 'group':
+              content = children(node.children);
+              break;
             case 'divider':
               content = <FormDivider label={node.label} />;
               break;

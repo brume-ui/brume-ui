@@ -85,6 +85,8 @@ export type PlainFieldDef = FieldBase & { remote?: never; excludeSelectedIn?: ne
     | { type: 'time'; seconds?: boolean }
     | { type: 'range'; decimals: number }
     | { type: 'timeRange'; seconds?: boolean }
+    /** 靜態建議；建議不限制輸入值，值與 `text` 相同（`string | null`） */
+    | { type: 'autocomplete'; options?: string[]; minLength?: number; maxLength?: number }
   );
 
 /** Form-only choices resolve through the adapter and a declared endpoint. */
@@ -94,9 +96,31 @@ export type RemoteChoiceFieldDef = FieldBase & {
   excludeSelectedIn?: ExclusionPath[];
 } & (
     | { type: 'select'; searchable?: boolean; clearable?: boolean }
-    | { type: 'multipleSelect'; max?: number }
+    | { type: 'multipleSelect'; max?: number; appearance?: never }
     | { type: 'tags'; max?: number; maxLength?: number }
   );
+
+/** `autocomplete` 的遠端建議；建議不限制輸入值。 */
+export type RemoteAutocompleteFieldDef = FieldBase & {
+  type: 'autocomplete';
+  remote: RemoteOptions;
+  options?: never;
+  minLength?: number;
+  maxLength?: number;
+};
+
+/** `multipleSelect` 的 listbox 外觀，只接受靜態選項（不是 PlainFieldDef）。 */
+export type ListboxFieldDef = FieldBase & {
+  type: 'multipleSelect';
+  appearance?: 'listbox';
+  options: OptionItem[];
+  max?: number;
+  remote?: never;
+  excludeSelectedIn?: never;
+};
+
+/** 扁平、深度優先的樹節點；`depth` 0 為根。 */
+export type TreeOption = { value: string; label: string; depth: number; disabled?: boolean };
 
 /** Form-only static choices may exclude siblings; flat inputs stay closed. */
 type ExclusiveChoice<T> = T extends unknown
@@ -123,6 +147,8 @@ export type RepeaterFieldDef = FieldBase & {
   max?: number;
   distinct?: string[];
   sortable?: boolean;
+  /** 省略時為 `'stack'` */
+  layout?: 'stack' | 'table';
 };
 export type CustomFieldDef = FieldBase & {
   type: 'custom';
@@ -134,11 +160,35 @@ export type CaptchaFieldDef = FieldBase & { type: 'captcha'; src: string };
 export type FieldDef =
   | Exclude<PlainFieldDef, { type: 'select' | 'multipleSelect' | 'tags' | 'radio' | 'checkbox' }>
   | RemoteChoiceFieldDef
+  | RemoteAutocompleteFieldDef
+  | ListboxFieldDef
   | ExclusiveChoiceFieldDef
   | RelationFieldDef
   | RepeaterFieldDef
   | CustomFieldDef
   | CaptchaFieldDef
+  /** 值是 `{ key, value }[]`（保序的配對） */
+  | (FieldBase & {
+      type: 'keyValue';
+      keyLabel?: string;
+      valueLabel?: string;
+      max?: number;
+    })
+  /** 值是 `string[]`，順序保留，可重複 */
+  | (FieldBase & {
+      type: 'list';
+      min?: number;
+      max?: number;
+      maxLength?: number;
+      sortable?: boolean;
+    })
+  /** 值是節點 id 的 `string[]` */
+  | (FieldBase & {
+      type: 'tree';
+      options: TreeOption[];
+      mode: 'leaves' | 'all' | 'independent';
+      expanded?: boolean;
+    })
   | (FieldBase & {
       type: 'richText';
       /** px，整數 120–2000；省略時由 renderer 決定（預設 500） */
@@ -192,6 +242,13 @@ const HEX_COLOR_PATTERN = '^#[0-9a-f]{6}(?:[0-9a-f]{2})?$';
 
 /** Lucide icon name in kebab-case. */
 const ICON_NAME_PATTERN = '^[a-z0-9]+(?:-[a-z0-9]+)*$';
+
+/** Wire limits shared with the PHP side. */
+const AUTOCOMPLETE_MAX_OPTIONS = 500;
+const TREE_MAX_OPTIONS = 2000;
+const TREE_MAX_DEPTH = 20;
+const KEY_VALUE_MAX_PAIRS = 200;
+const LIST_MAX_ITEMS = 500;
 
 const count = () => Type.Optional(Type.Integer({ minimum: 0 }));
 
@@ -271,6 +328,11 @@ const plainFields = [
   staticVariant(literals('time'), { seconds: Type.Optional(Type.Boolean()) }),
   staticVariant(literals('range'), { decimals: Type.Integer({ minimum: 0 }) }),
   staticVariant(literals('timeRange'), { seconds: Type.Optional(Type.Boolean()) }),
+  staticVariant(literals('autocomplete'), {
+    options: Type.Optional(Type.Array(Type.String(), { maxItems: AUTOCOMPLETE_MAX_OPTIONS })),
+    minLength: count(),
+    maxLength: count(),
+  }),
 ] as const;
 
 /**
@@ -313,6 +375,7 @@ export const FieldDefRaw = Type.Union(
       remote: RemoteOptionsSchema,
       options: Type.Optional(Type.Never()),
       max: Type.Optional(Type.Integer({ minimum: 1 })),
+      appearance: Type.Optional(Type.Never()),
       excludeSelectedIn: Type.Optional(Type.Array(ExclusionPathSchema)),
     }),
     variant(literals('tags'), {
@@ -322,6 +385,24 @@ export const FieldDefRaw = Type.Union(
       maxLength: count(),
       excludeSelectedIn: Type.Optional(Type.Array(ExclusionPathSchema)),
     }),
+    variant(literals('autocomplete'), {
+      remote: RemoteOptionsSchema,
+      options: Type.Optional(Type.Never()),
+      minLength: count(),
+      maxLength: count(),
+    }),
+    Type.Object(
+      {
+        type: Type.Literal('multipleSelect'),
+        ...fieldBase,
+        appearance: Type.Optional(Type.Literal('listbox')),
+        options: Type.Array(OptionItemSchema),
+        max: Type.Optional(Type.Integer({ minimum: 1 })),
+        remote: Type.Optional(Type.Never()),
+        excludeSelectedIn: Type.Optional(Type.Never()),
+      },
+      { additionalProperties: false },
+    ),
     exclusiveVariant(plainFields[11]),
     exclusiveVariant(plainFields[12]),
     exclusiveVariant(plainFields[13]),
@@ -340,12 +421,37 @@ export const FieldDefRaw = Type.Union(
       max: count(),
       distinct: Type.Optional(Type.Array(Type.String())),
       sortable: Type.Optional(Type.Boolean()),
+      layout: Type.Optional(literals('stack', 'table')),
     }),
     variant(literals('custom'), {
       component: ComponentRefSchema,
       displayOnly: Type.Optional(Type.Boolean()),
     }),
     variant(literals('captcha'), { src: Type.String() }),
+    variant(literals('keyValue'), {
+      keyLabel: Type.Optional(Type.String()),
+      valueLabel: Type.Optional(Type.String()),
+      max: Type.Optional(Type.Integer({ minimum: 1, maximum: KEY_VALUE_MAX_PAIRS })),
+    }),
+    variant(literals('list'), {
+      min: count(),
+      max: Type.Optional(Type.Integer({ minimum: 0, maximum: LIST_MAX_ITEMS })),
+      maxLength: Type.Optional(Type.Integer({ minimum: 1 })),
+      sortable: Type.Optional(Type.Boolean()),
+    }),
+    variant(literals('tree'), {
+      options: Type.Array(
+        Type.Object({
+          value: Type.String(),
+          label: Type.String(),
+          depth: Type.Integer({ minimum: 0, maximum: TREE_MAX_DEPTH }),
+          disabled: Type.Optional(Type.Boolean()),
+        }),
+        { maxItems: TREE_MAX_OPTIONS },
+      ),
+      mode: literals('leaves', 'all', 'independent'),
+      expanded: Type.Optional(Type.Boolean()),
+    }),
     variant(literals('richText'), {
       height: Type.Optional(Type.Integer({ minimum: 120, maximum: 2000 })),
       contentCss: Type.Optional(Type.Array(Type.String())),

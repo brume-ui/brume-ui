@@ -57,6 +57,11 @@
 | `time`                                                 | `HH:mm`（`seconds: true` 時為 `HH:mm:ss`）或 `null`           |
 | `range`                                                | `{ start?, end? }`，各為未分組小數字串，對應兩欄              |
 | `timeRange`                                            | `{ start?, end? }`，各為 `time` 值，對應兩欄                  |
+| `keyValue`                                             | `{ key: string, value: string }[]`，保序的配對（不是物件）    |
+| `list`                                                 | `string[]`，順序保留，可重複                                  |
+| `autocomplete`                                         | string 或 `null`，與 `text` 相同；建議不限制輸入值            |
+| `tree`                                                 | `string[]`，節點 id，依樹的深度優先順序                       |
+| `multipleSelect`（`appearance: 'listbox'`）            | `string[]`，與一般 `multipleSelect` 相同                      |
 | `captcha`                                              | 使用者輸入的字串；不屬於儲存的屬性，只由伺服器驗證            |
 | `embeds`                                               | 物件                                                          |
 | `password`                                             | 載入時一律是 `''`；送出 `''` 表示不修改                       |
@@ -192,6 +197,27 @@
 - `{ type: 'captcha', src }` 只能用在表單頁（不是 `PlainFieldDef`）：`src` 是驗證碼圖片網址，每次重新載入會附上防快取參數。
 - `{ type: 'button', label, href, newTab?, variant? }`（`variant` 為 `primary` 或 `secondary`）是沒有值也沒有 `children` 的版型節點，與 `html` 同樣不能放進 `row`。
 - `{ type: 'html', html, label? }` 是版型節點，沒有值，也沒有 `children`。`html` 由前端以白名單淨化後顯示。它不是欄位節點，所以不能放進 `row`。
+
+## 結構欄位與版型節點
+
+- `{ type: 'keyValue', keyLabel?, valueLabel?, max? }`：值是 `{ key, value }[]`，用陣列而不是物件，順序才不會丟，空值也不會在 `{}` 與 `[]` 之間漂移。最多 200 組（`max` 可再調低），key 最長 255 字、value 最長 65,535 字。**儲存**時是單一 `array`／`json` cast 屬性裡的 JSON 物件 `{ "k": "v" }`（與 Dcat 相容），空值存 `{}`；讀取接受物件、清單（key 變成 `"0"`、`"1"`…）、`[]` 與 `null`。key 會去除前後空白、不可為空、不可重複（無論有沒有宣告規則）；value 一律是字串，空值保留為 `""`。看起來像數字的 key（`"1"`）仍是 key，儲存的 JSON 永遠是物件。
+- `{ type: 'list', min?, max?, maxLength?, sortable? }`：值是 `string[]`，順序保留、可重複，最多 500 項。**儲存**為 JSON 清單。只含空白的項目在儲存時（瀏覽器與伺服器）丟棄；`min`／`max` 計算保留下來的項目，`maxLength` 限制每一項（預設 255）。`min > max` 是宣告階段的錯誤，不是 schema 的錯誤。
+- `{ type: 'autocomplete', options?, remote?, minLength?, maxLength? }`：值是 `string | null`，與 `text` 相同（空白 → `null`）。建議永遠不限制輸入值：沒有符合的文字照輸入儲存。靜態 `options` 是 `string[]`（最多 500 項），屬於 `PlainFieldDef`（排在 `plainFields` 最後）；`remote` 變體不是。`options` 與 `remote` 擇一。
+- `{ type: 'tree', options, mode, expanded? }`：`options` 是攤平、深度優先的 `{ value, label, depth, disabled? }[]`，`depth` 0 為根，最多 2,000 個節點、深度最多 20。值是節點 id 的 `string[]`。`mode: 'leaves'`（預設行為：父子連動，只儲存葉節點，與 Dcat 預設相同）、`'all'`（連動，每個完全勾選的節點都儲存，包含父節點）、`'independent'`（不連動，恰為勾選的節點）。伺服器每次寫入與讀取都會正規化到欄位的 mode：`leaves` 下儲存的父節點 id 展開為其葉節點；`all` 下葉節點全部在內的父節點會補上；讀取時未知 id 丟棄，寫入時未知 id 拒絕。儲存順序是樹的深度優先順序。
+- `multipleSelect` 的 `appearance: 'listbox'`：以清單框呈現，值仍是 `string[]`；只接受靜態 `options`，不可與 `remote` 同用。
+- `repeater` 的 `layout?: 'stack' | 'table'`：省略時為 `'stack'`。`'table'` 只允許欄位節點作為直接子節點（不可有 `section`、`row`、`columns`、`block`、`embeds`、`fieldset`、`group`，也不可在欄內放巢狀的 repeater／relation／upload／richText）。這條規則由宣告檢查（伺服器與 renderer）強制，不在 JSON Schema 內。
+- `{ type: 'fieldset', key, title, collapsed? }`：可收合的欄位群組，只是版型，值路徑不變；`collapsed` 只是初始狀態。收合不會丟值，也不會略過驗證。不能放進 `row`。
+- `{ type: 'group', showWhen, children }`：**只做呈現**的條件群組，`showWhen` 必填。群組內每個欄位也必須帶同一個 `showWhen`；consumer 不可只靠 `group` 判斷欄位是否啟用（伺服器的啟用判斷、驗證與寫入只看欄位自己的 `showWhen`）。不能放進 `row`。
+- `keyValue`、`list`、`tree` 與 listbox 外觀的 `multipleSelect` 都不是 `PlainFieldDef`，不能出現在 Action 輸入欄位、快速新增或 `upload.extra`。
+- 作為條件運算元（`showWhen`／`enableWhen` 的目標）：`autocomplete` 的行為與 `text` 相同；`keyValue`、`list`、`tree` **只支援 `empty`**，對它們使用其他運算子是宣告錯誤（伺服器與 renderer 都會拒絕）。
+
+### 哪一層拒絕什麼
+
+| 規則                                                                                                                                                                                                                                                                   | 拒絕的層                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 欄位形狀、`mode` 值、`tree` 超過 2,000 節點或深度超過 20、`autocomplete` 超過 500 項、`keyValue.max > 200`、`list.max > 500`、`listbox` 搭配 `remote`、`fieldset`／`group` 放進 `row`、`group` 缺 `showWhen`、結構欄位出現在 Action 輸入欄位／快速新增／`upload.extra` | JSON Schema（`schema/v0.json`）與 TypeBox 驗證                                       |
+| `tree` 第一個節點 `depth` 不是 0、`depth` 比前一個節點多超過 1、`value` 重複                                                                                                                                                                                           | 只有手寫驗證（`validateEnvelope` 內的 `findTreeOptionErrors`），JSON Schema 表達不了 |
+| `list` 的 `min > max`、`repeater` `layout: 'table'` 的子節點限制、`keyValue`／`list`／`tree` 上 `empty` 以外的條件運算子                                                                                                                                               | 宣告檢查（伺服器 `DeclarationRegistry` 與 renderer 的宣告檢查）                      |
 
 ## 前端驗證（`ClientRule`）
 

@@ -13,6 +13,7 @@ import {
   SCHEMA_VERSION,
   validateEnvelope,
 } from './index';
+import { findTreeOptionErrors } from './page';
 
 const pkg = (p: string) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 const load = (dir: string): [string, unknown][] =>
@@ -314,6 +315,152 @@ describe('schema 0.4', () => {
     }
   });
 
+  it('accepts the structural fields and nodes on both validators, in rows of a JSON repeater', () => {
+    const form = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: unknown[] } };
+    };
+    const field = (f: Record<string, unknown>) => ({ type: 'field', field: f });
+    const tree = {
+      type: 'tree',
+      name: 't',
+      label: 'T',
+      mode: 'independent',
+      options: Array.from({ length: 2000 }, (_, i) => ({ value: `n${i}`, label: 'N', depth: 0 })),
+    };
+    const nodes = [
+      field({ type: 'keyValue', name: 'kv', label: 'KV' }),
+      field({ type: 'list', name: 'l', label: 'L', max: 500 }),
+      field({ type: 'autocomplete', name: 'a', label: 'A', options: Array(500).fill('s') }),
+      field({ type: 'multipleSelect', name: 'm', label: 'M', appearance: 'listbox', options: [] }),
+      field(tree),
+      field({ type: 'repeater', name: 'r', label: 'R', mode: 'json', layout: 'stack', nodes: [] }),
+    ];
+    nodes.push(
+      field({
+        type: 'repeater',
+        name: 'rows',
+        label: 'Rows',
+        mode: 'json',
+        layout: 'table',
+        nodes: [
+          field({ type: 'keyValue', name: 'kv', label: 'KV' }),
+          field({ type: 'list', name: 'l', label: 'L' }),
+          field({ type: 'tree', name: 't', label: 'T', mode: 'all', options: [] }),
+        ],
+      }),
+    );
+    for (const node of nodes) {
+      const copy = structuredClone(form);
+      copy.page.form.nodes.push({ type: 'section', key: 's', title: 'S', children: [node] });
+      expect(validateEnvelope(copy), JSON.stringify(node).slice(0, 40)).toEqual({ ok: true });
+      expect(checkEnvelope(copy), JSON.stringify(checkEnvelope.errors)).toBe(true);
+    }
+  });
+
+  it('rejects out-of-range structural field options on both validators', () => {
+    const form = fixture('fixtures/valid', 'form-full.json') as {
+      page: { form: { nodes: unknown[] } };
+    };
+    const field = (f: Record<string, unknown>) => ({ type: 'field', field: f });
+    const bad: [string, unknown][] = [
+      ['keyValue max 201', field({ type: 'keyValue', name: 'k', label: 'K', max: 201 })],
+      ['list max 501', field({ type: 'list', name: 'l', label: 'L', max: 501 })],
+      ['list maxLength 0', field({ type: 'list', name: 'l', label: 'L', maxLength: 0 })],
+      ['tree no mode', field({ type: 'tree', name: 't', label: 'T', options: [] })],
+      ['tree bad mode', field({ type: 'tree', name: 't', label: 'T', mode: 'x', options: [] })],
+      [
+        'tree option depth -1',
+        field({
+          type: 'tree',
+          name: 't',
+          label: 'T',
+          mode: 'all',
+          options: [{ value: 'a', label: 'A', depth: -1 }],
+        }),
+      ],
+      [
+        'repeater layout grid',
+        field({ type: 'repeater', name: 'r', label: 'R', mode: 'json', layout: 'grid', nodes: [] }),
+      ],
+      [
+        'listbox as plain select appearance',
+        field({ type: 'select', name: 's', label: 'S', appearance: 'listbox', options: [] }),
+      ],
+      ['fieldset without title', { type: 'fieldset', key: 'f', children: [] }],
+    ];
+    for (const [name, node] of bad) {
+      const copy = structuredClone(form);
+      copy.page.form.nodes.push(node);
+      expect(validateEnvelope(copy).ok, name).toBe(false);
+      expect(checkEnvelope(copy), `ajv ${name}`).toBe(false);
+    }
+  });
+
+  it('accepts a static autocomplete in action forms and quick create, rejects keyValue, list and tree there', () => {
+    const base = fixture('fixtures/valid', 'grid-full.json') as GridFull;
+    const make = (fields: unknown[]) => {
+      const inAction = structuredClone(base);
+      inAction.page.actions.tools.find((a) => a.form)?.form?.fields.push(...fields);
+      const inQuickCreate = structuredClone(base);
+      inQuickCreate.page.quickCreate?.fields.push(...fields);
+      return [inAction, inQuickCreate];
+    };
+    const ok = { type: 'autocomplete', name: 'city', label: '城市', options: ['台北'] };
+    for (const copy of make([ok])) {
+      expect(validateEnvelope(copy).ok).toBe(true);
+      expect(checkEnvelope(copy)).toBe(true);
+    }
+    const remote = { ...ok, options: undefined, remote: { url: '/x' } };
+    for (const copy of make([remote])) {
+      expect(validateEnvelope(copy).ok, 'remote autocomplete').toBe(false);
+      expect(checkEnvelope(copy), 'ajv remote autocomplete').toBe(false);
+    }
+  });
+
+  it('keeps tree depth sequence and uniqueness for the hand-written layer', () => {
+    const rows = [
+      ['first option at depth 1', [{ value: 'a', label: 'A', depth: 1 }], /depth/],
+      [
+        'jump of two',
+        [
+          { value: 'a', label: 'A', depth: 0 },
+          { value: 'b', label: 'B', depth: 2 },
+        ],
+        /depth/,
+      ],
+      [
+        'duplicate values',
+        [
+          { value: 'a', label: 'A', depth: 0 },
+          { value: 'a', label: 'A', depth: 1 },
+        ],
+        /duplicate/,
+      ],
+    ] as const;
+    for (const [name, options, message] of rows) {
+      const errors = findTreeOptionErrors({ type: 'tree', options });
+      expect(errors.join(), name).toMatch(message);
+    }
+    expect(
+      findTreeOptionErrors({
+        type: 'tree',
+        options: [
+          { value: 'a', label: 'A', depth: 0 },
+          { value: 'b', label: 'B', depth: 1 },
+          { value: 'c', label: 'C', depth: 2 },
+          { value: 'd', label: 'D', depth: 0 },
+        ],
+      }),
+    ).toEqual([]);
+    // trees inside repeater rows are covered too
+    expect(
+      findTreeOptionErrors({
+        type: 'repeater',
+        nodes: [{ type: 'field', field: { type: 'tree', options: [{ value: 'a', depth: 3 }] } }],
+      }),
+    ).toHaveLength(1);
+  });
+
   it('rejects a column width outside 1–12 on both validators', () => {
     const base = fixture('fixtures/valid', 'form-full.json') as {
       page: { form: { nodes: { children: { columns?: { width: number }[] }[] }[] } };
@@ -402,6 +549,15 @@ describe('validateEnvelope (TypeBox)', () => {
         expect(r.errors.length).toBeGreaterThan(0);
         for (const e of r.errors) expect(e).toMatch(/^\/.*: .+/);
       }
+    },
+  );
+
+  it.each(load('fixtures/invalid-semantic'))(
+    'rejects %s in the hand-written layer only (JSON Schema cannot express it)',
+    (_n: string, value: unknown) => {
+      const r = validateEnvelope(value);
+      expect(r.ok).toBe(false);
+      expect(checkEnvelope(value)).toBe(true);
     },
   );
 

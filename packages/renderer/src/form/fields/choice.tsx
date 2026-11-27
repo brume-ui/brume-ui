@@ -36,7 +36,11 @@ export function ChoiceField(props: FieldProps) {
       }
     : {};
   if (!('options' in def) && !remote && def.type !== 'tags') return null;
-  const options = ('options' in def ? (def.options ?? []) : []).map((o) => ({
+  const choices =
+    'options' in def && def.type !== 'autocomplete' && def.type !== 'tree'
+      ? (def.options ?? [])
+      : [];
+  const options = choices.map((o) => ({
     ...o,
     disabled: o.disabled || blocked(o.value),
   }));

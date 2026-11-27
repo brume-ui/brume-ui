@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "0.3.0",
+  "page": {
+    "type": "form",
+    "title": "編輯訂單",
+    "description": "修改訂單內容後按儲存。",
+    "formId": "orders",
+    "name": "訂單",
+    "mode": "edit",
+    "record": {
+      "id": 42,
+      "label": "#A1042"
+    },
+    "form": {
+      "layout": "stacked",
+      "sections": "tabs",
+      "nodes": [
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "fieldset",
+              "key": "f",
+              "title": "F",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    "values": {},
+    "submit": {
+      "method": "put",
+      "url": "/admin/orders/42",
+      "label": "儲存"
+    },
+    "after": {
+      "options": ["list", "edit", "create", "view"],
+      "default": "list"
+    },
+    "presentation": "page",
+    "size": "lg",
+    "listUrl": "/admin/orders",
+    "uploadUrl": "/admin/orders/upload"
+  }
+}

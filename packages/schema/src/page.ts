@@ -39,8 +39,50 @@ function flatten(errors: Iterable<SchemaError>): SchemaError[] {
   return out;
 }
 
+/**
+ * Rules JSON Schema cannot express, so only this hand-written layer enforces them (v0.json does
+ * not): a `tree` field's flat options must start at depth 0, never jump more than +1 below the
+ * previous option, and have unique values. Walks every object, so trees nested in repeater
+ * rows or relation fields are covered.
+ */
+export function findTreeOptionErrors(value: unknown, path = ''): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item, i) => findTreeOptionErrors(item, `${path}/${i}`));
+  }
+  if (value === null || typeof value !== 'object') return [];
+  const node = value as Record<string, unknown>;
+  const errors: string[] = [];
+  if (node.type === 'tree' && Array.isArray(node.options)) {
+    const seen = new Set<string>();
+    let previous = -1;
+    node.options.forEach((raw, i) => {
+      const option = raw as { value?: unknown; depth?: unknown };
+      const at = `${path}/options/${i}`;
+      if (typeof option?.depth === 'number') {
+        if (option.depth > previous + 1) {
+          errors.push(
+            `${at}/depth: must be 0 for the first option and at most 1 deeper than the previous option`,
+          );
+        }
+        previous = option.depth;
+      }
+      if (typeof option?.value === 'string') {
+        if (seen.has(option.value)) errors.push(`${at}/value: duplicate tree option value`);
+        seen.add(option.value);
+      }
+    });
+  }
+  for (const [key, child] of Object.entries(node)) {
+    errors.push(...findTreeOptionErrors(child, `${path}/${key}`));
+  }
+  return errors;
+}
+
 export function validateEnvelope(value: unknown): ValidationResult {
-  if (compiled.Check(value)) return { ok: true };
+  if (compiled.Check(value)) {
+    const errors = findTreeOptionErrors(value);
+    return errors.length === 0 ? { ok: true } : { ok: false, errors };
+  }
   const errors = flatten(compiled.Errors(value)).map(
     (e) => `${e.path === '' ? '/' : e.path}: ${e.message}`,
   );
