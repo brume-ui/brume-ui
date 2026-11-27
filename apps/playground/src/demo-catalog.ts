@@ -217,6 +217,20 @@ export const DEMO_FEATURES: DemoFeature[] = [
     sources: ['brume-ui:apps/playground/src/pages/form-feature-demo.tsx'],
   })),
   {
+    id: 'component.structural-fields',
+    category: 'controls',
+    title: '結構欄位元件狀態',
+    summary: '比較鍵值、清單、自動完成、核取樹、雙欄選單與可收合群組的各種狀態。',
+    href: '#/structural-fields',
+    steps: [
+      '逐一操作每個元件的空白與已填寫範例：新增、刪除、調整順序、勾選、移動選項。',
+      '比較錯誤、唯讀與停用範例，並用 Tab 與方向鍵確認每個元件都能只用鍵盤操作。',
+    ],
+    expected: '各元件在五種狀態下外觀清楚；錯誤訊息貼在出錯的儲存格旁；窄螢幕不出現橫向捲軸。',
+    persistence: 'visual',
+    sources: ['brume-ui:apps/playground/src/pages/structural-fields-demo.tsx'],
+  },
+  {
     id: 'component.button',
     category: 'controls',
     title: '按鈕狀態',

@@ -14,6 +14,7 @@ import {
 } from './form-feature-data';
 import { buildRichTextFixture } from './rich-text-demo-data';
 import { BUTTON_DEMO, SMALL_FIELD_FIXTURES } from './small-fields-data';
+import { STRUCTURAL_FIXTURES } from './structural-fields-data';
 
 const eq = (path: string, value: string | boolean, scope: 'root' | 'row' = 'root'): Condition => ({
   op: 'eq',
@@ -76,6 +77,9 @@ export function buildFocusedFixture(id: string): {
   } else if (SMALL_FIELD_FIXTURES[id]) {
     form.nodes = structuredClone(SMALL_FIELD_FIXTURES[id].nodes);
     values = structuredClone(SMALL_FIELD_FIXTURES[id].values);
+  } else if (STRUCTURAL_FIXTURES[id]) {
+    form.nodes = structuredClone(STRUCTURAL_FIXTURES[id].nodes);
+    values = structuredClone(STRUCTURAL_FIXTURES[id].values);
   } else if (example.kind === 'field') {
     const f = FIELD_EXAMPLES.find((x) => `form.field.${x.field.type}` === id);
     if (!f) throw new Error(`Missing focused field: ${id}`);

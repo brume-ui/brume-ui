@@ -33,6 +33,7 @@ import { AppShellPage, CardPage, PageHeaderPage } from './pages/layout';
 import { MotionPage } from './pages/motion';
 import { ConfirmPage, DialogPage, MenusPage, ToastPage } from './pages/overlays';
 import { PublicContractsPage } from './pages/public-contracts';
+import { StructuralFieldsPage } from './pages/structural-fields-demo';
 
 export interface Route {
   name: string;
@@ -92,6 +93,7 @@ export const ROUTES: Route[] = [
     Component: FormCompositionPage,
     ownsGuide: true,
   },
+  { name: 'structural-fields', title: '結構欄位元件', Component: StructuralFieldsPage },
   { name: 'form-repeaters', title: '表單 · 巢狀重複列', Component: FormRepeatersPage },
   { name: 'form-relations', title: '表單 · 遠端選項與互斥', Component: FormRelationsPage },
   { name: 'form-dialog', title: '表單 · 彈窗', Component: FormDialogPage },

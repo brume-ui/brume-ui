@@ -179,6 +179,8 @@ export function createFocusedAdapter(
             'form.behavior.enable-when',
             'form.behavior.conditions-row',
             'form.behavior.condition-invalid-control',
+            // A hidden group branch is ignored by the server: only active fields are accepted.
+            'form.layout.group',
           ].includes(exampleId)
         )
           accepted = acceptConditionalDraft(

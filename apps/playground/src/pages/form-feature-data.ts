@@ -10,6 +10,14 @@ import {
   timeField,
   timeRangeField,
 } from './small-fields-data';
+import {
+  autocompleteField,
+  keyValueField,
+  listField,
+  STRUCTURAL_GUIDES,
+  structuralGuide,
+  treeField,
+} from './structural-fields-data';
 
 export const node = (field: FieldDef): FormNode => ({ type: 'field', field });
 export const text = (name: string, label: string): FieldDef => ({ type: 'text', name, label });
@@ -143,6 +151,10 @@ export const FIELD_EXAMPLES: { field: FieldDef; value: unknown; title: string }[
   { field: timeField, value: '09:05', title: '時間' },
   { field: timeRangeField, value: { start: '22:00', end: '06:00' }, title: '時間區間（可跨夜）' },
   { field: captchaField, value: null, title: '驗證碼' },
+  { field: keyValueField, value: [{ key: '材質', value: '純棉' }], title: '鍵值配對' },
+  { field: listField, value: ['手工製作'], title: '字串清單' },
+  { field: autocompleteField, value: null, title: '自動完成' },
+  { field: treeField('value', '商品分類', 'leaves'), value: [], title: '核取樹' },
   {
     field: address,
     value: { county: '臺北', zipcode: '100', district: '中正', address: '示範路1號' },
@@ -253,15 +265,14 @@ const guideOf = (type: string) =>
       ? COLOR_GUIDE
       : type === 'tel'
         ? TEL_GUIDE
-        : SMALL_FIELD_GUIDES[type]
-          ? SMALL_FIELD_GUIDES[type]
-          : {
-              steps: [
-                '修改可編輯欄位，再按「儲存後繼續編輯」。',
-                '比較目前草稿、實際請求與記憶體儲存值；唯讀欄位只供查看。',
-              ],
-              expected: '值出現在實際請求；精確數值保持字串。隱藏值仍可由草稿與請求核對。',
-            };
+        : (SMALL_FIELD_GUIDES[type] ??
+          STRUCTURAL_GUIDES[type] ?? {
+            steps: [
+              '修改可編輯欄位，再按「儲存後繼續編輯」。',
+              '比較目前草稿、實際請求與記憶體儲存值；唯讀欄位只供查看。',
+            ],
+            expected: '值出現在實際請求；精確數值保持字串。隱藏值仍可由草稿與請求核對。',
+          });
 export const FORM_EXAMPLES: FormExample[] = [
   ...FIELD_EXAMPLES.map(({ field, title }) => ({
     id: `form.field.${field.type}`,
@@ -294,37 +305,41 @@ export const FORM_EXAMPLES: FormExample[] = [
     divider: '分隔線',
     html: 'HTML 說明區塊',
     button: '連結按鈕',
+    fieldset: '可收合群組與表格列',
+    group: '條件群組',
     embeds: '巢狀物件',
   }).map(([id, title]) => ({
     id: `form.layout.${id}`,
     route: 'form-layouts' as const,
     title,
     kind: 'layout',
-    ...(id === 'button'
-      ? {
-          steps: [
-            '切到「地址分段」，在分隔線上方找到「前往站內說明」與「開啟外部公告」兩個連結按鈕。',
-            '檢視連結：站內按鈕指向 /admin/help，外部按鈕另開新分頁。',
-          ],
-          expected:
-            '按鈕是真正的連結（站內走路由、外部帶 rel=noopener noreferrer）；它沒有值，不會出現在儲存值。',
-        }
-      : id === 'html'
+    ...(id === 'fieldset' || id === 'group'
+      ? structuralGuide(id)
+      : id === 'button'
         ? {
             steps: [
-              '切到「地址分段」，閱讀分隔線上方的說明區塊。',
-              '點「站內說明」連結（站內路徑）與「外部公告」連結（另開新分頁）。',
+              '切到「地址分段」，在分隔線上方找到「前往站內說明」與「開啟外部公告」兩個連結按鈕。',
+              '檢視連結：站內按鈕指向 /admin/help，外部按鈕另開新分頁。',
             ],
             expected:
-              '說明區塊只保留白名單標籤；站內連結留在本頁，外部連結帶 rel=noopener noreferrer 並另開新分頁；儲存值不含此區塊。',
+              '按鈕是真正的連結（站內走路由、外部帶 rel=noopener noreferrer）；它沒有值，不會出現在儲存值。',
           }
-        : {
-            steps: [
-              '先儲存空白城市，觀察錯誤與焦點。',
-              '若使用頁籤，切換「地址分段」，輸入城市再儲存。',
-            ],
-            expected: '錯誤可導向對應分段；儲存值的 address.city 保持巢狀結構。',
-          }),
+        : id === 'html'
+          ? {
+              steps: [
+                '切到「地址分段」，閱讀分隔線上方的說明區塊。',
+                '點「站內說明」連結（站內路徑）與「外部公告」連結（另開新分頁）。',
+              ],
+              expected:
+                '說明區塊只保留白名單標籤；站內連結留在本頁，外部連結帶 rel=noopener noreferrer 並另開新分頁；儲存值不含此區塊。',
+            }
+          : {
+              steps: [
+                '先儲存空白城市，觀察錯誤與焦點。',
+                '若使用頁籤，切換「地址分段」，輸入城市再儲存。',
+              ],
+              expected: '錯誤可導向對應分段；儲存值的 address.city 保持巢狀結構。',
+            }),
   })),
   ...Object.entries(behaviorTitles).map(([id, title]) => ({
     id: `form.behavior.${id}`,

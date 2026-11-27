@@ -22,6 +22,7 @@ const first = <T,>(values: T[]): T => {
 };
 const change = (name: string, value: string) =>
   fireEvent.change(screen.getByLabelText(name), { target: { value } });
+const STRUCTURAL_TYPES = ['keyValue', 'list', 'autocomplete', 'tree'];
 const save = (name = '儲存後繼續編輯') => fireEvent.click(screen.getByRole('button', { name }));
 const output = (name: string) => JSON.parse(screen.getByTestId(name).textContent || '{}');
 
@@ -45,8 +46,12 @@ describe('focused public Form examples', () => {
       await waitFor(() => expect(output('form-saved').value).toEqual({ start, end }));
     },
   );
-  // richText and captcha have their own tests below (a required field that starts empty).
-  it.each(FIELD_EXAMPLES.filter((x) => x.field.type !== 'richText' && x.field.type !== 'captcha'))(
+  // richText, captcha and the structural fields have their own tests (a required field that starts empty).
+  it.each(
+    FIELD_EXAMPLES.filter(
+      (x) => !['richText', 'captcha', ...STRUCTURAL_TYPES].includes(x.field.type),
+    ),
+  )(
     'serializes the public $field.type field through a real save request',
     async ({ field, value }) => {
       renderWithBrume(<FocusedFormDemo exampleId={`form.field.${field.type}`} />);
@@ -55,6 +60,16 @@ describe('focused public Form examples', () => {
       expect(output('form-wire')[field.name]).toEqual(value);
       if (field.type === 'display') expect(screen.getByText(String(value))).toBeTruthy();
       if (field.type === 'hidden') expect(screen.queryByLabelText(field.label)).toBeNull();
+    },
+  );
+  it.each(STRUCTURAL_TYPES)(
+    'blocks the %s demo save on its invalid required field and never sends the draft',
+    async (type) => {
+      renderWithBrume(<FocusedFormDemo exampleId={`form.field.${type}`} />);
+      save();
+      await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0));
+      expect(output('form-wire')).toEqual({});
+      expect(screen.getByTestId('request-count').textContent).toContain('儲存請求：0');
     },
   );
   it('blocks the captcha demo save until an answer is typed, then sends it but never stores it', async () => {
