@@ -84,8 +84,6 @@ export const zhCN: Record<MessageKey, string> = {
   'tree.clearAll': '取消全选',
   'tree.expandAll': '全部展开',
   'tree.collapseAll': '全部收起',
-  'tree.expand': '展开 {name}',
-  'tree.collapse': '收起 {name}',
   'tree.empty': '没有项目',
   'tags.placeholder': '输入后按 Enter 添加',
   'color.open': '{label}：打开色盘',

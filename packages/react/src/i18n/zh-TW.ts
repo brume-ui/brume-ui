@@ -83,8 +83,6 @@ export const zhTW = {
   'tree.clearAll': '取消全選',
   'tree.expandAll': '全部展開',
   'tree.collapseAll': '全部收合',
-  'tree.expand': '展開 {name}',
-  'tree.collapse': '收合 {name}',
   'tree.empty': '沒有項目',
   'tags.placeholder': '輸入後按 Enter 新增',
   'color.open': '{label}：開啟色盤',

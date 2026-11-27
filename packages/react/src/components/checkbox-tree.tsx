@@ -125,7 +125,25 @@ export function CheckboxTree({
     refs.current.get(target)?.focus();
   });
 
-  const emit = (next: string[]) => onChange(next);
+  const emit = (next: string[]) => {
+    if (next.length === canonical.length && next.every((v, k) => v === canonical[k])) return;
+    onChange(next);
+  };
+  // A parent whose leaves are all locked cannot change anything.
+  const inert = useMemo(() => {
+    const out = new Array<boolean>(shape.n).fill(false);
+    for (let i = 0; i < shape.n; i++) {
+      if (shape.locked[i]) out[i] = true;
+      else if (mode !== 'independent' && shape.isParent[i]) {
+        let free = false;
+        for (let j = i + 1; j < (shape.end[i] as number) && !free; j++) {
+          free = !shape.isParent[j] && !shape.locked[j];
+        }
+        out[i] = !free;
+      }
+    }
+    return out;
+  }, [shape, mode]);
   const toggle = (i: number) => {
     const o = options[i] as TreeOption;
     if (locked || shape.locked[i]) return;
@@ -197,6 +215,9 @@ export function CheckboxTree({
       role="group"
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onBlur?.();
+      }}
       className="br:flex br:min-w-0 br:flex-col br:gap-1"
     >
       <div className="br:flex br:flex-wrap br:items-center br:gap-1">
@@ -225,7 +246,6 @@ export function CheckboxTree({
         aria-invalid={isInvalid || undefined}
         aria-required={ariaOn(ariaRequired) || undefined}
         aria-disabled={disabled || undefined}
-        onBlur={onBlur}
         className={cn(
           'br:max-h-80 br:overflow-y-auto br:rounded-input br:border br:bg-surface br:p-1',
           isInvalid ? 'br:border-danger' : 'br:border-border-strong',
@@ -242,7 +262,7 @@ export function CheckboxTree({
           const parent = shape.isParent[i] as boolean;
           const open = parent && expanded.has(o.value);
           const check = states.get(o.value) ?? false;
-          const itemLocked = Boolean(shape.locked[i]);
+          const itemLocked = Boolean(inert[i]);
           return (
             <div
               key={o.value}

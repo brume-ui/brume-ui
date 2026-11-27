@@ -1,0 +1,2066 @@
+{
+  "cases": [
+    {
+      "name": "leaves: empty",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": [],
+      "expected": []
+    },
+    {
+      "name": "leaves: parent expands to leaves",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a"],
+      "expected": ["a1", "a2x", "a2y"]
+    },
+    {
+      "name": "leaves: nested parent",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a2"],
+      "expected": ["a2x", "a2y"]
+    },
+    {
+      "name": "leaves: unknown dropped, order = tree order",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["b", "zzz", "a1"],
+      "expected": ["a1", "b"]
+    },
+    {
+      "name": "leaves: duplicates collapse",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["b", "b"],
+      "expected": ["b"]
+    },
+    {
+      "name": "leaves: parent skips disabled leaf",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["c"],
+      "expected": ["c1"]
+    },
+    {
+      "name": "leaves: disabled leaf already present stays",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["c2"],
+      "expected": ["c2"]
+    },
+    {
+      "name": "leaves: disabled parent id expands to nothing",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["d"],
+      "expected": []
+    },
+    {
+      "name": "leaves: leaf under a disabled parent stays",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["d1"],
+      "expected": ["d1"]
+    },
+    {
+      "name": "all: leaves of a parent add the parent",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a2x", "a2y"],
+      "expected": ["a2", "a2x", "a2y"]
+    },
+    {
+      "name": "all: cascades up through levels",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a1", "a2x", "a2y"],
+      "expected": ["a", "a1", "a2", "a2x", "a2y"]
+    },
+    {
+      "name": "all: stored parent expands",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a"],
+      "expected": ["a", "a1", "a2", "a2x", "a2y"]
+    },
+    {
+      "name": "all: partial parent not added",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a1", "a2x"],
+      "expected": ["a1", "a2x"]
+    },
+    {
+      "name": "all: disabled unchecked leaf blocks the parent",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["c1"],
+      "expected": ["c1"]
+    },
+    {
+      "name": "all: disabled leaf present completes the parent",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["c1", "c2"],
+      "expected": ["c", "c1", "c2"]
+    },
+    {
+      "name": "all: stored parent expands only enabled leaves",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["c"],
+      "expected": ["c1"]
+    },
+    {
+      "name": "all: unknown dropped",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["nope", "b"],
+      "expected": ["b"]
+    },
+    {
+      "name": "independent: no cascade",
+      "mode": "independent",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a", "a2x"],
+      "expected": ["a", "a2x"]
+    },
+    {
+      "name": "independent: unknown dropped, tree order, deduped",
+      "mode": "independent",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["b", "x", "a", "b"],
+      "expected": ["a", "b"]
+    },
+    {
+      "name": "independent: disabled stays",
+      "mode": "independent",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["d", "c2"],
+      "expected": ["c2", "d"]
+    },
+    {
+      "name": "leaves: empty options",
+      "mode": "leaves",
+      "options": [],
+      "value": ["a"],
+      "expected": []
+    },
+    {
+      "name": "all: empty options",
+      "mode": "all",
+      "options": [],
+      "value": ["a"],
+      "expected": []
+    },
+    {
+      "name": "independent: empty options",
+      "mode": "independent",
+      "options": [],
+      "value": ["a"],
+      "expected": []
+    },
+    {
+      "name": "leaves: former parent now a leaf",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        }
+      ],
+      "value": ["a", "zz"],
+      "expected": ["a"]
+    },
+    {
+      "name": "all: former parent now a leaf",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        }
+      ],
+      "value": ["a", "zz"],
+      "expected": ["a"]
+    },
+    {
+      "name": "independent: former parent now a leaf",
+      "mode": "independent",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        }
+      ],
+      "value": ["a", "zz"],
+      "expected": ["a"]
+    },
+    {
+      "name": "all: locked ancestor, locked leaf present completes the parent",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["d1"],
+      "expected": ["d", "d1"]
+    },
+    {
+      "name": "all: stored locked parent id with no leaves present is dropped",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["d"],
+      "expected": []
+    },
+    {
+      "name": "leaves: stored locked parent id with no leaves present is dropped",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["d"],
+      "expected": []
+    },
+    {
+      "name": "all: nested locked parent, its leaves present",
+      "mode": "all",
+      "options": [
+        {
+          "value": "x",
+          "label": "X",
+          "depth": 0
+        },
+        {
+          "value": "y",
+          "label": "Y",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "y1",
+          "label": "Y1",
+          "depth": 2
+        },
+        {
+          "value": "y2",
+          "label": "Y2",
+          "depth": 2
+        },
+        {
+          "value": "z",
+          "label": "Z",
+          "depth": 1
+        }
+      ],
+      "value": ["y1", "y2"],
+      "expected": ["y", "y1", "y2"]
+    },
+    {
+      "name": "all: nested locked parent, whole tree",
+      "mode": "all",
+      "options": [
+        {
+          "value": "x",
+          "label": "X",
+          "depth": 0
+        },
+        {
+          "value": "y",
+          "label": "Y",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "y1",
+          "label": "Y1",
+          "depth": 2
+        },
+        {
+          "value": "y2",
+          "label": "Y2",
+          "depth": 2
+        },
+        {
+          "value": "z",
+          "label": "Z",
+          "depth": 1
+        }
+      ],
+      "value": ["y1", "y2", "z"],
+      "expected": ["x", "y", "y1", "y2", "z"]
+    },
+    {
+      "name": "leaves: nested locked parent expands only unlocked leaves",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "x",
+          "label": "X",
+          "depth": 0
+        },
+        {
+          "value": "y",
+          "label": "Y",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "y1",
+          "label": "Y1",
+          "depth": 2
+        },
+        {
+          "value": "y2",
+          "label": "Y2",
+          "depth": 2
+        },
+        {
+          "value": "z",
+          "label": "Z",
+          "depth": 1
+        }
+      ],
+      "value": ["x"],
+      "expected": ["z"]
+    },
+    {
+      "name": "independent: disabled ancestor does not lock the descendant",
+      "mode": "independent",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["d1", "d"],
+      "expected": ["d", "d1"]
+    },
+    {
+      "name": "leaves: parent with some of its own leaves",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a", "a1"],
+      "expected": ["a1", "a2x", "a2y"]
+    },
+    {
+      "name": "all: parent with some of its own leaves",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a", "a1"],
+      "expected": ["a", "a1", "a2", "a2x", "a2y"]
+    },
+    {
+      "name": "independent: parent with some of its own leaves",
+      "mode": "independent",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a", "a1"],
+      "expected": ["a", "a1"]
+    },
+    {
+      "name": "all: duplicate ids in value",
+      "mode": "all",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a2x", "a2x", "a2y", "a2y"],
+      "expected": ["a2", "a2x", "a2y"]
+    },
+    {
+      "name": "leaves: duplicate parent and leaf ids",
+      "mode": "leaves",
+      "options": [
+        {
+          "value": "a",
+          "label": "A",
+          "depth": 0
+        },
+        {
+          "value": "a1",
+          "label": "A1",
+          "depth": 1
+        },
+        {
+          "value": "a2",
+          "label": "A2",
+          "depth": 1
+        },
+        {
+          "value": "a2x",
+          "label": "A2X",
+          "depth": 2
+        },
+        {
+          "value": "a2y",
+          "label": "A2Y",
+          "depth": 2
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "depth": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "depth": 0
+        },
+        {
+          "value": "c1",
+          "label": "C1",
+          "depth": 1
+        },
+        {
+          "value": "c2",
+          "label": "C2",
+          "depth": 1,
+          "disabled": true
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "depth": 0,
+          "disabled": true
+        },
+        {
+          "value": "d1",
+          "label": "D1",
+          "depth": 1
+        }
+      ],
+      "value": ["a2", "a2", "a2x"],
+      "expected": ["a2x", "a2y"]
+    }
+  ]
+}

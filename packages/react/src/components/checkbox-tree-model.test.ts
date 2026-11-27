@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import type { TreeMode, TreeOption } from './checkbox-tree-model';
 import {
   canonicalTreeValue,
   toggleTreeAll,
@@ -6,21 +9,30 @@ import {
   treeAllSelected,
   treeCheckStates,
 } from './checkbox-tree-model';
-import { TREE_CASES, TREE_FIXTURE } from './checkbox-tree-model.fixture';
+
+/** Shared with the PHP server tests: every case carries its own options. */
+const { cases: CASES } = JSON.parse(
+  readFileSync(resolve(process.cwd(), '../schema/fixtures/tree/canonical.json'), 'utf8'),
+) as {
+  cases: {
+    name: string;
+    mode: TreeMode;
+    options: TreeOption[];
+    value: string[];
+    expected: string[];
+  }[];
+};
+const TREE_FIXTURE = (CASES[0] as (typeof CASES)[number]).options;
 
 describe('canonicalTreeValue', () => {
-  for (const c of TREE_CASES) {
+  for (const c of CASES) {
     it(c.name, () => {
-      expect(canonicalTreeValue(TREE_FIXTURE, c.value, c.mode)).toEqual(c.expected);
+      expect(canonicalTreeValue(c.options, c.value, c.mode)).toEqual(c.expected);
+    });
+    it(`${c.name} (idempotent)`, () => {
+      expect(canonicalTreeValue(c.options, c.expected, c.mode)).toEqual(c.expected);
     });
   }
-
-  it('is idempotent', () => {
-    for (const c of TREE_CASES) {
-      const once = canonicalTreeValue(TREE_FIXTURE, c.value, c.mode);
-      expect(canonicalTreeValue(TREE_FIXTURE, once, c.mode)).toEqual(once);
-    }
-  });
 
   it('treats a former parent that is now a leaf as a leaf', () => {
     const options = [
@@ -60,6 +72,16 @@ describe('toggleTreeNode', () => {
   it('cascade skips disabled leaves and keeps a present one', () => {
     expect(toggleTreeNode(TREE_FIXTURE, [], 'c', 'leaves')).toEqual(['c1']);
     expect(toggleTreeNode(TREE_FIXTURE, ['c1', 'c2'], 'c', 'leaves')).toEqual(['c2']);
+  });
+  it('a mixed parent with locked leaves: "all on" is judged over the unlocked leaves', () => {
+    // c2 is locked and off: c can never show fully checked, but c1 on means "all on" -> uncheck.
+    expect(treeCheckStates(TREE_FIXTURE, ['c1'], 'leaves').get('c')).toBe('mixed');
+    expect(toggleTreeNode(TREE_FIXTURE, ['c1'], 'c', 'leaves')).toEqual([]);
+    expect(toggleTreeNode(TREE_FIXTURE, [], 'c', 'leaves')).toEqual(['c1']);
+    expect(toggleTreeNode(TREE_FIXTURE, ['c1'], 'c', 'all')).toEqual([]);
+  });
+  it('a parent whose leaves are all locked changes nothing', () => {
+    expect(toggleTreeNode(TREE_FIXTURE, ['b'], 'd', 'leaves')).toEqual(['b']);
   });
   it('a disabled node, or a node under one, cannot be toggled', () => {
     expect(toggleTreeNode(TREE_FIXTURE, [], 'c2', 'leaves')).toEqual([]);

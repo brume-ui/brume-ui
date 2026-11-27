@@ -4,7 +4,20 @@ import { describe, expect, it, vi } from 'vitest';
 import { createMemoryAdapter } from '../memory-adapter';
 import { BrumeProvider } from '../provider';
 import { CheckboxTree, type CheckboxTreeProps } from './checkbox-tree';
-import { TREE_FIXTURE } from './checkbox-tree-model.fixture';
+
+const TREE_FIXTURE = [
+  { value: 'a', label: 'A', depth: 0 },
+  { value: 'a1', label: 'A1', depth: 1 },
+  { value: 'a2', label: 'A2', depth: 1 },
+  { value: 'a2x', label: 'A2x', depth: 2 },
+  { value: 'a2y', label: 'A2y', depth: 2 },
+  { value: 'b', label: 'B', depth: 0 },
+  { value: 'c', label: 'C', depth: 0 },
+  { value: 'c1', label: 'C1', depth: 1 },
+  { value: 'c2', label: 'C2', depth: 1, disabled: true },
+  { value: 'd', label: 'D', depth: 0, disabled: true },
+  { value: 'd1', label: 'D1', depth: 1 },
+];
 
 function Harness(props: Partial<CheckboxTreeProps> & { onSpy?(v: string[]): void }) {
   const { onSpy, value: initial, ...rest } = props;
@@ -148,6 +161,31 @@ describe('CheckboxTree', () => {
     expect(spy).toHaveBeenLastCalledWith(['a1', 'a2x', 'a2y']);
     fireEvent.keyDown(item('A'), { key: 'ArrowUp' });
     expect(document.activeElement).toBe(item('A'));
+  });
+
+  it('does not emit when nothing changes, and marks a parent with only locked leaves disabled', () => {
+    const spy = vi.fn();
+    setup({ defaultExpanded: true, onSpy: spy });
+    expect(item('D').getAttribute('aria-disabled')).toBe('true');
+    expect(item('C').getAttribute('aria-disabled')).toBeNull();
+    fireEvent.click(item('D'));
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('onBlur fires only when focus leaves the whole tree', () => {
+    const blur = vi.fn();
+    render(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <Harness onBlur={blur} />
+        <button type="button">outside</button>
+      </BrumeProvider>,
+    );
+    item('A').focus();
+    fireEvent.keyDown(item('A'), { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(item('B'));
+    expect(blur).not.toHaveBeenCalled();
+    screen.getByRole('button', { name: 'outside' }).focus();
+    expect(blur).toHaveBeenCalledTimes(1);
   });
 
   it('readOnly blocks toggling; disabled has no tab stop', () => {

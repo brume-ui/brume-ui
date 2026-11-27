@@ -84,8 +84,6 @@ export const en: Record<MessageKey, string> = {
   'tree.clearAll': 'Clear selection',
   'tree.expandAll': 'Expand all',
   'tree.collapseAll': 'Collapse all',
-  'tree.expand': 'Expand {name}',
-  'tree.collapse': 'Collapse {name}',
   'tree.empty': 'No items',
   'tags.placeholder': 'Type and press Enter to add',
   'color.open': '{label}: open colour picker',

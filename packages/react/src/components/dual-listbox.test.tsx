@@ -55,9 +55,11 @@ describe('DualListbox', () => {
     expect(names(avail())).toHaveLength(5);
   });
 
-  it('moves selected options by button, in selection order, and back', () => {
+  it('moves selected options by button and back', () => {
     const spy = vi.fn();
     setup({ onSpy: spy });
+    // A batch is appended in options order (蘋果 before 香蕉 although 香蕉 was clicked first);
+    // "order of selection" means the order of the move operations.
     fireEvent.click(within(avail()).getByText('香蕉'));
     fireEvent.click(within(avail()).getByText('蘋果'), { ctrlKey: true });
     fireEvent.click(screen.getByRole('button', { name: '加入選取項目' }));
@@ -195,6 +197,43 @@ describe('DualListbox', () => {
     setup({ disabled: true, onSpy: spy });
     expect(avail().getAttribute('aria-disabled')).toBe('true');
     expect((screen.getByLabelText('篩選食物 可選') as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it('clicking an option keeps focus on the listbox', () => {
+    setup();
+    avail().focus();
+    const opt = within(avail()).getByText('蘋果').closest('[role=option]') as HTMLElement;
+    fireEvent.mouseDown(opt);
+    fireEvent.click(opt);
+    // Not focusable itself, so a click cannot pull focus off the listbox.
+    expect(opt.hasAttribute('tabindex')).toBe(false);
+    expect(document.activeElement).toBe(avail());
+  });
+
+  it('after a move button disables itself, focus goes to the receiving pane', () => {
+    setup();
+    fireEvent.click(within(avail()).getByText('蘋果'));
+    const add = screen.getByRole('button', { name: '加入選取項目' });
+    add.focus();
+    fireEvent.click(add);
+    expect((add as HTMLButtonElement).disabled).toBe(true);
+    expect(document.activeElement).toBe(chosen());
+  });
+
+  it('onBlur fires only when focus leaves the whole control', () => {
+    const blur = vi.fn();
+    render(
+      <BrumeProvider adapter={createMemoryAdapter()}>
+        <Harness onBlur={blur} />
+        <button type="button">outside</button>
+      </BrumeProvider>,
+    );
+    avail().focus();
+    screen.getByLabelText('篩選食物 可選').focus();
+    chosen().focus();
+    expect(blur).not.toHaveBeenCalled();
+    screen.getByRole('button', { name: 'outside' }).focus();
+    expect(blur).toHaveBeenCalledTimes(1);
   });
 
   it('leaves unknown ids in the value alone', () => {

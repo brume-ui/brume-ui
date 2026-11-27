@@ -77,6 +77,8 @@ export function DualListbox({
     selected: EMPTY,
   });
   const locked = Boolean(disabled || readOnly);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const refocus = useRef<PaneName | null>(null);
   const isInvalid = Boolean(invalid) || ariaOn(ariaInvalid);
 
   const byValue = useMemo(() => new Map(options.map((o) => [o.value, o])), [options]);
@@ -113,6 +115,21 @@ export function DualListbox({
     patch(name, { picked: state[name].picked.filter((v) => !gone.has(v)) });
   };
 
+  // A button that disables itself after its move would drop focus: send it to the receiving pane.
+  const moveByButton = (name: PaneName, values: string[]) => {
+    refocus.current = name === 'available' ? 'selected' : 'available';
+    move(name, values);
+  };
+  useEffect(() => {
+    const target = refocus.current;
+    if (target === null) return;
+    refocus.current = null;
+    const active = document.activeElement;
+    if (active instanceof HTMLButtonElement && active.disabled) {
+      rootRef.current?.querySelector<HTMLElement>(`[data-pane="${target}"]`)?.focus();
+    }
+  });
+
   const pickedIn = (name: PaneName) => {
     const here = new Set(items[name].map((o) => o.value));
     return state[name].picked.filter((v) => here.has(v));
@@ -133,7 +150,6 @@ export function DualListbox({
       invalid={name === 'selected' && isInvalid}
       required={name === 'selected' && ariaOn(ariaRequired)}
       describedBy={describedBy}
-      onBlur={onBlur}
       onPatch={(next) => patch(name, next)}
       onMove={(values) => move(name, values)}
     />
@@ -151,6 +167,10 @@ export function DualListbox({
     // biome-ignore lint/a11y/useSemanticElements: a fieldset would need a visible legend; the group is named by aria-label.
     <div
       id={id}
+      ref={rootRef}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onBlur?.();
+      }}
       role="group"
       aria-label={labelledBy ? undefined : label}
       aria-labelledby={labelledBy}
@@ -162,21 +182,21 @@ export function DualListbox({
           <MoveButton
             label={t('dual.add')}
             disabled={addDisabled}
-            onClick={() => move('available', pickedIn('available'))}
+            onClick={() => moveByButton('available', pickedIn('available'))}
           >
             <ChevronRight aria-hidden="true" className={cn('br:size-4', arrow)} />
           </MoveButton>
           <MoveButton
             label={t('dual.addAll')}
             disabled={addAllDisabled}
-            onClick={() => move('available', allOf('available'))}
+            onClick={() => moveByButton('available', allOf('available'))}
           >
             <ChevronsRight aria-hidden="true" className={cn('br:size-4', arrow)} />
           </MoveButton>
           <MoveButton
             label={t('dual.remove')}
             disabled={removeDisabled}
-            onClick={() => move('selected', pickedIn('selected'))}
+            onClick={() => moveByButton('selected', pickedIn('selected'))}
           >
             <ChevronRight
               aria-hidden="true"
@@ -186,7 +206,7 @@ export function DualListbox({
           <MoveButton
             label={t('dual.removeAll')}
             disabled={removeAllDisabled}
-            onClick={() => move('selected', allOf('selected'))}
+            onClick={() => moveByButton('selected', allOf('selected'))}
           >
             <ChevronsRight
               aria-hidden="true"
@@ -238,7 +258,6 @@ interface PaneProps {
   invalid: boolean;
   required: boolean;
   describedBy?: string;
-  onBlur?(): void;
   onPatch(next: Partial<PaneState>): void;
   onMove(values: string[]): void;
 }
@@ -256,18 +275,16 @@ function Pane({
   invalid,
   required,
   describedBy,
-  onBlur,
   onPatch,
   onMove,
 }: PaneProps) {
   const { t } = useBrume();
   const anchor = useRef<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
-  const optionId = (v: string) => `${baseId}-${name}-${list.findIndex((o) => o.value === v)}`;
+  const positions = useMemo(() => new Map(list.map((o, k) => [o.value, k])), [list]);
+  const optionId = (v: string) => `${baseId}-${name}-${positions.get(v) ?? -1}`;
   const activeValue =
-    state.active !== null && list.some((o) => o.value === state.active)
-      ? state.active
-      : (list[0]?.value ?? null);
+    state.active !== null && positions.has(state.active) ? state.active : (list[0]?.value ?? null);
   const picked = new Set(state.picked);
 
   useEffect(() => {
@@ -278,8 +295,8 @@ function Pane({
   });
 
   const range = (from: string, to: string) => {
-    const a = list.findIndex((o) => o.value === from);
-    const b = list.findIndex((o) => o.value === to);
+    const a = positions.get(from) ?? -1;
+    const b = positions.get(to) ?? -1;
     if (a < 0 || b < 0) return [to];
     return list
       .slice(Math.min(a, b), Math.max(a, b) + 1)
@@ -354,11 +371,11 @@ function Pane({
     const on = picked.has(o.value);
     return (
       // biome-ignore lint/a11y/useKeyWithClickEvents: keys are handled on the listbox (activedescendant pattern).
+      // biome-ignore lint/a11y/useFocusableInteractive: options are never focused; the listbox keeps focus (activedescendant).
       <div
         key={o.value}
         id={optionId(o.value)}
         role="option"
-        tabIndex={-1}
         aria-selected={on}
         aria-disabled={o.disabled || undefined}
         onClick={(e) => onOptionClick(e, o)}
@@ -432,6 +449,7 @@ function Pane({
       <div
         ref={root}
         role="listbox"
+        data-pane={name}
         tabIndex={disabled ? -1 : 0}
         aria-label={`${label} ${title}`}
         aria-multiselectable="true"
@@ -441,7 +459,6 @@ function Pane({
         aria-describedby={describedBy}
         aria-activedescendant={activeValue !== null ? optionId(activeValue) : undefined}
         onKeyDown={onKeyDown}
-        onBlur={onBlur}
         className={cn(
           'br:h-56 br:overflow-y-auto br:rounded-input br:border br:bg-surface br:p-1',
           invalid ? 'br:border-danger' : 'br:border-border-strong',

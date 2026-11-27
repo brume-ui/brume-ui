@@ -1,10 +1,16 @@
 /**
  * Canonical value of a checkbox tree. The PHP server implements these same rules; the shared
- * cases live in `checkbox-tree-model.fixture.ts`.
+ * table-driven cases live in `packages/schema/fixtures/tree/canonical.json` (each case carries
+ * its own options).
  *
  * Options are a flat depth-first list (`depth` 0 = root, each depth at most previous + 1, values
  * unique). A node is a PARENT iff the next option is deeper; every other node is a LEAF. The
  * leaves of a parent are all leaf nodes in its subtree.
+ *
+ * INVALID OPTIONS: a list that breaks the invariants above (first depth not 0, a depth more than
+ * previous + 1, a negative or non-integer depth, duplicate values) is a declaration error rejected
+ * upstream (schema `findTreeOptionErrors` and the server). The behaviour of every function here on
+ * such input is unspecified.
  *
  * LOCKED nodes: in modes `leaves` and `all` a node is locked when it is `disabled` or has a
  * disabled ancestor (a disabled node freezes its whole subtree). In `independent` only a node's
@@ -20,6 +26,10 @@
  * - `all`: expand parent ids as in `leaves`, then add every parent whose leaves are ALL present
  *   (locked leaves must be present themselves). Output = those parents + the leaves present.
  *   A parent id with a missing locked leaf is therefore not kept.
+ * - Toggling (UI only): a parent is "all on" when every UNLOCKED leaf below it is on; then a click
+ *   turns those leaves off, otherwise on. Locked leaves are ignored, so a parent with a locked-off
+ *   leaf shows `mixed` (never fully checked) yet a click with all unlocked leaves on unchecks them.
+ *   A parent without unlocked leaves does nothing.
  * - A node that used to be a parent and is now a leaf is just a leaf.
  */
 
