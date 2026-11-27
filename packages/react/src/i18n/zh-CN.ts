@@ -68,6 +68,8 @@ export const zhCN: Record<MessageKey, string> = {
   'upload.up': '上移 {name}',
   'upload.down': '下移 {name}',
   'upload.sort': '排序 {name}',
+  'keyValue.key': '键',
+  'keyValue.value': '值',
   'tags.placeholder': '输入后按 Enter 添加',
   'color.open': '{label}：打开色盘',
   'color.swatches': '预设色板',

@@ -68,6 +68,8 @@ export const en: Record<MessageKey, string> = {
   'upload.up': 'Move up {name}',
   'upload.down': 'Move down {name}',
   'upload.sort': 'Reorder {name}',
+  'keyValue.key': 'Key',
+  'keyValue.value': 'Value',
   'tags.placeholder': 'Type and press Enter to add',
   'color.open': '{label}: open colour picker',
   'color.swatches': 'Preset colours',

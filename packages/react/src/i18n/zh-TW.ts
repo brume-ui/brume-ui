@@ -67,6 +67,8 @@ export const zhTW = {
   'upload.up': '上移 {name}',
   'upload.down': '下移 {name}',
   'upload.sort': '排序 {name}',
+  'keyValue.key': '鍵',
+  'keyValue.value': '值',
   'tags.placeholder': '輸入後按 Enter 新增',
   'color.open': '{label}：開啟色盤',
   'color.swatches': '預設色票',

@@ -21,6 +21,11 @@ export {
   orderMenuItems,
 } from './components/action-menu';
 export { Alert, type AlertProps, type AlertTone } from './components/alert';
+export {
+  AutocompleteInput,
+  type AutocompleteInputProps,
+  type AutocompleteSuggestion,
+} from './components/autocomplete-input';
 export { Badge, type BadgeProps } from './components/badge';
 export {
   Button,
@@ -58,7 +63,13 @@ export { FormHtml } from './components/form-html';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { IconGlyph, IconInput, type IconInputProps } from './components/icon-input';
 export { isIp } from './components/ip';
+export {
+  KeyValueInput,
+  type KeyValueInputProps,
+  type KeyValuePair,
+} from './components/key-value-input';
 export { Link, LinkButton, type LinkButtonProps, type LinkProps } from './components/link';
+export { ListInput, type ListInputProps } from './components/list-input';
 export { NumberInput, type NumberInputProps } from './components/number-input';
 export { Pagination, type PaginationProps } from './components/pagination';
 export { PasswordInput, type PasswordInputProps } from './components/password-input';
