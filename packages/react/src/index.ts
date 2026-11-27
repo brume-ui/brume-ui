@@ -43,6 +43,17 @@ export {
 } from './components/cell-edit';
 export { Checkbox, type CheckboxProps } from './components/checkbox';
 export { CheckboxGroup, type CheckboxGroupProps } from './components/checkbox-group';
+export {
+  CheckboxTree,
+  type CheckboxTreeOption,
+  type CheckboxTreeProps,
+} from './components/checkbox-tree';
+export {
+  canonicalTreeValue,
+  type TreeCheck,
+  type TreeMode,
+  type TreeOption,
+} from './components/checkbox-tree-model';
 export { Chip, type ChipProps } from './components/chip';
 export { ColorChip, ColorInput, type ColorInputProps } from './components/color-input';
 export { Combobox, type ComboboxLoader, type ComboboxProps } from './components/combobox';
@@ -51,6 +62,11 @@ export { ConfirmHost, type ConfirmOptions, useConfirm } from './components/confi
 export { type DataColumn, DataTable, type DataTableProps } from './components/data-table';
 export { DateInput, type DateInputProps } from './components/date-input';
 export { Dialog, type DialogProps } from './components/dialog';
+export {
+  DualListbox,
+  type DualListboxOption,
+  type DualListboxProps,
+} from './components/dual-listbox';
 export { EmptyState, type EmptyStateProps } from './components/empty-state';
 export {
   Field,
