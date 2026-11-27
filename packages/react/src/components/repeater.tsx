@@ -43,7 +43,7 @@ export interface RepeaterProps extends RepeaterBaseProps {
 export interface RepeaterTableProps extends RepeaterBaseProps {
   layout: 'table';
   columns: readonly RepeaterColumn[];
-  /** Return `null` for a cell with nothing in it: its td stays (alignment) but draws no caption. */
+  /** Return `null`, `undefined` or a boolean for a cell with nothing in it: its td stays (alignment) but draws no caption. */
   renderCell(row: RowIdentity, index: number, columnKey: string): ReactNode;
   renderRow?: never;
 }
@@ -242,7 +242,9 @@ export function Repeater(props: RepeaterAnyProps) {
                         >
                           {/* Visual aid only: the cell's own field already labels its input. */}
                           {/* A cell with nothing in it (null) keeps its td for alignment but no caption. */}
-                          {cell === null ? null : (
+                          {cell === null ||
+                          cell === undefined ||
+                          typeof cell === 'boolean' ? null : (
                             <span
                               aria-hidden="true"
                               data-repeater-cell-label=""

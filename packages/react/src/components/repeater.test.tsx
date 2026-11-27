@@ -222,8 +222,16 @@ describe('Repeater layout="table"', () => {
           columns={[
             { key: 'a', label: 'A' },
             { key: 'b', label: 'B' },
+            { key: 'c', label: 'C' },
+            { key: 'd', label: 'D' },
           ]}
-          renderCell={(_row, _i, key) => (key === 'a' ? <input aria-label="a" /> : null)}
+          renderCell={(_row, _i, key) =>
+            key === 'a' ? (
+              <input aria-label="a" />
+            ) : key === 'b' ? undefined : key === 'c' ? (
+              false
+            ) : null
+          }
           onAdd={() => {}}
           onRemove={() => {}}
           onMove={() => {}}
@@ -231,7 +239,7 @@ describe('Repeater layout="table"', () => {
       </BrumeProvider>,
     );
     expect(document.querySelectorAll('[data-repeater-cell-label]')).toHaveLength(1);
-    expect(document.querySelectorAll('tbody tr:first-child td')).toHaveLength(3);
+    expect(document.querySelectorAll('tbody tr:first-child td')).toHaveLength(5);
   });
   it('leaves the stack layout untouched (no table)', () => {
     render(<Harness />);

@@ -23,6 +23,11 @@ export function canonicalizeFieldValue(
   def: FieldDef | undefined,
   value: unknown,
 ): CanonicalFieldValue {
+  // keyValue/list/tree: null and undefined are a valid empty value; a string (even '') is a wrong shape.
+  if (isStructural(def) && value !== null && value !== undefined)
+    return hasStructuralShape(def, value)
+      ? { valid: true, value: normalizeStructural(def, value) }
+      : { valid: false, value };
   if (value == null || value === '') return { valid: true, value };
   if (def?.type === 'decimal' || def?.type === 'currency' || def?.type === 'rate') {
     // Field validity is checked on the raw value, before display/paste rounding. This matches
@@ -52,10 +57,6 @@ export function canonicalizeFieldValue(
         Object.values(value).every((bound) => bound == null || typeof bound === 'string'),
       value,
     };
-  if (isStructural(def))
-    return hasStructuralShape(def, value)
-      ? { valid: true, value: normalizeStructural(def, value) }
-      : { valid: false, value };
   if (def?.type === 'switch') return { valid: typeof value === 'boolean', value };
   const record = (item: unknown): item is Record<string, unknown> =>
     item !== null && typeof item === 'object' && !Array.isArray(item);

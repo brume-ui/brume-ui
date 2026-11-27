@@ -217,10 +217,10 @@
 
 - 「空白」在整個專案只有一種定義：JavaScript `String.prototype.trim()` 的空白（Unicode `White_Space` 加上 U+FEFF，不含 U+0085）；伺服器以 `Field::jsTrim` 對應。字元長度以 Unicode code point 計。
 - `keyValue`：每列的 key 先去除前後空白；key 與 value 都是空字串的列**靜默丟棄**（不是錯誤，所以結尾多一列空白不會擋住儲存）。之後依序檢查：`required` 規則（`null`、`undefined`、空陣列或丟棄後為空都算失敗；失敗時只回這一個欄位錯誤，其餘檢查略過）→ 組數超過 `min(max ?? 200, 200)`（欄位本身的錯誤，路徑 `name`）→ 逐列：key 為空（`name.N.key`）、key 超過 255 字（`name.N.key`）、key 與前面某列相同（逐字比較、區分大小寫、trim 之後；錯誤在**第二個及之後**出現的那列，`name.N.key`；已因長度出錯的 key 仍算「已出現」；同一格只報第一個錯）→ value 超過 65,535 字（`name.N.value`）。value 不 trim，空字串保留。
-- `list`：項目**不** trim，但只含空白的項目在 `min`／`max`／送出前丟棄。依序：`required` 規則（至少一項）→ 項目數少於 `min`（欄位錯誤，路徑 `name`；`min` 對空清單也成立）→ 項目數超過 `min(max ?? 500, 500)`（欄位錯誤）→ 逐項超過 `maxLength`（預設 255）（`name.N`）。非字串項目是形狀錯誤（欄位錯誤）。
-- `tree`：以欄位的 `mode` 正規化（寫入時未知 id 在瀏覽器端直接丟棄，伺服器則拒絕直接 POST 的未知 id）；`required` 指正規化後至少一個 id。
+- `list`：項目**不** trim，但只含空白的項目在 `min`／`max`／送出前丟棄。依序：`required` 規則（`null`、`undefined`、空陣列或丟棄後為空都算失敗；失敗時只回這一個欄位錯誤，其餘檢查略過）→ 項目數少於 `min`（欄位錯誤，路徑 `name`；`min` 對空清單也成立）→ 項目數超過 `min(max ?? 500, 500)`（欄位錯誤）→ 逐項超過 `maxLength`（預設 255）（`name.N`）。非字串項目是形狀錯誤（欄位錯誤）。
+- `tree`：以欄位的 `mode` 正規化（寫入時未知 id 在瀏覽器端直接丟棄，伺服器則拒絕直接 POST 的未知 id）；`required` 指正規化後至少一個 id（`null`、`undefined`、空陣列或正規化後為空都算失敗；失敗時只回這一個欄位錯誤）。
 - `autocomplete`：等同 `text`（`''` 存為 `null`；`minLength`／`maxLength`／規則同 `text`）。
-- 條件：`empty` 套用在 `keyValue`／`list` 時，看的是正規化後的值（只有空白列／項目 = 空）；`tree` 看的是正規化後的 id 陣列。
+- 條件：`empty` 套用在 `keyValue`／`list`／`tree` 時，看的是正規化後的值（只有空白列／項目、只有未知 id = 空）；`null`、`undefined` 與 `[]` 都是「空」。形狀錯誤的值（字串、數字、非陣列物件、非配對列、非字串項目）視為無效，條件保守地視為成立。共用 fixture：`fixtures/conditions/evaluation.json`。
 - 隱藏、停用或唯讀的欄位不正規化也不驗證，草稿原樣保留（與既有的隱藏欄位語意相同）。
 
 ### 哪一層拒絕什麼

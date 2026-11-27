@@ -431,5 +431,660 @@
       }
     ],
     "expected": true
+  },
+  {
+    "name": "empty on keyValue: null",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": null
+    },
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on keyValue: undefined (missing)",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {},
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "not(empty) on keyValue: null",
+    "condition": {
+      "op": "not",
+      "condition": {
+        "op": "empty",
+        "field": {
+          "scope": "root",
+          "path": "v"
+        }
+      }
+    },
+    "values": {
+      "v": null
+    },
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": false
+  },
+  {
+    "name": "empty on keyValue: []",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": []
+    },
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on keyValue: only a blank row",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": [
+        {
+          "key": " ",
+          "value": ""
+        }
+      ]
+    },
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on keyValue: a pair",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": [
+        {
+          "key": "a",
+          "value": ""
+        }
+      ]
+    },
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": false
+  },
+  {
+    "name": "empty on keyValue: a string (wrong shape, conservatively active)",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": "x"
+    },
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on keyValue: not-pair rows (wrong shape, conservatively active)",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": [
+        {
+          "key": "a"
+        }
+      ]
+    },
+    "fields": [
+      {
+        "type": "keyValue",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on list: null",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": null
+    },
+    "fields": [
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on list: []",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": []
+    },
+    "fields": [
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on list: only whitespace items",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": ["", "  ", "﻿"]
+    },
+    "fields": [
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on list: an item",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": ["a"]
+    },
+    "fields": [
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": false
+  },
+  {
+    "name": "empty on list: a string (wrong shape, conservatively active)",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": "x"
+    },
+    "fields": [
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on list: non-string item (wrong shape, conservatively active)",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": ["a", 1]
+    },
+    "fields": [
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on tree: null",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": null
+    },
+    "fields": [
+      {
+        "type": "tree",
+        "name": "v",
+        "label": "V",
+        "mode": "leaves",
+        "options": [
+          {
+            "value": "a",
+            "label": "A",
+            "depth": 0
+          },
+          {
+            "value": "b",
+            "label": "B",
+            "depth": 0
+          }
+        ]
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on tree: []",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": []
+    },
+    "fields": [
+      {
+        "type": "tree",
+        "name": "v",
+        "label": "V",
+        "mode": "leaves",
+        "options": [
+          {
+            "value": "a",
+            "label": "A",
+            "depth": 0
+          },
+          {
+            "value": "b",
+            "label": "B",
+            "depth": 0
+          }
+        ]
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on tree: only unknown ids",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": ["zzz"]
+    },
+    "fields": [
+      {
+        "type": "tree",
+        "name": "v",
+        "label": "V",
+        "mode": "leaves",
+        "options": [
+          {
+            "value": "a",
+            "label": "A",
+            "depth": 0
+          },
+          {
+            "value": "b",
+            "label": "B",
+            "depth": 0
+          }
+        ]
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on tree: a known id",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": ["a"]
+    },
+    "fields": [
+      {
+        "type": "tree",
+        "name": "v",
+        "label": "V",
+        "mode": "leaves",
+        "options": [
+          {
+            "value": "a",
+            "label": "A",
+            "depth": 0
+          },
+          {
+            "value": "b",
+            "label": "B",
+            "depth": 0
+          }
+        ]
+      }
+    ],
+    "expected": false
+  },
+  {
+    "name": "empty on tree: a string (wrong shape, conservatively active)",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": "x"
+    },
+    "fields": [
+      {
+        "type": "tree",
+        "name": "v",
+        "label": "V",
+        "mode": "leaves",
+        "options": [
+          {
+            "value": "a",
+            "label": "A",
+            "depth": 0
+          },
+          {
+            "value": "b",
+            "label": "B",
+            "depth": 0
+          }
+        ]
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on tree: non-string id (wrong shape, conservatively active)",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "root",
+        "path": "v"
+      }
+    },
+    "values": {
+      "v": ["a", 1]
+    },
+    "fields": [
+      {
+        "type": "tree",
+        "name": "v",
+        "label": "V",
+        "mode": "leaves",
+        "options": [
+          {
+            "value": "a",
+            "label": "A",
+            "depth": 0
+          },
+          {
+            "value": "b",
+            "label": "B",
+            "depth": 0
+          }
+        ]
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "empty on list in row scope: null",
+    "condition": {
+      "op": "empty",
+      "field": {
+        "scope": "row",
+        "path": "v"
+      }
+    },
+    "values": {
+      "rows": [
+        {
+          "v": null
+        }
+      ]
+    },
+    "rowPath": "rows.0",
+    "fields": [
+      {
+        "type": "list",
+        "name": "rows.0.v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "not(empty) on list in row scope: whitespace items",
+    "condition": {
+      "op": "not",
+      "condition": {
+        "op": "empty",
+        "field": {
+          "scope": "row",
+          "path": "v"
+        }
+      }
+    },
+    "values": {
+      "rows": [
+        {
+          "v": [" "]
+        }
+      ]
+    },
+    "rowPath": "rows.0",
+    "fields": [
+      {
+        "type": "list",
+        "name": "rows.0.v",
+        "label": "V"
+      }
+    ],
+    "expected": false
+  },
+  {
+    "name": "all(empty tree null, empty list []) is true",
+    "condition": {
+      "op": "all",
+      "conditions": [
+        {
+          "op": "empty",
+          "field": {
+            "scope": "root",
+            "path": "t"
+          }
+        },
+        {
+          "op": "empty",
+          "field": {
+            "scope": "root",
+            "path": "v"
+          }
+        }
+      ]
+    },
+    "values": {
+      "t": null,
+      "v": []
+    },
+    "fields": [
+      {
+        "type": "tree",
+        "name": "t",
+        "label": "V",
+        "mode": "leaves",
+        "options": [
+          {
+            "value": "a",
+            "label": "A",
+            "depth": 0
+          },
+          {
+            "value": "b",
+            "label": "B",
+            "depth": 0
+          }
+        ]
+      },
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
+  },
+  {
+    "name": "any(empty list, never) with a wrong-shape list stays active",
+    "condition": {
+      "op": "any",
+      "conditions": [
+        {
+          "op": "empty",
+          "field": {
+            "scope": "root",
+            "path": "v"
+          }
+        },
+        {
+          "op": "eq",
+          "field": {
+            "scope": "root",
+            "path": "w"
+          },
+          "value": 1
+        }
+      ]
+    },
+    "values": {
+      "v": "x",
+      "w": 2
+    },
+    "fields": [
+      {
+        "type": "list",
+        "name": "v",
+        "label": "V"
+      }
+    ],
+    "expected": true
   }
 ]

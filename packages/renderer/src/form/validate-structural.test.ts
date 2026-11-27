@@ -149,6 +149,18 @@ describe('tree', () => {
   });
 });
 
+describe('canonical validity of structural values', () => {
+  it('null and undefined are a valid empty value; a string, even empty, is a wrong shape', () => {
+    for (const d of [kv(), list(), def('tree', { mode: 'leaves', options: [] })]) {
+      expect(canonicalizeFieldValue(d, null).valid).toBe(true);
+      expect(canonicalizeFieldValue(d, undefined).valid).toBe(true);
+      expect(canonicalizeFieldValue(d, '').valid).toBe(false);
+      expect(canonicalizeFieldValue(d, 'x').valid).toBe(false);
+      expect(canonicalizeFieldValue(d, {}).valid).toBe(false);
+    }
+  });
+});
+
 describe('autocomplete behaves as text', () => {
   it('blank is empty, minLength/maxLength apply, a string value is canonical', () => {
     const d = def('autocomplete', {
