@@ -152,6 +152,18 @@ describe('Repeater layout="table"', () => {
     expect((screen.getByLabelText('qty b') as HTMLInputElement).value).toBe('qty-b');
     expect(screen.getAllByRole('cell')).toHaveLength(6);
   });
+  it('states the table roles explicitly (display:block cards must not drop the semantics)', () => {
+    render(<TableHarness />);
+    const table = screen.getByRole('table', { name: 'Rows' });
+    expect(table.getAttribute('role')).toBe('table');
+    expect(table.querySelector('thead')?.getAttribute('role')).toBe('rowgroup');
+    expect(table.querySelector('tbody')?.getAttribute('role')).toBe('rowgroup');
+    for (const el of table.querySelectorAll('tr')) expect(el.getAttribute('role')).toBe('row');
+    for (const el of table.querySelectorAll('th')) {
+      expect(el.getAttribute('role')).toBe('columnheader');
+    }
+    for (const el of table.querySelectorAll('td')) expect(el.getAttribute('role')).toBe('cell');
+  });
   it('keeps the same controls, names and focus rules as the stack layout', () => {
     render(<TableHarness />);
     const a = screen.getByLabelText('name a');

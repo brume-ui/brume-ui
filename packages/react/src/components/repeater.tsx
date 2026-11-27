@@ -58,6 +58,13 @@ const RepeaterDepth = createContext(0);
 const ROW_ACTIONS =
   'br:flex br:items-center br:gap-0.5 br:transition-opacity br:duration-fast br:ease-out br:[@media(hover:hover)]:opacity-0 br:[@media(hover:hover)]:group-hover/row:opacity-100 br:[@media(hover:hover)]:group-focus-within/row:opacity-100';
 
+/**
+ * Spreading (not a literal attribute) because the roles are redundant on paper: below 640 px the
+ * table elements become display:block, which makes some browsers (Safari/VoiceOver) drop the table
+ * semantics, so they are stated explicitly.
+ */
+const explicit = (role: string) => ({ role });
+
 /** Controlled row presentation. Stable keys belong to the caller; no values or transport live here. */
 export function Repeater(props: RepeaterAnyProps) {
   const { label, rows, onAdd, onRemove, onMove, min = 0, max, disabled, sortable = true } = props;
@@ -175,14 +182,16 @@ export function Repeater(props: RepeaterAnyProps) {
       <div className={cn('br:@container br:min-w-0', frame)}>
         <table
           ref={root as RefObject<HTMLTableElement>}
+          {...explicit('table')}
           aria-label={label}
           className="br:m-0 br:w-full br:table-fixed br:border-collapse br:@max-[640px]:block"
         >
-          <thead className="br:@max-[640px]:sr-only">
-            <tr className="br:@max-[640px]:block">
+          <thead {...explicit('rowgroup')} className="br:@max-[640px]:sr-only">
+            <tr {...explicit('row')} className="br:@max-[640px]:block">
               {props.columns.map((column) => (
                 <th
                   key={column.key}
+                  {...explicit('columnheader')}
                   scope="col"
                   className="br:min-w-0 br:px-3 br:py-2 br:text-left br:text-[13px] br:font-medium br:text-text-label br:@max-[640px]:block"
                 >
@@ -195,6 +204,7 @@ export function Repeater(props: RepeaterAnyProps) {
                 </th>
               ))}
               <th
+                {...explicit('columnheader')}
                 scope="col"
                 className={cn(
                   'br:px-3 br:py-2 br:@max-[640px]:block',
@@ -205,12 +215,13 @@ export function Repeater(props: RepeaterAnyProps) {
               </th>
             </tr>
           </thead>
-          <tbody className="br:@max-[640px]:block">
+          <tbody {...explicit('rowgroup')} className="br:@max-[640px]:block">
             {rows.map((row, index) => {
               const name = `${label} ${index + 1}`;
               return (
                 <tr
                   key={row.key}
+                  {...explicit('row')}
                   data-repeater-key={row.key}
                   tabIndex={-1}
                   className={cn(
@@ -223,6 +234,7 @@ export function Repeater(props: RepeaterAnyProps) {
                     {props.columns.map((column) => (
                       <td
                         key={column.key}
+                        {...explicit('cell')}
                         className="br:min-w-0 br:px-3 br:py-3 br:@max-[640px]:block br:@max-[640px]:p-0"
                       >
                         {/* Visual aid only: the cell's own field already labels its input. */}
@@ -237,7 +249,10 @@ export function Repeater(props: RepeaterAnyProps) {
                       </td>
                     ))}
                   </RepeaterDepth.Provider>
-                  <td className="br:px-3 br:py-3 br:@max-[640px]:block br:@max-[640px]:p-0">
+                  <td
+                    {...explicit('cell')}
+                    className="br:px-3 br:py-3 br:@max-[640px]:block br:@max-[640px]:p-0"
+                  >
                     <div className={cn(ROW_ACTIONS, 'br:@max-[640px]:justify-end')}>
                       {controls(row, index, name)}
                     </div>
