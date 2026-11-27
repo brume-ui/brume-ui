@@ -7,6 +7,7 @@ export const zhCN: Record<MessageKey, string> = {
   'repeater.up': '上移 {name}',
   'repeater.down': '下移 {name}',
   'repeater.sort': '排序 {name}',
+  'repeater.actions': '操作',
 
   'relation.choose': '选择商品…',
   'form.errorSeparator': '：',

@@ -7,6 +7,7 @@ export const en: Record<MessageKey, string> = {
   'repeater.up': 'Move up {name}',
   'repeater.down': 'Move down {name}',
   'repeater.sort': 'Reorder {name}',
+  'repeater.actions': 'Actions',
 
   'relation.choose': 'Choose…',
   'form.errorSeparator': ':',

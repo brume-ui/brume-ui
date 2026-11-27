@@ -102,7 +102,13 @@ export { RadioGroup, type RadioGroupProps } from './components/radio-group';
 export { RangeInput, type RangeInputProps, type RangeValue } from './components/range-input';
 export { RelationPicker, type RelationPickerProps } from './components/relation-picker';
 export { ReorderDialog, type ReorderDialogProps } from './components/reorder-dialog';
-export { Repeater, type RepeaterProps } from './components/repeater';
+export {
+  Repeater,
+  type RepeaterAnyProps,
+  type RepeaterColumn,
+  type RepeaterProps,
+  type RepeaterTableProps,
+} from './components/repeater';
 export { isEmptyHtml } from './components/rich-text/empty';
 export {
   RichTextEditor,
@@ -167,6 +173,7 @@ export {
   CompositeField,
   FormBackLink,
   FormBlock,
+  FormCollapsible,
   FormDivider,
   FormFieldset,
   FormHeading,

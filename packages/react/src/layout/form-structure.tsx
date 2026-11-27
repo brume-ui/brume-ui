@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
   type CSSProperties,
@@ -248,5 +248,51 @@ export function CompositeField({
         </p>
       ) : null}
     </fieldset>
+  );
+}
+
+/**
+ * A quiet disclosure group between a block and a fieldset. Children stay mounted while collapsed
+ * (hidden, so they keep their values and stay findable, but are neither focusable nor announced).
+ * `forceOpen` opens it on each false-to-true transition; afterwards the user is in control again.
+ */
+export function FormCollapsible({
+  id,
+  title,
+  defaultCollapsed = false,
+  forceOpen = false,
+  children,
+}: {
+  id: string;
+  title: string;
+  defaultCollapsed?: boolean;
+  forceOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(forceOpen || !defaultCollapsed);
+  const [seenForce, setSeenForce] = useState(forceOpen);
+  if (forceOpen !== seenForce) {
+    setSeenForce(forceOpen);
+    if (forceOpen) setOpen(true);
+  }
+  const regionId = `${id}-region`;
+  const Chevron = open ? ChevronDown : ChevronRight;
+  return (
+    <div data-form-collapsible={id} className="br:grid br:min-w-0 br:gap-3">
+      <button
+        type="button"
+        id={`${id}-trigger`}
+        aria-expanded={open}
+        aria-controls={regionId}
+        onClick={() => setOpen(!open)}
+        className="br:flex br:w-full br:items-center br:gap-1.5 br:rounded-input br:border-b br:border-border br:px-1 br:py-1.5 br:text-left br:text-sm br:font-medium br:text-text br:hover:bg-surface br:focus-visible:outline-focus-ring"
+      >
+        <Chevron aria-hidden="true" className="br:size-4 br:shrink-0 br:text-text-muted" />
+        <span className="br:min-w-0">{title}</span>
+      </button>
+      <div id={regionId} hidden={!open} className="br:grid br:min-w-0 br:gap-4">
+        {children}
+      </div>
+    </div>
   );
 }
